@@ -1,0 +1,14 @@
+{
+  "app": {
+    "name": "Motion ERP",
+    "tagline": "Configurable enterprise resource planning platform",
+    "shellReady": "The application shell is running.",
+    "foundationOnly": "Business modules are not built yet — this is the project foundation only.",
+    "language": "Language",
+    "direction": "Text direction",
+    "languageName": {
+      "en": "English",
+      "ar": "العربية"
+    }
+  }
+}

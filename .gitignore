@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+dev-dist/
+*.tsbuildinfo
+
+# drizzle-kit compiles the config file next to itself at runtime
+apps/api/drizzle.config.js
+apps/api/drizzle.config.js.map
+
+# throwaway embedded-postgres data dir (pnpm test:db)
+apps/api/.embedded-pg-data/
+
+# test output
+coverage/
+
+# environment (only *.example files are committed)
+.env
+.env.local
+.env.*.local
+
+# editor / os
+.DS_Store
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json

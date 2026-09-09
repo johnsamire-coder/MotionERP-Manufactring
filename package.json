@@ -1,0 +1,44 @@
+{
+  "name": "motion-erp",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Motion ERP — configurable, multi-company enterprise resource planning platform",
+  "packageManager": "pnpm@11.18.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "postinstall": "pnpm run shared:build",
+    "shared:build": "pnpm --filter @motion-erp/shared run build",
+    "dev": "pnpm run shared:build && pnpm --recursive --parallel --stream run dev",
+    "dev:api": "pnpm run shared:build && pnpm --filter @motion-erp/api run dev",
+    "dev:web": "pnpm run shared:build && pnpm --filter @motion-erp/web run dev",
+    "build": "pnpm run shared:build && pnpm --recursive --filter=!@motion-erp/shared run build",
+    "typecheck": "pnpm run shared:build && pnpm --recursive run typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm run shared:build && pnpm --recursive run test",
+    "test:e2e": "pnpm run shared:build && pnpm --filter @motion-erp/api run test:e2e",
+    "test:db": "pnpm run shared:build && pnpm --filter @motion-erp/api run test:db",
+    "verify": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f db",
+    "db:generate": "pnpm --filter @motion-erp/api run db:generate",
+    "db:check": "pnpm --filter @motion-erp/api run db:check",
+    "db:migrate": "pnpm --filter @motion-erp/api run db:migrate",
+    "db:status": "pnpm --filter @motion-erp/api run db:status"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.18.2"
+  }
+}
