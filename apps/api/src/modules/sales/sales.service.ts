@@ -1,0 +1,98 @@
+import { randomUUID } from 'node:crypto';
+import { Injectable } from '@nestjs/common';
+import { CrmService } from '../crm/crm.service';
+import { SalesNotFoundError, SalesValidationError } from './sales.errors';
+import { SalesRepository } from './sales.repository';
+import type { CreateQuotationInput, QuotationRecord } from './sales.types';
+
+@Injectable()
+export class SalesService {
+  constructor(
+    private readonly repository: SalesRepository,
+    private readonly crmService: CrmService,
+  ) {}
+
+  async getQuotations(direction?: 'outgoing' | 'incoming'): Promise<QuotationRecord[]> {
+    return this.repository.listQuotations(direction);
+  }
+
+  async getQuotation(id: string): Promise<QuotationRecord> {
+    const found = await this.repository.findQuotationById(id);
+    if (!found) throw new SalesNotFoundError(`quotation ${id} does not exist`);
+    return found;
+  }
+
+  async createQuotation(input: CreateQuotationInput): Promise<QuotationRecord> {
+    if (input.direction === 'outgoing' && (!input.customerId || input.supplierId)) {
+      throw new SalesValidationError('an outgoing quotation needs exactly a customerId (no supplierId)');
+    }
+    if (input.direction === 'incoming' && (!input.supplierId || input.customerId)) {
+      throw new SalesValidationError('an incoming quotation needs exactly a supplierId (no customerId)');
+    }
+    if (!input.lines || input.lines.length === 0) {
+      throw new SalesValidationError('a quotation must have at least one line');
+    }
+    for (const line of input.lines) {
+      const qty = Number(line.quantity);
+      const price = Number(line.unitPrice);
+      if (!Number.isFinite(qty) || qty <= 0) throw new SalesValidationError('line quantity must be positive');
+      if (!Number.isFinite(price) || price < 0) throw new SalesValidationError('line unit price cannot be negative');
+    }
+
+    if (input.customerId) {
+      const customer = await this.crmService.getCustomer(input.customerId);
+      if (!customer) throw new SalesNotFoundError(`customer ${input.customerId} does not exist`);
+    }
+
+    const sequence = (await this.repository.countQuotations()) + 1;
+    const year = new Date().getFullYear();
+    const prefix = input.direction === 'outgoing' ? 'QO' : 'QI';
+    const quotationNumber = `${prefix}-${year}-${String(sequence).padStart(6, '0')}`;
+
+    return this.repository.insertQuotation({
+      id: randomUUID(), quotationNumber, direction: input.direction,
+      customerId: input.customerId, supplierId: input.supplierId,
+      quotationDate: input.quotationDate, validUntil: input.validUntil,
+      currency: input.currency, note: input.note, lines: input.lines,
+    });
+  }
+
+  async sendQuotation(id: string): Promise<QuotationRecord> {
+    const quotation = await this.repository.findQuotationById(id);
+    if (!quotation) throw new SalesNotFoundError(`quotation ${id} does not exist`);
+    if (quotation.status !== 'draft') {
+      throw new SalesValidationError(`quotation ${id} is "${quotation.status}" and cannot be sent (must be "draft")`);
+    }
+    return this.repository.setQuotationStatus(id, 'sent');
+  }
+
+  /**
+   * Approving an OUTGOING quotation is the exact moment described by the
+   * owner: the customer agrees, we record their PO reference, and — for a
+   * lead — the customer is promoted to 'active' automatically. This goes
+   * through CrmService's own public method, never a direct write to the
+   * customer table (D2/D20: units talk only through published surfaces).
+   * Reserving materials and creating the Job Order happen in later phases;
+   * this step only covers the quotation's own lifecycle plus the promotion.
+   */
+  async approveQuotation(id: string, customerPoReference?: string): Promise<QuotationRecord> {
+    const quotation = await this.repository.findQuotationById(id);
+    if (!quotation) throw new SalesNotFoundError(`quotation ${id} does not exist`);
+    if (quotation.status !== 'sent' && quotation.status !== 'draft') {
+      throw new SalesValidationError(`quotation ${id} is "${quotation.status}" and cannot be approved`);
+    }
+    if (quotation.direction === 'outgoing' && quotation.customerId) {
+      await this.crmService.promoteToActive(quotation.customerId);
+    }
+    return this.repository.setQuotationStatus(id, 'approved', customerPoReference);
+  }
+
+  async rejectQuotation(id: string): Promise<QuotationRecord> {
+    const quotation = await this.repository.findQuotationById(id);
+    if (!quotation) throw new SalesNotFoundError(`quotation ${id} does not exist`);
+    if (quotation.status === 'approved') {
+      throw new SalesValidationError(`quotation ${id} is already approved and cannot be rejected`);
+    }
+    return this.repository.setQuotationStatus(id, 'rejected');
+  }
+}
