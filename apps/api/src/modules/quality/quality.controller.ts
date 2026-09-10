@@ -30,7 +30,7 @@ export class QualityController {
 
   @Post('workflows/:id/approve') @HttpCode(200)
   async approveCheckPoint(
-    @Param('id', ParseUUIDPipe) workflowId: string,
+    @Param('id') workflowId: string,
     @Body() dto: ApproveRejectDto
   ): Promise<{ workflow: QualityWorkflowRecord }> {
     const workflow = await this.service.approveCheckPoint(workflowId, 'system-user', dto.resultNote);
@@ -39,7 +39,7 @@ export class QualityController {
 
   @Post('workflows/:id/reject') @HttpCode(200)
   async rejectCheckPoint(
-    @Param('id', ParseUUIDPipe) workflowId: string,
+    @Param('id') workflowId: string,
     @Body() dto: ApproveRejectDto
   ): Promise<{ workflow: QualityWorkflowRecord }> {
     const workflow = await this.service.rejectCheckPoint(workflowId, 'system-user', dto.resultNote);

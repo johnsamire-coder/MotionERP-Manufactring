@@ -8,6 +8,7 @@ import { PlanningModule } from './modules/planning/planning.module';
 import { ProductionModule } from './modules/production/production.module';
 import { ProductionOpsModule } from './modules/production_ops/production_ops.module';
 import { QualityModule } from './modules/quality/quality.module';
+import { CostModule } from './modules/cost/cost.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { TechnicalModule } from './modules/technical/technical.module';
 
@@ -16,7 +17,9 @@ import { TechnicalModule } from './modules/technical/technical.module';
     CoreModule, OrganizationModule, CatalogModule, InventoryModule, CrmModule,
     SalesModule, PlanningModule, TechnicalModule, ProductionModule, ProductionOpsModule,
       QualityModule,
+      CostModule,
   ],
 })
 export class AppModule {}
+
 
