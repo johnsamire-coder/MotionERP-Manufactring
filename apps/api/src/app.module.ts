@@ -9,6 +9,7 @@ import { ProductionModule } from './modules/production/production.module';
 import { ProductionOpsModule } from './modules/production_ops/production_ops.module';
 import { QualityModule } from './modules/quality/quality.module';
 import { CostModule } from './modules/cost/cost.module';
+import { DeliveryModule } from './modules/delivery/delivery.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { TechnicalModule } from './modules/technical/technical.module';
 
@@ -18,8 +19,10 @@ import { TechnicalModule } from './modules/technical/technical.module';
     SalesModule, PlanningModule, TechnicalModule, ProductionModule, ProductionOpsModule,
       QualityModule,
       CostModule,
+      DeliveryModule,
   ],
 })
 export class AppModule {}
+
 
 

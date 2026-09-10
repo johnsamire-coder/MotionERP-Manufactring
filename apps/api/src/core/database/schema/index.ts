@@ -26,3 +26,5 @@ export * from '../../../modules/production_ops/production_ops.schema';
 export * from '../../../modules/quality/quality.schema';
 
 export * from '../../../modules/cost/cost.schema';
+
+export * from '../../../modules/delivery/delivery.schema';
