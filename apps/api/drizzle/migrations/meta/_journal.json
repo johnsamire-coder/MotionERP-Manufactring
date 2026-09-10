@@ -64,6 +64,13 @@
       "when": 1789069889241,
       "tag": "0008_calm_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789070143715,
+      "tag": "0009_powerful_smasher",
+      "breakpoints": true
     }
   ]
 }
