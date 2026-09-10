@@ -8,5 +8,6 @@ import { SalesService } from './sales.service';
   imports: [CrmModule],
   controllers: [SalesController],
   providers: [SalesService, SalesRepository],
+  exports: [SalesService],
 })
 export class SalesModule {}

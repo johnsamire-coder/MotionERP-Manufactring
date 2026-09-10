@@ -14,3 +14,5 @@ export * from '../../../modules/inventory/inventory.schema';
 export * from '../../../modules/crm/crm.schema';
 
 export * from '../../../modules/sales/sales.schema';
+
+export * from '../../../modules/planning/planning.schema';
