@@ -6,3 +6,5 @@
  * registration point and one migration history.
  */
 export * from '../../../modules/organization/organization.schema';
+
+export * from '../../../modules/catalog/catalog.schema';
