@@ -57,6 +57,13 @@
       "when": 1789069312308,
       "tag": "0007_pink_madrox",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789069889241,
+      "tag": "0008_calm_master_chief",
+      "breakpoints": true
     }
   ]
 }
