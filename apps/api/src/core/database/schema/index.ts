@@ -28,3 +28,7 @@ export * from '../../../modules/quality/quality.schema';
 export * from '../../../modules/cost/cost.schema';
 
 export * from '../../../modules/delivery/delivery.schema';
+
+export * from '../../../modules/accounting/accounting.schema';
+
+export * from '../../../modules/finance/finance.schema';
