@@ -10,3 +10,5 @@ export * from '../../../modules/organization/organization.schema';
 export * from '../../../modules/catalog/catalog.schema';
 
 export * from '../../../modules/inventory/inventory.schema';
+
+export * from '../../../modules/crm/crm.schema';
