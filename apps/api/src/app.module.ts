@@ -6,10 +6,14 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { PlanningModule } from './modules/planning/planning.module';
 import { ProductionModule } from './modules/production/production.module';
+import { ProductionOpsModule } from './modules/production_ops/production_ops.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { TechnicalModule } from './modules/technical/technical.module';
 
 @Module({
-  imports: [CoreModule, OrganizationModule, CatalogModule, InventoryModule, CrmModule, SalesModule, PlanningModule, TechnicalModule, ProductionModule],
+  imports: [
+    CoreModule, OrganizationModule, CatalogModule, InventoryModule, CrmModule,
+    SalesModule, PlanningModule, TechnicalModule, ProductionModule, ProductionOpsModule,
+  ],
 })
 export class AppModule {}

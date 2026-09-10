@@ -71,6 +71,13 @@
       "when": 1789070143715,
       "tag": "0009_powerful_smasher",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789070412987,
+      "tag": "0010_cold_madame_masque",
+      "breakpoints": true
     }
   ]
 }

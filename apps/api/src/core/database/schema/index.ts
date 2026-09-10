@@ -20,3 +20,5 @@ export * from '../../../modules/planning/planning.schema';
 export * from '../../../modules/technical/technical.schema';
 
 export * from '../../../modules/production/production.schema';
+
+export * from '../../../modules/production_ops/production_ops.schema';
