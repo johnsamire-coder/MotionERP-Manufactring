@@ -115,6 +115,12 @@ export class QualityRepository {
     return rows[0] ? toRuleRecord(rows[0]) : null;
   }
 
+  async updateWorkflowEscalation(id: string, currentAssigneeId: string, escalationLevel: number, graceUntil: Date): Promise<QualityWorkflowRecord> {
+    const rows = await this.database.db.update(qualityWorkflow).set({
+      currentAssigneeId, escalationLevel, graceUntil
+    }).where(eq(qualityWorkflow.id, id)).returning(wfColumns);
+    return toWfRecord(rows[0]!);
+  }
   async insertSlaRule(input: CreateSlaRuleInput & { id: string }): Promise<SlaRuleRecord> {
     const rows = await this.database.db.insert(slaRule).values({
       id: input.id, checkPointId: input.checkPointId, escalationLevel: input.escalationLevel,

@@ -2,7 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { QualityNotFoundError, QualityValidationError } from './quality.errors';
 import { QualityRepository } from './quality.repository';
-import type { CreateQualityCheckPointInput, CreateSlaRuleInput, QualityCheckPointRecord, QualityWorkflowRecord, SlaRuleRecord } from './quality.types';
+import type {
+  CreateQualityCheckPointInput, CreateSlaRuleInput, QualityCheckPointRecord,
+  QualityWorkflowRecord, SlaRuleRecord,
+} from './quality.types';
 
 @Injectable()
 export class QualityService {
@@ -12,27 +15,27 @@ export class QualityService {
     const name = input.name.trim();
     if (!name) throw new QualityValidationError('name is required');
     if (input.targetDurationMinutes <= 0) throw new QualityValidationError('targetDurationMinutes must be positive');
-    
+
     return this.repository.insertCheckPoint({
       id: randomUUID(), ...input, name,
-      gracePeriodMinutes: input.gracePeriodMinutes ?? 0
+      gracePeriodMinutes: input.gracePeriodMinutes ?? 0,
     });
   }
 
   async initializeWorkflow(checkPointId: string): Promise<QualityWorkflowRecord> {
     const checkPoint = await this.repository.findCheckPointById(checkPointId);
-    if (!checkPoint) throw new QualityNotFoundError(`Check point ${checkPointId} not found`);
+    if (!checkPoint) throw new QualityNotFoundError(`check point ${checkPointId} does not exist`);
 
     const existing = await this.repository.findWorkflowByCheckPoint(checkPointId);
-    if (existing) throw new QualityValidationError(`Workflow already exists for check point ${checkPointId}`);
+    if (existing) throw new QualityValidationError(`workflow already exists for check point ${checkPointId}`);
 
     const enteredAt = new Date();
-    const targetAt = new Date(enteredAt.getTime() + (checkPoint.targetDurationMinutes * 60000));
-    const graceUntil = new Date(targetAt.getTime() + (checkPoint.gracePeriodMinutes * 60000));
+    const targetAt = new Date(enteredAt.getTime() + checkPoint.targetDurationMinutes * 60000);
+    const graceUntil = new Date(targetAt.getTime() + checkPoint.gracePeriodMinutes * 60000);
 
     return this.repository.insertWorkflow({
       id: randomUUID(), checkPointId, enteredAt, targetAt, graceUntil,
-      currentAssigneeId: checkPoint.assignedRoleId, status: 'pending', escalationLevel: 0
+      currentAssigneeId: checkPoint.assignedRoleId, status: 'pending', escalationLevel: 0,
     });
   }
 
@@ -46,41 +49,39 @@ export class QualityService {
 
   async createSlaRule(input: CreateSlaRuleInput): Promise<SlaRuleRecord> {
     if (input.delayMinutesAfterTarget < 0) throw new QualityValidationError('delayMinutesAfterTarget must be non-negative');
-    
+
     const checkPoint = await this.repository.findCheckPointById(input.checkPointId);
-    if (!checkPoint) throw new QualityNotFoundError(`Check point ${input.checkPointId} not found`);
+    if (!checkPoint) throw new QualityNotFoundError(`check point ${input.checkPointId} does not exist`);
 
-    const ruleInput: any = {
-      id: randomUUID(), 
-      checkPointId: input.checkPointId, 
-      escalationLevel: input.escalationLevel,
-      delayMinutesAfterTarget: input.delayMinutesAfterTarget, 
-      assignToRoleId: input.assignToRoleId
-    };
-    
-    if (input.notificationTemplate !== undefined) {
-      ruleInput.notificationTemplate = input.notificationTemplate;
-    }
-
-    return this.repository.insertSlaRule(ruleInput);
+    return this.repository.insertSlaRule({ id: randomUUID(), ...input });
   }
 
-  /** For background job: check overdue workflows and escalate */
+  /**
+   * The actual escalation logic (was a TODO stub before this fix): for every
+   * workflow still 'pending' past its graceUntil, find the SLA rule for the
+   * NEXT escalation level. If found, reassign the workflow to that rule's
+   * role, bump escalationLevel, and push graceUntil forward by
+   * delayMinutesAfterTarget from the ORIGINAL targetAt (so each level's
+   * deadline is anchored to the original target, not to "now"). If no next
+   * rule exists, the workflow simply stays overdue at its current level —
+   * there is no 'escalated' status in the schema by design; escalation is
+   * expressed purely via escalationLevel + currentAssigneeId while status
+   * remains 'pending'.
+   */
   async processOverdueWorkflows(): Promise<number> {
     const now = new Date();
     const overdue = await this.repository.findOverdueWorkflows(now);
     let escalatedCount = 0;
 
     for (const workflow of overdue) {
-      const rules = await this.repository.findRulesForCheckPoint(workflow.checkPointId);
-      const nextRule = rules.find(r => r.escalationLevel === workflow.escalationLevel + 1);
-      
-      if (nextRule) {
-        // TODO: Send notification to next role
-        // For now, just update the assignee
-        // In real implementation, this would be a background job
-        escalatedCount++;
-      }
+      const nextRule = await this.repository.findRuleByLevel(workflow.checkPointId, workflow.escalationLevel + 1);
+      if (!nextRule) continue;
+
+      const newGraceUntil = new Date(workflow.targetAt.getTime() + nextRule.delayMinutesAfterTarget * 60000);
+      await this.repository.updateWorkflowEscalation(
+        workflow.id, nextRule.assignToRoleId, nextRule.escalationLevel, newGraceUntil,
+      );
+      escalatedCount++;
     }
 
     return escalatedCount;
