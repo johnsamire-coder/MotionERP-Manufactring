@@ -26,3 +26,10 @@ export class CreateQuotationDto {
 export class ApproveQuotationDto {
   @IsOptional() @IsString() @MaxLength(255) customerPoReference?: string;
 }
+
+export class CreateJobOrderDto {
+  @IsIn(['quotation', 'internal']) source!: 'quotation' | 'internal';
+  @IsOptional() @IsString() @MaxLength(255) quotationReference?: string;
+  @IsOptional() @IsUUID() customerId?: string;
+  @IsOptional() @IsString() note?: string;
+}

@@ -58,4 +58,35 @@ export const quotationLine = salesSchema.table('quotation_line', {
 ]);
 
 export type Quotation = typeof quotation.$inferSelect;
+
+/**
+ * Job Order — the central operational hub described by the owner. It does
+ * NOT copy data from other units; it only holds REFERENCES (plain strings/IDs
+ * describing "what led to this"), keeping every other unit fully independent
+ * (D2/D20). Later phases (planning, technical office, production, quality,
+ * costing, delivery, collections) each reference the job order's id the same
+ * way, rather than the job order absorbing their data.
+ */
+export const jobOrder = salesSchema.table('job_order', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  jobOrderNumber: text('job_order_number').notNull(),
+  source: text('source').notNull(),
+  /** Free-text reference to the approved quotation, when source = 'quotation'. Not a FK on purpose. */
+  quotationReference: text('quotation_reference'),
+  customerId: uuid('customer_id').references(() => customer.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  status: text('status').notNull().default('draft'),
+  financialReviewPassed: text('financial_review_passed').notNull().default('false'),
+  note: text('note'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('job_order_number_unique').on(t.jobOrderNumber),
+  check('job_order_source_valid', sql`${t.source} in ('quotation', 'internal')`),
+  check('job_order_status_valid', sql`${t.status} in ('draft', 'approved', 'in_progress', 'completed', 'cancelled')`),
+  check('job_order_financial_review_valid', sql`${t.financialReviewPassed} in ('true', 'false')`),
+  index('job_order_customer_idx').on(t.customerId),
+]);
+
+export type JobOrder = typeof jobOrder.$inferSelect;
+
 export type QuotationLine = typeof quotationLine.$inferSelect;

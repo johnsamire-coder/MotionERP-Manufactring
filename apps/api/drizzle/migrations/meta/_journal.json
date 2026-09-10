@@ -43,6 +43,13 @@
       "when": 1789068269505,
       "tag": "0005_massive_texas_twister",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789068754964,
+      "tag": "0006_youthful_zodiak",
+      "breakpoints": true
     }
   ]
 }

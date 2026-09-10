@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { CrmService } from '../crm/crm.service';
 import { SalesNotFoundError, SalesValidationError } from './sales.errors';
 import { SalesRepository } from './sales.repository';
-import type { CreateQuotationInput, QuotationRecord } from './sales.types';
+import type { CreateJobOrderInput, CreateQuotationInput, JobOrderRecord, QuotationRecord } from './sales.types';
 
 @Injectable()
 export class SalesService {
@@ -38,7 +38,6 @@ export class SalesService {
       if (!Number.isFinite(qty) || qty <= 0) throw new SalesValidationError('line quantity must be positive');
       if (!Number.isFinite(price) || price < 0) throw new SalesValidationError('line unit price cannot be negative');
     }
-
     if (input.customerId) {
       const customer = await this.crmService.getCustomer(input.customerId);
       if (!customer) throw new SalesNotFoundError(`customer ${input.customerId} does not exist`);
@@ -67,24 +66,33 @@ export class SalesService {
   }
 
   /**
-   * Approving an OUTGOING quotation is the exact moment described by the
-   * owner: the customer agrees, we record their PO reference, and — for a
-   * lead — the customer is promoted to 'active' automatically. This goes
-   * through CrmService's own public method, never a direct write to the
-   * customer table (D2/D20: units talk only through published surfaces).
-   * Reserving materials and creating the Job Order happen in later phases;
-   * this step only covers the quotation's own lifecycle plus the promotion.
+   * Approving an outgoing quotation: promote lead→active, record the
+   * customer's PO reference, AND create the Job Order automatically — this
+   * is the exact hinge point the owner described ("موافقة العميل تبدأ مرحلة
+   * التصنيع والتسليم"). The job order only carries a reference to the
+   * quotation number, never a copy of its lines (D2/D20).
    */
-  async approveQuotation(id: string, customerPoReference?: string): Promise<QuotationRecord> {
+  async approveQuotation(id: string, customerPoReference?: string): Promise<{ quotation: QuotationRecord; jobOrder?: JobOrderRecord }> {
     const quotation = await this.repository.findQuotationById(id);
     if (!quotation) throw new SalesNotFoundError(`quotation ${id} does not exist`);
     if (quotation.status !== 'sent' && quotation.status !== 'draft') {
       throw new SalesValidationError(`quotation ${id} is "${quotation.status}" and cannot be approved`);
     }
-    if (quotation.direction === 'outgoing' && quotation.customerId) {
-      await this.crmService.promoteToActive(quotation.customerId);
+
+    let createdJobOrder: JobOrderRecord | undefined;
+    if (quotation.direction === 'outgoing') {
+      if (quotation.customerId) await this.crmService.promoteToActive(quotation.customerId);
+      const updated = await this.repository.setQuotationStatus(id, 'approved', customerPoReference);
+      createdJobOrder = await this.createJobOrder({
+        source: 'quotation',
+        quotationReference: updated.quotationNumber,
+        customerId: updated.customerId ?? undefined,
+      });
+      return { quotation: updated, jobOrder: createdJobOrder };
     }
-    return this.repository.setQuotationStatus(id, 'approved', customerPoReference);
+
+    const updated = await this.repository.setQuotationStatus(id, 'approved', customerPoReference);
+    return { quotation: updated };
   }
 
   async rejectQuotation(id: string): Promise<QuotationRecord> {
@@ -94,5 +102,60 @@ export class SalesService {
       throw new SalesValidationError(`quotation ${id} is already approved and cannot be rejected`);
     }
     return this.repository.setQuotationStatus(id, 'rejected');
+  }
+
+  // ---- Job Order ----
+
+  async getJobOrders(): Promise<JobOrderRecord[]> { return this.repository.listJobOrders(); }
+
+  async getJobOrder(id: string): Promise<JobOrderRecord> {
+    const found = await this.repository.findJobOrderById(id);
+    if (!found) throw new SalesNotFoundError(`job order ${id} does not exist`);
+    return found;
+  }
+
+  async createJobOrder(input: CreateJobOrderInput): Promise<JobOrderRecord> {
+    if (input.source === 'internal' && input.customerId) {
+      throw new SalesValidationError('an internal job order (company stock) must not have a customerId');
+    }
+    const sequence = (await this.repository.countJobOrders()) + 1;
+    const year = new Date().getFullYear();
+    const jobOrderNumber = `JO-${year}-${String(sequence).padStart(6, '0')}`;
+    return this.repository.insertJobOrder({
+      id: randomUUID(), jobOrderNumber, source: input.source,
+      quotationReference: input.quotationReference, customerId: input.customerId, note: input.note,
+    });
+  }
+
+  /** Step ٦-٣: financial review must explicitly pass before the job order can move past draft. */
+  async passFinancialReview(id: string): Promise<JobOrderRecord> {
+    const found = await this.repository.findJobOrderById(id);
+    if (!found) throw new SalesNotFoundError(`job order ${id} does not exist`);
+    if (found.status !== 'draft') {
+      throw new SalesValidationError(`job order ${id} is "${found.status}"; financial review only applies to a "draft" order`);
+    }
+    return this.repository.setJobOrderFinancialReview(id, true);
+  }
+
+  /** Moves the job order from draft to approved — only allowed once financial review has passed. */
+  async approveJobOrder(id: string): Promise<JobOrderRecord> {
+    const found = await this.repository.findJobOrderById(id);
+    if (!found) throw new SalesNotFoundError(`job order ${id} does not exist`);
+    if (found.status !== 'draft') {
+      throw new SalesValidationError(`job order ${id} is "${found.status}" and cannot be approved (must be "draft")`);
+    }
+    if (!found.financialReviewPassed) {
+      throw new SalesValidationError(`job order ${id} cannot be approved before financial review passes`);
+    }
+    return this.repository.setJobOrderStatus(id, 'approved');
+  }
+
+  async cancelJobOrder(id: string): Promise<JobOrderRecord> {
+    const found = await this.repository.findJobOrderById(id);
+    if (!found) throw new SalesNotFoundError(`job order ${id} does not exist`);
+    if (found.status === 'completed') {
+      throw new SalesValidationError(`job order ${id} is already completed and cannot be cancelled`);
+    }
+    return this.repository.setJobOrderStatus(id, 'cancelled');
   }
 }

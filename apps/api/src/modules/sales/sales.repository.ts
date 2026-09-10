@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
-import { quotation, quotationLine } from './sales.schema';
+import { jobOrder, quotation, quotationLine } from './sales.schema';
 import type {
-  CreateQuotationInput, QuotationDirection, QuotationLineRecord, QuotationRecord, QuotationStatus,
+  CreateJobOrderInput, CreateQuotationInput, JobOrderRecord, JobOrderSource, JobOrderStatus,
+  QuotationDirection, QuotationLineRecord, QuotationRecord, QuotationStatus,
 } from './sales.types';
 
 const quotationColumns = {
@@ -17,6 +18,12 @@ const lineColumns = {
   id: quotationLine.id, quotationId: quotationLine.quotationId, itemId: quotationLine.itemId,
   quantity: quotationLine.quantity, unitPrice: quotationLine.unitPrice, lineNumber: quotationLine.lineNumber,
 };
+const jobOrderColumns = {
+  id: jobOrder.id, jobOrderNumber: jobOrder.jobOrderNumber, source: jobOrder.source,
+  quotationReference: jobOrder.quotationReference, customerId: jobOrder.customerId,
+  status: jobOrder.status, financialReviewPassed: jobOrder.financialReviewPassed, note: jobOrder.note,
+  createdAt: jobOrder.createdAt, updatedAt: jobOrder.updatedAt,
+};
 
 interface QuotationRow {
   id: string; quotationNumber: string; direction: string; customerId: string | null; supplierId: string | null;
@@ -24,6 +31,11 @@ interface QuotationRow {
   customerPoReference: string | null; note: string | null; createdAt: Date; updatedAt: Date;
 }
 interface LineRow { id: string; quotationId: string; itemId: string; quantity: string; unitPrice: string; lineNumber: number; }
+interface JobOrderRow {
+  id: string; jobOrderNumber: string; source: string; quotationReference: string | null;
+  customerId: string | null; status: string; financialReviewPassed: string; note: string | null;
+  createdAt: Date; updatedAt: Date;
+}
 
 function toLineRecord(row: LineRow): QuotationLineRecord {
   return { id: row.id, quotationId: row.quotationId, itemId: row.itemId, quantity: row.quantity, unitPrice: row.unitPrice, lineNumber: row.lineNumber };
@@ -35,6 +47,14 @@ function toQuotationRecord(row: QuotationRow, lines: QuotationLineRecord[]): Quo
     quotationDate: row.quotationDate.toISOString(), validUntil: row.validUntil ? row.validUntil.toISOString() : null,
     status: row.status as QuotationStatus, currency: row.currency, customerPoReference: row.customerPoReference,
     note: row.note, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(), lines,
+  };
+}
+function toJobOrderRecord(row: JobOrderRow): JobOrderRecord {
+  return {
+    id: row.id, jobOrderNumber: row.jobOrderNumber, source: row.source as JobOrderSource,
+    quotationReference: row.quotationReference, customerId: row.customerId,
+    status: row.status as JobOrderStatus, financialReviewPassed: row.financialReviewPassed === 'true',
+    note: row.note, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(),
   };
 }
 
@@ -91,6 +111,43 @@ export class SalesRepository {
 
   async countQuotations(): Promise<number> {
     const rows = await this.database.db.select({ id: quotation.id }).from(quotation);
+    return rows.length;
+  }
+
+  // ---- Job Order ----
+
+  async listJobOrders(): Promise<JobOrderRecord[]> {
+    const rows = await this.database.db.select(jobOrderColumns).from(jobOrder).orderBy(asc(jobOrder.jobOrderNumber));
+    return rows.map(toJobOrderRecord);
+  }
+
+  async findJobOrderById(id: string): Promise<JobOrderRecord | null> {
+    const rows = await this.database.db.select(jobOrderColumns).from(jobOrder).where(eq(jobOrder.id, id)).limit(1);
+    return rows[0] ? toJobOrderRecord(rows[0]) : null;
+  }
+
+  async insertJobOrder(input: CreateJobOrderInput & { id: string; jobOrderNumber: string }): Promise<JobOrderRecord> {
+    const rows = await this.database.db.insert(jobOrder).values({
+      id: input.id, jobOrderNumber: input.jobOrderNumber, source: input.source,
+      quotationReference: input.quotationReference ?? null, customerId: input.customerId ?? null,
+      note: input.note ?? null,
+    }).returning(jobOrderColumns);
+    return toJobOrderRecord(rows[0]!);
+  }
+
+  async setJobOrderStatus(id: string, status: JobOrderStatus): Promise<JobOrderRecord> {
+    const rows = await this.database.db.update(jobOrder).set({ status }).where(eq(jobOrder.id, id)).returning(jobOrderColumns);
+    return toJobOrderRecord(rows[0]!);
+  }
+
+  async setJobOrderFinancialReview(id: string, passed: boolean): Promise<JobOrderRecord> {
+    const rows = await this.database.db.update(jobOrder).set({ financialReviewPassed: passed ? 'true' : 'false' })
+      .where(eq(jobOrder.id, id)).returning(jobOrderColumns);
+    return toJobOrderRecord(rows[0]!);
+  }
+
+  async countJobOrders(): Promise<number> {
+    const rows = await this.database.db.select({ id: jobOrder.id }).from(jobOrder);
     return rows.length;
   }
 }
