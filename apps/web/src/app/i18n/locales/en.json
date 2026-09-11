@@ -21,7 +21,8 @@
     "helpTitle": "Need a hand?",
     "helpText": "Explore the Motion ERP workspace and keep every team aligned.",
     "helpAction": "View guide",
-    "systemOperational": "All systems operational"
+    "systemOperational": "All systems operational",
+    "planning": "Production Planning"
   },
   "common": {
     "viewAll": "View all",
@@ -445,6 +446,39 @@
         "loading": "Loading...",
         "empty": "No records found",
         "success": "Action completed successfully"
+      }
+    },
+    "planning": {
+      "eyebrow": "Manufacturing Control",
+      "title": "Production Planning",
+      "description": "Set priorities, execution methods (Internal / Subcontracted / Mixed), and manage capacities for Job Orders",
+      "table": {
+        "title": "Job Orders & Production Plans",
+        "jobOrder": "Job Order No.",
+        "customer": "Customer",
+        "priority": "Priority",
+        "executionType": "Execution Method",
+        "internalQty": "Internal Qty",
+        "externalQty": "External Qty",
+        "status": "Status",
+        "action": "Plan Execution"
+      },
+      "execution": {
+        "internal": "100% Internal",
+        "external": "100% External (Subcontractor)",
+        "mixed": "Mixed (Internal + External)"
+      },
+      "form": {
+        "title": "Set Execution Plan",
+        "priority": "Priority Order",
+        "executionType": "Execution Method",
+        "internalQty": "Internal Quantity",
+        "externalQty": "External Quantity",
+        "save": "Save Plan",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No Job Orders ready for planning",
+        "success": "Production plan saved successfully"
       }
     }
   },
