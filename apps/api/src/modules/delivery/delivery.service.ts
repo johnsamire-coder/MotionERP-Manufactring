@@ -101,7 +101,7 @@ export class DeliveryService {
 
     // Generate receipt number: DR-YYYY-MM-DD-XXXX
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const sequence = 1; // In real implementation, query existing receipts for today
+    const sequence = Math.floor(Math.random() * 8999) + 1000; // In real implementation, query existing receipts for today
     const receiptNumber = `DR-${today}-${sequence.toString().padStart(4, '0')}`;
 
     return this.repository.insertDeliveryReceipt({
@@ -121,7 +121,7 @@ export class DeliveryService {
 
     // Generate report number: IR-YYYY-MM-DD-XXXX
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const sequence = 1; // In real implementation, query existing reports for today
+    const sequence = Math.floor(Math.random() * 8999) + 1000; // In real implementation, query existing reports for today
     const reportNumber = `IR-${today}-${sequence.toString().padStart(4, '0')}`;
 
     return this.repository.insertInstallationReport({
@@ -129,5 +129,8 @@ export class DeliveryService {
       reportNumber,
       ...input
     });
+  }
+  async getDeliveryReceipts(): Promise<DeliveryReceiptRecord[]> {
+    return this.repository.findAllReceipts();
   }
 }

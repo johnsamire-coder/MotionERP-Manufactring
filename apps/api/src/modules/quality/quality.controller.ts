@@ -33,7 +33,7 @@ export class QualityController {
     @Param('id') workflowId: string,
     @Body() dto: ApproveRejectDto
   ): Promise<{ workflow: QualityWorkflowRecord }> {
-    const workflow = await this.service.approveCheckPoint(workflowId, 'system-user', dto.resultNote);
+    const workflow = await this.service.approveCheckPoint(workflowId, '00000000-0000-0000-0000-000000000000', dto.resultNote);
     return { workflow };
   }
 
@@ -42,7 +42,7 @@ export class QualityController {
     @Param('id') workflowId: string,
     @Body() dto: ApproveRejectDto
   ): Promise<{ workflow: QualityWorkflowRecord }> {
-    const workflow = await this.service.rejectCheckPoint(workflowId, 'system-user', dto.resultNote);
+    const workflow = await this.service.rejectCheckPoint(workflowId, '00000000-0000-0000-0000-000000000000', dto.resultNote);
     return { workflow };
   }
 
@@ -62,5 +62,14 @@ export class QualityController {
   async processOverdue(): Promise<{ processed: number }> {
     const processed = await this.service.processOverdueWorkflows();
     return { processed };
+  }
+  @Get('check-points')
+  async getCheckPoints(): Promise<{ checkPoints: QualityCheckPointRecord[] }> {
+    return { checkPoints: await this.service.getCheckPoints() };
+  }
+
+  @Get('workflows')
+  async getWorkflows(): Promise<{ workflows: QualityWorkflowRecord[] }> {
+    return { workflows: await this.service.getWorkflows() };
   }
 }

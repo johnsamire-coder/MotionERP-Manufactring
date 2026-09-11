@@ -109,4 +109,8 @@ export class DeliveryRepository {
     }).returning(irColumns);
     return toIrRecord(rows[0]!);
   }
+  async findAllReceipts(): Promise<DeliveryReceiptRecord[]> {
+    const rows = await this.database.db.select(drColumns).from(deliveryReceipt);
+    return rows.map(toDrRecord);
+  }
 }

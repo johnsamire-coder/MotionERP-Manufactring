@@ -102,4 +102,8 @@ export class DeliveryController {
     });
     return { installationReport };
   }
+  @Get('receipts')
+  async getDeliveryReceipts(): Promise<{ deliveryReceipts: DeliveryReceiptRecord[] }> {
+    return { deliveryReceipts: await this.service.getDeliveryReceipts() };
+  }
 }

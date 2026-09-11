@@ -3,15 +3,18 @@ import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 
 interface JobOrderRecord { id: string; jobOrderNumber: string; }
-interface WorkCenterRecord { id: string; code: string; name: string; costPerMinute: string; status: string; }
+interface WorkCenterRecord { id: string; code: string; name: string; ratePerMinute?: string; costPerMinute?: string; status: string; }
 interface ProductionStepRecord {
   id: string;
   jobOrderReference: string;
   workCenterId: string;
   sequence: number;
-  name: string;
-  standardMinutes: string;
+  operationName?: string;
+  name?: string;
+  standardTimeMinutes?: string;
+  standardMinutes?: string;
   actualMinutes?: string;
+  actualTimeMinutes?: string;
   status: 'pending' | 'in_progress' | 'completed';
 }
 
@@ -36,6 +39,7 @@ export function ProductionOpsPage(): JSX.Element {
   const [workCenters, setWorkCenters] = useState<WorkCenterRecord[]>([]);
   const [steps, setSteps] = useState<ProductionStepRecord[]>([]);
   const [costSummary, setCostSummary] = useState<LaborCostSummary | null>(null);
+  const [orgNodeId, setOrgNodeId] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,6 +64,23 @@ export function ProductionOpsPage(): JSX.Element {
   // Complete Step Modal
   const [actualMinsInput, setActualMinsInput] = useState('30');
 
+  async function getActiveOrgId(): Promise<string> {
+    if (orgNodeId) return orgNodeId;
+    try {
+      const nodesRes = await api.get<{ nodes?: Array<{ id: string }> }>('/organization/nodes');
+      if (nodesRes.nodes && nodesRes.nodes[0]) {
+        setOrgNodeId(nodesRes.nodes[0].id);
+        return nodesRes.nodes[0].id;
+      }
+    } catch {
+      // fallback
+    }
+    const treeRes = await api.get<{ tree: Array<{ id: string }> }>('/organization/tree');
+    const fallbackId = treeRes.tree[0]?.id ?? '';
+    setOrgNodeId(fallbackId);
+    return fallbackId;
+  }
+
   async function loadAll(): Promise<void> {
     setLoading(true);
     setError(null);
@@ -68,6 +89,7 @@ export function ProductionOpsPage(): JSX.Element {
         api.get<{ jobOrders: JobOrderRecord[] }>('/sales/job-orders'),
         api.get<{ workCenters: WorkCenterRecord[] }>('/production-ops/work-centers'),
       ]);
+      await getActiveOrgId();
       setJobOrders(joRes.jobOrders);
       setWorkCenters(wcRes.workCenters);
 
@@ -87,11 +109,11 @@ export function ProductionOpsPage(): JSX.Element {
   async function loadJoData(joNumber: string): Promise<void> {
     try {
       const [stepsRes, costRes] = await Promise.all([
-        api.get<{ steps: ProductionStepRecord[] }>(`/production-ops/steps/jobs/${joNumber}`),
-        api.get<LaborCostSummary>(`/production-ops/jobs/${joNumber}/labor-cost`),
+        api.get<{ steps: ProductionStepRecord[] }>(`/production-ops/steps?jobOrderReference=${joNumber}`),
+        api.get<{ cost: LaborCostSummary }>(`/production-ops/job-orders/${joNumber}/labor-cost`),
       ]);
-      setSteps(stepsRes.steps);
-      setCostSummary(costRes);
+      setSteps(stepsRes.steps ?? []);
+      setCostSummary(costRes.cost ?? null);
     } catch {
       setSteps([]);
       setCostSummary(null);
@@ -114,10 +136,12 @@ export function ProductionOpsPage(): JSX.Element {
     e.preventDefault();
     setFormError(null); setFormSuccess(null); setSubmitting(true);
     try {
+      const activeOrg = await getActiveOrgId();
       await api.post('/production-ops/work-centers', {
+        orgNodeId: activeOrg,
         code: wcCode,
         name: wcName,
-        costPerMinute: wcCostPerMin,
+        ratePerMinute: wcCostPerMin,
       });
       setWcName(''); setShowWcForm(false);
       setFormSuccess(t('pages.production_ops.form.success'));
@@ -133,8 +157,8 @@ export function ProductionOpsPage(): JSX.Element {
         jobOrderReference: selectedJO,
         workCenterId: selectedWcId,
         sequence: steps.length + 1,
-        name: stepName,
-        standardMinutes: stdMins,
+        operationName: stepName,
+        standardTimeMinutes: String(stdMins),
       });
       setStepName(''); setShowStepForm(false);
       setFormSuccess(t('pages.production_ops.form.success'));
@@ -154,8 +178,8 @@ export function ProductionOpsPage(): JSX.Element {
   async function handleCompleteStep(stepId: string): Promise<void> {
     setFormError(null); setFormSuccess(null); setSubmitting(true);
     try {
-      await api.post(`/production-ops/steps/${stepId}/complete`, {
-        actualMinutes: actualMinsInput,
+      await api.post(`/production-ops/steps/${stepId}/close`, {
+        actualTimeMinutes: String(actualMinsInput),
       });
       setShowCompleteModal(null);
       setFormSuccess(t('pages.production_ops.form.success'));
@@ -201,11 +225,11 @@ export function ProductionOpsPage(): JSX.Element {
             </div>
             <div>
               <span style={labelStyle}>{t('pages.production_ops.cost.stdTotalCost')}</span>
-              <p style={{ margin: '2px 0 0', fontWeight: 'bold', fontSize: 16 }}>{costSummary.totalStandardCost.toFixed(2)} EGP</p>
+              <p style={{ margin: '2px 0 0', fontWeight: 'bold', fontSize: 16 }}>{Number(costSummary.totalStandardCost ?? 0).toFixed(2)} EGP</p>
             </div>
             <div>
               <span style={labelStyle}>{t('pages.production_ops.cost.actTotalCost')}</span>
-              <p style={{ margin: '2px 0 0', fontWeight: 'bold', fontSize: 18, color: '#166534' }}>{costSummary.totalActualCost.toFixed(2)} EGP</p>
+              <p style={{ margin: '2px 0 0', fontWeight: 'bold', fontSize: 18, color: '#166534' }}>{Number(costSummary.totalActualCost ?? 0).toFixed(2)} EGP</p>
             </div>
           </div>
         )}
@@ -251,7 +275,7 @@ export function ProductionOpsPage(): JSX.Element {
             <div className="placeholder-table__row" key={wc.id}>
               <span><b>{wc.code}</b></span>
               <span>{wc.name}</span>
-              <span><b>{wc.costPerMinute} EGP / min</b></span>
+              <span><b>{wc.ratePerMinute ?? wc.costPerMinute ?? '0'} EGP / min</b></span>
               <span><span className="status status--success"><i />{wc.status}</span></span>
             </div>
           ))}
@@ -301,33 +325,38 @@ export function ProductionOpsPage(): JSX.Element {
 
           {steps.length === 0 && <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.production_ops.form.empty')}</p>}
 
-          {steps.map((st) => (
-            <div className="placeholder-table__row" key={st.id}>
-              <span><b>#{st.sequence}</b></span>
-              <span><b>{st.name}</b></span>
-              <span>{wcLabel(st.workCenterId)}</span>
-              <span>{st.standardMinutes} min</span>
-              <span><b>{st.actualMinutes ? `${st.actualMinutes} min` : '—'}</b></span>
-              <span>
-                <span className={`status status--${st.status === 'completed' ? 'success' : st.status === 'in_progress' ? 'warning' : 'neutral'}`}>
-                  <i />{st.status}
+          {steps.map((st) => {
+            const displayStepName = st.operationName ?? st.name ?? '—';
+            const displayStdMins = st.standardTimeMinutes ?? st.standardMinutes ?? '0';
+            const displayActMins = st.actualTimeMinutes ?? st.actualMinutes;
+            return (
+              <div className="placeholder-table__row" key={st.id}>
+                <span><b>#{st.sequence}</b></span>
+                <span><b>{displayStepName}</b></span>
+                <span>{wcLabel(st.workCenterId)}</span>
+                <span>{displayStdMins} min</span>
+                <span><b>{displayActMins ? `${displayActMins} min` : '—'}</b></span>
+                <span>
+                  <span className={`status status--${st.status === 'completed' ? 'success' : st.status === 'in_progress' ? 'warning' : 'neutral'}`}>
+                    <i />{st.status}
+                  </span>
                 </span>
-              </span>
-              <span>
-                {st.status === 'pending' && (
-                  <button className="filter-button" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { void handleStartStep(st.id); }}>
-                    {t('pages.production_ops.steps.start')}
-                  </button>
-                )}
-                {st.status === 'in_progress' && (
-                  <button className="primary-button" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { setActualMinsInput(st.standardMinutes); setShowCompleteModal(st.id); }}>
-                    {t('pages.production_ops.steps.complete')}
-                  </button>
-                )}
-                {st.status === 'completed' && <span style={{ fontSize: 12, color: '#166534', fontWeight: 'bold' }}>مُكتمَل ✓</span>}
-              </span>
-            </div>
-          ))}
+                <span>
+                  {st.status === 'pending' && (
+                    <button className="filter-button" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { void handleStartStep(st.id); }}>
+                      {t('pages.production_ops.steps.start')}
+                    </button>
+                  )}
+                  {st.status === 'in_progress' && (
+                    <button className="primary-button" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { setActualMinsInput(displayStdMins); setShowCompleteModal(st.id); }}>
+                      {t('pages.production_ops.steps.complete')}
+                    </button>
+                  )}
+                  {st.status === 'completed' && <span style={{ fontSize: 12, color: '#166534', fontWeight: 'bold' }}>مُكتمَل ✓</span>}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </article>
 

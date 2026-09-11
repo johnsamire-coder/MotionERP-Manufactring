@@ -99,7 +99,8 @@ export function TechnicalPage(): JSX.Element {
       await api.post('/technical/boms', {
         jobOrderReference: selectedJO,
         version: bomVersion,
-        lines: bomLines.map((l) => ({ itemId: l.itemId, plannedQuantity: l.plannedQuantity })),
+        productItemId: items[0]?.id ?? '00000000-0000-0000-0000-000000000000',
+        lines: bomLines.map((l) => ({ componentItemId: l.itemId, quantity: l.plannedQuantity, plannedQuantity: l.plannedQuantity })),
       });
       setShowBomForm(false);
       setFormSuccess(t('pages.technical.form.success'));

@@ -176,68 +176,6 @@
     }
   },
   "pages": {
-    "organization": {
-      "eyebrow": "Structure & access",
-      "title": "Organization",
-      "description": "Manage companies, sites, departments, and operating teams in one place.",
-      "action": "Add organization",
-      "stats": {
-        "primary": {
-          "label": "Active entities",
-          "value": "12",
-          "trend": "+2 this month"
-        },
-        "secondary": {
-          "label": "Sites",
-          "value": "04",
-          "trend": "All connected"
-        },
-        "tertiary": {
-          "label": "Team members",
-          "value": "248",
-          "trend": "+8.4%"
-        }
-      },
-      "table": {
-        "eyebrow": "Organization tree",
-        "title": "Entities and operating units",
-        "columnOne": "Entity",
-        "columnTwo": "Type",
-        "columnThree": "Members",
-        "columnFour": "Status"
-      }
-    },
-    "manufacturing": {
-      "eyebrow": "Production control",
-      "title": "Manufacturing",
-      "description": "Plan production, monitor work centers, and keep orders moving on schedule.",
-      "action": "New work order",
-      "stats": {
-        "primary": {
-          "label": "Open work orders",
-          "value": "38",
-          "trend": "+6.2%"
-        },
-        "secondary": {
-          "label": "In production",
-          "value": "12",
-          "trend": "32% of total"
-        },
-        "tertiary": {
-          "label": "Completed today",
-          "value": "24",
-          "trend": "+14.1%"
-        }
-      },
-      "table": {
-        "eyebrow": "Execution queue",
-        "title": "Work orders",
-        "columnOne": "Order",
-        "columnTwo": "Product",
-        "columnThree": "Due date",
-        "columnFour": "Status"
-      }
-    },
     "inventory": {
       "eyebrow": "Materials & stock",
       "title": "Inventory",
@@ -622,35 +560,48 @@
       }
     },
     "costing": {
-      "eyebrow": "Financial Control & Profitability",
-      "title": "Costing & Margin Control",
-      "description": "Monitor real-time job order budgets, aggregate actual costs (materials, labor, external), and track live profit margins",
-      "summary": {
-        "title": "Job Order Margin Monitor",
-        "sellingPrice": "Selling Price (PO)",
-        "budgetCost": "Estimated Cost (Budget)",
-        "actualCost": "Current Actual Cost",
-        "profitMargin": "Net Profit Margin",
-        "marginPercentage": "Profit Margin %"
+      "eyebrow": "Cost Engineering & Variance Analysis",
+      "title": "Unit Cost Estimator & Job Variance",
+      "description": "Standard product unit cost calculator (Excel model) and Job Order estimated vs actual variance report",
+      "tabs": {
+        "estimator": "Unit Cost Estimator (Excel Model)",
+        "variance": "Job Order Variance Analysis"
       },
-      "breakdown": {
-        "title": "Actual Cost Breakdown",
-        "addCost": "Record Manual Cost Entry",
-        "componentType": "Cost Category",
-        "material": "Raw Materials (Stock)",
-        "labor": "Labor & Operating Hours",
-        "overhead": "Factory Overheads",
-        "accessory": "Accessories & Hardware",
-        "consumable": "Consumables",
-        "external": "Subcontracting / External",
-        "amount": "Amount (EGP)"
+      "estimator": {
+        "productTitle": "Product Specification & Batch Size",
+        "rawMaterials": "Raw Materials (Sheet Metal & Profiles)",
+        "accessories": "Hardware & Accessories",
+        "consumables": "Consumables & Paint Coating",
+        "operations": "Work Center Operations & Time",
+        "length": "L (m)",
+        "width": "W (m)",
+        "height": "H (m)",
+        "thickness": "Thick (mm)",
+        "qty": "Qty",
+        "scrap": "Scrap %",
+        "totalQty": "Total Qty",
+        "price": "Unit Price",
+        "totalPrice": "Total (EGP)",
+        "operation": "Operation / Station",
+        "stdMins": "Minutes",
+        "ratePerMin": "Rate/Min (EGP)",
+        "directCost": "Direct Unit Cost",
+        "overheadCost": "Overhead & Depreciation (20%)",
+        "totalUnitCost": "Total Estimated Unit Cost"
+      },
+      "variance": {
+        "joTitle": "Job Order Cost Comparison",
+        "category": "Cost Category",
+        "estimatedBudget": "Estimated Budget (JO)",
+        "actualSpent": "Actual Spent (Shop Floor)",
+        "varianceAmount": "Variance (EGP)",
+        "variancePct": "Variance %",
+        "status": "Status"
       },
       "form": {
-        "save": "Save Entry",
-        "cancel": "Cancel",
-        "loading": "Loading...",
-        "empty": "No cost entries recorded for this Job Order",
-        "success": "Action completed successfully"
+        "save": "Save Estimate Template",
+        "loading": "Calculating...",
+        "success": "Calculation completed successfully"
       }
     },
     "delivery": {
@@ -786,6 +737,51 @@
         "loading": "Loading...",
         "empty": "No user or permission records found",
         "success": "Action completed successfully"
+      }
+    },
+    "organization": {
+      "eyebrow": "Corporate Structure & Hierarchy",
+      "title": "Organization Core",
+      "description": "Manage multi-company node tree, parent-child rules, facilities, and organizational units",
+      "tree": {
+        "title": "Organizational Hierarchy Tree",
+        "addNode": "Add Organizational Unit",
+        "nodeType": "Unit Type",
+        "name": "Unit Name",
+        "parent": "Parent Unit",
+        "status": "Status",
+        "actions": "Actions",
+        "archive": "Archive Unit"
+      },
+      "form": {
+        "save": "Save Unit",
+        "cancel": "Cancel",
+        "loading": "Loading Tree...",
+        "empty": "No organizational units created yet",
+        "success": "Action completed successfully"
+      }
+    },
+    "manufacturing": {
+      "eyebrow": "Manufacturing Execution Control",
+      "title": "Manufacturing Control Hub",
+      "description": "Executive oversight of active manufacturing orders, line capacities, material dispatch, and production progress",
+      "stats": {
+        "activeOrders": "Active Job Orders",
+        "workCenters": "Operating Work Centers",
+        "materialRequests": "Active Material Requests",
+        "plannedQty": "Planned Production Qty"
+      },
+      "table": {
+        "title": "Live Manufacturing Orders Progress",
+        "orderNo": "Job Order No.",
+        "customer": "Client",
+        "plan": "Planning Status",
+        "progress": "Execution Progress",
+        "status": "Status"
+      },
+      "form": {
+        "empty": "No active manufacturing orders found",
+        "loading": "Loading manufacturing data..."
       }
     }
   },

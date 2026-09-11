@@ -16,6 +16,7 @@ export function HrPage(): JSX.Element {
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [rules, setRules] = useState<CommissionRuleRecord[]>([]);
   const [commissions, setCommissions] = useState<CommissionEntryRecord[]>([]);
+  const [orgNodeId, setOrgNodeId] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,19 +43,43 @@ export function HrPage(): JSX.Element {
   const [payYear, setPayYear] = useState('2026');
   const [payMonth, setPayMonth] = useState('9');
 
+  async function getActiveOrgId(): Promise<string> {
+    if (orgNodeId) return orgNodeId;
+    try {
+      const nodesRes = await api.get<{ nodes?: Array<{ id: string }> }>('/organization/nodes');
+      if (nodesRes.nodes && nodesRes.nodes[0]) {
+        setOrgNodeId(nodesRes.nodes[0].id);
+        return nodesRes.nodes[0].id;
+      }
+    } catch {
+      // fallback
+    }
+    const treeRes = await api.get<{ tree: Array<{ id: string }> }>('/organization/tree');
+    const fallbackId = treeRes.tree[0]?.id ?? '';
+    setOrgNodeId(fallbackId);
+    return fallbackId;
+  }
+
   async function loadAll(): Promise<void> {
     setLoading(true);
     setError(null);
     try {
       const [empRes, rulesRes, commRes] = await Promise.all([
-        api.get<{ employees: EmployeeRecord[] }>('/hr/employees'),
-        api.get<{ rules: CommissionRuleRecord[] }>('/hr/commission-rules'),
-        api.get<{ entries: CommissionEntryRecord[] }>('/hr/commissions'),
+        api.get<any>('/hr/employees'),
+        api.get<any>('/hr/commission-rules'),
+        api.get<any>('/hr/commission-entries'),
       ]);
-      setEmployees(empRes.employees);
-      setRules(rulesRes.rules);
-      setCommissions(commRes.entries);
-      if (!selectedEmpId && empRes.employees[0]) setSelectedEmpId(empRes.employees[0].id);
+      await getActiveOrgId();
+
+      const listEmp = Array.isArray(empRes) ? empRes : (empRes?.employees ?? []);
+      const listRules = Array.isArray(rulesRes) ? rulesRes : (rulesRes?.rules ?? []);
+      const listComm = Array.isArray(commRes) ? commRes : (commRes?.entries ?? []);
+
+      setEmployees(listEmp);
+      setRules(listRules);
+      setCommissions(listComm);
+
+      if (!selectedEmpId && listEmp[0]) setSelectedEmpId(listEmp[0].id);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to load HR & payroll data');
     } finally {
@@ -73,7 +98,9 @@ export function HrPage(): JSX.Element {
     e.preventDefault();
     setFormError(null); setFormSuccess(null); setSubmitting(true);
     try {
+      const activeOrg = await getActiveOrgId();
       await api.post('/hr/employees', {
+        orgNodeId: activeOrg,
         code: empCode,
         name: empName,
         role: empRole,
@@ -105,8 +132,8 @@ export function HrPage(): JSX.Element {
     try {
       await api.post('/hr/payroll/generate', {
         employeeId,
-        year: Number(payYear),
-        month: Number(payMonth),
+        periodYear: String(payYear),
+        periodMonth: String(payMonth),
       });
       setShowPayrollModal(null);
       setFormSuccess(t('pages.hr.form.success'));

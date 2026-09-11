@@ -129,4 +129,13 @@ export class QualityRepository {
     }).returning(ruleColumns);
     return toRuleRecord(rows[0]!);
   }
+  async findAllCheckPoints(): Promise<QualityCheckPointRecord[]> {
+    const rows = await this.database.db.select(cpColumns).from(qualityCheckPoint);
+    return rows.map(toCpRecord);
+  }
+
+  async findAllWorkflows(): Promise<QualityWorkflowRecord[]> {
+    const rows = await this.database.db.select(wfColumns).from(qualityWorkflow);
+    return rows.map(toWfRecord);
+  }
 }

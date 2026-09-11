@@ -86,4 +86,11 @@ export class QualityService {
 
     return escalatedCount;
   }
+  async getCheckPoints(): Promise<QualityCheckPointRecord[]> {
+    return this.repository.findAllCheckPoints();
+  }
+
+  async getWorkflows(): Promise<QualityWorkflowRecord[]> {
+    return this.repository.findAllWorkflows();
+  }
 }
