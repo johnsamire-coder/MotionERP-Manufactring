@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AccountingModule } from './modules/accounting/accounting.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { CoreModule } from './core/core.module';
 import { CostModule } from './modules/cost/cost.module';
@@ -20,7 +21,7 @@ import { TechnicalModule } from './modules/technical/technical.module';
   imports: [
     CoreModule, OrganizationModule, CatalogModule, InventoryModule, CrmModule,
     SalesModule, PlanningModule, TechnicalModule, ProductionModule, ProductionOpsModule,
-    QualityModule, CostModule, DeliveryModule, AccountingModule, FinanceModule, HrModule,
+    QualityModule, CostModule, DeliveryModule, AccountingModule, FinanceModule, HrModule, AuthModule,
   ],
 })
 export class AppModule {}
