@@ -26,7 +26,8 @@
     "technical": "Technical Office",
     "material": "Material Requests",
     "production_ops": "Production Work Stations",
-    "quality": "Quality Control & SLA"
+    "quality": "Quality Control & SLA",
+    "costing": "Job Costing & Margins"
   },
   "common": {
     "viewAll": "View all",
@@ -613,6 +614,38 @@
         "cancel": "Cancel",
         "loading": "Loading...",
         "empty": "No active quality workflows found",
+        "success": "Action completed successfully"
+      }
+    },
+    "costing": {
+      "eyebrow": "Financial Control & Profitability",
+      "title": "Costing & Margin Control",
+      "description": "Monitor real-time job order budgets, aggregate actual costs (materials, labor, external), and track live profit margins",
+      "summary": {
+        "title": "Job Order Margin Monitor",
+        "sellingPrice": "Selling Price (PO)",
+        "budgetCost": "Estimated Cost (Budget)",
+        "actualCost": "Current Actual Cost",
+        "profitMargin": "Net Profit Margin",
+        "marginPercentage": "Profit Margin %"
+      },
+      "breakdown": {
+        "title": "Actual Cost Breakdown",
+        "addCost": "Record Manual Cost Entry",
+        "componentType": "Cost Category",
+        "material": "Raw Materials (Stock)",
+        "labor": "Labor & Operating Hours",
+        "overhead": "Factory Overheads",
+        "accessory": "Accessories & Hardware",
+        "consumable": "Consumables",
+        "external": "Subcontracting / External",
+        "amount": "Amount (EGP)"
+      },
+      "form": {
+        "save": "Save Entry",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No cost entries recorded for this Job Order",
         "success": "Action completed successfully"
       }
     }
