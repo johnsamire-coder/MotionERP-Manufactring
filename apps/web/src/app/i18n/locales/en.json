@@ -22,7 +22,8 @@
     "helpText": "Explore the Motion ERP workspace and keep every team aligned.",
     "helpAction": "View guide",
     "systemOperational": "All systems operational",
-    "planning": "Production Planning"
+    "planning": "Production Planning",
+    "technical": "Technical Office"
   },
   "common": {
     "viewAll": "View all",
@@ -479,6 +480,38 @@
         "loading": "Loading...",
         "empty": "No Job Orders ready for planning",
         "success": "Production plan saved successfully"
+      }
+    },
+    "technical": {
+      "eyebrow": "Engineering & Specifications",
+      "title": "Technical Office",
+      "description": "Attach Shop Drawings, Cutting Lists, and manage versioned Bill of Materials (BOM) per Job Order",
+      "docs": {
+        "title": "Technical Documents",
+        "addDoc": "Attach Document",
+        "docType": "Type",
+        "fileRef": "File Reference / Link",
+        "version": "Version",
+        "shopDrawing": "Shop Drawing",
+        "cuttingList": "Cutting List",
+        "spec": "Specification"
+      },
+      "bom": {
+        "title": "Job Order BOM",
+        "createBom": "Create Job Order BOM",
+        "version": "BOM Version",
+        "status": "Status",
+        "approve": "Approve BOM",
+        "addItem": "Add Component",
+        "item": "Component / Raw Material",
+        "plannedQty": "Planned Quantity"
+      },
+      "form": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No records found",
+        "success": "Action completed successfully"
       }
     }
   },
