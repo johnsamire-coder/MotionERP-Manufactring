@@ -32,3 +32,5 @@ export * from '../../../modules/delivery/delivery.schema';
 export * from '../../../modules/accounting/accounting.schema';
 
 export * from '../../../modules/finance/finance.schema';
+
+export * from '../../../modules/hr/hr.schema';

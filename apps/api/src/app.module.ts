@@ -6,6 +6,7 @@ import { CostModule } from './modules/cost/cost.module';
 import { CrmModule } from './modules/crm/crm.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
 import { FinanceModule } from './modules/finance/finance.module';
+import { HrModule } from './modules/hr/hr.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { PlanningModule } from './modules/planning/planning.module';
@@ -19,7 +20,7 @@ import { TechnicalModule } from './modules/technical/technical.module';
   imports: [
     CoreModule, OrganizationModule, CatalogModule, InventoryModule, CrmModule,
     SalesModule, PlanningModule, TechnicalModule, ProductionModule, ProductionOpsModule,
-    QualityModule, CostModule, DeliveryModule, AccountingModule, FinanceModule,
+    QualityModule, CostModule, DeliveryModule, AccountingModule, FinanceModule, HrModule,
   ],
 })
 export class AppModule {}
