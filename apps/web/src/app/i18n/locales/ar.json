@@ -332,37 +332,6 @@
         "columnFour": "الحالة"
       }
     },
-    "sales": {
-      "eyebrow": "العملاء والطلبات",
-      "title": "المبيعات",
-      "description": "تابع طلبات العملاء والتزامات التسليم والأداء التجاري.",
-      "action": "أمر مبيعات جديد",
-      "stats": {
-        "primary": {
-          "label": "الطلبات المفتوحة",
-          "value": "86",
-          "trend": "+9.2٪"
-        },
-        "secondary": {
-          "label": "هذا الشهر",
-          "value": "684K$ ",
-          "trend": "+12.5٪"
-        },
-        "tertiary": {
-          "label": "العملاء",
-          "value": "142",
-          "trend": "+6 جدد"
-        }
-      },
-      "table": {
-        "eyebrow": "دفتر الطلبات",
-        "title": "أوامر المبيعات",
-        "columnOne": "الأمر",
-        "columnTwo": "العميل",
-        "columnThree": "القيمة",
-        "columnFour": "الحالة"
-      }
-    },
     "reports": {
       "eyebrow": "الرؤى والتحليلات",
       "title": "التقارير",
@@ -423,6 +392,59 @@
         "columnTwo": "المجال",
         "columnThree": "آخر تحديث",
         "columnFour": "الحالة"
+      }
+    },
+    "sales": {
+      "eyebrow": "العمليات التجارية",
+      "title": "المبيعات وأوامر التشغيل",
+      "description": "إدارة العملاء، إصدار عروض الأسعار، الاعتماد، وتوليد أوامر التشغيل المركزية",
+      "customers": {
+        "title": "العملاء",
+        "addCustomer": "إضافة عميل",
+        "code": "الكود",
+        "name": "الاسم",
+        "nameAr": "الاسم بالعربي",
+        "nameEn": "الاسم بالإنجليزي",
+        "phone": "الهاتف",
+        "status": "الحالة"
+      },
+      "quotations": {
+        "title": "عروض الأسعار",
+        "addQuotation": "عرض سعر جديد",
+        "number": "رقم العرض",
+        "customer": "العميل",
+        "direction": "الاتجاه",
+        "total": "الإجمالي",
+        "status": "الحالة",
+        "approve": "اعتماد وتوليد أمر تشغيل",
+        "outgoing": "صادر (لعميل)",
+        "incoming": "وارد (من مورد)",
+        "poReference": "رقم أمر شراء العميل (PO)",
+        "lines": "بنود العرض",
+        "addItem": "إضافة بند",
+        "item": "الصنف",
+        "qty": "الكمية",
+        "price": "سعر الوحدة"
+      },
+      "jobOrders": {
+        "title": "أوامر التشغيل (Job Orders)",
+        "addInternal": "أمر تشغيل داخلي",
+        "number": "رقم أمر التشغيل",
+        "source": "المصدر",
+        "quotationRef": "مرجع العرض",
+        "financialReview": "المراجعة المالية",
+        "passed": "تمت المراجعة",
+        "pending": "معلّقة",
+        "passReview": "اجتياز المراجعة المالية",
+        "approve": "اعتماد أمر التشغيل",
+        "status": "الحالة"
+      },
+      "form": {
+        "save": "حفظ",
+        "cancel": "إلغاء",
+        "loading": "جاري التحميل...",
+        "empty": "لا توجد سجلات بعد",
+        "success": "تمت العملية بنجاح"
       }
     }
   },

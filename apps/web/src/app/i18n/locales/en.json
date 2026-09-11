@@ -332,37 +332,6 @@
         "columnFour": "Status"
       }
     },
-    "sales": {
-      "eyebrow": "Customers & orders",
-      "title": "Sales",
-      "description": "Track customer orders, delivery commitments, and commercial performance.",
-      "action": "New sales order",
-      "stats": {
-        "primary": {
-          "label": "Open orders",
-          "value": "86",
-          "trend": "+9.2%"
-        },
-        "secondary": {
-          "label": "This month",
-          "value": "$684K",
-          "trend": "+12.5%"
-        },
-        "tertiary": {
-          "label": "Customers",
-          "value": "142",
-          "trend": "+6 new"
-        }
-      },
-      "table": {
-        "eyebrow": "Order book",
-        "title": "Sales orders",
-        "columnOne": "Order",
-        "columnTwo": "Customer",
-        "columnThree": "Value",
-        "columnFour": "Status"
-      }
-    },
     "reports": {
       "eyebrow": "Insights & analytics",
       "title": "Reports",
@@ -423,6 +392,59 @@
         "columnTwo": "Area",
         "columnThree": "Updated",
         "columnFour": "Status"
+      }
+    },
+    "sales": {
+      "eyebrow": "Commercial Operations",
+      "title": "Sales & Job Orders",
+      "description": "Manage customers, issue quotations, approve orders, and generate Job Orders",
+      "customers": {
+        "title": "Customers",
+        "addCustomer": "Add Customer",
+        "code": "Code",
+        "name": "Name",
+        "nameAr": "Arabic Name",
+        "nameEn": "English Name",
+        "phone": "Phone",
+        "status": "Status"
+      },
+      "quotations": {
+        "title": "Quotations",
+        "addQuotation": "New Quotation",
+        "number": "Quotation No.",
+        "customer": "Customer",
+        "direction": "Direction",
+        "total": "Total",
+        "status": "Status",
+        "approve": "Approve & Create Job Order",
+        "outgoing": "Outgoing (Customer)",
+        "incoming": "Incoming (Supplier)",
+        "poReference": "Customer PO Ref",
+        "lines": "Items",
+        "addItem": "Add Line",
+        "item": "Item",
+        "qty": "Qty",
+        "price": "Unit Price"
+      },
+      "jobOrders": {
+        "title": "Job Orders",
+        "addInternal": "New Internal Order",
+        "number": "Job Order No.",
+        "source": "Source",
+        "quotationRef": "Quotation Ref",
+        "financialReview": "Financial Review",
+        "passed": "Passed",
+        "pending": "Pending",
+        "passReview": "Pass Financial Review",
+        "approve": "Approve Job Order",
+        "status": "Status"
+      },
+      "form": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No records found",
+        "success": "Action completed successfully"
       }
     }
   },
