@@ -28,7 +28,8 @@
     "production_ops": "Production Work Stations",
     "quality": "Quality Control & SLA",
     "costing": "Job Costing & Margins",
-    "delivery": "Delivery & Installation"
+    "delivery": "Delivery & Installation",
+    "accounting": "Accounting & Treasury"
   },
   "common": {
     "viewAll": "View all",
@@ -677,6 +678,45 @@
         "cancel": "Cancel",
         "loading": "Loading...",
         "empty": "No delivery or installation records for this Job Order",
+        "success": "Action completed successfully"
+      }
+    },
+    "accounting": {
+      "eyebrow": "Financial Ledgers & Treasury",
+      "title": "Accounting, Treasury & Retention",
+      "description": "Manage Chart of Accounts, balanced double-entry journals, customer collections, and retention release cycles",
+      "coa": {
+        "title": "Chart of Accounts",
+        "code": "Account Code",
+        "name": "Account Name",
+        "type": "Type",
+        "balance": "Current Balance",
+        "isLeaf": "Posting Level"
+      },
+      "journal": {
+        "title": "Double-Entry Journal Entries",
+        "addEntry": "New Journal Entry",
+        "entryNo": "Entry No.",
+        "debit": "Total Debit",
+        "credit": "Total Credit",
+        "status": "Status",
+        "post": "Post Entry"
+      },
+      "treasury": {
+        "title": "Customer Collections & Retention Release",
+        "addCollection": "Record Collection",
+        "addRetention": "Record Retention Hold",
+        "collNo": "Collection No.",
+        "retNo": "Retention No.",
+        "amount": "Amount",
+        "releasedAmount": "Released Amount",
+        "release": "Release Funds"
+      },
+      "form": {
+        "save": "Save Record",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No accounting or treasury records found",
         "success": "Action completed successfully"
       }
     }
