@@ -29,7 +29,8 @@
     "quality": "Quality Control & SLA",
     "costing": "Job Costing & Margins",
     "delivery": "Delivery & Installation",
-    "accounting": "Accounting & Treasury"
+    "accounting": "Accounting & Treasury",
+    "hr": "HR & Payroll"
   },
   "common": {
     "viewAll": "View all",
@@ -717,6 +718,43 @@
         "cancel": "Cancel",
         "loading": "Loading...",
         "empty": "No accounting or treasury records found",
+        "success": "Action completed successfully"
+      }
+    },
+    "hr": {
+      "eyebrow": "Human Capital & Incentives",
+      "title": "HR, Payroll & Sales Commissions",
+      "description": "Manage employees, configure sales commission rules (sales vs collections), and generate monthly payrolls",
+      "employees": {
+        "title": "Employees Directory",
+        "addEmployee": "Add Employee",
+        "code": "Code",
+        "name": "Name",
+        "role": "Role",
+        "baseSalary": "Base Salary (EGP)"
+      },
+      "commissions": {
+        "title": "Commission Rules & Earned Ledger",
+        "addRule": "Set Commission Rule",
+        "ruleBasis": "Commission Basis",
+        "ratePct": "Rate %",
+        "saleValue": "Percentage of Sale Value",
+        "collectedAmt": "Percentage of Actual Collection",
+        "earnedAmount": "Earned Amount",
+        "status": "Status"
+      },
+      "payroll": {
+        "title": "Monthly Payroll Processing",
+        "generatePayroll": "Generate Monthly Payroll",
+        "period": "Month / Year",
+        "grossSalary": "Gross Salary (Base + Commissions)",
+        "status": "Status"
+      },
+      "form": {
+        "save": "Save Record",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No records found",
         "success": "Action completed successfully"
       }
     }
