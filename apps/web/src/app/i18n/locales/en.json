@@ -45,10 +45,18 @@
     "description": "Here is what is happening across your manufacturing operations today.",
     "demoData": "Demo data",
     "kpis": {
-      "output": { "label": "Production output" },
-      "onTime": { "label": "On-time delivery" },
-      "oee": { "label": "Overall equipment effectiveness" },
-      "quality": { "label": "First-pass quality" },
+      "output": {
+        "label": "Production output"
+      },
+      "onTime": {
+        "label": "On-time delivery"
+      },
+      "oee": {
+        "label": "Overall equipment effectiveness"
+      },
+      "quality": {
+        "label": "First-pass quality"
+      },
       "vsLastMonth": "vs. last month",
       "target": "vs. target"
     },
@@ -60,18 +68,50 @@
       "progress": "Progress",
       "status": "Status",
       "rows": {
-        "mo1048": { "id": "MO-1048", "product": "Infusion Pump IP-400", "line": "Assembly line A", "status": "On track" },
-        "mo1047": { "id": "MO-1047", "product": "Patient Monitor PM-20", "line": "Assembly line B", "status": "In progress" },
-        "mo1046": { "id": "MO-1046", "product": "Surgical Table ST-8", "line": "Finishing cell", "status": "On track" },
-        "mo1045": { "id": "MO-1045", "product": "Ventilator VX-2", "line": "Assembly line A", "status": "Planned" }
+        "mo1048": {
+          "id": "MO-1048",
+          "product": "Infusion Pump IP-400",
+          "line": "Assembly line A",
+          "status": "On track"
+        },
+        "mo1047": {
+          "id": "MO-1047",
+          "product": "Patient Monitor PM-20",
+          "line": "Assembly line B",
+          "status": "In progress"
+        },
+        "mo1046": {
+          "id": "MO-1046",
+          "product": "Surgical Table ST-8",
+          "line": "Finishing cell",
+          "status": "On track"
+        },
+        "mo1045": {
+          "id": "MO-1045",
+          "product": "Ventilator VX-2",
+          "line": "Assembly line A",
+          "status": "Planned"
+        }
       }
     },
     "inventory": {
       "eyebrow": "Materials",
       "title": "Inventory status",
-      "critical": { "name": "Critical stock", "meta": "Immediate attention", "count": "04" },
-      "low": { "name": "Low stock", "meta": "Reorder recommended", "count": "12" },
-      "healthy": { "name": "Healthy stock", "meta": "Within target levels", "count": "86%" },
+      "critical": {
+        "name": "Critical stock",
+        "meta": "Immediate attention",
+        "count": "04"
+      },
+      "low": {
+        "name": "Low stock",
+        "meta": "Reorder recommended",
+        "count": "12"
+      },
+      "healthy": {
+        "name": "Healthy stock",
+        "meta": "Within target levels",
+        "count": "86%"
+      },
       "manage": "Manage inventory"
     },
     "pipeline": {
@@ -92,16 +132,37 @@
     "approvals": {
       "eyebrow": "Action needed",
       "title": "Pending approvals",
-      "purchase": { "initials": "OM", "title": "Purchase request PR-2084", "meta": "Omar Mostafa · 18 min ago" },
-      "change": { "initials": "LS", "title": "Engineering change EC-019", "meta": "Lina Samir · 42 min ago" },
-      "quality": { "initials": "YH", "title": "Quality release QR-442", "meta": "Youssef Hassan · 1 hr ago" }
+      "purchase": {
+        "initials": "OM",
+        "title": "Purchase request PR-2084",
+        "meta": "Omar Mostafa · 18 min ago"
+      },
+      "change": {
+        "initials": "LS",
+        "title": "Engineering change EC-019",
+        "meta": "Lina Samir · 42 min ago"
+      },
+      "quality": {
+        "initials": "YH",
+        "title": "Quality release QR-442",
+        "meta": "Youssef Hassan · 1 hr ago"
+      }
     },
     "activity": {
       "eyebrow": "Latest updates",
       "title": "Recent activity",
-      "completed": { "title": "Order MO-1046 completed", "meta": "Production · 12 minutes ago" },
-      "updated": { "title": "BOM revision updated", "meta": "Engineering · 35 minutes ago" },
-      "alert": { "title": "Shortage alert acknowledged", "meta": "Inventory · 1 hour ago" }
+      "completed": {
+        "title": "Order MO-1046 completed",
+        "meta": "Production · 12 minutes ago"
+      },
+      "updated": {
+        "title": "BOM revision updated",
+        "meta": "Engineering · 35 minutes ago"
+      },
+      "alert": {
+        "title": "Shortage alert acknowledged",
+        "meta": "Inventory · 1 hour ago"
+      }
     }
   },
   "pages": {
@@ -111,11 +172,30 @@
       "description": "Manage companies, sites, departments, and operating teams in one place.",
       "action": "Add organization",
       "stats": {
-        "primary": { "label": "Active entities", "value": "12", "trend": "+2 this month" },
-        "secondary": { "label": "Sites", "value": "04", "trend": "All connected" },
-        "tertiary": { "label": "Team members", "value": "248", "trend": "+8.4%" }
+        "primary": {
+          "label": "Active entities",
+          "value": "12",
+          "trend": "+2 this month"
+        },
+        "secondary": {
+          "label": "Sites",
+          "value": "04",
+          "trend": "All connected"
+        },
+        "tertiary": {
+          "label": "Team members",
+          "value": "248",
+          "trend": "+8.4%"
+        }
       },
-      "table": { "eyebrow": "Organization tree", "title": "Entities and operating units", "columnOne": "Entity", "columnTwo": "Type", "columnThree": "Members", "columnFour": "Status" }
+      "table": {
+        "eyebrow": "Organization tree",
+        "title": "Entities and operating units",
+        "columnOne": "Entity",
+        "columnTwo": "Type",
+        "columnThree": "Members",
+        "columnFour": "Status"
+      }
     },
     "manufacturing": {
       "eyebrow": "Production control",
@@ -123,11 +203,30 @@
       "description": "Plan production, monitor work centers, and keep orders moving on schedule.",
       "action": "New work order",
       "stats": {
-        "primary": { "label": "Open work orders", "value": "38", "trend": "+6.2%" },
-        "secondary": { "label": "In production", "value": "12", "trend": "32% of total" },
-        "tertiary": { "label": "Completed today", "value": "24", "trend": "+14.1%" }
+        "primary": {
+          "label": "Open work orders",
+          "value": "38",
+          "trend": "+6.2%"
+        },
+        "secondary": {
+          "label": "In production",
+          "value": "12",
+          "trend": "32% of total"
+        },
+        "tertiary": {
+          "label": "Completed today",
+          "value": "24",
+          "trend": "+14.1%"
+        }
       },
-      "table": { "eyebrow": "Execution queue", "title": "Work orders", "columnOne": "Order", "columnTwo": "Product", "columnThree": "Due date", "columnFour": "Status" }
+      "table": {
+        "eyebrow": "Execution queue",
+        "title": "Work orders",
+        "columnOne": "Order",
+        "columnTwo": "Product",
+        "columnThree": "Due date",
+        "columnFour": "Status"
+      }
     },
     "inventory": {
       "eyebrow": "Materials & stock",
@@ -135,11 +234,72 @@
       "description": "See material availability, stock movements, and replenishment priorities.",
       "action": "Add item",
       "stats": {
-        "primary": { "label": "Total items", "value": "4,820", "trend": "+3.1%" },
-        "secondary": { "label": "Low stock items", "value": "12", "trend": "Needs review" },
-        "tertiary": { "label": "Inventory value", "value": "$2.4M", "trend": "+4.8%" }
+        "primary": {
+          "label": "Total items",
+          "value": "4,820",
+          "trend": "+3.1%"
+        },
+        "secondary": {
+          "label": "Low stock items",
+          "value": "12",
+          "trend": "Needs review"
+        },
+        "tertiary": {
+          "label": "Inventory value",
+          "value": "$2.4M",
+          "trend": "+4.8%"
+        }
       },
-      "table": { "eyebrow": "Stock overview", "title": "Inventory items", "columnOne": "Item", "columnTwo": "Category", "columnThree": "On hand", "columnFour": "Status" }
+      "table": {
+        "eyebrow": "Stock overview",
+        "title": "Inventory items",
+        "columnOne": "Item",
+        "columnTwo": "Category",
+        "columnThree": "On hand",
+        "columnFour": "Status"
+      },
+      "form": {
+        "code": "Code",
+        "name": "Name",
+        "category": "Category",
+        "uom": "Unit of Measure",
+        "itemType": "Type",
+        "save": "Save",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "addItem": "Add item",
+        "addCategory": "Add category",
+        "categoryName": "Category name",
+        "categoryCode": "Category code",
+        "warehouses": "Warehouses",
+        "balances": "Stock balances",
+        "onHand": "On hand",
+        "reserved": "Reserved",
+        "available": "Available",
+        "recordMovement": "Record movement",
+        "movementType": "Movement type",
+        "quantity": "Quantity",
+        "receipt": "Receipt",
+        "issue": "Issue",
+        "item": "Item",
+        "warehouse": "Warehouse",
+        "addWarehouse": "Add warehouse",
+        "warehouseCode": "Warehouse code",
+        "warehouseName": "Warehouse name",
+        "loading": "Loading...",
+        "empty": "No data yet",
+        "success": "Saved successfully",
+        "nameAr": "Arabic name",
+        "nameEn": "English name"
+      },
+      "itemTypes": {
+        "raw_material": "Raw Material",
+        "finished_product": "Finished Product",
+        "semi_finished_product": "Semi-Finished Product",
+        "consumable": "Consumable",
+        "spare_part": "Spare Part",
+        "service": "Service"
+      }
     },
     "purchasing": {
       "eyebrow": "Sourcing & suppliers",
@@ -147,11 +307,30 @@
       "description": "Coordinate purchase requests, supplier relationships, and incoming materials.",
       "action": "Create request",
       "stats": {
-        "primary": { "label": "Open requests", "value": "16", "trend": "+4 today" },
-        "secondary": { "label": "Pending orders", "value": "28", "trend": "7 due this week" },
-        "tertiary": { "label": "Active suppliers", "value": "74", "trend": "+5.3%" }
+        "primary": {
+          "label": "Open requests",
+          "value": "16",
+          "trend": "+4 today"
+        },
+        "secondary": {
+          "label": "Pending orders",
+          "value": "28",
+          "trend": "7 due this week"
+        },
+        "tertiary": {
+          "label": "Active suppliers",
+          "value": "74",
+          "trend": "+5.3%"
+        }
       },
-      "table": { "eyebrow": "Procurement queue", "title": "Purchase requests", "columnOne": "Request", "columnTwo": "Supplier", "columnThree": "Amount", "columnFour": "Status" }
+      "table": {
+        "eyebrow": "Procurement queue",
+        "title": "Purchase requests",
+        "columnOne": "Request",
+        "columnTwo": "Supplier",
+        "columnThree": "Amount",
+        "columnFour": "Status"
+      }
     },
     "sales": {
       "eyebrow": "Customers & orders",
@@ -159,11 +338,30 @@
       "description": "Track customer orders, delivery commitments, and commercial performance.",
       "action": "New sales order",
       "stats": {
-        "primary": { "label": "Open orders", "value": "86", "trend": "+9.2%" },
-        "secondary": { "label": "This month", "value": "$684K", "trend": "+12.5%" },
-        "tertiary": { "label": "Customers", "value": "142", "trend": "+6 new" }
+        "primary": {
+          "label": "Open orders",
+          "value": "86",
+          "trend": "+9.2%"
+        },
+        "secondary": {
+          "label": "This month",
+          "value": "$684K",
+          "trend": "+12.5%"
+        },
+        "tertiary": {
+          "label": "Customers",
+          "value": "142",
+          "trend": "+6 new"
+        }
       },
-      "table": { "eyebrow": "Order book", "title": "Sales orders", "columnOne": "Order", "columnTwo": "Customer", "columnThree": "Value", "columnFour": "Status" }
+      "table": {
+        "eyebrow": "Order book",
+        "title": "Sales orders",
+        "columnOne": "Order",
+        "columnTwo": "Customer",
+        "columnThree": "Value",
+        "columnFour": "Status"
+      }
     },
     "reports": {
       "eyebrow": "Insights & analytics",
@@ -171,11 +369,30 @@
       "description": "Turn operational data into clear decisions for every team and leadership group.",
       "action": "Create report",
       "stats": {
-        "primary": { "label": "Saved reports", "value": "24", "trend": "+3 this month" },
-        "secondary": { "label": "Scheduled", "value": "08", "trend": "All delivered" },
-        "tertiary": { "label": "Shared with team", "value": "16", "trend": "+2.4%" }
+        "primary": {
+          "label": "Saved reports",
+          "value": "24",
+          "trend": "+3 this month"
+        },
+        "secondary": {
+          "label": "Scheduled",
+          "value": "08",
+          "trend": "All delivered"
+        },
+        "tertiary": {
+          "label": "Shared with team",
+          "value": "16",
+          "trend": "+2.4%"
+        }
       },
-      "table": { "eyebrow": "Report library", "title": "Recent reports", "columnOne": "Report", "columnTwo": "Owner", "columnThree": "Last run", "columnFour": "Status" }
+      "table": {
+        "eyebrow": "Report library",
+        "title": "Recent reports",
+        "columnOne": "Report",
+        "columnTwo": "Owner",
+        "columnThree": "Last run",
+        "columnFour": "Status"
+      }
     },
     "settings": {
       "eyebrow": "Workspace configuration",
@@ -183,11 +400,30 @@
       "description": "Configure your workspace, preferences, roles, and operational defaults.",
       "action": "Add setting",
       "stats": {
-        "primary": { "label": "Configured areas", "value": "18", "trend": "92% complete" },
-        "secondary": { "label": "Roles", "value": "09", "trend": "2 pending" },
-        "tertiary": { "label": "Integrations", "value": "06", "trend": "All healthy" }
+        "primary": {
+          "label": "Configured areas",
+          "value": "18",
+          "trend": "92% complete"
+        },
+        "secondary": {
+          "label": "Roles",
+          "value": "09",
+          "trend": "2 pending"
+        },
+        "tertiary": {
+          "label": "Integrations",
+          "value": "06",
+          "trend": "All healthy"
+        }
       },
-      "table": { "eyebrow": "Configuration", "title": "Workspace settings", "columnOne": "Setting", "columnTwo": "Area", "columnThree": "Updated", "columnFour": "Status" }
+      "table": {
+        "eyebrow": "Configuration",
+        "title": "Workspace settings",
+        "columnOne": "Setting",
+        "columnTwo": "Area",
+        "columnThree": "Updated",
+        "columnFour": "Status"
+      }
     }
   },
   "footer": {

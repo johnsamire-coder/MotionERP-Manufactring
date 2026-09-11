@@ -45,10 +45,18 @@
     "description": "إليك ما يحدث اليوم عبر عمليات التصنيع لديك.",
     "demoData": "بيانات تجريبية",
     "kpis": {
-      "output": { "label": "إنتاج المصنع" },
-      "onTime": { "label": "التسليم في الموعد" },
-      "oee": { "label": "فعالية المعدات" },
-      "quality": { "label": "جودة من المرة الأولى" },
+      "output": {
+        "label": "إنتاج المصنع"
+      },
+      "onTime": {
+        "label": "التسليم في الموعد"
+      },
+      "oee": {
+        "label": "فعالية المعدات"
+      },
+      "quality": {
+        "label": "جودة من المرة الأولى"
+      },
       "vsLastMonth": "مقارنة بالشهر الماضي",
       "target": "مقارنة بالمستهدف"
     },
@@ -60,18 +68,50 @@
       "progress": "التقدم",
       "status": "الحالة",
       "rows": {
-        "mo1048": { "id": "MO-1048", "product": "مضخة التسريب IP-400", "line": "خط التجميع A", "status": "على المسار" },
-        "mo1047": { "id": "MO-1047", "product": "جهاز مراقبة المريض PM-20", "line": "خط التجميع B", "status": "قيد التنفيذ" },
-        "mo1046": { "id": "MO-1046", "product": "طاولة العمليات ST-8", "line": "خلية التشطيب", "status": "على المسار" },
-        "mo1045": { "id": "MO-1045", "product": "جهاز التنفس VX-2", "line": "خط التجميع A", "status": "مخطط" }
+        "mo1048": {
+          "id": "MO-1048",
+          "product": "مضخة التسريب IP-400",
+          "line": "خط التجميع A",
+          "status": "على المسار"
+        },
+        "mo1047": {
+          "id": "MO-1047",
+          "product": "جهاز مراقبة المريض PM-20",
+          "line": "خط التجميع B",
+          "status": "قيد التنفيذ"
+        },
+        "mo1046": {
+          "id": "MO-1046",
+          "product": "طاولة العمليات ST-8",
+          "line": "خلية التشطيب",
+          "status": "على المسار"
+        },
+        "mo1045": {
+          "id": "MO-1045",
+          "product": "جهاز التنفس VX-2",
+          "line": "خط التجميع A",
+          "status": "مخطط"
+        }
       }
     },
     "inventory": {
       "eyebrow": "المواد",
       "title": "حالة المخزون",
-      "critical": { "name": "مخزون حرج", "meta": "يتطلب اهتماماً فورياً", "count": "04" },
-      "low": { "name": "مخزون منخفض", "meta": "يوصى بإعادة الطلب", "count": "12" },
-      "healthy": { "name": "مخزون سليم", "meta": "ضمن المستويات المستهدفة", "count": "86٪" },
+      "critical": {
+        "name": "مخزون حرج",
+        "meta": "يتطلب اهتماماً فورياً",
+        "count": "04"
+      },
+      "low": {
+        "name": "مخزون منخفض",
+        "meta": "يوصى بإعادة الطلب",
+        "count": "12"
+      },
+      "healthy": {
+        "name": "مخزون سليم",
+        "meta": "ضمن المستويات المستهدفة",
+        "count": "86٪"
+      },
       "manage": "إدارة المخزون"
     },
     "pipeline": {
@@ -92,16 +132,37 @@
     "approvals": {
       "eyebrow": "إجراء مطلوب",
       "title": "الموافقات المعلقة",
-      "purchase": { "initials": "ع م", "title": "طلب شراء PR-2084", "meta": "عمر مصطفى · منذ 18 دقيقة" },
-      "change": { "initials": "ل س", "title": "تغيير هندسي EC-019", "meta": "لينا سامر · منذ 42 دقيقة" },
-      "quality": { "initials": "ي ح", "title": "إطلاق جودة QR-442", "meta": "يوسف حسن · منذ ساعة" }
+      "purchase": {
+        "initials": "ع م",
+        "title": "طلب شراء PR-2084",
+        "meta": "عمر مصطفى · منذ 18 دقيقة"
+      },
+      "change": {
+        "initials": "ل س",
+        "title": "تغيير هندسي EC-019",
+        "meta": "لينا سامر · منذ 42 دقيقة"
+      },
+      "quality": {
+        "initials": "ي ح",
+        "title": "إطلاق جودة QR-442",
+        "meta": "يوسف حسن · منذ ساعة"
+      }
     },
     "activity": {
       "eyebrow": "آخر التحديثات",
       "title": "النشاط الأخير",
-      "completed": { "title": "اكتمل الأمر MO-1046", "meta": "الإنتاج · منذ 12 دقيقة" },
-      "updated": { "title": "تم تحديث مراجعة قائمة المواد", "meta": "الهندسة · منذ 35 دقيقة" },
-      "alert": { "title": "تم تأكيد تنبيه النقص", "meta": "المخزون · منذ ساعة" }
+      "completed": {
+        "title": "اكتمل الأمر MO-1046",
+        "meta": "الإنتاج · منذ 12 دقيقة"
+      },
+      "updated": {
+        "title": "تم تحديث مراجعة قائمة المواد",
+        "meta": "الهندسة · منذ 35 دقيقة"
+      },
+      "alert": {
+        "title": "تم تأكيد تنبيه النقص",
+        "meta": "المخزون · منذ ساعة"
+      }
     }
   },
   "pages": {
@@ -111,11 +172,30 @@
       "description": "أدر الشركات والمواقع والأقسام وفرق التشغيل من مكان واحد.",
       "action": "إضافة منظمة",
       "stats": {
-        "primary": { "label": "الكيانات النشطة", "value": "12", "trend": "+2 هذا الشهر" },
-        "secondary": { "label": "المواقع", "value": "04", "trend": "الكل متصل" },
-        "tertiary": { "label": "أعضاء الفريق", "value": "248", "trend": "+8.4٪" }
+        "primary": {
+          "label": "الكيانات النشطة",
+          "value": "12",
+          "trend": "+2 هذا الشهر"
+        },
+        "secondary": {
+          "label": "المواقع",
+          "value": "04",
+          "trend": "الكل متصل"
+        },
+        "tertiary": {
+          "label": "أعضاء الفريق",
+          "value": "248",
+          "trend": "+8.4٪"
+        }
       },
-      "table": { "eyebrow": "شجرة المنظمة", "title": "الكيانات ووحدات التشغيل", "columnOne": "الكيان", "columnTwo": "النوع", "columnThree": "الأعضاء", "columnFour": "الحالة" }
+      "table": {
+        "eyebrow": "شجرة المنظمة",
+        "title": "الكيانات ووحدات التشغيل",
+        "columnOne": "الكيان",
+        "columnTwo": "النوع",
+        "columnThree": "الأعضاء",
+        "columnFour": "الحالة"
+      }
     },
     "manufacturing": {
       "eyebrow": "مراقبة الإنتاج",
@@ -123,11 +203,30 @@
       "description": "خطط الإنتاج وراقب مراكز العمل وحافظ على سير الأوامر في موعدها.",
       "action": "أمر عمل جديد",
       "stats": {
-        "primary": { "label": "أوامر العمل المفتوحة", "value": "38", "trend": "+6.2٪" },
-        "secondary": { "label": "قيد الإنتاج", "value": "12", "trend": "32٪ من الإجمالي" },
-        "tertiary": { "label": "مكتمل اليوم", "value": "24", "trend": "+14.1٪" }
+        "primary": {
+          "label": "أوامر العمل المفتوحة",
+          "value": "38",
+          "trend": "+6.2٪"
+        },
+        "secondary": {
+          "label": "قيد الإنتاج",
+          "value": "12",
+          "trend": "32٪ من الإجمالي"
+        },
+        "tertiary": {
+          "label": "مكتمل اليوم",
+          "value": "24",
+          "trend": "+14.1٪"
+        }
       },
-      "table": { "eyebrow": "قائمة التنفيذ", "title": "أوامر العمل", "columnOne": "الأمر", "columnTwo": "المنتج", "columnThree": "تاريخ الاستحقاق", "columnFour": "الحالة" }
+      "table": {
+        "eyebrow": "قائمة التنفيذ",
+        "title": "أوامر العمل",
+        "columnOne": "الأمر",
+        "columnTwo": "المنتج",
+        "columnThree": "تاريخ الاستحقاق",
+        "columnFour": "الحالة"
+      }
     },
     "inventory": {
       "eyebrow": "المواد والمخزون",
@@ -135,11 +234,72 @@
       "description": "اعرض توفر المواد وحركات المخزون وأولويات إعادة التوريد.",
       "action": "إضافة صنف",
       "stats": {
-        "primary": { "label": "إجمالي الأصناف", "value": "4,820", "trend": "+3.1٪" },
-        "secondary": { "label": "أصناف منخفضة", "value": "12", "trend": "تحتاج مراجعة" },
-        "tertiary": { "label": "قيمة المخزون", "value": "2.4M$ ", "trend": "+4.8٪" }
+        "primary": {
+          "label": "إجمالي الأصناف",
+          "value": "4,820",
+          "trend": "+3.1٪"
+        },
+        "secondary": {
+          "label": "أصناف منخفضة",
+          "value": "12",
+          "trend": "تحتاج مراجعة"
+        },
+        "tertiary": {
+          "label": "قيمة المخزون",
+          "value": "2.4M$ ",
+          "trend": "+4.8٪"
+        }
       },
-      "table": { "eyebrow": "نظرة عامة على المخزون", "title": "أصناف المخزون", "columnOne": "الصنف", "columnTwo": "الفئة", "columnThree": "المتاح", "columnFour": "الحالة" }
+      "table": {
+        "eyebrow": "نظرة عامة على المخزون",
+        "title": "أصناف المخزون",
+        "columnOne": "الصنف",
+        "columnTwo": "الفئة",
+        "columnThree": "المتاح",
+        "columnFour": "الحالة"
+      },
+      "form": {
+        "code": "الكود",
+        "name": "الاسم",
+        "category": "الفئة",
+        "uom": "وحدة القياس",
+        "itemType": "النوع",
+        "save": "حفظ",
+        "cancel": "إلغاء",
+        "saving": "جاري الحفظ...",
+        "addItem": "إضافة صنف",
+        "addCategory": "إضافة فئة",
+        "categoryName": "اسم الفئة",
+        "categoryCode": "كود الفئة",
+        "warehouses": "المخازن",
+        "balances": "أرصدة المخزون",
+        "onHand": "الفعلي",
+        "reserved": "المحجوز",
+        "available": "المتاح",
+        "recordMovement": "تسجيل حركة",
+        "movementType": "نوع الحركة",
+        "quantity": "الكمية",
+        "receipt": "استلام",
+        "issue": "صرف",
+        "item": "الصنف",
+        "warehouse": "المخزن",
+        "addWarehouse": "إضافة مخزن",
+        "warehouseCode": "كود المخزن",
+        "warehouseName": "اسم المخزن",
+        "loading": "جاري التحميل...",
+        "empty": "لا توجد بيانات بعد",
+        "success": "تم الحفظ بنجاح",
+        "nameAr": "الاسم بالعربي",
+        "nameEn": "الاسم بالإنجليزي"
+      },
+      "itemTypes": {
+        "raw_material": "خامة",
+        "finished_product": "منتج تام",
+        "semi_finished_product": "نصف مصنّع",
+        "consumable": "مستهلك",
+        "spare_part": "قطعة غيار",
+        "service": "خدمة"
+      }
     },
     "purchasing": {
       "eyebrow": "التوريد والموردون",
@@ -147,11 +307,30 @@
       "description": "نسق طلبات الشراء وعلاقات الموردين والمواد الواردة.",
       "action": "إنشاء طلب",
       "stats": {
-        "primary": { "label": "الطلبات المفتوحة", "value": "16", "trend": "+4 اليوم" },
-        "secondary": { "label": "أوامر معلقة", "value": "28", "trend": "7 هذا الأسبوع" },
-        "tertiary": { "label": "الموردون النشطون", "value": "74", "trend": "+5.3٪" }
+        "primary": {
+          "label": "الطلبات المفتوحة",
+          "value": "16",
+          "trend": "+4 اليوم"
+        },
+        "secondary": {
+          "label": "أوامر معلقة",
+          "value": "28",
+          "trend": "7 هذا الأسبوع"
+        },
+        "tertiary": {
+          "label": "الموردون النشطون",
+          "value": "74",
+          "trend": "+5.3٪"
+        }
       },
-      "table": { "eyebrow": "قائمة التوريد", "title": "طلبات الشراء", "columnOne": "الطلب", "columnTwo": "المورد", "columnThree": "القيمة", "columnFour": "الحالة" }
+      "table": {
+        "eyebrow": "قائمة التوريد",
+        "title": "طلبات الشراء",
+        "columnOne": "الطلب",
+        "columnTwo": "المورد",
+        "columnThree": "القيمة",
+        "columnFour": "الحالة"
+      }
     },
     "sales": {
       "eyebrow": "العملاء والطلبات",
@@ -159,11 +338,30 @@
       "description": "تابع طلبات العملاء والتزامات التسليم والأداء التجاري.",
       "action": "أمر مبيعات جديد",
       "stats": {
-        "primary": { "label": "الطلبات المفتوحة", "value": "86", "trend": "+9.2٪" },
-        "secondary": { "label": "هذا الشهر", "value": "684K$ ", "trend": "+12.5٪" },
-        "tertiary": { "label": "العملاء", "value": "142", "trend": "+6 جدد" }
+        "primary": {
+          "label": "الطلبات المفتوحة",
+          "value": "86",
+          "trend": "+9.2٪"
+        },
+        "secondary": {
+          "label": "هذا الشهر",
+          "value": "684K$ ",
+          "trend": "+12.5٪"
+        },
+        "tertiary": {
+          "label": "العملاء",
+          "value": "142",
+          "trend": "+6 جدد"
+        }
       },
-      "table": { "eyebrow": "دفتر الطلبات", "title": "أوامر المبيعات", "columnOne": "الأمر", "columnTwo": "العميل", "columnThree": "القيمة", "columnFour": "الحالة" }
+      "table": {
+        "eyebrow": "دفتر الطلبات",
+        "title": "أوامر المبيعات",
+        "columnOne": "الأمر",
+        "columnTwo": "العميل",
+        "columnThree": "القيمة",
+        "columnFour": "الحالة"
+      }
     },
     "reports": {
       "eyebrow": "الرؤى والتحليلات",
@@ -171,11 +369,30 @@
       "description": "حوّل بيانات التشغيل إلى قرارات واضحة لكل فريق وقيادة.",
       "action": "إنشاء تقرير",
       "stats": {
-        "primary": { "label": "التقارير المحفوظة", "value": "24", "trend": "+3 هذا الشهر" },
-        "secondary": { "label": "مجدولة", "value": "08", "trend": "تم تسليم الكل" },
-        "tertiary": { "label": "مشارَكة مع الفريق", "value": "16", "trend": "+2.4٪" }
+        "primary": {
+          "label": "التقارير المحفوظة",
+          "value": "24",
+          "trend": "+3 هذا الشهر"
+        },
+        "secondary": {
+          "label": "مجدولة",
+          "value": "08",
+          "trend": "تم تسليم الكل"
+        },
+        "tertiary": {
+          "label": "مشارَكة مع الفريق",
+          "value": "16",
+          "trend": "+2.4٪"
+        }
       },
-      "table": { "eyebrow": "مكتبة التقارير", "title": "التقارير الأخيرة", "columnOne": "التقرير", "columnTwo": "المالك", "columnThree": "آخر تشغيل", "columnFour": "الحالة" }
+      "table": {
+        "eyebrow": "مكتبة التقارير",
+        "title": "التقارير الأخيرة",
+        "columnOne": "التقرير",
+        "columnTwo": "المالك",
+        "columnThree": "آخر تشغيل",
+        "columnFour": "الحالة"
+      }
     },
     "settings": {
       "eyebrow": "إعدادات مساحة العمل",
@@ -183,11 +400,30 @@
       "description": "اضبط مساحة العمل والتفضيلات والأدوار والخيارات التشغيلية الافتراضية.",
       "action": "إضافة إعداد",
       "stats": {
-        "primary": { "label": "المجالات المضبوطة", "value": "18", "trend": "92٪ مكتمل" },
-        "secondary": { "label": "الأدوار", "value": "09", "trend": "2 معلقة" },
-        "tertiary": { "label": "التكاملات", "value": "06", "trend": "الكل سليم" }
+        "primary": {
+          "label": "المجالات المضبوطة",
+          "value": "18",
+          "trend": "92٪ مكتمل"
+        },
+        "secondary": {
+          "label": "الأدوار",
+          "value": "09",
+          "trend": "2 معلقة"
+        },
+        "tertiary": {
+          "label": "التكاملات",
+          "value": "06",
+          "trend": "الكل سليم"
+        }
       },
-      "table": { "eyebrow": "التهيئة", "title": "إعدادات مساحة العمل", "columnOne": "الإعداد", "columnTwo": "المجال", "columnThree": "آخر تحديث", "columnFour": "الحالة" }
+      "table": {
+        "eyebrow": "التهيئة",
+        "title": "إعدادات مساحة العمل",
+        "columnOne": "الإعداد",
+        "columnTwo": "المجال",
+        "columnThree": "آخر تحديث",
+        "columnFour": "الحالة"
+      }
     }
   },
   "footer": {
