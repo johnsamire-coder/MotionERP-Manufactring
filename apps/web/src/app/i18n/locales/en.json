@@ -25,7 +25,8 @@
     "planning": "Production Planning",
     "technical": "Technical Office",
     "material": "Material Requests",
-    "production_ops": "Production Work Stations"
+    "production_ops": "Production Work Stations",
+    "quality": "Quality Control & SLA"
   },
   "common": {
     "viewAll": "View all",
@@ -582,6 +583,37 @@
         "empty": "No records found",
         "success": "Action completed successfully",
         "enterActualMins": "Enter Actual Minutes Spent"
+      }
+    },
+    "quality": {
+      "eyebrow": "Quality Assurance & SLA Rules",
+      "title": "Quality Control & Escalation Engine",
+      "description": "Define inspection points, enforce resolution SLAs, and automate overdue escalation to management",
+      "inspectionPoints": {
+        "title": "Inspection Points Configuration",
+        "addPoint": "Add Inspection Point",
+        "code": "Code",
+        "name": "Point Name",
+        "targetMins": "Target Time (Mins)"
+      },
+      "workflows": {
+        "title": "Quality Workflows & Escalation Queue",
+        "startWorkflow": "Trigger Inspection",
+        "point": "Inspection Point",
+        "assignedTo": "Assigned Officer",
+        "escalationLevel": "SLA Level",
+        "status": "Status",
+        "action": "Action",
+        "processOverdue": "Process Overdue SLAs",
+        "pass": "Pass Inspection",
+        "fail": "Reject"
+      },
+      "form": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No active quality workflows found",
+        "success": "Action completed successfully"
       }
     }
   },

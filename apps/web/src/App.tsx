@@ -7,6 +7,7 @@ import { PlanningPage } from './app/pages/PlanningPage';
 import { TechnicalPage } from './app/pages/TechnicalPage';
 import { MaterialPage } from './app/pages/MaterialPage';
 import { ProductionOpsPage } from './app/pages/ProductionOpsPage';
+import { QualityPage } from './app/pages/QualityPage';
 
 type PageKey =
   | 'dashboard'
@@ -16,7 +17,7 @@ type PageKey =
   | 'purchasing'
   | 'sales'
   | 'reports'
-  | 'settings' | 'planning' | 'technical' | 'material' | 'production_ops';
+  | 'settings' | 'planning' | 'technical' | 'material' | 'production_ops' | 'quality';
 
 type IconName =
   | 'grid'
@@ -49,6 +50,7 @@ const NAV_ITEMS: ReadonlyArray<{ key: PageKey; icon: IconName }> = [
     { key: 'technical', icon: 'layers' },
     { key: 'material', icon: 'box' },
     { key: 'production_ops', icon: 'factory' },
+    { key: 'quality', icon: 'check' },
   { key: 'reports', icon: 'chart' },
   { key: 'settings', icon: 'settings' },
 ];
@@ -58,6 +60,7 @@ const PAGE_META: Record<PageKey, { title: string; description: string; icon: Ico
   technical: { title: 'navigation.technical', description: 'pages.technical.description', icon: 'layers' },
   material: { title: 'navigation.material', description: 'pages.material.description', icon: 'box' },
   production_ops: { title: 'navigation.production_ops', description: 'pages.production_ops.description', icon: 'factory' },
+  quality: { title: 'navigation.quality', description: 'pages.quality.description', icon: 'check' },
   dashboard: { title: 'dashboard.title', description: 'dashboard.description', icon: 'grid' },
   organization: {
     title: 'pages.organization.title',
@@ -260,6 +263,6 @@ export function App(): JSX.Element {
     <h1 className="visually-hidden">{t('app.name')}</h1><span className="visually-hidden" data-testid="direction">{directionOf(i18n.language)}</span>
     <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}><div className="sidebar__brand"><span className="brand-mark"><i /><i /><i /></span><span className="brand-name"><b>Motion</b><small>ERP</small></span><button className="sidebar__close icon-button" onClick={() => setMenuOpen(false)} aria-label={t('common.close')}><Icon name="close" /></button></div><p className="sidebar__label">{t('navigation.workspace')}</p><nav className="sidebar__nav" aria-label={t('navigation.label')}>{NAV_ITEMS.map((item) => <button key={item.key} className={`nav-item ${page === item.key ? 'nav-item--active' : ''}`} onClick={() => navigate(item.key)}><Icon name={item.icon} /><span>{t(`navigation.${item.key}`)}</span>{page === item.key && <Icon name="chevron" size={14} />}</button>)}</nav><div className="sidebar__bottom"><div className="help-card"><span className="help-card__icon"><Icon name="layers" size={16} /></span><b>{t('navigation.helpTitle')}</b><p>{t('navigation.helpText')}</p><button onClick={() => navigate('settings')}>{t('navigation.helpAction')}<Icon name="arrow" size={14} /></button></div><div className="system-status"><i />{t('navigation.systemOperational')}</div></div></aside>
     <div className={`mobile-overlay ${menuOpen ? 'mobile-overlay--visible' : ''}`} onClick={() => setMenuOpen(false)} />
-    <section className="app-main"><header className="topbar"><button className="mobile-menu icon-button" onClick={() => setMenuOpen(true)} aria-label={t('common.openMenu')}><Icon name="menu" /></button><div className="breadcrumbs"><span>{t('app.name')}</span><Icon name="chevron" size={13} /><b>{t(`navigation.${page}`)}</b></div><div className="topbar__actions"><button className="company-switcher"><span className="company-logo">M</span><span><b>{t('header.company')}</b><small>{t('header.companyMeta')}</small></span><Icon name="chevron" size={14} /></button><span className="topbar-divider" /><label className="language-select"><span>文</span><select aria-label={t('app.language')} value={i18n.language} onChange={(event) => { void i18n.changeLanguage(event.target.value as SupportedLanguage); }}>{SUPPORTED_LANGUAGES.map((language) => <option key={language} value={language}>{t(`app.languageName.${language}`)}</option>)}</select></label><button className="notification icon-button" aria-label={t('header.notifications')}><Icon name="bell" size={18} /><i /></button><button className="profile"><span className="avatar">AS</span><span className="profile__copy"><b>{t('header.user')}</b><small>{t('header.role')}</small></span><Icon name="chevron" size={14} /></button></div></header><main className="content">{page === 'dashboard' ? <Dashboard onNavigate={navigate} /> : page === 'inventory' ? <InventoryPage /> : page === 'sales' ? <SalesPage /> : page === 'planning' ? <PlanningPage /> : page === 'technical' ? <TechnicalPage /> : page === 'material' ? <MaterialPage /> : page === 'production_ops' ? <ProductionOpsPage /> : <ModulePage page={page} />}</main><footer className="app-footer"><span>{t('footer.demo')} · <b>{t('footer.version')}</b></span><span>{t('footer.updated')}</span></footer></section>
+    <section className="app-main"><header className="topbar"><button className="mobile-menu icon-button" onClick={() => setMenuOpen(true)} aria-label={t('common.openMenu')}><Icon name="menu" /></button><div className="breadcrumbs"><span>{t('app.name')}</span><Icon name="chevron" size={13} /><b>{t(`navigation.${page}`)}</b></div><div className="topbar__actions"><button className="company-switcher"><span className="company-logo">M</span><span><b>{t('header.company')}</b><small>{t('header.companyMeta')}</small></span><Icon name="chevron" size={14} /></button><span className="topbar-divider" /><label className="language-select"><span>文</span><select aria-label={t('app.language')} value={i18n.language} onChange={(event) => { void i18n.changeLanguage(event.target.value as SupportedLanguage); }}>{SUPPORTED_LANGUAGES.map((language) => <option key={language} value={language}>{t(`app.languageName.${language}`)}</option>)}</select></label><button className="notification icon-button" aria-label={t('header.notifications')}><Icon name="bell" size={18} /><i /></button><button className="profile"><span className="avatar">AS</span><span className="profile__copy"><b>{t('header.user')}</b><small>{t('header.role')}</small></span><Icon name="chevron" size={14} /></button></div></header><main className="content">{page === 'dashboard' ? <Dashboard onNavigate={navigate} /> : page === 'inventory' ? <InventoryPage /> : page === 'sales' ? <SalesPage /> : page === 'planning' ? <PlanningPage /> : page === 'technical' ? <TechnicalPage /> : page === 'material' ? <MaterialPage /> : page === 'production_ops' ? <ProductionOpsPage /> : page === 'quality' ? <QualityPage /> : <ModulePage page={page} />}</main><footer className="app-footer"><span>{t('footer.demo')} · <b>{t('footer.version')}</b></span><span>{t('footer.updated')}</span></footer></section>
   </div>;
 }
