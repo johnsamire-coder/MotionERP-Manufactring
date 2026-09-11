@@ -31,7 +31,8 @@
     "delivery": "Delivery & Installation",
     "accounting": "Accounting & Treasury",
     "hr": "HR & Payroll",
-    "auth": "Users & Permissions"
+    "auth": "Users & Permissions",
+    "expenses": "Production Expenses"
   },
   "common": {
     "viewAll": "View all",
@@ -782,6 +783,37 @@
       "form": {
         "empty": "No active manufacturing orders found",
         "loading": "Loading manufacturing data..."
+      }
+    },
+    "expenses": {
+      "eyebrow": "Cost Accounting & Matrix Analysis",
+      "title": "Production Expenses Analysis",
+      "description": "Record daily production expenses, auto-generate accounting journal entries, allocate costs to Job Orders, and export Excel matrix sheets",
+      "table": {
+        "title": "Monthly Production Expenses Matrix (Excel Model)",
+        "export": "Export Excel Sheet",
+        "date": "Date",
+        "description": "Description / Details",
+        "totalAmount": "Total Amount (EGP)",
+        "jobOrder": "Linked Job Order",
+        "transport": "Freight & Transport",
+        "samples": "Samples",
+        "electricity": "Electricity",
+        "packaging": "Packaging",
+        "paint": "Paint & Coating",
+        "wages": "Wages & Supervision",
+        "gratuity": "Gratuity & Other",
+        "totals": "Monthly Category Totals"
+      },
+      "form": {
+        "title": "Record Expense & Create Journal Entry",
+        "amount": "Amount (EGP)",
+        "category": "Expense Category",
+        "save": "Save & Post to JO Cost",
+        "cancel": "Cancel",
+        "loading": "Processing...",
+        "empty": "No production expenses recorded for this period",
+        "success": "Expense logged, journal posted, and allocated to Job Order successfully"
       }
     }
   },
