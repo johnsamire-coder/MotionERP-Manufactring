@@ -42,6 +42,7 @@ const NAV_ITEMS: ReadonlyArray<{ key: PageKey; icon: IconName }> = [
   { key: 'inventory', icon: 'box' },
   { key: 'purchasing', icon: 'cart' },
   { key: 'sales', icon: 'sales' },
+    { key: 'planning', icon: 'factory' },
   { key: 'reports', icon: 'chart' },
   { key: 'settings', icon: 'settings' },
 ];
