@@ -24,7 +24,8 @@
     "systemOperational": "All systems operational",
     "planning": "Production Planning",
     "technical": "Technical Office",
-    "material": "Material Requests"
+    "material": "Material Requests",
+    "production_ops": "Production Work Stations"
   },
   "common": {
     "viewAll": "View all",
@@ -541,6 +542,46 @@
         "loading": "Loading...",
         "empty": "No material requests found for this Job Order",
         "success": "Action completed successfully"
+      }
+    },
+    "production_ops": {
+      "eyebrow": "Shop Floor Control",
+      "title": "Work Stations & Production Operations",
+      "description": "Configure factory work centers, define step sequences per Job Order, and track real-time labor & overhead costs",
+      "workCenters": {
+        "title": "Work Centers & Machinery",
+        "addCenter": "Add Work Center",
+        "code": "Code",
+        "name": "Work Center Name",
+        "ratePerMinute": "Cost / Min (EGP)"
+      },
+      "steps": {
+        "title": "Production Steps & Routing",
+        "addStep": "Add Production Step",
+        "sequence": "Seq",
+        "stepName": "Step Name",
+        "workCenter": "Work Center",
+        "stdMins": "Standard Mins",
+        "actMins": "Actual Mins",
+        "status": "Status",
+        "action": "Control",
+        "start": "Start Step",
+        "complete": "Complete Step"
+      },
+      "cost": {
+        "summaryTitle": "Live Labor Cost Tracker",
+        "stdTotalMins": "Total Std Mins",
+        "actTotalMins": "Total Act Mins",
+        "stdTotalCost": "Estimated Labor Cost",
+        "actTotalCost": "Actual Labor Cost"
+      },
+      "form": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No records found",
+        "success": "Action completed successfully",
+        "enterActualMins": "Enter Actual Minutes Spent"
       }
     }
   },
