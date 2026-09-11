@@ -23,7 +23,8 @@
     "helpAction": "View guide",
     "systemOperational": "All systems operational",
     "planning": "Production Planning",
-    "technical": "Technical Office"
+    "technical": "Technical Office",
+    "material": "Material Requests"
   },
   "common": {
     "viewAll": "View all",
@@ -511,6 +512,34 @@
         "cancel": "Cancel",
         "loading": "Loading...",
         "empty": "No records found",
+        "success": "Action completed successfully"
+      }
+    },
+    "material": {
+      "eyebrow": "Inventory & Production Control",
+      "title": "Material Requests & Deviation Control",
+      "description": "Request raw materials against BOMs, enforce human review on BOM budget overruns, and issue stock",
+      "table": {
+        "title": "Material Requests Queue",
+        "jobOrder": "Job Order",
+        "item": "Raw Material",
+        "planned": "Planned (BOM)",
+        "requested": "Requested",
+        "issued": "Issued",
+        "status": "Status",
+        "action": "Action"
+      },
+      "form": {
+        "newRequest": "New Material Request",
+        "qtyPlanned": "Planned Qty",
+        "qtyRequested": "Requested Qty",
+        "reason": "Deviation Reason (Required if requested > planned)",
+        "approveDeviation": "Approve Deviation",
+        "issueStock": "Issue Stock",
+        "save": "Submit Request",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No material requests found for this Job Order",
         "success": "Action completed successfully"
       }
     }
