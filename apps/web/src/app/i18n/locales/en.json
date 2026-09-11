@@ -30,7 +30,8 @@
     "costing": "Job Costing & Margins",
     "delivery": "Delivery & Installation",
     "accounting": "Accounting & Treasury",
-    "hr": "HR & Payroll"
+    "hr": "HR & Payroll",
+    "auth": "Users & Permissions"
   },
   "common": {
     "viewAll": "View all",
@@ -755,6 +756,35 @@
         "cancel": "Cancel",
         "loading": "Loading...",
         "empty": "No records found",
+        "success": "Action completed successfully"
+      }
+    },
+    "auth": {
+      "eyebrow": "Security & RBAC Controls",
+      "title": "Users, Roles & Permissions",
+      "description": "Manage user accounts, assign roles, configure action-resource permissions, and set financial value limits",
+      "users": {
+        "title": "User Accounts",
+        "addUser": "New User",
+        "username": "Username",
+        "role": "Assigned Role",
+        "status": "Status"
+      },
+      "roles": {
+        "title": "System Roles & Value Limits",
+        "addRole": "Create Role",
+        "addPermission": "Grant Permission",
+        "code": "Role Code",
+        "name": "Role Name",
+        "resource": "Resource Target",
+        "action": "Action",
+        "maxValue": "Max Value Limit (EGP)"
+      },
+      "form": {
+        "save": "Save Record",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No user or permission records found",
         "success": "Action completed successfully"
       }
     }
