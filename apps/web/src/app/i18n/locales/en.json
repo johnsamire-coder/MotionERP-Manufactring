@@ -27,7 +27,8 @@
     "material": "Material Requests",
     "production_ops": "Production Work Stations",
     "quality": "Quality Control & SLA",
-    "costing": "Job Costing & Margins"
+    "costing": "Job Costing & Margins",
+    "delivery": "Delivery & Installation"
   },
   "common": {
     "viewAll": "View all",
@@ -646,6 +647,36 @@
         "cancel": "Cancel",
         "loading": "Loading...",
         "empty": "No cost entries recorded for this Job Order",
+        "success": "Action completed successfully"
+      }
+    },
+    "delivery": {
+      "eyebrow": "Logistics & Client Handover",
+      "title": "Delivery & Installation Control",
+      "description": "Manage shipping delivery orders, site installation reports, and customer acceptance certificates",
+      "orders": {
+        "title": "Delivery Orders & Logistics",
+        "createOrder": "New Delivery Order",
+        "orderNo": "Delivery Order No.",
+        "address": "Delivery Site Address",
+        "driver": "Driver & Vehicle",
+        "status": "Status",
+        "action": "Action"
+      },
+      "handover": {
+        "title": "Site Installation & Handover Protocols",
+        "addReceipt": "Record Delivery Receipt",
+        "addReport": "Record Installation Protocol",
+        "receiptNo": "Receipt No.",
+        "reportNo": "Protocol No.",
+        "accepted": "Client Acceptance Status",
+        "notes": "Client Remarks / Notes"
+      },
+      "form": {
+        "save": "Save Document",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No delivery or installation records for this Job Order",
         "success": "Action completed successfully"
       }
     }
