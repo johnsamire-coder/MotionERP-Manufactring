@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { SalesService } from '../sales/sales.service';
+import type { JobOrderRecord } from '../sales/sales.types';
 import { FinanceNotFoundError, FinanceValidationError } from './finance.errors';
 import { FinanceRepository } from './finance.repository';
 import type { CollectionRecord, CreateCollectionInput, CreateRetentionInput, RetentionRecord } from './finance.types';
@@ -12,9 +13,17 @@ export class FinanceService {
     private readonly salesService: SalesService,
   ) {}
 
-  private async tryGetOrgNodeId(jobOrderReference: string): Promise<string | null> {
+  /**
+   * Mandatory job order lookup (D2/D20: via SalesService's public surface
+   * only, no direct FK between finance and sales). Same pattern applied to
+   * production, production_ops, cost, and delivery — a collection or
+   * retention can no longer be recorded against a non-existent job order.
+   */
+  private async getJobOrderOrThrow(jobOrderReference: string): Promise<JobOrderRecord> {
     const jobOrders = await this.salesService.getJobOrders();
-    return jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference)?.orgNodeId ?? null;
+    const found = jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference);
+    if (!found) throw new FinanceNotFoundError(`job order "${jobOrderReference}" does not exist`);
+    return found;
   }
 
   async getCollections(jobOrderReference?: string): Promise<CollectionRecord[]> { return this.repository.listCollections(jobOrderReference); }
@@ -23,12 +32,12 @@ export class FinanceService {
     const amount = Number(input.amount);
     if (!Number.isFinite(amount) || amount <= 0) throw new FinanceValidationError('amount must be positive');
 
+    const jobOrder = await this.getJobOrderOrThrow(input.jobOrderReference);
     const sequence = (await this.repository.countCollections()) + 1;
     const year = new Date().getFullYear();
     const collectionNumber = `COL-${year}-${String(sequence).padStart(6, '0')}`;
-    const orgNodeId = await this.tryGetOrgNodeId(input.jobOrderReference);
 
-    return this.repository.insertCollection({ id: randomUUID(), collectionNumber, orgNodeId, ...input });
+    return this.repository.insertCollection({ id: randomUUID(), collectionNumber, orgNodeId: jobOrder.orgNodeId, ...input });
   }
 
   async getRetentions(jobOrderReference?: string): Promise<RetentionRecord[]> { return this.repository.listRetentions(jobOrderReference); }
@@ -38,12 +47,12 @@ export class FinanceService {
     if (!Number.isFinite(amount) || amount <= 0) throw new FinanceValidationError('originalAmount must be positive');
     if (!input.dueDate) throw new FinanceValidationError('dueDate is required');
 
+    const jobOrder = await this.getJobOrderOrThrow(input.jobOrderReference);
     const sequence = (await this.repository.countRetentions()) + 1;
     const year = new Date().getFullYear();
     const retentionNumber = `RET-${year}-${String(sequence).padStart(6, '0')}`;
-    const orgNodeId = await this.tryGetOrgNodeId(input.jobOrderReference);
 
-    return this.repository.insertRetention({ id: randomUUID(), retentionNumber, orgNodeId, ...input });
+    return this.repository.insertRetention({ id: randomUUID(), retentionNumber, orgNodeId: jobOrder.orgNodeId, ...input });
   }
 
   async releaseRetention(id: string, amount: string): Promise<RetentionRecord> {
