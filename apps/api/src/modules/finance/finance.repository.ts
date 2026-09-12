@@ -5,32 +5,32 @@ import { collection, retention } from './finance.schema';
 import type { CollectionRecord, CollectionStatus, CreateCollectionInput, CreateRetentionInput, PaymentMethod, RetentionRecord, RetentionStatus } from './finance.types';
 
 const colColumns = {
-  id: collection.id, jobOrderReference: collection.jobOrderReference, collectionNumber: collection.collectionNumber,
+  id: collection.id, jobOrderReference: collection.jobOrderReference, orgNodeId: collection.orgNodeId, collectionNumber: collection.collectionNumber,
   collectionDate: collection.collectionDate, amount: collection.amount, currencyCode: collection.currencyCode,
   paymentMethod: collection.paymentMethod, referenceNumber: collection.referenceNumber, notes: collection.notes, status: collection.status,
 };
 const retColumns = {
-  id: retention.id, jobOrderReference: retention.jobOrderReference, retentionNumber: retention.retentionNumber,
+  id: retention.id, jobOrderReference: retention.jobOrderReference, orgNodeId: retention.orgNodeId, retentionNumber: retention.retentionNumber,
   originalAmount: retention.originalAmount, releasedAmount: retention.releasedAmount, currencyCode: retention.currencyCode,
   startDate: retention.startDate, releaseDate: retention.releaseDate, dueDate: retention.dueDate, status: retention.status, notes: retention.notes,
 };
 
 interface ColRow {
-  id: string; jobOrderReference: string; collectionNumber: string; collectionDate: Date; amount: string;
+  id: string; jobOrderReference: string; orgNodeId: string | null; collectionNumber: string; collectionDate: Date; amount: string;
   currencyCode: string; paymentMethod: string; referenceNumber: string | null; notes: string | null; status: string;
 }
 interface RetRow {
-  id: string; jobOrderReference: string; retentionNumber: string; originalAmount: string; releasedAmount: string;
+  id: string; jobOrderReference: string; orgNodeId: string | null; retentionNumber: string; originalAmount: string; releasedAmount: string;
   currencyCode: string; startDate: Date; releaseDate: Date | null; dueDate: Date; status: string; notes: string | null;
 }
 
 function toColRecord(row: ColRow): CollectionRecord {
-  return { id: row.id, jobOrderReference: row.jobOrderReference, collectionNumber: row.collectionNumber,
+  return { id: row.id, jobOrderReference: row.jobOrderReference, orgNodeId: row.orgNodeId, collectionNumber: row.collectionNumber,
     collectionDate: row.collectionDate.toISOString(), amount: row.amount, currencyCode: row.currencyCode,
     paymentMethod: row.paymentMethod as PaymentMethod, referenceNumber: row.referenceNumber, notes: row.notes, status: row.status as CollectionStatus };
 }
 function toRetRecord(row: RetRow): RetentionRecord {
-  return { id: row.id, jobOrderReference: row.jobOrderReference, retentionNumber: row.retentionNumber,
+  return { id: row.id, jobOrderReference: row.jobOrderReference, orgNodeId: row.orgNodeId, retentionNumber: row.retentionNumber,
     originalAmount: row.originalAmount, releasedAmount: row.releasedAmount, currencyCode: row.currencyCode,
     startDate: row.startDate.toISOString(), releaseDate: row.releaseDate ? row.releaseDate.toISOString() : null,
     dueDate: row.dueDate.toISOString(), status: row.status as RetentionStatus, notes: row.notes };
@@ -50,9 +50,9 @@ export class FinanceRepository {
     const rows = await this.database.db.select({ id: collection.id }).from(collection);
     return rows.length;
   }
-  async insertCollection(input: CreateCollectionInput & { id: string; collectionNumber: string }): Promise<CollectionRecord> {
+  async insertCollection(input: CreateCollectionInput & { id: string; collectionNumber: string; orgNodeId: string | null }): Promise<CollectionRecord> {
     const rows = await this.database.db.insert(collection).values({
-      id: input.id, jobOrderReference: input.jobOrderReference, collectionNumber: input.collectionNumber,
+      id: input.id, jobOrderReference: input.jobOrderReference, orgNodeId: input.orgNodeId, collectionNumber: input.collectionNumber,
       collectionDate: input.collectionDate ? new Date(input.collectionDate) : new Date(),
       amount: input.amount, currencyCode: input.currencyCode ?? 'EGP', paymentMethod: input.paymentMethod,
       referenceNumber: input.referenceNumber ?? null, notes: input.notes ?? null,
@@ -74,9 +74,9 @@ export class FinanceRepository {
     const rows = await this.database.db.select({ id: retention.id }).from(retention);
     return rows.length;
   }
-  async insertRetention(input: CreateRetentionInput & { id: string; retentionNumber: string }): Promise<RetentionRecord> {
+  async insertRetention(input: CreateRetentionInput & { id: string; retentionNumber: string; orgNodeId: string | null }): Promise<RetentionRecord> {
     const rows = await this.database.db.insert(retention).values({
-      id: input.id, jobOrderReference: input.jobOrderReference, retentionNumber: input.retentionNumber,
+      id: input.id, jobOrderReference: input.jobOrderReference, orgNodeId: input.orgNodeId, retentionNumber: input.retentionNumber,
       originalAmount: input.originalAmount, currencyCode: input.currencyCode ?? 'EGP',
       startDate: input.startDate ? new Date(input.startDate) : new Date(), dueDate: new Date(input.dueDate), notes: input.notes ?? null,
     }).returning(retColumns);

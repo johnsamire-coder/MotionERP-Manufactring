@@ -1,12 +1,21 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
+import { SalesService } from '../sales/sales.service';
 import { DeliveryNotFoundError, DeliveryValidationError } from './delivery.errors';
 import { DeliveryRepository } from './delivery.repository';
 import type { CreateDeliveryOrderInput, CreateDeliveryReceiptInput, CreateInstallationInput, CreateInstallationReportInput, DeliveryOrderRecord, DeliveryReceiptRecord, InstallationRecord, InstallationReportRecord, UpdateDeliveryOrderInput, UpdateInstallationInput } from './delivery.types';
 
 @Injectable()
 export class DeliveryService {
-  constructor(private readonly repository: DeliveryRepository) {}
+  constructor(
+    private readonly repository: DeliveryRepository,
+    private readonly salesService: SalesService,
+  ) {}
+
+  private async tryGetOrgNodeId(jobOrderReference: string): Promise<string | null> {
+    const jobOrders = await this.salesService.getJobOrders();
+    return jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference)?.orgNodeId ?? null;
+  }
 
   async createDeliveryOrder(input: CreateDeliveryOrderInput): Promise<DeliveryOrderRecord> {
     const scheduledDate = new Date(input.scheduledDate);
@@ -14,16 +23,17 @@ export class DeliveryService {
       throw new DeliveryValidationError('Invalid scheduled date');
     }
 
-    // Generate delivery number: DO-YYYY-MM-DD-XXXX
     const datePart = scheduledDate.toISOString().slice(0, 10).replace(/-/g, '');
     const existingToday = (await this.repository.findDeliveryOrdersByJobOrder(input.jobOrderReference))
       .filter(order => order.deliveryNumber.startsWith(`DO-${datePart}`));
     const sequence = existingToday.length + 1;
     const deliveryNumber = `DO-${datePart}-${sequence.toString().padStart(4, '0')}`;
+    const orgNodeId = await this.tryGetOrgNodeId(input.jobOrderReference);
 
     return this.repository.insertDeliveryOrder({
       id: randomUUID(),
       deliveryNumber,
+      orgNodeId,
       ...input,
       scheduledDate
     });
@@ -99,9 +109,8 @@ export class DeliveryService {
       throw new DeliveryValidationError('Signed by is required');
     }
 
-    // Generate receipt number: DR-YYYY-MM-DD-XXXX
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const sequence = Math.floor(Math.random() * 8999) + 1000; // In real implementation, query existing receipts for today
+    const sequence = Math.floor(Math.random() * 8999) + 1000;
     const receiptNumber = `DR-${today}-${sequence.toString().padStart(4, '0')}`;
 
     return this.repository.insertDeliveryReceipt({
@@ -119,9 +128,8 @@ export class DeliveryService {
       throw new DeliveryValidationError('Performed by is required');
     }
 
-    // Generate report number: IR-YYYY-MM-DD-XXXX
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const sequence = Math.floor(Math.random() * 8999) + 1000; // In real implementation, query existing reports for today
+    const sequence = Math.floor(Math.random() * 8999) + 1000;
     const reportNumber = `IR-${today}-${sequence.toString().padStart(4, '0')}`;
 
     return this.repository.insertInstallationReport({

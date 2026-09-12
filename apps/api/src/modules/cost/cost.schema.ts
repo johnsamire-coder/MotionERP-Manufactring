@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { check, index, numeric, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { orgNode } from '../organization/organization.schema';
 
 export const costSchema = pgSchema('cost');
 
@@ -17,6 +18,7 @@ export const costComponentType = costSchema.table('component_type', {
 export const jobCostSheet = costSchema.table('job_cost_sheet', {
   id: uuid('id').primaryKey().defaultRandom(),
   jobOrderReference: text('job_order_reference').notNull().unique(),
+  orgNodeId: uuid('org_node_id').references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   currencyCode: text('currency_code').notNull().default('EGP'),
   status: text('status').notNull().default('draft'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -24,6 +26,7 @@ export const jobCostSheet = costSchema.table('job_cost_sheet', {
 }, (t) => [
   check('job_cost_sheet_status_valid', sql`${t.status} in ('draft', 'active', 'closed')`),
   index('idx_job_cost_sheet_reference').on(t.jobOrderReference),
+  index('idx_job_cost_sheet_org_node').on(t.orgNodeId),
 ]);
 
 export const costEntry = costSchema.table('entry', {
@@ -34,11 +37,11 @@ export const costEntry = costSchema.table('entry', {
   componentTypeId: uuid('component_type_id')
     .notNull()
     .references(() => costComponentType.id, { onDelete: 'restrict' }),
-  entryType: text('entry_type').notNull(), // 'estimated' | 'actual'
+  entryType: text('entry_type').notNull(),
   amount: numeric('amount', { precision: 12, scale: 4 }).notNull(),
   currencyCode: text('currency_code').notNull(),
   description: text('description'),
-  sourceReference: text('source_reference'), // e.g., BOM id, work center id
+  sourceReference: text('source_reference'),
   recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

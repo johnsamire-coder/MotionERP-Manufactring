@@ -7,7 +7,7 @@ export interface WorkCenterRecord {
 export interface CreateWorkCenterInput { code: string; name: string; orgNodeId: string; ratePerMinute?: string; }
 
 export interface ProductionStepRecord {
-  id: string; jobOrderReference: string; workCenterId: string; operationName: string;
+  id: string; jobOrderReference: string; orgNodeId: string | null; workCenterId: string; operationName: string;
   standardTimeMinutes: string; actualTimeMinutes: string | null; sequence: number; status: ProductionStepStatus;
 }
 export interface CreateProductionStepInput {

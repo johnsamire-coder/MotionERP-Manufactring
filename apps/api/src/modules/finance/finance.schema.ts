@@ -1,11 +1,13 @@
 import { sql } from 'drizzle-orm';
 import { check, index, numeric, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { orgNode } from '../organization/organization.schema';
 
 export const financeSchema = pgSchema('finance');
 
 export const collection = financeSchema.table('collection', {
   id: uuid('id').primaryKey().defaultRandom(),
   jobOrderReference: text('job_order_reference').notNull(),
+  orgNodeId: uuid('org_node_id').references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   collectionNumber: text('collection_number').notNull().unique(),
   collectionDate: timestamp('collection_date', { withTimezone: true }).notNull(),
   amount: numeric('amount', { precision: 12, scale: 4 }).notNull(),
@@ -23,11 +25,13 @@ export const collection = financeSchema.table('collection', {
   index('idx_collection_job_order').on(t.jobOrderReference),
   index('idx_collection_number').on(t.collectionNumber),
   index('idx_collection_date').on(t.collectionDate),
+  index('idx_collection_org_node').on(t.orgNodeId),
 ]);
 
 export const retention = financeSchema.table('retention', {
   id: uuid('id').primaryKey().defaultRandom(),
   jobOrderReference: text('job_order_reference').notNull(),
+  orgNodeId: uuid('org_node_id').references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   retentionNumber: text('retention_number').notNull().unique(),
   originalAmount: numeric('original_amount', { precision: 12, scale: 4 }).notNull(),
   releasedAmount: numeric('released_amount', { precision: 12, scale: 4 }).notNull().default('0'),
@@ -45,6 +49,7 @@ export const retention = financeSchema.table('retention', {
   index('idx_retention_job_order').on(t.jobOrderReference),
   index('idx_retention_number').on(t.retentionNumber),
   index('idx_retention_due_date').on(t.dueDate),
+  index('idx_retention_org_node').on(t.orgNodeId),
 ]);
 
 export type Collection = typeof collection.$inferSelect;

@@ -8,29 +8,29 @@ import type {
 } from './technical.types';
 
 const docColumns = {
-  id: technicalDocument.id, jobOrderReference: technicalDocument.jobOrderReference,
+  id: technicalDocument.id, jobOrderReference: technicalDocument.jobOrderReference, orgNodeId: technicalDocument.orgNodeId,
   documentType: technicalDocument.documentType, fileReference: technicalDocument.fileReference,
   version: technicalDocument.version, note: technicalDocument.note, createdAt: technicalDocument.createdAt,
 };
 const bomColumns = {
-  id: bom.id, jobOrderReference: bom.jobOrderReference, productItemId: bom.productItemId,
+  id: bom.id, jobOrderReference: bom.jobOrderReference, orgNodeId: bom.orgNodeId, productItemId: bom.productItemId,
   version: bom.version, outputQuantity: bom.outputQuantity, status: bom.status,
 };
 const bomLineColumns = { id: bomLine.id, bomId: bomLine.bomId, componentItemId: bomLine.componentItemId, quantity: bomLine.quantity, lineNumber: bomLine.lineNumber };
 
-interface DocRow { id: string; jobOrderReference: string; documentType: string; fileReference: string; version: number; note: string | null; createdAt: Date; }
-interface BomRow { id: string; jobOrderReference: string; productItemId: string; version: number; outputQuantity: string; status: string; }
+interface DocRow { id: string; jobOrderReference: string; orgNodeId: string | null; documentType: string; fileReference: string; version: number; note: string | null; createdAt: Date; }
+interface BomRow { id: string; jobOrderReference: string; orgNodeId: string | null; productItemId: string; version: number; outputQuantity: string; status: string; }
 interface BomLineRow { id: string; bomId: string; componentItemId: string; quantity: string; lineNumber: number; }
 
 function toDocRecord(row: DocRow): TechnicalDocumentRecord {
-  return { id: row.id, jobOrderReference: row.jobOrderReference, documentType: row.documentType as DocumentType,
+  return { id: row.id, jobOrderReference: row.jobOrderReference, orgNodeId: row.orgNodeId, documentType: row.documentType as DocumentType,
     fileReference: row.fileReference, version: row.version, note: row.note, createdAt: row.createdAt.toISOString() };
 }
 function toBomLineRecord(row: BomLineRow): BomLineRecord {
   return { id: row.id, bomId: row.bomId, componentItemId: row.componentItemId, quantity: row.quantity, lineNumber: row.lineNumber };
 }
 function toBomRecord(row: BomRow, lines: BomLineRecord[]): BomRecord {
-  return { id: row.id, jobOrderReference: row.jobOrderReference, productItemId: row.productItemId,
+  return { id: row.id, jobOrderReference: row.jobOrderReference, orgNodeId: row.orgNodeId, productItemId: row.productItemId,
     version: row.version, outputQuantity: row.outputQuantity, status: row.status as BomStatus, lines };
 }
 
@@ -44,9 +44,9 @@ export class TechnicalRepository {
       : await this.database.db.select(docColumns).from(technicalDocument).orderBy(asc(technicalDocument.createdAt));
     return rows.map(toDocRecord);
   }
-  async insertDocument(input: CreateTechnicalDocumentInput & { id: string }): Promise<TechnicalDocumentRecord> {
+  async insertDocument(input: CreateTechnicalDocumentInput & { id: string; orgNodeId: string | null }): Promise<TechnicalDocumentRecord> {
     const rows = await this.database.db.insert(technicalDocument).values({
-      id: input.id, jobOrderReference: input.jobOrderReference, documentType: input.documentType,
+      id: input.id, jobOrderReference: input.jobOrderReference, orgNodeId: input.orgNodeId, documentType: input.documentType,
       fileReference: input.fileReference, note: input.note ?? null,
     }).returning(docColumns);
     return toDocRecord(rows[0]!);
@@ -70,9 +70,9 @@ export class TechnicalRepository {
     const match = rows.find((r) => r.version === version);
     return match ? toBomRecord(match, []) : null;
   }
-  async insertBom(input: CreateBomInput & { id: string; version: number }): Promise<BomRecord> {
+  async insertBom(input: CreateBomInput & { id: string; version: number; orgNodeId: string | null }): Promise<BomRecord> {
     const rows = await this.database.db.insert(bom).values({
-      id: input.id, jobOrderReference: input.jobOrderReference, productItemId: input.productItemId,
+      id: input.id, jobOrderReference: input.jobOrderReference, orgNodeId: input.orgNodeId, productItemId: input.productItemId,
       version: input.version, outputQuantity: input.outputQuantity ?? '1',
     }).returning(bomColumns);
     const inserted = rows[0]!;

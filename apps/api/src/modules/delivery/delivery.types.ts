@@ -4,6 +4,7 @@ export type InstallationStatus = 'scheduled' | 'in_progress' | 'completed' | 'ca
 export interface DeliveryOrderRecord {
   id: string;
   jobOrderReference: string;
+  orgNodeId: string | null;
   deliveryNumber: string;
   scheduledDate: Date;
   actualDate: Date | null;

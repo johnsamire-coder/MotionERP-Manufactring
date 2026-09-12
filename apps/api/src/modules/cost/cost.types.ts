@@ -17,6 +17,7 @@ export interface CreateCostComponentTypeInput {
 export interface JobCostSheetRecord {
   id: string;
   jobOrderReference: string;
+  orgNodeId: string | null;
   currencyCode: string;
   status: JobCostSheetStatus;
 }

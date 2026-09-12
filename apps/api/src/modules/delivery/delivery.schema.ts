@@ -1,11 +1,13 @@
 import { sql } from 'drizzle-orm';
 import { check, index, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { orgNode } from '../organization/organization.schema';
 
 export const deliverySchema = pgSchema('delivery');
 
 export const deliveryOrder = deliverySchema.table('delivery_order', {
   id: uuid('id').primaryKey().defaultRandom(),
   jobOrderReference: text('job_order_reference').notNull(),
+  orgNodeId: uuid('org_node_id').references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   deliveryNumber: text('delivery_number').notNull().unique(),
   scheduledDate: timestamp('scheduled_date', { withTimezone: true }).notNull(),
   actualDate: timestamp('actual_date', { withTimezone: true }),
@@ -19,6 +21,7 @@ export const deliveryOrder = deliverySchema.table('delivery_order', {
   check('delivery_order_status_valid', sql`${t.status} in ('scheduled', 'in_transit', 'delivered', 'cancelled')`),
   index('idx_delivery_order_job_order').on(t.jobOrderReference),
   index('idx_delivery_order_number').on(t.deliveryNumber),
+  index('idx_delivery_order_org_node').on(t.orgNodeId),
 ]);
 
 export const installation = deliverySchema.table('installation', {

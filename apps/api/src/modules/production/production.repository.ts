@@ -5,7 +5,8 @@ import { materialRequest } from './production.schema';
 import type { CreateMaterialRequestInput, MaterialRequestRecord, MaterialRequestStatus } from './production.types';
 
 const columns = {
-  id: materialRequest.id, jobOrderReference: materialRequest.jobOrderReference, itemId: materialRequest.itemId,
+  id: materialRequest.id, jobOrderReference: materialRequest.jobOrderReference, orgNodeId: materialRequest.orgNodeId,
+  itemId: materialRequest.itemId,
   warehouseId: materialRequest.warehouseId, plannedQuantity: materialRequest.plannedQuantity,
   requestedQuantity: materialRequest.requestedQuantity, issuedQuantity: materialRequest.issuedQuantity,
   actualUsedQuantity: materialRequest.actualUsedQuantity, status: materialRequest.status,
@@ -13,7 +14,7 @@ const columns = {
 };
 
 interface Row {
-  id: string; jobOrderReference: string; itemId: string; warehouseId: string;
+  id: string; jobOrderReference: string; orgNodeId: string | null; itemId: string; warehouseId: string;
   plannedQuantity: string; requestedQuantity: string; issuedQuantity: string | null;
   actualUsedQuantity: string | null; status: string; deviationReason: string | null;
   createdAt: Date; updatedAt: Date;
@@ -21,7 +22,7 @@ interface Row {
 
 function toRecord(row: Row): MaterialRequestRecord {
   return {
-    id: row.id, jobOrderReference: row.jobOrderReference, itemId: row.itemId, warehouseId: row.warehouseId,
+    id: row.id, jobOrderReference: row.jobOrderReference, orgNodeId: row.orgNodeId, itemId: row.itemId, warehouseId: row.warehouseId,
     plannedQuantity: row.plannedQuantity, requestedQuantity: row.requestedQuantity, issuedQuantity: row.issuedQuantity,
     actualUsedQuantity: row.actualUsedQuantity, status: row.status as MaterialRequestStatus,
     deviationReason: row.deviationReason, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(),
@@ -44,9 +45,9 @@ export class ProductionRepository {
     return rows[0] ? toRecord(rows[0]) : null;
   }
 
-  async insertRequest(input: CreateMaterialRequestInput & { id: string; status: MaterialRequestStatus }): Promise<MaterialRequestRecord> {
+  async insertRequest(input: CreateMaterialRequestInput & { id: string; status: MaterialRequestStatus; orgNodeId: string | null }): Promise<MaterialRequestRecord> {
     const rows = await this.database.db.insert(materialRequest).values({
-      id: input.id, jobOrderReference: input.jobOrderReference, itemId: input.itemId, warehouseId: input.warehouseId,
+      id: input.id, jobOrderReference: input.jobOrderReference, orgNodeId: input.orgNodeId, itemId: input.itemId, warehouseId: input.warehouseId,
       plannedQuantity: input.plannedQuantity, requestedQuantity: input.requestedQuantity, status: input.status,
     }).returning(columns);
     return toRecord(rows[0]!);

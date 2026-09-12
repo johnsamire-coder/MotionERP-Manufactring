@@ -23,10 +23,10 @@ export const workCenter = productionOpsSchema.table('work_center', {
   index('work_center_org_node_idx').on(t.orgNodeId),
 ]);
 
-/** One actual production step of a Job Order's routing. Standard time is the plan; actual time is recorded when the step is closed, driving real labor cost. */
 export const productionStep = productionOpsSchema.table('production_step', {
   id: uuid('id').primaryKey().defaultRandom(),
   jobOrderReference: text('job_order_reference').notNull(),
+  orgNodeId: uuid('org_node_id').references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   workCenterId: uuid('work_center_id')
     .notNull()
     .references(() => workCenter.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
@@ -42,6 +42,7 @@ export const productionStep = productionOpsSchema.table('production_step', {
   check('production_step_status_valid', sql`${t.status} in ('pending', 'in_progress', 'done')`),
   index('production_step_job_order_idx').on(t.jobOrderReference),
   index('production_step_work_center_idx').on(t.workCenterId),
+  index('production_step_org_node_idx').on(t.orgNodeId),
 ]);
 
 export type WorkCenter = typeof workCenter.$inferSelect;

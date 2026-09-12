@@ -2,7 +2,7 @@ export type DocumentType = 'shop_drawing' | 'cutting_list' | 'other';
 export type BomStatus = 'draft' | 'approved' | 'archived';
 
 export interface TechnicalDocumentRecord {
-  id: string; jobOrderReference: string; documentType: DocumentType;
+  id: string; jobOrderReference: string; orgNodeId: string | null; documentType: DocumentType;
   fileReference: string; version: number; note: string | null; createdAt: string;
 }
 export interface CreateTechnicalDocumentInput {
@@ -11,7 +11,7 @@ export interface CreateTechnicalDocumentInput {
 
 export interface BomLineRecord { id: string; bomId: string; componentItemId: string; quantity: string; lineNumber: number; }
 export interface BomRecord {
-  id: string; jobOrderReference: string; productItemId: string; version: number;
+  id: string; jobOrderReference: string; orgNodeId: string | null; productItemId: string; version: number;
   outputQuantity: string; status: BomStatus; lines: BomLineRecord[];
 }
 export interface CreateBomLineInput { componentItemId: string; quantity: string; }

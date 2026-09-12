@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { InventoryService } from '../inventory/inventory.service';
+import { SalesService } from '../sales/sales.service';
 import { ProductionNotFoundError, ProductionValidationError } from './production.errors';
 import { ProductionRepository } from './production.repository';
 import type { CreateMaterialRequestInput, MaterialRequestRecord } from './production.types';
@@ -10,7 +11,20 @@ export class ProductionService {
   constructor(
     private readonly repository: ProductionRepository,
     private readonly inventoryService: InventoryService,
+    private readonly salesService: SalesService,
   ) {}
+
+  /**
+   * Best-effort lookup of the referenced job order's orgNodeId. Unlike
+   * technical/planning, production never required the job order to exist
+   * before this change — adding that requirement now would be a new
+   * validation rule, not just organizational linking — so a missing job
+   * order simply leaves orgNodeId as null instead of throwing.
+   */
+  private async tryGetOrgNodeId(jobOrderReference: string): Promise<string | null> {
+    const jobOrders = await this.salesService.getJobOrders();
+    return jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference)?.orgNodeId ?? null;
+  }
 
   async getRequests(jobOrderReference?: string): Promise<MaterialRequestRecord[]> {
     return this.repository.listRequests(jobOrderReference);
@@ -22,14 +36,6 @@ export class ProductionService {
     return found;
   }
 
-  /**
-   * The core fix the owner insisted on: requesting more than plannedQuantity
-   * is NEVER auto-approved — it is held as 'pending_review' for a human
-   * decision. Requesting at or below the plan auto-approves and may proceed
-   * to actual issuance. Requesting less is also allowed through (still
-   * 'approved'), but its under-usage is only reconciled at closeout via
-   * actualUsedQuantity, never silently treated as "savings".
-   */
   async createRequest(input: CreateMaterialRequestInput): Promise<MaterialRequestRecord> {
     const planned = Number(input.plannedQuantity);
     const requested = Number(input.requestedQuantity);
@@ -37,10 +43,10 @@ export class ProductionService {
     if (!Number.isFinite(requested) || requested <= 0) throw new ProductionValidationError('requestedQuantity must be positive');
 
     const status = requested > planned ? 'pending_review' : 'approved';
-    return this.repository.insertRequest({ id: randomUUID(), ...input, status });
+    const orgNodeId = await this.tryGetOrgNodeId(input.jobOrderReference);
+    return this.repository.insertRequest({ id: randomUUID(), orgNodeId, ...input, status });
   }
 
-  /** A human reviewing a pending_review request can approve it explicitly, recording why the deviation is acceptable. */
   async approveDeviation(id: string, deviationReason: string): Promise<MaterialRequestRecord> {
     const found = await this.repository.findRequestById(id);
     if (!found) throw new ProductionNotFoundError(`material request ${id} does not exist`);
@@ -62,7 +68,6 @@ export class ProductionService {
     return this.repository.setStatus(id, 'rejected', reason);
   }
 
-  /** Physically issues the material — only allowed once the request is 'approved'. Delegates to InventoryService, which itself enforces available stock (D31). */
   async issueRequest(id: string): Promise<MaterialRequestRecord> {
     const found = await this.repository.findRequestById(id);
     if (!found) throw new ProductionNotFoundError(`material request ${id} does not exist`);
@@ -76,7 +81,6 @@ export class ProductionService {
     return this.repository.recordIssue(id, found.requestedQuantity);
   }
 
-  /** Closes the request, recording the final actual-used quantity (after any scrap) for cost/reporting purposes. */
   async closeRequest(id: string, actualUsedQuantity: string): Promise<MaterialRequestRecord> {
     const found = await this.repository.findRequestById(id);
     if (!found) throw new ProductionNotFoundError(`material request ${id} does not exist`);

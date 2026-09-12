@@ -134,6 +134,20 @@
       "when": 1789232422838,
       "tag": "0018_steep_masked_marvel",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789232658023,
+      "tag": "0019_flimsy_trauma",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789233362179,
+      "tag": "0020_elite_prodigy",
+      "breakpoints": true
     }
   ]
 }

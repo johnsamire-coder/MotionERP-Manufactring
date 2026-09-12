@@ -5,7 +5,7 @@ import { deliveryOrder, deliveryReceipt, installation, installationReport } from
 import type { CreateDeliveryOrderInput, CreateDeliveryReceiptInput, CreateInstallationInput, CreateInstallationReportInput, DeliveryOrderRecord, DeliveryReceiptRecord, InstallationRecord, InstallationReportRecord, UpdateDeliveryOrderInput, UpdateInstallationInput } from './delivery.types';
 
 const doColumns = {
-  id: deliveryOrder.id, jobOrderReference: deliveryOrder.jobOrderReference, deliveryNumber: deliveryOrder.deliveryNumber,
+  id: deliveryOrder.id, jobOrderReference: deliveryOrder.jobOrderReference, orgNodeId: deliveryOrder.orgNodeId, deliveryNumber: deliveryOrder.deliveryNumber,
   scheduledDate: deliveryOrder.scheduledDate, actualDate: deliveryOrder.actualDate, status: deliveryOrder.status,
   vehiclePlate: deliveryOrder.vehiclePlate, driverName: deliveryOrder.driverName, notes: deliveryOrder.notes
 };
@@ -28,7 +28,7 @@ const irColumns = {
   issuesFound: installationReport.issuesFound, correctiveActions: installationReport.correctiveActions, verifiedAt: installationReport.verifiedAt
 };
 
-interface DoRow { id: string; jobOrderReference: string; deliveryNumber: string; scheduledDate: Date; actualDate: Date | null; status: string; vehiclePlate: string | null; driverName: string | null; notes: string | null; }
+interface DoRow { id: string; jobOrderReference: string; orgNodeId: string | null; deliveryNumber: string; scheduledDate: Date; actualDate: Date | null; status: string; vehiclePlate: string | null; driverName: string | null; notes: string | null; }
 interface InstRow { id: string; deliveryOrderId: string; scheduledDate: Date; actualStartDate: Date | null; actualEndDate: Date | null; status: string; technicianNames: string | null; location: string | null; notes: string | null; }
 interface DrRow { id: string; deliveryOrderId: string; receiptNumber: string; signedBy: string; signatureImage: string | null; receivedItems: string | null; notes: string | null; signedAt: Date; }
 interface IrRow { id: string; installationId: string; reportNumber: string; performedBy: string; verifiedBy: string | null; completionNotes: string | null; issuesFound: string | null; correctiveActions: string | null; verifiedAt: Date | null; }
@@ -57,9 +57,9 @@ export class DeliveryRepository {
     return rows.map(toDoRecord);
   }
 
-  async insertDeliveryOrder(input: CreateDeliveryOrderInput & { id: string; deliveryNumber: string }): Promise<DeliveryOrderRecord> {
+  async insertDeliveryOrder(input: CreateDeliveryOrderInput & { id: string; deliveryNumber: string; orgNodeId: string | null }): Promise<DeliveryOrderRecord> {
     const rows = await this.database.db.insert(deliveryOrder).values({
-      id: input.id, jobOrderReference: input.jobOrderReference, deliveryNumber: input.deliveryNumber,
+      id: input.id, jobOrderReference: input.jobOrderReference, orgNodeId: input.orgNodeId, deliveryNumber: input.deliveryNumber,
       scheduledDate: input.scheduledDate, vehiclePlate: input.vehiclePlate, driverName: input.driverName, notes: input.notes
     }).returning(doColumns);
     return toDoRecord(rows[0]!);

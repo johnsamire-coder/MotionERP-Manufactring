@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
+import { SalesService } from '../sales/sales.service';
 import { ProductionOpsNotFoundError, ProductionOpsValidationError } from './production_ops.errors';
 import { ProductionOpsRepository } from './production_ops.repository';
 import type {
@@ -8,7 +9,15 @@ import type {
 
 @Injectable()
 export class ProductionOpsService {
-  constructor(private readonly repository: ProductionOpsRepository) {}
+  constructor(
+    private readonly repository: ProductionOpsRepository,
+    private readonly salesService: SalesService,
+  ) {}
+
+  private async tryGetOrgNodeId(jobOrderReference: string): Promise<string | null> {
+    const jobOrders = await this.salesService.getJobOrders();
+    return jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference)?.orgNodeId ?? null;
+  }
 
   async getWorkCenters(): Promise<WorkCenterRecord[]> { return this.repository.listWorkCenters(); }
 
@@ -28,7 +37,8 @@ export class ProductionOpsService {
     const time = Number(input.standardTimeMinutes);
     if (!Number.isFinite(time) || time <= 0) throw new ProductionOpsValidationError('standardTimeMinutes must be positive');
     const sequence = (await this.repository.countSteps(input.jobOrderReference)) + 1;
-    return this.repository.insertStep({ id: randomUUID(), sequence, ...input });
+    const orgNodeId = await this.tryGetOrgNodeId(input.jobOrderReference);
+    return this.repository.insertStep({ id: randomUUID(), sequence, orgNodeId, ...input });
   }
 
   async startStep(id: string): Promise<ProductionStepRecord> {
@@ -38,7 +48,6 @@ export class ProductionOpsService {
     return this.repository.setStepStatus(id, 'in_progress');
   }
 
-  /** Closes the step and records its ACTUAL time — this is what drives real labor cost, separate from the standard/planned time. */
   async closeStep(id: string, actualTimeMinutes: string): Promise<ProductionStepRecord> {
     const step = await this.repository.findStepById(id);
     if (!step) throw new ProductionOpsNotFoundError(`production step ${id} does not exist`);
@@ -48,7 +57,6 @@ export class ProductionOpsService {
     return this.repository.recordActualTime(id, actualTimeMinutes);
   }
 
-  /** Aggregates standard vs actual labor cost for a job order — the production-side half of the estimated/actual cost comparison the owner described. */
   async getJobOrderLaborCost(jobOrderReference: string): Promise<JobOrderLaborCost> {
     const steps = await this.repository.listSteps(jobOrderReference);
     let totalStandardMinutes = 0;

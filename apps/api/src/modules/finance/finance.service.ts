@@ -1,12 +1,21 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
+import { SalesService } from '../sales/sales.service';
 import { FinanceNotFoundError, FinanceValidationError } from './finance.errors';
 import { FinanceRepository } from './finance.repository';
 import type { CollectionRecord, CreateCollectionInput, CreateRetentionInput, RetentionRecord } from './finance.types';
 
 @Injectable()
 export class FinanceService {
-  constructor(private readonly repository: FinanceRepository) {}
+  constructor(
+    private readonly repository: FinanceRepository,
+    private readonly salesService: SalesService,
+  ) {}
+
+  private async tryGetOrgNodeId(jobOrderReference: string): Promise<string | null> {
+    const jobOrders = await this.salesService.getJobOrders();
+    return jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference)?.orgNodeId ?? null;
+  }
 
   async getCollections(jobOrderReference?: string): Promise<CollectionRecord[]> { return this.repository.listCollections(jobOrderReference); }
 
@@ -17,8 +26,9 @@ export class FinanceService {
     const sequence = (await this.repository.countCollections()) + 1;
     const year = new Date().getFullYear();
     const collectionNumber = `COL-${year}-${String(sequence).padStart(6, '0')}`;
+    const orgNodeId = await this.tryGetOrgNodeId(input.jobOrderReference);
 
-    return this.repository.insertCollection({ id: randomUUID(), collectionNumber, ...input });
+    return this.repository.insertCollection({ id: randomUUID(), collectionNumber, orgNodeId, ...input });
   }
 
   async getRetentions(jobOrderReference?: string): Promise<RetentionRecord[]> { return this.repository.listRetentions(jobOrderReference); }
@@ -31,11 +41,11 @@ export class FinanceService {
     const sequence = (await this.repository.countRetentions()) + 1;
     const year = new Date().getFullYear();
     const retentionNumber = `RET-${year}-${String(sequence).padStart(6, '0')}`;
+    const orgNodeId = await this.tryGetOrgNodeId(input.jobOrderReference);
 
-    return this.repository.insertRetention({ id: randomUUID(), retentionNumber, ...input });
+    return this.repository.insertRetention({ id: randomUUID(), retentionNumber, orgNodeId, ...input });
   }
 
-  /** Releasing retention: amount must be positive and cannot exceed what remains (originalAmount - already released). */
   async releaseRetention(id: string, amount: string): Promise<RetentionRecord> {
     const retentionRecord = await this.repository.findRetentionById(id);
     if (!retentionRecord) throw new FinanceNotFoundError(`retention ${id} does not exist`);

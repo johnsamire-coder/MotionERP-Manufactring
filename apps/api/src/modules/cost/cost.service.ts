@@ -1,17 +1,26 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
+import { SalesService } from '../sales/sales.service';
 import { CostNotFoundError, CostValidationError } from './cost.errors';
 import { CostRepository } from './cost.repository';
 import type { CreateCostComponentTypeInput, CreateCostEntryInput, CreateJobCostSheetInput, CostComponentTypeRecord, CostEntryRecord, CostSummary, JobCostSheetRecord } from './cost.types';
 
 @Injectable()
 export class CostService {
-  constructor(private readonly repository: CostRepository) {}
+  constructor(
+    private readonly repository: CostRepository,
+    private readonly salesService: SalesService,
+  ) {}
+
+  private async tryGetOrgNodeId(jobOrderReference: string): Promise<string | null> {
+    const jobOrders = await this.salesService.getJobOrders();
+    return jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference)?.orgNodeId ?? null;
+  }
 
   async createComponentType(input: CreateCostComponentTypeInput): Promise<CostComponentTypeRecord> {
     const code = input.code.trim().toLowerCase();
     const name = input.name.trim();
-    
+
     if (!code || !/^[a-z_][a-z0-9_]*$/.test(code)) {
       throw new CostValidationError('Invalid component type code format');
     }
@@ -28,8 +37,9 @@ export class CostService {
   async getOrCreateCostSheet(jobOrderReference: string, currencyCode?: string): Promise<JobCostSheetRecord> {
     let sheet = await this.repository.findCostSheetByJobOrder(jobOrderReference);
     if (!sheet) {
+      const orgNodeId = await this.tryGetOrgNodeId(jobOrderReference);
       sheet = await this.repository.insertCostSheet({
-        id: randomUUID(), jobOrderReference, currencyCode
+        id: randomUUID(), jobOrderReference, currencyCode, orgNodeId
       });
     }
     return sheet;
@@ -60,7 +70,7 @@ export class CostService {
       const estimated = Number(entry.estimated);
       const actual = Number(entry.actual);
       const variance = actual - estimated;
-      
+
       estimatedTotal += estimated;
       actualTotal += actual;
 
@@ -89,9 +99,9 @@ export class CostService {
   async addMaterialCost(jobOrderReference: string, amount: string, description?: string, sourceReference?: string): Promise<CostEntryRecord> {
     const materialType = await this.repository.findComponentTypeByCode('material');
     if (!materialType) throw new CostNotFoundError('Material component type not found');
-    
+
     const sheet = await this.getOrCreateCostSheet(jobOrderReference);
-    
+
     return this.addCostEntry({
       costSheetId: sheet.id,
       componentTypeId: materialType.id,
@@ -106,9 +116,9 @@ export class CostService {
   async addLaborCost(jobOrderReference: string, amount: string, description?: string, sourceReference?: string): Promise<CostEntryRecord> {
     const laborType = await this.repository.findComponentTypeByCode('labor');
     if (!laborType) throw new CostNotFoundError('Labor component type not found');
-    
+
     const sheet = await this.getOrCreateCostSheet(jobOrderReference);
-    
+
     return this.addCostEntry({
       costSheetId: sheet.id,
       componentTypeId: laborType.id,

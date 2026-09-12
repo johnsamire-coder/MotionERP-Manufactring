@@ -9,14 +9,14 @@ import type {
 
 const wcColumns = { id: workCenter.id, code: workCenter.code, name: workCenter.name, orgNodeId: workCenter.orgNodeId, ratePerMinute: workCenter.ratePerMinute, status: workCenter.status };
 const stepColumns = {
-  id: productionStep.id, jobOrderReference: productionStep.jobOrderReference, workCenterId: productionStep.workCenterId,
+  id: productionStep.id, jobOrderReference: productionStep.jobOrderReference, orgNodeId: productionStep.orgNodeId, workCenterId: productionStep.workCenterId,
   operationName: productionStep.operationName, standardTimeMinutes: productionStep.standardTimeMinutes,
   actualTimeMinutes: productionStep.actualTimeMinutes, sequence: productionStep.sequence, status: productionStep.status,
 };
 
 interface WcRow { id: string; code: string; name: string; orgNodeId: string; ratePerMinute: string; status: string; }
 interface StepRow {
-  id: string; jobOrderReference: string; workCenterId: string; operationName: string;
+  id: string; jobOrderReference: string; orgNodeId: string | null; workCenterId: string; operationName: string;
   standardTimeMinutes: string; actualTimeMinutes: string | null; sequence: number; status: string;
 }
 
@@ -24,7 +24,7 @@ function toWcRecord(row: WcRow): WorkCenterRecord {
   return { id: row.id, code: row.code, name: row.name, orgNodeId: row.orgNodeId, ratePerMinute: row.ratePerMinute, status: row.status as WorkCenterStatus };
 }
 function toStepRecord(row: StepRow): ProductionStepRecord {
-  return { id: row.id, jobOrderReference: row.jobOrderReference, workCenterId: row.workCenterId,
+  return { id: row.id, jobOrderReference: row.jobOrderReference, orgNodeId: row.orgNodeId, workCenterId: row.workCenterId,
     operationName: row.operationName, standardTimeMinutes: row.standardTimeMinutes,
     actualTimeMinutes: row.actualTimeMinutes, sequence: row.sequence, status: row.status as ProductionStepStatus };
 }
@@ -66,9 +66,9 @@ export class ProductionOpsRepository {
     const rows = await this.database.db.select({ id: productionStep.id }).from(productionStep).where(eq(productionStep.jobOrderReference, jobOrderReference));
     return rows.length;
   }
-  async insertStep(input: CreateProductionStepInput & { id: string; sequence: number }): Promise<ProductionStepRecord> {
+  async insertStep(input: CreateProductionStepInput & { id: string; sequence: number; orgNodeId: string | null }): Promise<ProductionStepRecord> {
     const rows = await this.database.db.insert(productionStep).values({
-      id: input.id, jobOrderReference: input.jobOrderReference, workCenterId: input.workCenterId,
+      id: input.id, jobOrderReference: input.jobOrderReference, orgNodeId: input.orgNodeId, workCenterId: input.workCenterId,
       operationName: input.operationName, standardTimeMinutes: input.standardTimeMinutes, sequence: input.sequence,
     }).returning(stepColumns);
     return toStepRecord(rows[0]!);

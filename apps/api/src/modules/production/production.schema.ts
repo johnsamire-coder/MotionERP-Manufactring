@@ -2,21 +2,14 @@ import { sql } from 'drizzle-orm';
 import { check, index, numeric, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { item } from '../catalog/catalog.schema';
 import { warehouse } from '../inventory/inventory.schema';
+import { orgNode } from '../organization/organization.schema';
 
 export const productionSchema = pgSchema('production');
 
-/**
- * Tracks the FOUR quantities the owner insisted on, and never auto-approves
- * a deviation: plannedQuantity (from BOM), requestedQuantity (what production
- * asked for), issuedQuantity (what was actually taken from the warehouse),
- * actualUsedQuantity (final, after any scrap — recorded at closeout).
- * A request exceeding plannedQuantity is held ('pending_review'), never
- * auto-approved (D9 owner requirement — this is the exact fix for the
- * original design's flaw of silent exact-BOM auto-issue).
- */
 export const materialRequest = productionSchema.table('material_request', {
   id: uuid('id').primaryKey().defaultRandom(),
   jobOrderReference: text('job_order_reference').notNull(),
+  orgNodeId: uuid('org_node_id').references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   itemId: uuid('item_id')
     .notNull()
     .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
@@ -39,6 +32,7 @@ export const materialRequest = productionSchema.table('material_request', {
     sql`${t.status} in ('approved', 'pending_review', 'rejected', 'issued', 'closed')`,
   ),
   index('material_request_job_order_idx').on(t.jobOrderReference),
+  index('material_request_org_node_idx').on(t.orgNodeId),
 ]);
 
 export type MaterialRequest = typeof materialRequest.$inferSelect;
