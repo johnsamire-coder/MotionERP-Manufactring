@@ -10,6 +10,7 @@ export class CreateAccountTypeDto {
 export class CreateChartOfAccountsDto {
   @IsString() @MaxLength(64) code!: string;
   @IsString() @MaxLength(255) name!: string;
+  @IsUUID() orgNodeId!: string;
   @IsUUID() accountTypeId!: string;
   @IsOptional() @IsUUID() parentId?: string;
 }
@@ -22,6 +23,7 @@ export class JournalLineDto {
 }
 
 export class CreateJournalEntryDto {
+  @IsUUID() orgNodeId!: string;
   @IsString() @MaxLength(500) description!: string;
   @IsOptional() @IsString() reference?: string;
   @IsOptional() @IsString() entryDate?: string;

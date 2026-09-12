@@ -23,11 +23,22 @@ export class AccountingService {
 
   async getAccounts(): Promise<ChartOfAccountsRecord[]> { return this.repository.listAccounts(); }
 
+  /**
+   * Chart of accounts is scoped per company (org_node) — orgNodeId is
+   * mandatory here (D2/D20: DB-level FK to org_node, no OrganizationService
+   * call needed, same pattern as inventory.warehouse). Code uniqueness is
+   * checked per company, not globally, and a parent account must belong to
+   * the SAME company as its child — this is a real validation gap fix, not
+   * just organizational tagging: previously nothing stopped an account from
+   * being parented under an account of a different company.
+   */
   async createAccount(input: CreateChartOfAccountsInput): Promise<ChartOfAccountsRecord> {
     const code = input.code.trim();
     if (!code) throw new AccountingValidationError('code is required');
-    const existing = await this.repository.findAccountByCode(code);
-    if (existing) throw new AccountingValidationError(`an account with code "${code}" already exists`);
+    if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
+
+    const existing = await this.repository.findAccountByCode(input.orgNodeId, code);
+    if (existing) throw new AccountingValidationError(`an account with code "${code}" already exists for this company`);
 
     const accountType = await this.repository.findAccountTypeById(input.accountTypeId);
     if (!accountType) throw new AccountingNotFoundError(`account type ${input.accountTypeId} does not exist`);
@@ -35,11 +46,16 @@ export class AccountingService {
     if (input.parentId) {
       const parent = await this.repository.findAccountById(input.parentId);
       if (!parent) throw new AccountingNotFoundError(`parent account ${input.parentId} does not exist`);
-      // Parent accounts become non-leaf once they get a child (they cannot receive direct journal lines afterward — enforced in createEntry).
+      if (parent.orgNodeId !== input.orgNodeId) {
+        throw new AccountingValidationError(`parent account "${parent.code}" belongs to a different company`);
+      }
       await this.repository.markAsParent(input.parentId);
     }
 
-    return this.repository.insertAccount({ id: randomUUID(), code, name: input.name.trim(), accountTypeId: input.accountTypeId, parentId: input.parentId });
+    return this.repository.insertAccount({
+      id: randomUUID(), code, name: input.name.trim(), orgNodeId: input.orgNodeId,
+      accountTypeId: input.accountTypeId, parentId: input.parentId,
+    });
   }
 
   async getEntries(): Promise<JournalEntryRecord[]> { return this.repository.listEntries(); }
@@ -51,12 +67,15 @@ export class AccountingService {
   }
 
   /**
-   * Creates a journal entry in 'draft' status. Validates every line refers to
-   * a real, LEAF account (D35-style rule: postings only touch leaf accounts,
-   * never a parent/summary account) and that no line has both debit and
-   * credit or neither.
+   * Creates a journal entry in 'draft' status. orgNodeId is mandatory
+   * (user-supplied, like sales.quotation — not every entry traces back to a
+   * job order). Every line must reference a real LEAF account belonging to
+   * the SAME company as the entry — this cross-company check is new and
+   * closes a real gap: previously any leaf account from any company could
+   * be posted into any entry.
    */
   async createEntry(input: CreateJournalEntryInput): Promise<JournalEntryRecord> {
+    if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
     if (!input.lines || input.lines.length < 2) {
       throw new AccountingValidationError('a journal entry needs at least two lines (double-entry)');
     }
@@ -76,6 +95,9 @@ export class AccountingService {
       const account = await this.repository.findAccountById(line.accountId);
       if (!account) throw new AccountingNotFoundError(`account ${line.accountId} does not exist`);
       if (!account.isLeaf) throw new AccountingValidationError(`account ${account.code} is a parent account and cannot receive direct postings`);
+      if (account.orgNodeId !== input.orgNodeId) {
+        throw new AccountingValidationError(`account "${account.code}" belongs to a different company than this journal entry`);
+      }
     }
 
     const sequence = (await this.repository.countEntries()) + 1;
@@ -85,12 +107,6 @@ export class AccountingService {
     return this.repository.insertEntry({ id: randomUUID(), entryNumber, ...input });
   }
 
-  /**
-   * The one rule that can never be broken: total debit must equal total
-   * credit before a draft can be posted. This is checked HERE (at posting
-   * time), not at creation time, so a draft can be built incrementally
-   * across multiple lines before the final balance check.
-   */
   async postEntry(id: string): Promise<JournalEntryRecord> {
     const entry = await this.repository.findEntryById(id);
     if (!entry) throw new AccountingNotFoundError(`journal entry ${id} does not exist`);
@@ -116,7 +132,6 @@ export class AccountingService {
     return this.repository.setEntryStatus(id, 'cancelled');
   }
 
-  /** Running balance per account, computed only from POSTED entries (draft/cancelled entries never affect balances). */
   async getAccountBalances(): Promise<AccountBalance[]> {
     const rows = await this.repository.listAllPostedLinesWithAccounts();
     const byAccount = new Map<string, { code: string; name: string; debit: number; credit: number }>();

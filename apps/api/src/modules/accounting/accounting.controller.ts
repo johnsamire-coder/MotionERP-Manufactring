@@ -22,7 +22,7 @@ export class AccountingController {
 
   @Post('accounts') @HttpCode(201)
   async createAccount(@Body() dto: CreateChartOfAccountsDto): Promise<{ account: ChartOfAccountsRecord }> {
-    return { account: await this.service.createAccount({ code: dto.code, name: dto.name, accountTypeId: dto.accountTypeId, parentId: dto.parentId }) };
+    return { account: await this.service.createAccount({ code: dto.code, name: dto.name, orgNodeId: dto.orgNodeId, accountTypeId: dto.accountTypeId, parentId: dto.parentId }) };
   }
 
   @Get('entries')
@@ -34,7 +34,7 @@ export class AccountingController {
   @Post('entries') @HttpCode(201)
   async createEntry(@Body() dto: CreateJournalEntryDto): Promise<{ entry: JournalEntryRecord }> {
     const created = await this.service.createEntry({
-      description: dto.description, reference: dto.reference, entryDate: dto.entryDate,
+      orgNodeId: dto.orgNodeId, description: dto.description, reference: dto.reference, entryDate: dto.entryDate,
       lines: dto.lines.map((l) => ({ accountId: l.accountId, debitAmount: l.debitAmount, creditAmount: l.creditAmount, description: l.description })),
     });
     return { entry: created };

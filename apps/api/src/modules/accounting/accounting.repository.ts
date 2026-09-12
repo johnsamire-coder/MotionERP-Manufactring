@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import { accountType, chartOfAccounts, journalEntry, journalLine } from './accounting.schema';
 import type {
@@ -10,12 +10,12 @@ import type {
 
 const atColumns = { id: accountType.id, code: accountType.code, name: accountType.name, normalBalance: accountType.normalBalance };
 const coaColumns = {
-  id: chartOfAccounts.id, code: chartOfAccounts.code, name: chartOfAccounts.name,
+  id: chartOfAccounts.id, code: chartOfAccounts.code, name: chartOfAccounts.name, orgNodeId: chartOfAccounts.orgNodeId,
   accountTypeId: chartOfAccounts.accountTypeId, parentId: chartOfAccounts.parentId,
   isLeaf: chartOfAccounts.isLeaf, status: chartOfAccounts.status,
 };
 const jeColumns = {
-  id: journalEntry.id, entryNumber: journalEntry.entryNumber, reference: journalEntry.reference,
+  id: journalEntry.id, entryNumber: journalEntry.entryNumber, orgNodeId: journalEntry.orgNodeId, reference: journalEntry.reference,
   description: journalEntry.description, entryDate: journalEntry.entryDate, postedAt: journalEntry.postedAt, status: journalEntry.status,
 };
 const jlColumns = {
@@ -24,20 +24,20 @@ const jlColumns = {
 };
 
 interface AtRow { id: string; code: string; name: string; normalBalance: string; }
-interface CoaRow { id: string; code: string; name: string; accountTypeId: string; parentId: string | null; isLeaf: string; status: string; }
-interface JeRow { id: string; entryNumber: string; reference: string | null; description: string; entryDate: Date; postedAt: Date | null; status: string; }
+interface CoaRow { id: string; code: string; name: string; orgNodeId: string | null; accountTypeId: string; parentId: string | null; isLeaf: string; status: string; }
+interface JeRow { id: string; entryNumber: string; orgNodeId: string | null; reference: string | null; description: string; entryDate: Date; postedAt: Date | null; status: string; }
 interface JlRow { id: string; journalEntryId: string; accountId: string; debitAmount: string; creditAmount: string; description: string | null; }
 
 function toAtRecord(row: AtRow): AccountTypeRecord { return { id: row.id, code: row.code, name: row.name, normalBalance: row.normalBalance as NormalBalance }; }
 function toCoaRecord(row: CoaRow): ChartOfAccountsRecord {
-  return { id: row.id, code: row.code, name: row.name, accountTypeId: row.accountTypeId, parentId: row.parentId,
+  return { id: row.id, code: row.code, name: row.name, orgNodeId: row.orgNodeId, accountTypeId: row.accountTypeId, parentId: row.parentId,
     isLeaf: row.isLeaf === 'yes', status: row.status as ChartAccountStatus };
 }
 function toJlRecord(row: JlRow): JournalLineRecord {
   return { id: row.id, journalEntryId: row.journalEntryId, accountId: row.accountId, debitAmount: row.debitAmount, creditAmount: row.creditAmount, description: row.description };
 }
 function toJeRecord(row: JeRow, lines: JournalLineRecord[]): JournalEntryRecord {
-  return { id: row.id, entryNumber: row.entryNumber, reference: row.reference, description: row.description,
+  return { id: row.id, entryNumber: row.entryNumber, orgNodeId: row.orgNodeId, reference: row.reference, description: row.description,
     entryDate: row.entryDate.toISOString(), postedAt: row.postedAt ? row.postedAt.toISOString() : null,
     status: row.status as JournalEntryStatus, lines };
 }
@@ -71,13 +71,14 @@ export class AccountingRepository {
     const rows = await this.database.db.select(coaColumns).from(chartOfAccounts).where(eq(chartOfAccounts.id, id)).limit(1);
     return rows[0] ? toCoaRecord(rows[0]) : null;
   }
-  async findAccountByCode(code: string): Promise<ChartOfAccountsRecord | null> {
-    const rows = await this.database.db.select(coaColumns).from(chartOfAccounts).where(eq(chartOfAccounts.code, code)).limit(1);
+  async findAccountByCode(orgNodeId: string, code: string): Promise<ChartOfAccountsRecord | null> {
+    const rows = await this.database.db.select(coaColumns).from(chartOfAccounts)
+      .where(and(eq(chartOfAccounts.orgNodeId, orgNodeId), eq(chartOfAccounts.code, code))).limit(1);
     return rows[0] ? toCoaRecord(rows[0]) : null;
   }
   async insertAccount(input: CreateChartOfAccountsInput & { id: string }): Promise<ChartOfAccountsRecord> {
     const rows = await this.database.db.insert(chartOfAccounts).values({
-      id: input.id, code: input.code, name: input.name, accountTypeId: input.accountTypeId, parentId: input.parentId ?? null,
+      id: input.id, code: input.code, name: input.name, orgNodeId: input.orgNodeId, accountTypeId: input.accountTypeId, parentId: input.parentId ?? null,
     }).returning(coaColumns);
     return toCoaRecord(rows[0]!);
   }
@@ -102,7 +103,7 @@ export class AccountingRepository {
   }
   async insertEntry(input: CreateJournalEntryInput & { id: string; entryNumber: string }): Promise<JournalEntryRecord> {
     const rows = await this.database.db.insert(journalEntry).values({
-      id: input.id, entryNumber: input.entryNumber, reference: input.reference ?? null,
+      id: input.id, entryNumber: input.entryNumber, orgNodeId: input.orgNodeId, reference: input.reference ?? null,
       description: input.description, entryDate: input.entryDate ? new Date(input.entryDate) : new Date(),
     }).returning(jeColumns);
     const inserted = rows[0]!;
