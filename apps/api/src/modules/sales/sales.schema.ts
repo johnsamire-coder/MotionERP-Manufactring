@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { item } from '../catalog/catalog.schema';
 import { customer, supplier } from '../crm/crm.schema';
+import { orgNode } from '../organization/organization.schema';
 
 export const salesSchema = pgSchema('sales');
 
@@ -17,6 +18,8 @@ export const quotation = salesSchema.table('quotation', {
   direction: text('direction').notNull(),
   customerId: uuid('customer_id').references(() => customer.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   supplierId: uuid('supplier_id').references(() => supplier.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  /** Which company/activity node this quotation belongs to. Nullable for now (existing rows have none); will become NOT NULL once backfilled in a later step. */
+  orgNodeId: uuid('org_node_id').references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   quotationDate: timestamp('quotation_date', { withTimezone: true }).notNull(),
   validUntil: timestamp('valid_until', { withTimezone: true }),
   status: text('status').notNull().default('draft'),
@@ -37,6 +40,7 @@ export const quotation = salesSchema.table('quotation', {
   ),
   index('quotation_customer_idx').on(t.customerId),
   index('quotation_supplier_idx').on(t.supplierId),
+  index('quotation_org_node_idx').on(t.orgNodeId),
 ]);
 
 export const quotationLine = salesSchema.table('quotation_line', {
@@ -74,6 +78,8 @@ export const jobOrder = salesSchema.table('job_order', {
   /** Free-text reference to the approved quotation, when source = 'quotation'. Not a FK on purpose. */
   quotationReference: text('quotation_reference'),
   customerId: uuid('customer_id').references(() => customer.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  /** Which company/activity node this job order belongs to. Nullable for now (existing rows have none); will become NOT NULL once backfilled in a later step. */
+  orgNodeId: uuid('org_node_id').references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   status: text('status').notNull().default('draft'),
   financialReviewPassed: text('financial_review_passed').notNull().default('false'),
   note: text('note'),
@@ -85,6 +91,7 @@ export const jobOrder = salesSchema.table('job_order', {
   check('job_order_status_valid', sql`${t.status} in ('draft', 'approved', 'in_progress', 'completed', 'cancelled')`),
   check('job_order_financial_review_valid', sql`${t.financialReviewPassed} in ('true', 'false')`),
   index('job_order_customer_idx').on(t.customerId),
+  index('job_order_org_node_idx').on(t.orgNodeId),
 ]);
 
 export type JobOrder = typeof jobOrder.$inferSelect;

@@ -7,7 +7,7 @@ export interface QuotationLineRecord {
 
 export interface QuotationRecord {
   id: string; quotationNumber: string; direction: QuotationDirection;
-  customerId: string | null; supplierId: string | null;
+  customerId: string | null; supplierId: string | null; orgNodeId: string | null;
   quotationDate: string; validUntil: string | null; status: QuotationStatus;
   currency: string; customerPoReference: string | null; note: string | null;
   createdAt: string; updatedAt: string; lines: QuotationLineRecord[];
@@ -19,6 +19,7 @@ export interface CreateQuotationInput {
   direction: QuotationDirection;
   customerId?: string;
   supplierId?: string;
+  orgNodeId?: string;
   quotationDate?: string;
   validUntil?: string;
   currency?: string;
@@ -31,7 +32,7 @@ export type JobOrderStatus = 'draft' | 'approved' | 'in_progress' | 'completed' 
 
 export interface JobOrderRecord {
   id: string; jobOrderNumber: string; source: JobOrderSource;
-  quotationReference: string | null; customerId: string | null;
+  quotationReference: string | null; customerId: string | null; orgNodeId: string | null;
   status: JobOrderStatus; financialReviewPassed: boolean; note: string | null;
   createdAt: string; updatedAt: string;
 }
@@ -40,5 +41,6 @@ export interface CreateJobOrderInput {
   source: JobOrderSource;
   quotationReference?: string;
   customerId?: string;
+  orgNodeId?: string;
   note?: string;
 }

@@ -9,7 +9,7 @@ import type {
 
 const quotationColumns = {
   id: quotation.id, quotationNumber: quotation.quotationNumber, direction: quotation.direction,
-  customerId: quotation.customerId, supplierId: quotation.supplierId,
+  customerId: quotation.customerId, supplierId: quotation.supplierId, orgNodeId: quotation.orgNodeId,
   quotationDate: quotation.quotationDate, validUntil: quotation.validUntil, status: quotation.status,
   currency: quotation.currency, customerPoReference: quotation.customerPoReference, note: quotation.note,
   createdAt: quotation.createdAt, updatedAt: quotation.updatedAt,
@@ -20,20 +20,21 @@ const lineColumns = {
 };
 const jobOrderColumns = {
   id: jobOrder.id, jobOrderNumber: jobOrder.jobOrderNumber, source: jobOrder.source,
-  quotationReference: jobOrder.quotationReference, customerId: jobOrder.customerId,
+  quotationReference: jobOrder.quotationReference, customerId: jobOrder.customerId, orgNodeId: jobOrder.orgNodeId,
   status: jobOrder.status, financialReviewPassed: jobOrder.financialReviewPassed, note: jobOrder.note,
   createdAt: jobOrder.createdAt, updatedAt: jobOrder.updatedAt,
 };
 
 interface QuotationRow {
   id: string; quotationNumber: string; direction: string; customerId: string | null; supplierId: string | null;
+  orgNodeId: string | null;
   quotationDate: Date; validUntil: Date | null; status: string; currency: string;
   customerPoReference: string | null; note: string | null; createdAt: Date; updatedAt: Date;
 }
 interface LineRow { id: string; quotationId: string; itemId: string; quantity: string; unitPrice: string; lineNumber: number; }
 interface JobOrderRow {
   id: string; jobOrderNumber: string; source: string; quotationReference: string | null;
-  customerId: string | null; status: string; financialReviewPassed: string; note: string | null;
+  customerId: string | null; orgNodeId: string | null; status: string; financialReviewPassed: string; note: string | null;
   createdAt: Date; updatedAt: Date;
 }
 
@@ -43,7 +44,7 @@ function toLineRecord(row: LineRow): QuotationLineRecord {
 function toQuotationRecord(row: QuotationRow, lines: QuotationLineRecord[]): QuotationRecord {
   return {
     id: row.id, quotationNumber: row.quotationNumber, direction: row.direction as QuotationDirection,
-    customerId: row.customerId, supplierId: row.supplierId,
+    customerId: row.customerId, supplierId: row.supplierId, orgNodeId: row.orgNodeId,
     quotationDate: row.quotationDate.toISOString(), validUntil: row.validUntil ? row.validUntil.toISOString() : null,
     status: row.status as QuotationStatus, currency: row.currency, customerPoReference: row.customerPoReference,
     note: row.note, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(), lines,
@@ -52,7 +53,7 @@ function toQuotationRecord(row: QuotationRow, lines: QuotationLineRecord[]): Quo
 function toJobOrderRecord(row: JobOrderRow): JobOrderRecord {
   return {
     id: row.id, jobOrderNumber: row.jobOrderNumber, source: row.source as JobOrderSource,
-    quotationReference: row.quotationReference, customerId: row.customerId,
+    quotationReference: row.quotationReference, customerId: row.customerId, orgNodeId: row.orgNodeId,
     status: row.status as JobOrderStatus, financialReviewPassed: row.financialReviewPassed === 'true',
     note: row.note, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(),
   };
@@ -81,7 +82,7 @@ export class SalesRepository {
   async insertQuotation(input: CreateQuotationInput & { id: string; quotationNumber: string }): Promise<QuotationRecord> {
     const rows = await this.database.db.insert(quotation).values({
       id: input.id, quotationNumber: input.quotationNumber, direction: input.direction,
-      customerId: input.customerId ?? null, supplierId: input.supplierId ?? null,
+      customerId: input.customerId ?? null, supplierId: input.supplierId ?? null, orgNodeId: input.orgNodeId ?? null,
       quotationDate: input.quotationDate ? new Date(input.quotationDate) : new Date(),
       validUntil: input.validUntil ? new Date(input.validUntil) : null,
       currency: input.currency ?? 'EGP', note: input.note ?? null,
@@ -130,7 +131,7 @@ export class SalesRepository {
     const rows = await this.database.db.insert(jobOrder).values({
       id: input.id, jobOrderNumber: input.jobOrderNumber, source: input.source,
       quotationReference: input.quotationReference ?? null, customerId: input.customerId ?? null,
-      note: input.note ?? null,
+      orgNodeId: input.orgNodeId ?? null, note: input.note ?? null,
     }).returning(jobOrderColumns);
     return toJobOrderRecord(rows[0]!);
   }

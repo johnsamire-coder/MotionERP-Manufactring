@@ -13,6 +13,7 @@ export class CreateQuotationDto {
   @IsIn(DIRECTIONS) direction!: (typeof DIRECTIONS)[number];
   @IsOptional() @IsUUID() customerId?: string;
   @IsOptional() @IsUUID() supplierId?: string;
+  @IsOptional() @IsUUID() orgNodeId?: string;
   @IsOptional() @IsString() quotationDate?: string;
   @IsOptional() @IsString() validUntil?: string;
   @IsOptional() @IsString() @MaxLength(3) currency?: string;
@@ -31,5 +32,6 @@ export class CreateJobOrderDto {
   @IsIn(['quotation', 'internal']) source!: 'quotation' | 'internal';
   @IsOptional() @IsString() @MaxLength(255) quotationReference?: string;
   @IsOptional() @IsUUID() customerId?: string;
+  @IsOptional() @IsUUID() orgNodeId?: string;
   @IsOptional() @IsString() note?: string;
 }

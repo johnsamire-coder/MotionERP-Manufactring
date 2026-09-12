@@ -50,7 +50,7 @@ export class SalesService {
 
     return this.repository.insertQuotation({
       id: randomUUID(), quotationNumber, direction: input.direction,
-      customerId: input.customerId, supplierId: input.supplierId,
+      customerId: input.customerId, supplierId: input.supplierId, orgNodeId: input.orgNodeId,
       quotationDate: input.quotationDate, validUntil: input.validUntil,
       currency: input.currency, note: input.note, lines: input.lines,
     });
@@ -70,7 +70,9 @@ export class SalesService {
    * customer's PO reference, AND create the Job Order automatically — this
    * is the exact hinge point the owner described ("موافقة العميل تبدأ مرحلة
    * التصنيع والتسليم"). The job order only carries a reference to the
-   * quotation number, never a copy of its lines (D2/D20).
+   * quotation number, never a copy of its lines (D2/D20). The job order also
+   * inherits the quotation's org_node_id automatically, so the company/activity
+   * it belongs to never has to be re-entered by hand.
    */
   async approveQuotation(id: string, customerPoReference?: string): Promise<{ quotation: QuotationRecord; jobOrder?: JobOrderRecord }> {
     const quotation = await this.repository.findQuotationById(id);
@@ -87,6 +89,7 @@ export class SalesService {
         source: 'quotation',
         quotationReference: updated.quotationNumber,
         customerId: updated.customerId ?? undefined,
+        orgNodeId: updated.orgNodeId ?? undefined,
       });
       return { quotation: updated, jobOrder: createdJobOrder };
     }
@@ -123,7 +126,8 @@ export class SalesService {
     const jobOrderNumber = `JO-${year}-${String(sequence).padStart(6, '0')}`;
     return this.repository.insertJobOrder({
       id: randomUUID(), jobOrderNumber, source: input.source,
-      quotationReference: input.quotationReference, customerId: input.customerId, note: input.note,
+      quotationReference: input.quotationReference, customerId: input.customerId,
+      orgNodeId: input.orgNodeId, note: input.note,
     });
   }
 

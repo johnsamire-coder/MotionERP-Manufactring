@@ -22,7 +22,7 @@ export class SalesController {
   @Post('quotations') @HttpCode(201)
   async createQuotation(@Body() dto: CreateQuotationDto): Promise<{ quotation: QuotationRecord }> {
     const created = await this.service.createQuotation({
-      direction: dto.direction, customerId: dto.customerId, supplierId: dto.supplierId,
+      direction: dto.direction, customerId: dto.customerId, supplierId: dto.supplierId, orgNodeId: dto.orgNodeId,
       quotationDate: dto.quotationDate, validUntil: dto.validUntil, currency: dto.currency,
       note: dto.note, lines: dto.lines.map((l) => ({ itemId: l.itemId, quantity: l.quantity, unitPrice: l.unitPrice })),
     });
@@ -58,7 +58,8 @@ export class SalesController {
   @Post('job-orders') @HttpCode(201)
   async createJobOrder(@Body() dto: CreateJobOrderDto): Promise<{ jobOrder: JobOrderRecord }> {
     const created = await this.service.createJobOrder({
-      source: dto.source, quotationReference: dto.quotationReference, customerId: dto.customerId, note: dto.note,
+      source: dto.source, quotationReference: dto.quotationReference, customerId: dto.customerId,
+      orgNodeId: dto.orgNodeId, note: dto.note,
     });
     return { jobOrder: created };
   }
