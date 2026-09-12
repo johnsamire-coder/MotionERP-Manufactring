@@ -8,6 +8,7 @@ import type {
 
 const cpColumns = {
   id: qualityCheckPoint.id, relatedEntityType: qualityCheckPoint.relatedEntityType, relatedEntityId: qualityCheckPoint.relatedEntityId,
+  orgNodeId: qualityCheckPoint.orgNodeId,
   name: qualityCheckPoint.name, targetDurationMinutes: qualityCheckPoint.targetDurationMinutes, gracePeriodMinutes: qualityCheckPoint.gracePeriodMinutes,
   assignedRoleId: qualityCheckPoint.assignedRoleId
 };
@@ -25,7 +26,7 @@ const ruleColumns = {
 };
 
 interface CpRow {
-  id: string; relatedEntityType: string; relatedEntityId: string; name: string; targetDurationMinutes: number;
+  id: string; relatedEntityType: string; relatedEntityId: string; orgNodeId: string | null; name: string; targetDurationMinutes: number;
   gracePeriodMinutes: number; assignedRoleId: string | null;
 }
 
@@ -41,7 +42,7 @@ interface RuleRow {
 
 function toCpRecord(row: CpRow): QualityCheckPointRecord {
   return {
-    id: row.id, relatedEntityType: row.relatedEntityType as any, relatedEntityId: row.relatedEntityId, name: row.name,
+    id: row.id, relatedEntityType: row.relatedEntityType as any, relatedEntityId: row.relatedEntityId, orgNodeId: row.orgNodeId, name: row.name,
     targetDurationMinutes: row.targetDurationMinutes, gracePeriodMinutes: row.gracePeriodMinutes, assignedRoleId: row.assignedRoleId
   };
 }
@@ -70,9 +71,9 @@ export class QualityRepository {
     return rows[0] ? toCpRecord(rows[0]) : null;
   }
 
-  async insertCheckPoint(input: CreateQualityCheckPointInput & { id: string }): Promise<QualityCheckPointRecord> {
+  async insertCheckPoint(input: CreateQualityCheckPointInput & { id: string; orgNodeId: string | null }): Promise<QualityCheckPointRecord> {
     const rows = await this.database.db.insert(qualityCheckPoint).values({
-      id: input.id, relatedEntityType: input.relatedEntityType, relatedEntityId: input.relatedEntityId, name: input.name,
+      id: input.id, relatedEntityType: input.relatedEntityType, relatedEntityId: input.relatedEntityId, orgNodeId: input.orgNodeId, name: input.name,
       targetDurationMinutes: input.targetDurationMinutes, gracePeriodMinutes: input.gracePeriodMinutes ?? 0,
       assignedRoleId: input.assignedRoleId
     }).returning(cpColumns);

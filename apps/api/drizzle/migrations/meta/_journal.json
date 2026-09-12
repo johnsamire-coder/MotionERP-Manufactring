@@ -148,6 +148,13 @@
       "when": 1789233362179,
       "tag": "0020_elite_prodigy",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789245071068,
+      "tag": "0021_robust_juggernaut",
+      "breakpoints": true
     }
   ]
 }

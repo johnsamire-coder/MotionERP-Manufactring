@@ -15,10 +15,6 @@ export class ProductionOpsService {
     private readonly salesService: SalesService,
   ) {}
 
-  /**
-   * Looks up the referenced job order through SalesService's public surface
-   * only (D2/D20), and rejects unknown references before creating a step.
-   */
   private async getJobOrderOrThrow(jobOrderReference: string): Promise<JobOrderRecord> {
     const jobOrders = await this.salesService.getJobOrders();
     const found = jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference);
@@ -37,6 +33,13 @@ export class ProductionOpsService {
   }
 
   async getSteps(jobOrderReference?: string): Promise<ProductionStepRecord[]> { return this.repository.listSteps(jobOrderReference); }
+
+  /** Public single-step lookup that throws when not found — mirrors ProductionService.getRequest, used by quality's cross-module check-point validation. */
+  async getStep(id: string): Promise<ProductionStepRecord> {
+    const found = await this.repository.findStepById(id);
+    if (!found) throw new ProductionOpsNotFoundError(`production step ${id} does not exist`);
+    return found;
+  }
 
   async addStep(input: CreateProductionStepInput): Promise<ProductionStepRecord> {
     const wc = await this.repository.findWorkCenterById(input.workCenterId);

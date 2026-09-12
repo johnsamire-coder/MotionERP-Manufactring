@@ -1,23 +1,58 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
+import { ProductionService } from '../production/production.service';
+import { ProductionOpsService } from '../production_ops/production_ops.service';
 import { QualityNotFoundError, QualityValidationError } from './quality.errors';
 import { QualityRepository } from './quality.repository';
 import type {
-  CreateQualityCheckPointInput, CreateSlaRuleInput, QualityCheckPointRecord,
+  CreateQualityCheckPointInput, CreateSlaRuleInput, QualityCheckPointRecord, QualityCheckPointType,
   QualityWorkflowRecord, SlaRuleRecord,
 } from './quality.types';
 
 @Injectable()
 export class QualityService {
-  constructor(private readonly repository: QualityRepository) {}
+  constructor(
+    private readonly repository: QualityRepository,
+    private readonly productionService: ProductionService,
+    private readonly productionOpsService: ProductionOpsService,
+  ) {}
+
+  /**
+   * Mandatory validation of the related entity a check point points to
+   * (D2/D20: through each module's public service surface only, no direct
+   * FK from quality to production/production_ops). Any failure from the
+   * other module (its own NotFoundError) is normalized into
+   * QualityNotFoundError so quality's own exception filter handles it
+   * uniformly (404), instead of leaking a foreign error type. The entity's
+   * orgNodeId is returned so the check point inherits the same
+   * company/activity automatically — this was previously never verified at
+   * all (a check point could reference a non-existent entity silently).
+   */
+  private async resolveRelatedEntityOrgNodeId(
+    relatedEntityType: QualityCheckPointType,
+    relatedEntityId: string,
+  ): Promise<string | null> {
+    try {
+      if (relatedEntityType === 'production_step') {
+        const step = await this.productionOpsService.getStep(relatedEntityId);
+        return step.orgNodeId;
+      }
+      const request = await this.productionService.getRequest(relatedEntityId);
+      return request.orgNodeId;
+    } catch {
+      throw new QualityNotFoundError(`${relatedEntityType} "${relatedEntityId}" does not exist`);
+    }
+  }
 
   async createCheckPoint(input: CreateQualityCheckPointInput): Promise<QualityCheckPointRecord> {
     const name = input.name.trim();
     if (!name) throw new QualityValidationError('name is required');
     if (input.targetDurationMinutes <= 0) throw new QualityValidationError('targetDurationMinutes must be positive');
 
+    const orgNodeId = await this.resolveRelatedEntityOrgNodeId(input.relatedEntityType, input.relatedEntityId);
+
     return this.repository.insertCheckPoint({
-      id: randomUUID(), ...input, name,
+      id: randomUUID(), ...input, name, orgNodeId,
       gracePeriodMinutes: input.gracePeriodMinutes ?? 0,
     });
   }
@@ -56,18 +91,6 @@ export class QualityService {
     return this.repository.insertSlaRule({ id: randomUUID(), ...input });
   }
 
-  /**
-   * The actual escalation logic (was a TODO stub before this fix): for every
-   * workflow still 'pending' past its graceUntil, find the SLA rule for the
-   * NEXT escalation level. If found, reassign the workflow to that rule's
-   * role, bump escalationLevel, and push graceUntil forward by
-   * delayMinutesAfterTarget from the ORIGINAL targetAt (so each level's
-   * deadline is anchored to the original target, not to "now"). If no next
-   * rule exists, the workflow simply stays overdue at its current level —
-   * there is no 'escalated' status in the schema by design; escalation is
-   * expressed purely via escalationLevel + currentAssigneeId while status
-   * remains 'pending'.
-   */
   async processOverdueWorkflows(): Promise<number> {
     const now = new Date();
     const overdue = await this.repository.findOverdueWorkflows(now);

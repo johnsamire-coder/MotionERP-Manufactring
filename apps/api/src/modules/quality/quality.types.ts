@@ -5,6 +5,7 @@ export interface QualityCheckPointRecord {
   id: string;
   relatedEntityType: QualityCheckPointType;
   relatedEntityId: string;
+  orgNodeId: string | null;
   name: string;
   targetDurationMinutes: number;
   gracePeriodMinutes: number;

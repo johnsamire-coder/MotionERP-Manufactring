@@ -1,0 +1,3 @@
+ALTER TABLE "quality"."check_point" ADD COLUMN "org_node_id" uuid;--> statement-breakpoint
+ALTER TABLE "quality"."check_point" ADD CONSTRAINT "check_point_org_node_id_org_node_id_fk" FOREIGN KEY ("org_node_id") REFERENCES "platform"."org_node"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+CREATE INDEX "idx_check_point_org_node" ON "quality"."check_point" USING btree ("org_node_id");
