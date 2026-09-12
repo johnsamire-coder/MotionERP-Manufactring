@@ -24,7 +24,10 @@ export class PlanningService {
    * Creates a planning record for a job order. Looks up the job order via
    * SalesService's public surface only (D2/D20) — planning never touches the
    * sales schema directly, it just verifies the referenced job order number
-   * corresponds to a real job order before planning it.
+   * corresponds to a real job order before planning it. The plan also
+   * inherits the job order's orgNodeId automatically (same pattern as
+   * job_order inheriting it from its quotation), so the company/activity is
+   * never re-entered by hand.
    */
   async createPlan(input: CreatePlanInput): Promise<ProductionPlanRecord> {
     const jobOrders = await this.salesService.getJobOrders();
@@ -40,7 +43,7 @@ export class PlanningService {
 
     this.validateExecutionMode(input.executionMode, input.internalQuantity, input.externalQuantity);
 
-    return this.repository.insertPlan({ id: randomUUID(), ...input });
+    return this.repository.insertPlan({ id: randomUUID(), orgNodeId: matchingJobOrder.orgNodeId, ...input });
   }
 
   async updatePlan(id: string, patch: UpdatePlanInput): Promise<ProductionPlanRecord> {

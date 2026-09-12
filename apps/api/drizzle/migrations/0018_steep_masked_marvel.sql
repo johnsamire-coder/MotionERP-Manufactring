@@ -1,0 +1,3 @@
+ALTER TABLE "planning"."production_plan" ADD COLUMN "org_node_id" uuid;--> statement-breakpoint
+ALTER TABLE "planning"."production_plan" ADD CONSTRAINT "production_plan_org_node_id_org_node_id_fk" FOREIGN KEY ("org_node_id") REFERENCES "platform"."org_node"("id") ON DELETE restrict ON UPDATE cascade;--> statement-breakpoint
+CREATE INDEX "production_plan_org_node_idx" ON "planning"."production_plan" USING btree ("org_node_id");

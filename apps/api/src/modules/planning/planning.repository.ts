@@ -5,7 +5,8 @@ import { productionPlan } from './planning.schema';
 import type { CreatePlanInput, ExecutionMode, PlanStatus, ProductionPlanRecord, UpdatePlanInput } from './planning.types';
 
 const planColumns = {
-  id: productionPlan.id, jobOrderReference: productionPlan.jobOrderReference, priority: productionPlan.priority,
+  id: productionPlan.id, jobOrderReference: productionPlan.jobOrderReference, orgNodeId: productionPlan.orgNodeId,
+  priority: productionPlan.priority,
   executionMode: productionPlan.executionMode, internalQuantity: productionPlan.internalQuantity,
   externalQuantity: productionPlan.externalQuantity, status: productionPlan.status,
   plannedStartDate: productionPlan.plannedStartDate, plannedEndDate: productionPlan.plannedEndDate,
@@ -13,7 +14,7 @@ const planColumns = {
 };
 
 interface PlanRow {
-  id: string; jobOrderReference: string; priority: number; executionMode: string;
+  id: string; jobOrderReference: string; orgNodeId: string | null; priority: number; executionMode: string;
   internalQuantity: string | null; externalQuantity: string | null; status: string;
   plannedStartDate: Date | null; plannedEndDate: Date | null; note: string | null;
   createdAt: Date; updatedAt: Date;
@@ -21,7 +22,7 @@ interface PlanRow {
 
 function toPlanRecord(row: PlanRow): ProductionPlanRecord {
   return {
-    id: row.id, jobOrderReference: row.jobOrderReference, priority: row.priority,
+    id: row.id, jobOrderReference: row.jobOrderReference, orgNodeId: row.orgNodeId, priority: row.priority,
     executionMode: row.executionMode as ExecutionMode, internalQuantity: row.internalQuantity,
     externalQuantity: row.externalQuantity, status: row.status as PlanStatus,
     plannedStartDate: row.plannedStartDate ? row.plannedStartDate.toISOString() : null,
@@ -50,9 +51,9 @@ export class PlanningRepository {
     return rows[0] ? toPlanRecord(rows[0]) : null;
   }
 
-  async insertPlan(input: CreatePlanInput & { id: string }): Promise<ProductionPlanRecord> {
+  async insertPlan(input: CreatePlanInput & { id: string; orgNodeId: string | null }): Promise<ProductionPlanRecord> {
     const rows = await this.database.db.insert(productionPlan).values({
-      id: input.id, jobOrderReference: input.jobOrderReference, priority: input.priority ?? 0,
+      id: input.id, jobOrderReference: input.jobOrderReference, orgNodeId: input.orgNodeId, priority: input.priority ?? 0,
       executionMode: input.executionMode ?? 'internal', internalQuantity: input.internalQuantity ?? null,
       externalQuantity: input.externalQuantity ?? null,
       plannedStartDate: input.plannedStartDate ? new Date(input.plannedStartDate) : null,

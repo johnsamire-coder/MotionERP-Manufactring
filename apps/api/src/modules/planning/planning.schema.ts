@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
+import { orgNode } from '../organization/organization.schema';
 
 export const planningSchema = pgSchema('planning');
 
@@ -8,10 +9,15 @@ export const planningSchema = pgSchema('planning');
  * reference to the job order's number (not a FK) — planning is a separate
  * unit that only reads/records references to job orders, it does not own
  * them (D2/D20, same pattern already used for job_order.quotationReference).
+ *
+ * `orgNodeId` is copied from the referenced job order at creation time (same
+ * inheritance pattern as job_order copying it from its quotation) so plans
+ * can be filtered/reported by company/activity without re-querying sales.
  */
 export const productionPlan = planningSchema.table('production_plan', {
   id: uuid('id').primaryKey().defaultRandom(),
   jobOrderReference: text('job_order_reference').notNull(),
+  orgNodeId: uuid('org_node_id').references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   priority: integer('priority').notNull().default(0),
   executionMode: text('execution_mode').notNull().default('internal'),
   internalQuantity: numeric('internal_quantity', { precision: 24, scale: 6 }),
@@ -31,6 +37,7 @@ export const productionPlan = planningSchema.table('production_plan', {
     sql`${t.executionMode} <> 'mixed' or (${t.internalQuantity} > 0 and ${t.externalQuantity} > 0)`,
   ),
   index('production_plan_priority_idx').on(t.priority),
+  index('production_plan_org_node_idx').on(t.orgNodeId),
 ]);
 
 export type ProductionPlan = typeof productionPlan.$inferSelect;
