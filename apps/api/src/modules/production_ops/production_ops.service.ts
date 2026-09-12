@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { SalesService } from '../sales/sales.service';
 import { ProductionOpsNotFoundError, ProductionOpsValidationError } from './production_ops.errors';
 import { ProductionOpsRepository } from './production_ops.repository';
+import type { JobOrderRecord } from '../sales/sales.types';
 import type {
   CreateProductionStepInput, CreateWorkCenterInput, JobOrderLaborCost, ProductionStepRecord, WorkCenterRecord,
 } from './production_ops.types';
@@ -14,9 +15,15 @@ export class ProductionOpsService {
     private readonly salesService: SalesService,
   ) {}
 
-  private async tryGetOrgNodeId(jobOrderReference: string): Promise<string | null> {
+  /**
+   * Looks up the referenced job order through SalesService's public surface
+   * only (D2/D20), and rejects unknown references before creating a step.
+   */
+  private async getJobOrderOrThrow(jobOrderReference: string): Promise<JobOrderRecord> {
     const jobOrders = await this.salesService.getJobOrders();
-    return jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference)?.orgNodeId ?? null;
+    const found = jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference);
+    if (!found) throw new ProductionOpsNotFoundError(`job order "${jobOrderReference}" does not exist`);
+    return found;
   }
 
   async getWorkCenters(): Promise<WorkCenterRecord[]> { return this.repository.listWorkCenters(); }
@@ -37,8 +44,8 @@ export class ProductionOpsService {
     const time = Number(input.standardTimeMinutes);
     if (!Number.isFinite(time) || time <= 0) throw new ProductionOpsValidationError('standardTimeMinutes must be positive');
     const sequence = (await this.repository.countSteps(input.jobOrderReference)) + 1;
-    const orgNodeId = await this.tryGetOrgNodeId(input.jobOrderReference);
-    return this.repository.insertStep({ id: randomUUID(), sequence, orgNodeId, ...input });
+    const jobOrder = await this.getJobOrderOrThrow(input.jobOrderReference);
+    return this.repository.insertStep({ id: randomUUID(), sequence, orgNodeId: jobOrder.orgNodeId, ...input });
   }
 
   async startStep(id: string): Promise<ProductionStepRecord> {
