@@ -4,6 +4,7 @@ import { InventoryService } from '../inventory/inventory.service';
 import { SalesService } from '../sales/sales.service';
 import { ProductionNotFoundError, ProductionValidationError } from './production.errors';
 import { ProductionRepository } from './production.repository';
+import type { JobOrderRecord } from '../sales/sales.types';
 import type { CreateMaterialRequestInput, MaterialRequestRecord } from './production.types';
 
 @Injectable()
@@ -15,15 +16,14 @@ export class ProductionService {
   ) {}
 
   /**
-   * Best-effort lookup of the referenced job order's orgNodeId. Unlike
-   * technical/planning, production never required the job order to exist
-   * before this change — adding that requirement now would be a new
-   * validation rule, not just organizational linking — so a missing job
-   * order simply leaves orgNodeId as null instead of throwing.
+   * Looks up the referenced job order through SalesService's public surface
+   * only (D2/D20), and rejects unknown references before creating a request.
    */
-  private async tryGetOrgNodeId(jobOrderReference: string): Promise<string | null> {
+  private async getJobOrderOrThrow(jobOrderReference: string): Promise<JobOrderRecord> {
     const jobOrders = await this.salesService.getJobOrders();
-    return jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference)?.orgNodeId ?? null;
+    const found = jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference);
+    if (!found) throw new ProductionNotFoundError(`job order "${jobOrderReference}" does not exist`);
+    return found;
   }
 
   async getRequests(jobOrderReference?: string): Promise<MaterialRequestRecord[]> {
@@ -43,8 +43,8 @@ export class ProductionService {
     if (!Number.isFinite(requested) || requested <= 0) throw new ProductionValidationError('requestedQuantity must be positive');
 
     const status = requested > planned ? 'pending_review' : 'approved';
-    const orgNodeId = await this.tryGetOrgNodeId(input.jobOrderReference);
-    return this.repository.insertRequest({ id: randomUUID(), orgNodeId, ...input, status });
+    const jobOrder = await this.getJobOrderOrThrow(input.jobOrderReference);
+    return this.repository.insertRequest({ id: randomUUID(), orgNodeId: jobOrder.orgNodeId, ...input, status });
   }
 
   async approveDeviation(id: string, deviationReason: string): Promise<MaterialRequestRecord> {
