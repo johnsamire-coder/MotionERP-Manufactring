@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { SalesService } from '../sales/sales.service';
+import type { JobOrderRecord } from '../sales/sales.types';
 import { DeliveryNotFoundError, DeliveryValidationError } from './delivery.errors';
 import { DeliveryRepository } from './delivery.repository';
 import type { CreateDeliveryOrderInput, CreateDeliveryReceiptInput, CreateInstallationInput, CreateInstallationReportInput, DeliveryOrderRecord, DeliveryReceiptRecord, InstallationRecord, InstallationReportRecord, UpdateDeliveryOrderInput, UpdateInstallationInput } from './delivery.types';
@@ -12,9 +13,11 @@ export class DeliveryService {
     private readonly salesService: SalesService,
   ) {}
 
-  private async tryGetOrgNodeId(jobOrderReference: string): Promise<string | null> {
+  private async getJobOrderOrThrow(jobOrderReference: string): Promise<JobOrderRecord> {
     const jobOrders = await this.salesService.getJobOrders();
-    return jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference)?.orgNodeId ?? null;
+    const found = jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference);
+    if (!found) throw new DeliveryNotFoundError(`job order "${jobOrderReference}" does not exist`);
+    return found;
   }
 
   async createDeliveryOrder(input: CreateDeliveryOrderInput): Promise<DeliveryOrderRecord> {
@@ -28,12 +31,12 @@ export class DeliveryService {
       .filter(order => order.deliveryNumber.startsWith(`DO-${datePart}`));
     const sequence = existingToday.length + 1;
     const deliveryNumber = `DO-${datePart}-${sequence.toString().padStart(4, '0')}`;
-    const orgNodeId = await this.tryGetOrgNodeId(input.jobOrderReference);
+    const jobOrder = await this.getJobOrderOrThrow(input.jobOrderReference);
 
     return this.repository.insertDeliveryOrder({
       id: randomUUID(),
       deliveryNumber,
-      orgNodeId,
+      orgNodeId: jobOrder.orgNodeId,
       ...input,
       scheduledDate
     });
