@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { SalesService } from '../sales/sales.service';
+import type { JobOrderRecord } from '../sales/sales.types';
 import { CostNotFoundError, CostValidationError } from './cost.errors';
 import { CostRepository } from './cost.repository';
 import type { CreateCostComponentTypeInput, CreateCostEntryInput, CreateJobCostSheetInput, CostComponentTypeRecord, CostEntryRecord, CostSummary, JobCostSheetRecord } from './cost.types';
@@ -12,9 +13,11 @@ export class CostService {
     private readonly salesService: SalesService,
   ) {}
 
-  private async tryGetOrgNodeId(jobOrderReference: string): Promise<string | null> {
+  private async getJobOrderOrThrow(jobOrderReference: string): Promise<JobOrderRecord> {
     const jobOrders = await this.salesService.getJobOrders();
-    return jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference)?.orgNodeId ?? null;
+    const found = jobOrders.find((jo) => jo.jobOrderNumber === jobOrderReference);
+    if (!found) throw new CostNotFoundError(`job order "${jobOrderReference}" does not exist`);
+    return found;
   }
 
   async createComponentType(input: CreateCostComponentTypeInput): Promise<CostComponentTypeRecord> {
@@ -35,11 +38,12 @@ export class CostService {
   }
 
   async getOrCreateCostSheet(jobOrderReference: string, currencyCode?: string): Promise<JobCostSheetRecord> {
+    const jobOrder = await this.getJobOrderOrThrow(jobOrderReference);
     let sheet = await this.repository.findCostSheetByJobOrder(jobOrderReference);
     if (!sheet) {
-      const orgNodeId = await this.tryGetOrgNodeId(jobOrderReference);
+
       sheet = await this.repository.insertCostSheet({
-        id: randomUUID(), jobOrderReference, currencyCode, orgNodeId
+        id: randomUUID(), jobOrderReference, currencyCode, orgNodeId: jobOrder.orgNodeId
       });
     }
     return sheet;
