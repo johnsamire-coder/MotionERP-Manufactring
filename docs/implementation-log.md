@@ -3,6 +3,48 @@
 سجل مختصر لكل مرحلة تنفيذ. هذا **ليس** مكان القرارات المعمارية
 (مكانها [`00-Motion-ERP-Architecture-Decisions.md`](00-Motion-ERP-Architecture-Decisions.md)).
 
+> **ملاحظة:** سجل المراحل التنفيذية للأعمال الحديثة (المرحلة صفر وما بعدها — الربط بالشركة
+> القابضة، وإعادة بناء الواجهة على نمط ERPNext) موثَّق في الوثيقة الانتقالية المرسلة
+> في المحادثات. هذا الملف يحفظ سجل المراحل التأسيسية القديمة (ب-1 إلى ب-2-4)
+> ومراحل تنفيذ إضافية.
+
+---
+
+## [2026-09-13] — استكمال البحث الميداني لموديول Manufacturing (أجزاء 2 و3)
+
+### ما تم إنشاؤه
+
+- استخراج أرشيف `Manufactoring.rar` (50 لقطة شاشة من موقع ERPNext التجريبي الحي
+  `erpnext-dch-zpe.k.frappe.cloud` — شركة "Js (Demo)") إلى
+  [`docs/erpnext-screenshots/Manufactoring/`](erpnext-screenshots/Manufactoring/).
+- **مرجع بناء كامل** للموديول من المعاينة الفعلية:
+  [`docs/erpnext-manufacturing-field-research.md`](erpnext-manufacturing-field-research.md) —
+  يوثّق: القائمة الجانبية الحرفية الكاملة (شاملة قسم Setup المكتشف حديثًا)،
+  الصفحة الرئيسية (KPIs + 3 رسوم)، BOM و BOM Creator و BOM Update Tool،
+  Work Order و Job Card بالحقول والتابات والحالات، Stock Entry،
+  الـ6 شاشات في Material Planning (منها MPS وSales Forecast وForecasting
+  الجديدة كليًا)، Downtime Entry، والتقارير العشرة بفلاترها.
+
+### تصحيحات موثقة على التوثيق النصي السابق
+
+- KPIs الصفحة الرئيسية الفعلية: `Total Work Order / Work Orders In Progress /
+  Ongoing Job Card / Total BOMs` (وليس القيم الشهرية المذكورة سابقًا).
+- قسم **Setup** لم يكن موثقًا: يحوي `Item / Warehouse / Operation / Workstation /
+  Workstation Type` — منها مستندان جديدان كليًا عندنا (Operation وWorkstation Type).
+- تقارير Manufacturing الفعلية 10 (زادت: BOM Search وProduction Analytics
+  وBOM Operations Time وWork Order Consumed Materials) وليست 5 كما ورد سابقًا.
+
+### الاختبار
+
+- معاينة بصرية للـ50 لقطة كاملة أثناء التوثيق (لا كود جديد لم يُختبر).
+- لا تعديل على `apps/api` أو `apps/web` في هذه الخطوة — توثيق فقط.
+
+### الخطوة التالية
+
+- الموديول التالي للمعاينة الميدانية من قائمة الجزء الثاني عشر: **Accounting،
+  Assets، Projects، Quality، Selling، Stock، Subcontracting** (بالتنسيق مع المالك
+  على إرسال اللقطات) — ولا كود في `apps/web` قبل اكتمال المعاينة.
+
 ---
 
 ## المرحلة ب-1 — تأسيس المشروع (2026-08-29)
