@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { AccountingModule } from './modules/accounting/accounting.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
@@ -10,11 +10,11 @@ import { FinanceModule } from './modules/finance/finance.module';
 import { HrModule } from './modules/hr/hr.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { OrganizationModule } from './modules/organization/organization.module';
-import { PlanningModule } from './modules/planning/planning.module';
 import { ProductionModule } from './modules/production/production.module';
 import { ProductionOpsModule } from './modules/production_ops/production_ops.module';
 import { QualityModule } from './modules/quality/quality.module';
 import { SalesModule } from './modules/sales/sales.module';
+import { PlanningModule } from './modules/planning/planning.module';
 import { TechnicalModule } from './modules/technical/technical.module';
 
 @Module({
@@ -25,3 +25,4 @@ import { TechnicalModule } from './modules/technical/technical.module';
   ],
 })
 export class AppModule {}
+

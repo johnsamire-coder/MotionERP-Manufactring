@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Aggregated Drizzle schema barrel.
  *
  * This is the SINGLE place drizzle-kit reads table definitions from. Each module
@@ -16,6 +16,7 @@ export * from '../../../modules/crm/crm.schema';
 export * from '../../../modules/sales/sales.schema';
 
 export * from '../../../modules/planning/planning.schema';
+
 
 export * from '../../../modules/technical/technical.schema';
 

@@ -1,86 +1,42 @@
-import { randomUUID } from 'node:crypto';
+﻿import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
-import { SalesService } from '../sales/sales.service';
 import { PlanningNotFoundError, PlanningValidationError } from './planning.errors';
 import { PlanningRepository } from './planning.repository';
-import type { CreatePlanInput, ProductionPlanRecord, UpdatePlanInput } from './planning.types';
+import type { CreateSalesForecastInput, SalesForecastRecord } from './planning.types';
 
 @Injectable()
 export class PlanningService {
-  constructor(
-    private readonly repository: PlanningRepository,
-    private readonly salesService: SalesService,
-  ) {}
+  constructor(private readonly repository: PlanningRepository) {}
 
-  async getPlans(): Promise<ProductionPlanRecord[]> { return this.repository.listPlans(); }
+  async getSalesForecasts(): Promise<SalesForecastRecord[]> { return this.repository.listSalesForecasts(); }
 
-  async getPlan(id: string): Promise<ProductionPlanRecord> {
-    const found = await this.repository.findPlanById(id);
-    if (!found) throw new PlanningNotFoundError(`production plan ${id} does not exist`);
+  async getSalesForecast(id: string): Promise<SalesForecastRecord> {
+    const found = await this.repository.findSalesForecastById(id);
+    if (!found) throw new PlanningNotFoundError(`sales forecast ${id} does not exist`);
     return found;
   }
 
-  /**
-   * Creates a planning record for a job order. Looks up the job order via
-   * SalesService's public surface only (D2/D20) — planning never touches the
-   * sales schema directly, it just verifies the referenced job order number
-   * corresponds to a real job order before planning it. The plan also
-   * inherits the job order's orgNodeId automatically (same pattern as
-   * job_order inheriting it from its quotation), so the company/activity is
-   * never re-entered by hand.
-   */
-  async createPlan(input: CreatePlanInput): Promise<ProductionPlanRecord> {
-    const jobOrders = await this.salesService.getJobOrders();
-    const matchingJobOrder = jobOrders.find((jo) => jo.jobOrderNumber === input.jobOrderReference);
-    if (!matchingJobOrder) {
-      throw new PlanningNotFoundError(`job order "${input.jobOrderReference}" does not exist`);
+  async createSalesForecast(input: CreateSalesForecastInput): Promise<SalesForecastRecord> {
+    if (!input.lines || input.lines.length === 0) {
+      throw new PlanningValidationError('a sales forecast must have at least one line');
     }
-
-    const existing = await this.repository.findPlanByJobOrderReference(input.jobOrderReference);
-    if (existing) {
-      throw new PlanningValidationError(`job order "${input.jobOrderReference}" is already planned`);
+    if (new Date(input.toDate) < new Date(input.fromDate)) {
+      throw new PlanningValidationError('toDate cannot be before fromDate');
     }
-
-    this.validateExecutionMode(input.executionMode, input.internalQuantity, input.externalQuantity);
-
-    return this.repository.insertPlan({ id: randomUUID(), orgNodeId: matchingJobOrder.orgNodeId, ...input });
+    for (const line of input.lines) {
+      const qty = Number(line.forecastQuantity);
+      if (!Number.isFinite(qty) || qty <= 0) throw new PlanningValidationError('every forecast line quantity must be positive');
+    }
+    const sequence = (await this.repository.countSalesForecasts()) + 1;
+    const year = new Date().getFullYear();
+    const forecastNumber = `SF-${year}-${String(sequence).padStart(6, '0')}`;
+    return this.repository.insertSalesForecast({ id: randomUUID(), forecastNumber, ...input });
   }
 
-  async updatePlan(id: string, patch: UpdatePlanInput): Promise<ProductionPlanRecord> {
-    const plan = await this.repository.findPlanById(id);
-    if (!plan) throw new PlanningNotFoundError(`production plan ${id} does not exist`);
-    if (plan.status === 'locked') {
-      throw new PlanningValidationError(`production plan ${id} is locked and cannot be modified`);
-    }
-
-    const effectiveMode = patch.executionMode ?? plan.executionMode;
-    const effectiveInternal = patch.internalQuantity ?? plan.internalQuantity ?? undefined;
-    const effectiveExternal = patch.externalQuantity ?? plan.externalQuantity ?? undefined;
-    this.validateExecutionMode(effectiveMode, effectiveInternal, effectiveExternal);
-
-    return this.repository.updatePlanFields(id, patch);
-  }
-
-  async lockPlan(id: string): Promise<ProductionPlanRecord> {
-    const plan = await this.repository.findPlanById(id);
-    if (!plan) throw new PlanningNotFoundError(`production plan ${id} does not exist`);
-    return this.repository.setPlanStatus(id, 'locked');
-  }
-
-  private validateExecutionMode(
-    mode: CreatePlanInput['executionMode'],
-    internalQuantity?: string,
-    externalQuantity?: string,
-  ): void {
-    if (mode === 'mixed') {
-      const internalNum = Number(internalQuantity);
-      const externalNum = Number(externalQuantity);
-      if (!internalQuantity || !Number.isFinite(internalNum) || internalNum <= 0) {
-        throw new PlanningValidationError('mixed execution mode requires a positive internalQuantity');
-      }
-      if (!externalQuantity || !Number.isFinite(externalNum) || externalNum <= 0) {
-        throw new PlanningValidationError('mixed execution mode requires a positive externalQuantity');
-      }
-    }
+  async submitSalesForecast(id: string): Promise<SalesForecastRecord> {
+    const found = await this.repository.findSalesForecastById(id);
+    if (!found) throw new PlanningNotFoundError(`sales forecast ${id} does not exist`);
+    if (found.status !== 'draft') throw new PlanningValidationError(`sales forecast ${id} is "${found.status}" and cannot be submitted (must be "draft")`);
+    return this.repository.setSalesForecastStatus(id, 'submitted');
   }
 }

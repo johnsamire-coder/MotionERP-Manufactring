@@ -1,33 +1,37 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
-import { productionPlan } from './planning.schema';
-import type { CreatePlanInput, ExecutionMode, PlanStatus, ProductionPlanRecord, UpdatePlanInput } from './planning.types';
+import { salesForecast, salesForecastLine } from './planning.schema';
+import type {
+  CreateSalesForecastInput, SalesForecastLineInput, SalesForecastLineRecord,
+  SalesForecastRecord, SalesForecastStatus,
+} from './planning.types';
 
-const planColumns = {
-  id: productionPlan.id, jobOrderReference: productionPlan.jobOrderReference, orgNodeId: productionPlan.orgNodeId,
-  priority: productionPlan.priority,
-  executionMode: productionPlan.executionMode, internalQuantity: productionPlan.internalQuantity,
-  externalQuantity: productionPlan.externalQuantity, status: productionPlan.status,
-  plannedStartDate: productionPlan.plannedStartDate, plannedEndDate: productionPlan.plannedEndDate,
-  note: productionPlan.note, createdAt: productionPlan.createdAt, updatedAt: productionPlan.updatedAt,
+const sfColumns = {
+  id: salesForecast.id, forecastNumber: salesForecast.forecastNumber, orgNodeId: salesForecast.orgNodeId,
+  itemCategoryId: salesForecast.itemCategoryId, warehouseId: salesForecast.warehouseId,
+  fromDate: salesForecast.fromDate, toDate: salesForecast.toDate, basedOn: salesForecast.basedOn,
+  forecastPeriodicity: salesForecast.forecastPeriodicity, status: salesForecast.status,
+};
+const sfLineColumns = {
+  id: salesForecastLine.id, salesForecastId: salesForecastLine.salesForecastId, itemId: salesForecastLine.itemId,
+  warehouseId: salesForecastLine.warehouseId, forecastQuantity: salesForecastLine.forecastQuantity,
+  plannedQuantity: salesForecastLine.plannedQuantity, lineNumber: salesForecastLine.lineNumber,
 };
 
-interface PlanRow {
-  id: string; jobOrderReference: string; orgNodeId: string | null; priority: number; executionMode: string;
-  internalQuantity: string | null; externalQuantity: string | null; status: string;
-  plannedStartDate: Date | null; plannedEndDate: Date | null; note: string | null;
-  createdAt: Date; updatedAt: Date;
+interface SfRow {
+  id: string; forecastNumber: string; orgNodeId: string; itemCategoryId: string; warehouseId: string | null;
+  fromDate: Date; toDate: Date; basedOn: string; forecastPeriodicity: string; status: string;
+}
+interface SfLineRow {
+  id: string; salesForecastId: string; itemId: string; warehouseId: string | null;
+  forecastQuantity: string; plannedQuantity: string | null; lineNumber: number;
 }
 
-function toPlanRecord(row: PlanRow): ProductionPlanRecord {
+function toLineRecord(row: SfLineRow): SalesForecastLineRecord {
   return {
-    id: row.id, jobOrderReference: row.jobOrderReference, orgNodeId: row.orgNodeId, priority: row.priority,
-    executionMode: row.executionMode as ExecutionMode, internalQuantity: row.internalQuantity,
-    externalQuantity: row.externalQuantity, status: row.status as PlanStatus,
-    plannedStartDate: row.plannedStartDate ? row.plannedStartDate.toISOString() : null,
-    plannedEndDate: row.plannedEndDate ? row.plannedEndDate.toISOString() : null,
-    note: row.note, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(),
+    id: row.id, salesForecastId: row.salesForecastId, itemId: row.itemId, warehouseId: row.warehouseId,
+    forecastQuantity: row.forecastQuantity, plannedQuantity: row.plannedQuantity, lineNumber: row.lineNumber,
   };
 }
 
@@ -35,49 +39,69 @@ function toPlanRecord(row: PlanRow): ProductionPlanRecord {
 export class PlanningRepository {
   constructor(private readonly database: DatabaseService) {}
 
-  async listPlans(): Promise<ProductionPlanRecord[]> {
-    const rows = await this.database.db.select(planColumns).from(productionPlan).orderBy(asc(productionPlan.priority));
-    return rows.map(toPlanRecord);
+  async listSalesForecasts(): Promise<SalesForecastRecord[]> {
+    const rows = await this.database.db.select(sfColumns).from(salesForecast).orderBy(asc(salesForecast.forecastNumber));
+    const results: SalesForecastRecord[] = [];
+    for (const row of rows) {
+      const lines = await this.listLines(row.id);
+      results.push(this.toRecord(row, lines));
+    }
+    return results;
   }
 
-  async findPlanById(id: string): Promise<ProductionPlanRecord | null> {
-    const rows = await this.database.db.select(planColumns).from(productionPlan).where(eq(productionPlan.id, id)).limit(1);
-    return rows[0] ? toPlanRecord(rows[0]) : null;
+  async findSalesForecastById(id: string): Promise<SalesForecastRecord | null> {
+    const rows = await this.database.db.select(sfColumns).from(salesForecast).where(eq(salesForecast.id, id)).limit(1);
+    if (!rows[0]) return null;
+    const lines = await this.listLines(id);
+    return this.toRecord(rows[0], lines);
   }
 
-  async findPlanByJobOrderReference(jobOrderReference: string): Promise<ProductionPlanRecord | null> {
-    const rows = await this.database.db.select(planColumns).from(productionPlan)
-      .where(eq(productionPlan.jobOrderReference, jobOrderReference)).limit(1);
-    return rows[0] ? toPlanRecord(rows[0]) : null;
+  async countSalesForecasts(): Promise<number> {
+    const rows = await this.database.db.select({ id: salesForecast.id }).from(salesForecast);
+    return rows.length;
   }
 
-  async insertPlan(input: CreatePlanInput & { id: string; orgNodeId: string | null }): Promise<ProductionPlanRecord> {
-    const rows = await this.database.db.insert(productionPlan).values({
-      id: input.id, jobOrderReference: input.jobOrderReference, orgNodeId: input.orgNodeId, priority: input.priority ?? 0,
-      executionMode: input.executionMode ?? 'internal', internalQuantity: input.internalQuantity ?? null,
-      externalQuantity: input.externalQuantity ?? null,
-      plannedStartDate: input.plannedStartDate ? new Date(input.plannedStartDate) : null,
-      plannedEndDate: input.plannedEndDate ? new Date(input.plannedEndDate) : null,
-      note: input.note ?? null,
-    }).returning(planColumns);
-    return toPlanRecord(rows[0]!);
+  private async listLines(salesForecastId: string): Promise<SalesForecastLineRecord[]> {
+    const rows = await this.database.db.select(sfLineColumns).from(salesForecastLine)
+      .where(eq(salesForecastLine.salesForecastId, salesForecastId)).orderBy(asc(salesForecastLine.lineNumber));
+    return rows.map(toLineRecord);
   }
 
-  async updatePlanFields(id: string, fields: UpdatePlanInput): Promise<ProductionPlanRecord> {
-    const dbFields: Record<string, unknown> = {};
-    if (fields.priority !== undefined) dbFields.priority = fields.priority;
-    if (fields.executionMode !== undefined) dbFields.executionMode = fields.executionMode;
-    if (fields.internalQuantity !== undefined) dbFields.internalQuantity = fields.internalQuantity;
-    if (fields.externalQuantity !== undefined) dbFields.externalQuantity = fields.externalQuantity;
-    if (fields.plannedStartDate !== undefined) dbFields.plannedStartDate = fields.plannedStartDate ? new Date(fields.plannedStartDate) : null;
-    if (fields.plannedEndDate !== undefined) dbFields.plannedEndDate = fields.plannedEndDate ? new Date(fields.plannedEndDate) : null;
-    if (fields.note !== undefined) dbFields.note = fields.note;
-    const rows = await this.database.db.update(productionPlan).set(dbFields).where(eq(productionPlan.id, id)).returning(planColumns);
-    return toPlanRecord(rows[0]!);
+  private toRecord(row: SfRow, lines: SalesForecastLineRecord[]): SalesForecastRecord {
+    return {
+      id: row.id, forecastNumber: row.forecastNumber, orgNodeId: row.orgNodeId, itemCategoryId: row.itemCategoryId,
+      warehouseId: row.warehouseId, fromDate: row.fromDate.toISOString(), toDate: row.toDate.toISOString(),
+      basedOn: row.basedOn as 'job_order', forecastPeriodicity: row.forecastPeriodicity as SalesForecastRecord['forecastPeriodicity'],
+      status: row.status as SalesForecastStatus, lines,
+    };
   }
 
-  async setPlanStatus(id: string, status: PlanStatus): Promise<ProductionPlanRecord> {
-    const rows = await this.database.db.update(productionPlan).set({ status }).where(eq(productionPlan.id, id)).returning(planColumns);
-    return toPlanRecord(rows[0]!);
+  async insertSalesForecast(input: CreateSalesForecastInput & { id: string; forecastNumber: string }): Promise<SalesForecastRecord> {
+    const rows = await this.database.db.insert(salesForecast).values({
+      id: input.id, forecastNumber: input.forecastNumber, orgNodeId: input.orgNodeId, itemCategoryId: input.itemCategoryId,
+      warehouseId: input.warehouseId ?? null, fromDate: new Date(input.fromDate), toDate: new Date(input.toDate),
+      forecastPeriodicity: input.forecastPeriodicity ?? 'monthly',
+    }).returning(sfColumns);
+    const inserted = rows[0]!;
+    let lineNumber = 1;
+    for (const line of input.lines) {
+      await this.insertLine(inserted.id, line, lineNumber);
+      lineNumber += 1;
+    }
+    const lines = await this.listLines(inserted.id);
+    return this.toRecord(inserted, lines);
+  }
+
+  private async insertLine(salesForecastId: string, input: SalesForecastLineInput, lineNumber: number): Promise<void> {
+    await this.database.db.insert(salesForecastLine).values({
+      salesForecastId, itemId: input.itemId, warehouseId: input.warehouseId ?? null,
+      forecastQuantity: input.forecastQuantity, plannedQuantity: input.plannedQuantity ?? null, lineNumber,
+    });
+  }
+
+  async setSalesForecastStatus(id: string, status: SalesForecastStatus): Promise<SalesForecastRecord> {
+    const rows = await this.database.db.update(salesForecast).set({ status }).where(eq(salesForecast.id, id)).returning(sfColumns);
+    const lines = await this.listLines(id);
+    return this.toRecord(rows[0]!, lines);
   }
 }

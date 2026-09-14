@@ -1,24 +1,24 @@
-import { IsIn, IsInt, IsNumberString, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+﻿import { Type } from 'class-transformer';
+import { IsArray, IsIn, IsNumberString, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 
-const EXECUTION_MODES = ['internal', 'external', 'mixed'] as const;
+const PERIODICITIES = ['monthly', 'quarterly', 'half_yearly', 'yearly'] as const;
 
-export class CreatePlanDto {
-  @IsString() @MaxLength(64) jobOrderReference!: string;
-  @IsOptional() @IsInt() priority?: number;
-  @IsOptional() @IsIn(EXECUTION_MODES) executionMode?: (typeof EXECUTION_MODES)[number];
-  @IsOptional() @IsNumberString() internalQuantity?: string;
-  @IsOptional() @IsNumberString() externalQuantity?: string;
-  @IsOptional() @IsString() plannedStartDate?: string;
-  @IsOptional() @IsString() plannedEndDate?: string;
-  @IsOptional() @IsString() note?: string;
+export class SalesForecastLineDto {
+  @IsUUID() itemId!: string;
+  @IsOptional() @IsUUID() warehouseId?: string;
+  @IsNumberString() forecastQuantity!: string;
+  @IsOptional() @IsNumberString() plannedQuantity?: string;
 }
 
-export class UpdatePlanDto {
-  @IsOptional() @IsInt() @Min(0) priority?: number;
-  @IsOptional() @IsIn(EXECUTION_MODES) executionMode?: (typeof EXECUTION_MODES)[number];
-  @IsOptional() @IsNumberString() internalQuantity?: string;
-  @IsOptional() @IsNumberString() externalQuantity?: string;
-  @IsOptional() @IsString() plannedStartDate?: string;
-  @IsOptional() @IsString() plannedEndDate?: string;
-  @IsOptional() @IsString() note?: string;
+export class CreateSalesForecastDto {
+  @IsUUID() orgNodeId!: string;
+  @IsUUID() itemCategoryId!: string;
+  @IsOptional() @IsUUID() warehouseId?: string;
+  @IsString() fromDate!: string;
+  @IsString() toDate!: string;
+  @IsOptional() @IsIn(PERIODICITIES) forecastPeriodicity?: (typeof PERIODICITIES)[number];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SalesForecastLineDto)
+  lines!: SalesForecastLineDto[];
 }

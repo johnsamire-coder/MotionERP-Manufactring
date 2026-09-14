@@ -1,43 +1,66 @@
-import { sql } from 'drizzle-orm';
+﻿import { sql } from 'drizzle-orm';
 import { check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
+import { item, itemCategory } from '../catalog/catalog.schema';
+import { warehouse } from '../inventory/inventory.schema';
 import { orgNode } from '../organization/organization.schema';
 
 export const planningSchema = pgSchema('planning');
 
 /**
- * One planning record per Job Order. `jobOrderReference` is a plain text
- * reference to the job order's number (not a FK) — planning is a separate
- * unit that only reads/records references to job orders, it does not own
- * them (D2/D20, same pattern already used for job_order.quotationReference).
- *
- * `orgNodeId` is copied from the referenced job order at creation time (same
- * inheritance pattern as job_order copying it from its quotation) so plans
- * can be filtered/reported by company/activity without re-querying sales.
+ * Sales Forecast — ERPNext parity build (14 Sep 2026): the first of three
+ * Material Planning masters (Sales Forecast, then a Production-Plan-shaped
+ * Material Request, then Production Plan itself, which will consume all
+ * three). "For" is scoped to Item Category only for now (our closest match
+ * to ERPNext's Item Group) — there is no Territory concept in Motion yet,
+ * so that option is deferred until a real need for it appears.
+ * "Based On" is scoped to job_order only for now (our closest match to
+ * ERPNext's Sales Order) — Sales Invoice / Quantity Forecast are ERPNext
+ * options with no Motion equivalent yet.
  */
-export const productionPlan = planningSchema.table('production_plan', {
+export const salesForecast = planningSchema.table('sales_forecast', {
   id: uuid('id').primaryKey().defaultRandom(),
-  jobOrderReference: text('job_order_reference').notNull(),
-  orgNodeId: uuid('org_node_id').references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
-  priority: integer('priority').notNull().default(0),
-  executionMode: text('execution_mode').notNull().default('internal'),
-  internalQuantity: numeric('internal_quantity', { precision: 24, scale: 6 }),
-  externalQuantity: numeric('external_quantity', { precision: 24, scale: 6 }),
-  status: text('status').notNull().default('pending'),
-  plannedStartDate: timestamp('planned_start_date', { withTimezone: true }),
-  plannedEndDate: timestamp('planned_end_date', { withTimezone: true }),
-  note: text('note'),
+  forecastNumber: text('forecast_number').notNull(),
+  orgNodeId: uuid('org_node_id')
+    .notNull()
+    .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  itemCategoryId: uuid('item_category_id')
+    .notNull()
+    .references(() => itemCategory.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  warehouseId: uuid('warehouse_id').references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  fromDate: timestamp('from_date', { withTimezone: true }).notNull(),
+  toDate: timestamp('to_date', { withTimezone: true }).notNull(),
+  basedOn: text('based_on').notNull().default('job_order'),
+  forecastPeriodicity: text('forecast_periodicity').notNull().default('monthly'),
+  status: text('status').notNull().default('draft'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
-  unique('production_plan_job_order_unique').on(t.jobOrderReference),
-  check('production_plan_execution_mode_valid', sql`${t.executionMode} in ('internal', 'external', 'mixed')`),
-  check('production_plan_status_valid', sql`${t.status} in ('pending', 'planned', 'locked')`),
-  check(
-    'production_plan_mixed_quantities',
-    sql`${t.executionMode} <> 'mixed' or (${t.internalQuantity} > 0 and ${t.externalQuantity} > 0)`,
-  ),
-  index('production_plan_priority_idx').on(t.priority),
-  index('production_plan_org_node_idx').on(t.orgNodeId),
+  unique('sales_forecast_number_unique').on(t.forecastNumber),
+  check('sales_forecast_based_on_valid', sql`${t.basedOn} in ('job_order')`),
+  check('sales_forecast_periodicity_valid', sql`${t.forecastPeriodicity} in ('monthly', 'quarterly', 'half_yearly', 'yearly')`),
+  check('sales_forecast_status_valid', sql`${t.status} in ('draft', 'submitted')`),
+  check('sales_forecast_dates_valid', sql`${t.toDate} >= ${t.fromDate}`),
+  index('sales_forecast_org_node_idx').on(t.orgNodeId),
+  index('sales_forecast_item_category_idx').on(t.itemCategoryId),
 ]);
 
-export type ProductionPlan = typeof productionPlan.$inferSelect;
+export const salesForecastLine = planningSchema.table('sales_forecast_line', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  salesForecastId: uuid('sales_forecast_id')
+    .notNull()
+    .references(() => salesForecast.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  warehouseId: uuid('warehouse_id').references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  forecastQuantity: numeric('forecast_quantity', { precision: 24, scale: 6 }).notNull(),
+  plannedQuantity: numeric('planned_quantity', { precision: 24, scale: 6 }),
+  lineNumber: integer('line_number').notNull().default(0),
+}, (t) => [
+  check('sales_forecast_line_forecast_qty_positive', sql`${t.forecastQuantity} > 0`),
+  index('sales_forecast_line_forecast_idx').on(t.salesForecastId),
+  index('sales_forecast_line_item_idx').on(t.itemId),
+]);
+
+export type SalesForecast = typeof salesForecast.$inferSelect;
+export type SalesForecastLine = typeof salesForecastLine.$inferSelect;
