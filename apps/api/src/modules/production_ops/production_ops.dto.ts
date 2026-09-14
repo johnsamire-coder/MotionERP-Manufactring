@@ -1,4 +1,4 @@
-import { IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
+﻿import { IsDateString, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
 
 export class CreateWorkCenterDto {
   @Matches(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/) @MaxLength(64) @IsString() code!: string;
@@ -16,4 +16,16 @@ export class CreateProductionStepDto {
 
 export class CloseStepDto {
   @IsNumberString() actualTimeMinutes!: string;
+}
+
+export class CreateWorkOrderDto {
+  @IsUUID() productItemId!: string;
+  @IsUUID() bomId!: string;
+  @IsUUID() orgNodeId!: string;
+  @IsOptional() @IsString() @MaxLength(64) jobOrderReference?: string;
+  @IsNumberString() qtyToManufacture!: string;
+  @IsOptional() @IsUUID() sourceWarehouseId?: string;
+  @IsOptional() @IsUUID() wipWarehouseId?: string;
+  @IsUUID() finishedGoodsWarehouseId!: string;
+  @IsOptional() @IsDateString() plannedStartDate?: string;
 }

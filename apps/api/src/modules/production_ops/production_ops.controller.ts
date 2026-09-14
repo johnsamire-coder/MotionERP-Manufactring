@@ -1,8 +1,8 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseFilters } from '@nestjs/common';
-import { CloseStepDto, CreateProductionStepDto, CreateWorkCenterDto } from './production_ops.dto';
+﻿import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseFilters } from '@nestjs/common';
+import { CloseStepDto, CreateProductionStepDto, CreateWorkCenterDto, CreateWorkOrderDto } from './production_ops.dto';
 import { ProductionOpsExceptionFilter } from './production_ops.exception-filter';
 import { ProductionOpsService } from './production_ops.service';
-import type { JobOrderLaborCost, ProductionStepRecord, WorkCenterRecord } from './production_ops.types';
+import type { JobOrderLaborCost, ProductionStepRecord, WorkCenterRecord, WorkOrderRecord } from './production_ops.types';
 
 @Controller({ path: 'production-ops', version: '1' })
 @UseFilters(ProductionOpsExceptionFilter)
@@ -45,5 +45,43 @@ export class ProductionOpsController {
   @Get('job-orders/:jobOrderReference/labor-cost')
   async laborCost(@Param('jobOrderReference') jobOrderReference: string): Promise<{ cost: JobOrderLaborCost }> {
     return { cost: await this.service.getJobOrderLaborCost(jobOrderReference) };
+  }
+
+  @Get('work-orders')
+  async workOrders(): Promise<{ workOrders: WorkOrderRecord[] }> { return { workOrders: await this.service.getWorkOrders() }; }
+
+  @Get('work-orders/:id')
+  async workOrderById(@Param('id', ParseUUIDPipe) id: string): Promise<{ workOrder: WorkOrderRecord }> {
+    return { workOrder: await this.service.getWorkOrder(id) };
+  }
+
+  @Post('work-orders') @HttpCode(201)
+  async createWorkOrder(@Body() dto: CreateWorkOrderDto): Promise<{ workOrder: WorkOrderRecord }> {
+    const created = await this.service.createWorkOrder({
+      productItemId: dto.productItemId, bomId: dto.bomId, orgNodeId: dto.orgNodeId, jobOrderReference: dto.jobOrderReference,
+      qtyToManufacture: dto.qtyToManufacture, sourceWarehouseId: dto.sourceWarehouseId, wipWarehouseId: dto.wipWarehouseId,
+      finishedGoodsWarehouseId: dto.finishedGoodsWarehouseId, plannedStartDate: dto.plannedStartDate,
+    });
+    return { workOrder: created };
+  }
+
+  @Post('work-orders/:id/start') @HttpCode(200)
+  async startWorkOrder(@Param('id', ParseUUIDPipe) id: string): Promise<{ workOrder: WorkOrderRecord }> {
+    return { workOrder: await this.service.startWorkOrder(id) };
+  }
+
+  @Post('work-orders/:id/complete') @HttpCode(200)
+  async completeWorkOrder(@Param('id', ParseUUIDPipe) id: string): Promise<{ workOrder: WorkOrderRecord }> {
+    return { workOrder: await this.service.completeWorkOrder(id) };
+  }
+
+  @Post('work-orders/:id/stop') @HttpCode(200)
+  async stopWorkOrder(@Param('id', ParseUUIDPipe) id: string): Promise<{ workOrder: WorkOrderRecord }> {
+    return { workOrder: await this.service.stopWorkOrder(id) };
+  }
+
+  @Post('work-orders/:id/close') @HttpCode(200)
+  async closeWorkOrder(@Param('id', ParseUUIDPipe) id: string): Promise<{ workOrder: WorkOrderRecord }> {
+    return { workOrder: await this.service.closeWorkOrder(id) };
   }
 }

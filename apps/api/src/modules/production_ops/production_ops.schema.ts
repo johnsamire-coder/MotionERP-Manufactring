@@ -1,6 +1,9 @@
-import { sql } from 'drizzle-orm';
+﻿import { sql } from 'drizzle-orm';
 import { check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
+import { item } from '../catalog/catalog.schema';
+import { warehouse } from '../inventory/inventory.schema';
 import { orgNode } from '../organization/organization.schema';
+import { bom } from '../technical/technical.schema';
 
 export const productionOpsSchema = pgSchema('production_ops');
 
@@ -45,5 +48,48 @@ export const productionStep = productionOpsSchema.table('production_step', {
   index('production_step_org_node_idx').on(t.orgNodeId),
 ]);
 
+/**
+ * Work Order — ERPNext parity build (13 Sep 2026): built strictly on top of
+ * an approved BOM (bomId mandatory, matching ERPNext's mandatory "BOM No"),
+ * matching ERPNext's real Work Order fields for Materials/warehouses/status.
+ * jobOrderReference is a Motion-specific addition kept optional from day one
+ * (owner's explicit choice) — it plays no role in ERPNext's own lifecycle.
+ */
+export const workOrder = productionOpsSchema.table('work_order', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  workOrderNumber: text('work_order_number').notNull(),
+  productItemId: uuid('product_item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  bomId: uuid('bom_id')
+    .notNull()
+    .references(() => bom.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  orgNodeId: uuid('org_node_id')
+    .notNull()
+    .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  jobOrderReference: text('job_order_reference'),
+  qtyToManufacture: numeric('qty_to_manufacture', { precision: 24, scale: 6 }).notNull(),
+  sourceWarehouseId: uuid('source_warehouse_id').references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  wipWarehouseId: uuid('wip_warehouse_id').references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  finishedGoodsWarehouseId: uuid('finished_goods_warehouse_id')
+    .notNull()
+    .references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  plannedStartDate: timestamp('planned_start_date', { withTimezone: true }),
+  actualStartDate: timestamp('actual_start_date', { withTimezone: true }),
+  actualEndDate: timestamp('actual_end_date', { withTimezone: true }),
+  status: text('status').notNull().default('not_started'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('work_order_number_unique').on(t.workOrderNumber),
+  check('work_order_qty_positive', sql`${t.qtyToManufacture} > 0`),
+  check('work_order_status_valid', sql`${t.status} in ('not_started', 'in_progress', 'completed', 'stopped', 'closed')`),
+  index('work_order_product_item_idx').on(t.productItemId),
+  index('work_order_bom_idx').on(t.bomId),
+  index('work_order_org_node_idx').on(t.orgNodeId),
+  index('work_order_job_order_idx').on(t.jobOrderReference),
+]);
+
 export type WorkCenter = typeof workCenter.$inferSelect;
 export type ProductionStep = typeof productionStep.$inferSelect;
+export type WorkOrder = typeof workOrder.$inferSelect;

@@ -169,6 +169,13 @@
       "when": 1789300387578,
       "tag": "0023_watery_scarlet_spider",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1789373261842,
+      "tag": "0024_red_ultimates",
+      "breakpoints": true
     }
   ]
 }

@@ -1,11 +1,13 @@
-import { randomUUID } from 'node:crypto';
+﻿import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { SalesService } from '../sales/sales.service';
+import { TechnicalService } from '../technical/technical.service';
 import { ProductionOpsNotFoundError, ProductionOpsValidationError } from './production_ops.errors';
 import { ProductionOpsRepository } from './production_ops.repository';
 import type { JobOrderRecord } from '../sales/sales.types';
 import type {
-  CreateProductionStepInput, CreateWorkCenterInput, JobOrderLaborCost, ProductionStepRecord, WorkCenterRecord,
+  CreateProductionStepInput, CreateWorkCenterInput, CreateWorkOrderInput, JobOrderLaborCost, ProductionStepRecord,
+  WorkCenterRecord, WorkOrderRecord,
 } from './production_ops.types';
 
 @Injectable()
@@ -13,6 +15,7 @@ export class ProductionOpsService {
   constructor(
     private readonly repository: ProductionOpsRepository,
     private readonly salesService: SalesService,
+    private readonly technicalService: TechnicalService,
   ) {}
 
   private async getJobOrderOrThrow(jobOrderReference: string): Promise<JobOrderRecord> {
@@ -34,7 +37,6 @@ export class ProductionOpsService {
 
   async getSteps(jobOrderReference?: string): Promise<ProductionStepRecord[]> { return this.repository.listSteps(jobOrderReference); }
 
-  /** Public single-step lookup that throws when not found — mirrors ProductionService.getRequest, used by quality's cross-module check-point validation. */
   async getStep(id: string): Promise<ProductionStepRecord> {
     const found = await this.repository.findStepById(id);
     if (!found) throw new ProductionOpsNotFoundError(`production step ${id} does not exist`);
@@ -98,6 +100,56 @@ export class ProductionOpsService {
       stepsCount: steps.length,
       stepsDone,
     };
+  }
+
+  async getWorkOrders(): Promise<WorkOrderRecord[]> { return this.repository.listWorkOrders(); }
+
+  async getWorkOrder(id: string): Promise<WorkOrderRecord> {
+    const found = await this.repository.findWorkOrderById(id);
+    if (!found) throw new ProductionOpsNotFoundError(`work order ${id} does not exist`);
+    return found;
+  }
+
+  async createWorkOrder(input: CreateWorkOrderInput): Promise<WorkOrderRecord> {
+    const qty = Number(input.qtyToManufacture);
+    if (!Number.isFinite(qty) || qty <= 0) throw new ProductionOpsValidationError('qtyToManufacture must be positive');
+    const bomRecord = await this.technicalService.getBom(input.bomId);
+    if (bomRecord.productItemId !== input.productItemId) {
+      throw new ProductionOpsValidationError(`BOM ${input.bomId} belongs to a different item than productItemId ${input.productItemId}`);
+    }
+    if (bomRecord.status !== 'approved') {
+      throw new ProductionOpsValidationError(`BOM ${input.bomId} is "${bomRecord.status}" and cannot be used on a work order (must be "approved")`);
+    }
+    const sequence = (await this.repository.countWorkOrders()) + 1;
+    const year = new Date().getFullYear();
+    const workOrderNumber = `MFG-WO-${year}-${String(sequence).padStart(6, '0')}`;
+    return this.repository.insertWorkOrder({ id: randomUUID(), workOrderNumber, ...input });
+  }
+
+  async startWorkOrder(id: string): Promise<WorkOrderRecord> {
+    const wo = await this.getWorkOrder(id);
+    if (wo.status !== 'not_started') throw new ProductionOpsValidationError(`work order ${id} is "${wo.status}" and cannot be started (must be "not_started")`);
+    return this.repository.recordActualStart(id);
+  }
+
+  async completeWorkOrder(id: string): Promise<WorkOrderRecord> {
+    const wo = await this.getWorkOrder(id);
+    if (wo.status !== 'in_progress') throw new ProductionOpsValidationError(`work order ${id} is "${wo.status}" and cannot be completed (must be "in_progress")`);
+    return this.repository.recordActualEnd(id, 'completed');
+  }
+
+  async stopWorkOrder(id: string): Promise<WorkOrderRecord> {
+    const wo = await this.getWorkOrder(id);
+    if (wo.status !== 'in_progress') throw new ProductionOpsValidationError(`work order ${id} is "${wo.status}" and cannot be stopped (must be "in_progress")`);
+    return this.repository.setWorkOrderStatus(id, 'stopped');
+  }
+
+  async closeWorkOrder(id: string): Promise<WorkOrderRecord> {
+    const wo = await this.getWorkOrder(id);
+    if (wo.status !== 'completed' && wo.status !== 'stopped') {
+      throw new ProductionOpsValidationError(`work order ${id} is "${wo.status}" and cannot be closed (must be "completed" or "stopped")`);
+    }
+    return this.repository.setWorkOrderStatus(id, 'closed');
   }
 }
 
