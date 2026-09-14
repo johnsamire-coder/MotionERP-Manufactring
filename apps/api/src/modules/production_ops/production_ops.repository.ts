@@ -1,17 +1,28 @@
 ﻿import { Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
-import { productionStep, workCenter, workOrder } from './production_ops.schema';
+import { operation, productionStep, productionStepTimeLog, workCenter, workOrder, workstationType } from './production_ops.schema';
 import type {
-  CreateProductionStepInput, CreateWorkCenterInput, CreateWorkOrderInput, ProductionStepRecord, ProductionStepStatus,
-  WorkCenterRecord, WorkCenterStatus, WorkOrderRecord, WorkOrderStatus,
+  AddTimeLogInput, CreateOperationInput, CreateProductionStepInput, CreateWorkCenterInput, CreateWorkOrderInput,
+  CreateWorkstationTypeInput, OperationRecord, OperationStatus, ProductionStepRecord, ProductionStepStatus,
+  ProductionStepTimeLogRecord, WorkCenterRecord, WorkCenterStatus, WorkOrderRecord, WorkOrderStatus,
+  WorkstationTypeRecord, WorkstationTypeStatus,
 } from './production_ops.types';
 
 const wcColumns = { id: workCenter.id, code: workCenter.code, name: workCenter.name, orgNodeId: workCenter.orgNodeId, ratePerMinute: workCenter.ratePerMinute, status: workCenter.status };
 const stepColumns = {
-  id: productionStep.id, jobOrderReference: productionStep.jobOrderReference, orgNodeId: productionStep.orgNodeId, workCenterId: productionStep.workCenterId,
-  operationName: productionStep.operationName, standardTimeMinutes: productionStep.standardTimeMinutes,
-  actualTimeMinutes: productionStep.actualTimeMinutes, sequence: productionStep.sequence, status: productionStep.status,
+  id: productionStep.id, jobOrderReference: productionStep.jobOrderReference, workOrderId: productionStep.workOrderId,
+  orgNodeId: productionStep.orgNodeId, workCenterId: productionStep.workCenterId, operationName: productionStep.operationName,
+  standardTimeMinutes: productionStep.standardTimeMinutes, actualTimeMinutes: productionStep.actualTimeMinutes,
+  forQuantity: productionStep.forQuantity, completedQuantity: productionStep.completedQuantity,
+  processLossQuantity: productionStep.processLossQuantity, allowOverproduction: productionStep.allowOverproduction,
+  overproductionPercentage: productionStep.overproductionPercentage, operatorEmployeeId: productionStep.operatorEmployeeId,
+  sequence: productionStep.sequence, status: productionStep.status,
+};
+const timeLogColumns = {
+  id: productionStepTimeLog.id, productionStepId: productionStepTimeLog.productionStepId, fromTime: productionStepTimeLog.fromTime,
+  toTime: productionStepTimeLog.toTime, timeInMinutes: productionStepTimeLog.timeInMinutes,
+  completedQuantity: productionStepTimeLog.completedQuantity, processLossQuantity: productionStepTimeLog.processLossQuantity,
 };
 const woColumns = {
   id: workOrder.id, workOrderNumber: workOrder.workOrderNumber, productItemId: workOrder.productItemId, bomId: workOrder.bomId,
@@ -20,11 +31,23 @@ const woColumns = {
   plannedStartDate: workOrder.plannedStartDate, actualStartDate: workOrder.actualStartDate, actualEndDate: workOrder.actualEndDate,
   status: workOrder.status,
 };
+const wsTypeColumns = { id: workstationType.id, code: workstationType.code, name: workstationType.name, status: workstationType.status };
+const operationColumns = {
+  id: operation.id, code: operation.code, name: operation.name, defaultWorkCenterId: operation.defaultWorkCenterId,
+  standardTimeMinutes: operation.standardTimeMinutes, status: operation.status,
+};
 
 interface WcRow { id: string; code: string; name: string; orgNodeId: string; ratePerMinute: string; status: string; }
 interface StepRow {
-  id: string; jobOrderReference: string; orgNodeId: string | null; workCenterId: string; operationName: string;
-  standardTimeMinutes: string; actualTimeMinutes: string | null; sequence: number; status: string;
+  id: string; jobOrderReference: string; workOrderId: string | null; orgNodeId: string | null; workCenterId: string;
+  operationName: string; standardTimeMinutes: string; actualTimeMinutes: string | null;
+  forQuantity: string | null; completedQuantity: string; processLossQuantity: string | null;
+  allowOverproduction: boolean; overproductionPercentage: string | null; operatorEmployeeId: string | null;
+  sequence: number; status: string;
+}
+interface TimeLogRow {
+  id: string; productionStepId: string; fromTime: Date; toTime: Date | null; timeInMinutes: string | null;
+  completedQuantity: string | null; processLossQuantity: string | null;
 }
 interface WoRow {
   id: string; workOrderNumber: string; productItemId: string; bomId: string; orgNodeId: string;
@@ -32,14 +55,27 @@ interface WoRow {
   sourceWarehouseId: string | null; wipWarehouseId: string | null; finishedGoodsWarehouseId: string;
   plannedStartDate: Date | null; actualStartDate: Date | null; actualEndDate: Date | null; status: string;
 }
+interface WsTypeRow { id: string; code: string; name: string; status: string; }
+interface OperationRow { id: string; code: string; name: string; defaultWorkCenterId: string | null; standardTimeMinutes: string | null; status: string; }
 
 function toWcRecord(row: WcRow): WorkCenterRecord {
   return { id: row.id, code: row.code, name: row.name, orgNodeId: row.orgNodeId, ratePerMinute: row.ratePerMinute, status: row.status as WorkCenterStatus };
 }
 function toStepRecord(row: StepRow): ProductionStepRecord {
-  return { id: row.id, jobOrderReference: row.jobOrderReference, orgNodeId: row.orgNodeId, workCenterId: row.workCenterId,
-    operationName: row.operationName, standardTimeMinutes: row.standardTimeMinutes,
-    actualTimeMinutes: row.actualTimeMinutes, sequence: row.sequence, status: row.status as ProductionStepStatus };
+  return {
+    id: row.id, jobOrderReference: row.jobOrderReference, workOrderId: row.workOrderId, orgNodeId: row.orgNodeId, workCenterId: row.workCenterId,
+    operationName: row.operationName, standardTimeMinutes: row.standardTimeMinutes, actualTimeMinutes: row.actualTimeMinutes,
+    forQuantity: row.forQuantity, completedQuantity: row.completedQuantity, processLossQuantity: row.processLossQuantity,
+    allowOverproduction: row.allowOverproduction, overproductionPercentage: row.overproductionPercentage, operatorEmployeeId: row.operatorEmployeeId,
+    sequence: row.sequence, status: row.status as ProductionStepStatus,
+  };
+}
+function toTimeLogRecord(row: TimeLogRow): ProductionStepTimeLogRecord {
+  return {
+    id: row.id, productionStepId: row.productionStepId, fromTime: row.fromTime.toISOString(),
+    toTime: row.toTime ? row.toTime.toISOString() : null, timeInMinutes: row.timeInMinutes,
+    completedQuantity: row.completedQuantity, processLossQuantity: row.processLossQuantity,
+  };
 }
 function toWoRecord(row: WoRow): WorkOrderRecord {
   return {
@@ -51,6 +87,12 @@ function toWoRecord(row: WoRow): WorkOrderRecord {
     actualEndDate: row.actualEndDate ? row.actualEndDate.toISOString() : null,
     status: row.status as WorkOrderStatus,
   };
+}
+function toWsTypeRecord(row: WsTypeRow): WorkstationTypeRecord {
+  return { id: row.id, code: row.code, name: row.name, status: row.status as WorkstationTypeStatus };
+}
+function toOperationRecord(row: OperationRow): OperationRecord {
+  return { id: row.id, code: row.code, name: row.name, defaultWorkCenterId: row.defaultWorkCenterId, standardTimeMinutes: row.standardTimeMinutes, status: row.status as OperationStatus };
 }
 
 @Injectable()
@@ -92,8 +134,11 @@ export class ProductionOpsRepository {
   }
   async insertStep(input: CreateProductionStepInput & { id: string; sequence: number; orgNodeId: string | null }): Promise<ProductionStepRecord> {
     const rows = await this.database.db.insert(productionStep).values({
-      id: input.id, jobOrderReference: input.jobOrderReference, orgNodeId: input.orgNodeId, workCenterId: input.workCenterId,
-      operationName: input.operationName, standardTimeMinutes: input.standardTimeMinutes, sequence: input.sequence,
+      id: input.id, jobOrderReference: input.jobOrderReference, workOrderId: input.workOrderId ?? null, orgNodeId: input.orgNodeId,
+      workCenterId: input.workCenterId, operationName: input.operationName, standardTimeMinutes: input.standardTimeMinutes,
+      forQuantity: input.forQuantity ?? null, allowOverproduction: input.allowOverproduction ?? false,
+      overproductionPercentage: input.overproductionPercentage ?? null, operatorEmployeeId: input.operatorEmployeeId ?? null,
+      sequence: input.sequence,
     }).returning(stepColumns);
     return toStepRecord(rows[0]!);
   }
@@ -104,6 +149,25 @@ export class ProductionOpsRepository {
   async recordActualTime(id: string, actualTimeMinutes: string): Promise<ProductionStepRecord> {
     const rows = await this.database.db.update(productionStep).set({ actualTimeMinutes, status: 'done' }).where(eq(productionStep.id, id)).returning(stepColumns);
     return toStepRecord(rows[0]!);
+  }
+  async incrementCompletedQuantity(id: string, addQuantity: string): Promise<ProductionStepRecord> {
+    const current = await this.findStepById(id);
+    const newQty = (Number(current?.completedQuantity ?? '0') + Number(addQuantity)).toString();
+    const rows = await this.database.db.update(productionStep).set({ completedQuantity: newQty }).where(eq(productionStep.id, id)).returning(stepColumns);
+    return toStepRecord(rows[0]!);
+  }
+
+  async addTimeLog(input: AddTimeLogInput & { id: string }): Promise<ProductionStepTimeLogRecord> {
+    const rows = await this.database.db.insert(productionStepTimeLog).values({
+      id: input.id, productionStepId: input.productionStepId, fromTime: new Date(input.fromTime),
+      toTime: input.toTime ? new Date(input.toTime) : null, timeInMinutes: input.timeInMinutes ?? null,
+      completedQuantity: input.completedQuantity ?? null, processLossQuantity: input.processLossQuantity ?? null,
+    }).returning(timeLogColumns);
+    return toTimeLogRecord(rows[0]!);
+  }
+  async listTimeLogs(productionStepId: string): Promise<ProductionStepTimeLogRecord[]> {
+    const rows = await this.database.db.select(timeLogColumns).from(productionStepTimeLog).where(eq(productionStepTimeLog.productionStepId, productionStepId)).orderBy(asc(productionStepTimeLog.fromTime));
+    return rows.map(toTimeLogRecord);
   }
 
   async listWorkOrders(): Promise<WorkOrderRecord[]> {
@@ -139,5 +203,34 @@ export class ProductionOpsRepository {
   async recordActualEnd(id: string, status: WorkOrderStatus): Promise<WorkOrderRecord> {
     const rows = await this.database.db.update(workOrder).set({ status, actualEndDate: new Date() }).where(eq(workOrder.id, id)).returning(woColumns);
     return toWoRecord(rows[0]!);
+  }
+
+  async listWorkstationTypes(): Promise<WorkstationTypeRecord[]> {
+    const rows = await this.database.db.select(wsTypeColumns).from(workstationType).orderBy(asc(workstationType.code));
+    return rows.map(toWsTypeRecord);
+  }
+  async findWorkstationTypeByCode(code: string): Promise<WorkstationTypeRecord | null> {
+    const rows = await this.database.db.select(wsTypeColumns).from(workstationType).where(eq(workstationType.code, code)).limit(1);
+    return rows[0] ? toWsTypeRecord(rows[0]) : null;
+  }
+  async insertWorkstationType(input: CreateWorkstationTypeInput & { id: string }): Promise<WorkstationTypeRecord> {
+    const rows = await this.database.db.insert(workstationType).values({ id: input.id, code: input.code, name: input.name }).returning(wsTypeColumns);
+    return toWsTypeRecord(rows[0]!);
+  }
+
+  async listOperations(): Promise<OperationRecord[]> {
+    const rows = await this.database.db.select(operationColumns).from(operation).orderBy(asc(operation.code));
+    return rows.map(toOperationRecord);
+  }
+  async findOperationByCode(code: string): Promise<OperationRecord | null> {
+    const rows = await this.database.db.select(operationColumns).from(operation).where(eq(operation.code, code)).limit(1);
+    return rows[0] ? toOperationRecord(rows[0]) : null;
+  }
+  async insertOperation(input: CreateOperationInput & { id: string }): Promise<OperationRecord> {
+    const rows = await this.database.db.insert(operation).values({
+      id: input.id, code: input.code, name: input.name, defaultWorkCenterId: input.defaultWorkCenterId ?? null,
+      standardTimeMinutes: input.standardTimeMinutes ?? null,
+    }).returning(operationColumns);
+    return toOperationRecord(rows[0]!);
   }
 }

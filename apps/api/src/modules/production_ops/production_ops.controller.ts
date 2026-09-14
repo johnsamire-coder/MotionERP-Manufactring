@@ -1,8 +1,14 @@
 ﻿import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseFilters } from '@nestjs/common';
-import { CloseStepDto, CreateProductionStepDto, CreateWorkCenterDto, CreateWorkOrderDto } from './production_ops.dto';
+import {
+  AddTimeLogDto, CloseStepDto, CreateOperationDto, CreateProductionStepDto, CreateWorkCenterDto,
+  CreateWorkOrderDto, CreateWorkstationTypeDto,
+} from './production_ops.dto';
 import { ProductionOpsExceptionFilter } from './production_ops.exception-filter';
 import { ProductionOpsService } from './production_ops.service';
-import type { JobOrderLaborCost, ProductionStepRecord, WorkCenterRecord, WorkOrderRecord } from './production_ops.types';
+import type {
+  JobOrderLaborCost, OperationRecord, ProductionStepRecord, ProductionStepTimeLogRecord, WorkCenterRecord,
+  WorkOrderRecord, WorkstationTypeRecord,
+} from './production_ops.types';
 
 @Controller({ path: 'production-ops', version: '1' })
 @UseFilters(ProductionOpsExceptionFilter)
@@ -26,8 +32,10 @@ export class ProductionOpsController {
   @Post('steps') @HttpCode(201)
   async addStep(@Body() dto: CreateProductionStepDto): Promise<{ step: ProductionStepRecord }> {
     const created = await this.service.addStep({
-      jobOrderReference: dto.jobOrderReference, workCenterId: dto.workCenterId,
-      operationName: dto.operationName, standardTimeMinutes: dto.standardTimeMinutes,
+      jobOrderReference: dto.jobOrderReference, workOrderId: dto.workOrderId, workCenterId: dto.workCenterId,
+      operationName: dto.operationName, standardTimeMinutes: dto.standardTimeMinutes, forQuantity: dto.forQuantity,
+      allowOverproduction: dto.allowOverproduction, overproductionPercentage: dto.overproductionPercentage,
+      operatorEmployeeId: dto.operatorEmployeeId,
     });
     return { step: created };
   }
@@ -40,6 +48,20 @@ export class ProductionOpsController {
   @Post('steps/:id/close') @HttpCode(200)
   async closeStep(@Param('id', ParseUUIDPipe) id: string, @Body() dto: CloseStepDto): Promise<{ step: ProductionStepRecord }> {
     return { step: await this.service.closeStep(id, dto.actualTimeMinutes) };
+  }
+
+  @Get('steps/:id/time-logs')
+  async timeLogs(@Param('id', ParseUUIDPipe) id: string): Promise<{ timeLogs: ProductionStepTimeLogRecord[] }> {
+    return { timeLogs: await this.service.getTimeLogs(id) };
+  }
+
+  @Post('time-logs') @HttpCode(201)
+  async addTimeLog(@Body() dto: AddTimeLogDto): Promise<{ timeLog: ProductionStepTimeLogRecord }> {
+    const created = await this.service.addTimeLog({
+      productionStepId: dto.productionStepId, fromTime: dto.fromTime, toTime: dto.toTime,
+      timeInMinutes: dto.timeInMinutes, completedQuantity: dto.completedQuantity, processLossQuantity: dto.processLossQuantity,
+    });
+    return { timeLog: created };
   }
 
   @Get('job-orders/:jobOrderReference/labor-cost')
@@ -83,5 +105,25 @@ export class ProductionOpsController {
   @Post('work-orders/:id/close') @HttpCode(200)
   async closeWorkOrder(@Param('id', ParseUUIDPipe) id: string): Promise<{ workOrder: WorkOrderRecord }> {
     return { workOrder: await this.service.closeWorkOrder(id) };
+  }
+
+  @Get('workstation-types')
+  async workstationTypes(): Promise<{ workstationTypes: WorkstationTypeRecord[] }> { return { workstationTypes: await this.service.getWorkstationTypes() }; }
+
+  @Post('workstation-types') @HttpCode(201)
+  async createWorkstationType(@Body() dto: CreateWorkstationTypeDto): Promise<{ workstationType: WorkstationTypeRecord }> {
+    const created = await this.service.createWorkstationType({ code: dto.code, name: dto.name });
+    return { workstationType: created };
+  }
+
+  @Get('operations')
+  async operations(): Promise<{ operations: OperationRecord[] }> { return { operations: await this.service.getOperations() }; }
+
+  @Post('operations') @HttpCode(201)
+  async createOperation(@Body() dto: CreateOperationDto): Promise<{ operation: OperationRecord }> {
+    const created = await this.service.createOperation({
+      code: dto.code, name: dto.name, defaultWorkCenterId: dto.defaultWorkCenterId, standardTimeMinutes: dto.standardTimeMinutes,
+    });
+    return { operation: created };
   }
 }

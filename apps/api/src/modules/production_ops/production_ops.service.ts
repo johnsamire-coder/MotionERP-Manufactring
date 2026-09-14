@@ -6,8 +6,9 @@ import { ProductionOpsNotFoundError, ProductionOpsValidationError } from './prod
 import { ProductionOpsRepository } from './production_ops.repository';
 import type { JobOrderRecord } from '../sales/sales.types';
 import type {
-  CreateProductionStepInput, CreateWorkCenterInput, CreateWorkOrderInput, JobOrderLaborCost, ProductionStepRecord,
-  WorkCenterRecord, WorkOrderRecord,
+  AddTimeLogInput, CreateOperationInput, CreateProductionStepInput, CreateWorkCenterInput, CreateWorkOrderInput,
+  CreateWorkstationTypeInput, JobOrderLaborCost, OperationRecord, ProductionStepRecord, ProductionStepTimeLogRecord,
+  WorkCenterRecord, WorkOrderRecord, WorkstationTypeRecord,
 } from './production_ops.types';
 
 @Injectable()
@@ -43,11 +44,22 @@ export class ProductionOpsService {
     return found;
   }
 
+  /**
+   * Job Card — extended 14 Sep 2026 to optionally link to a Work Order
+   * (owner's explicit choice, kept optional). When workOrderId is given, it
+   * must reference an existing Work Order — no cross-field consistency check
+   * against jobOrderReference is enforced yet (Motion's jobOrderReference and
+   * ERPNext's Work Order model different things; deferred to a later stage).
+   */
   async addStep(input: CreateProductionStepInput): Promise<ProductionStepRecord> {
     const wc = await this.repository.findWorkCenterById(input.workCenterId);
     if (!wc) throw new ProductionOpsNotFoundError(`work center ${input.workCenterId} does not exist`);
     const time = Number(input.standardTimeMinutes);
     if (!Number.isFinite(time) || time <= 0) throw new ProductionOpsValidationError('standardTimeMinutes must be positive');
+    if (input.workOrderId) {
+      const wo = await this.repository.findWorkOrderById(input.workOrderId);
+      if (!wo) throw new ProductionOpsNotFoundError(`work order ${input.workOrderId} does not exist`);
+    }
     const sequence = (await this.repository.countSteps(input.jobOrderReference)) + 1;
     const jobOrder = await this.getJobOrderOrThrow(input.jobOrderReference);
     return this.repository.insertStep({ id: randomUUID(), sequence, orgNodeId: jobOrder.orgNodeId, ...input });
@@ -67,6 +79,29 @@ export class ProductionOpsService {
     const time = Number(actualTimeMinutes);
     if (!Number.isFinite(time) || time <= 0) throw new ProductionOpsValidationError('actualTimeMinutes must be positive');
     return this.repository.recordActualTime(id, actualTimeMinutes);
+  }
+
+  /**
+   * A Time Log entry records one shift of actual execution on a Job Card,
+   * matching ERPNext's real Time Logs child table (supports multiple
+   * pause/resume entries per card). Also accumulates completedQuantity on
+   * the parent step when a quantity is reported, without changing status.
+   */
+  async addTimeLog(input: AddTimeLogInput): Promise<ProductionStepTimeLogRecord> {
+    const step = await this.repository.findStepById(input.productionStepId);
+    if (!step) throw new ProductionOpsNotFoundError(`production step ${input.productionStepId} does not exist`);
+    if (input.toTime && new Date(input.toTime) < new Date(input.fromTime)) {
+      throw new ProductionOpsValidationError('toTime cannot be before fromTime');
+    }
+    const created = await this.repository.addTimeLog({ id: randomUUID(), ...input });
+    if (input.completedQuantity) {
+      await this.repository.incrementCompletedQuantity(input.productionStepId, input.completedQuantity);
+    }
+    return created;
+  }
+
+  async getTimeLogs(productionStepId: string): Promise<ProductionStepTimeLogRecord[]> {
+    return this.repository.listTimeLogs(productionStepId);
   }
 
   async getJobOrderLaborCost(jobOrderReference: string): Promise<JobOrderLaborCost> {
@@ -150,6 +185,30 @@ export class ProductionOpsService {
       throw new ProductionOpsValidationError(`work order ${id} is "${wo.status}" and cannot be closed (must be "completed" or "stopped")`);
     }
     return this.repository.setWorkOrderStatus(id, 'closed');
+  }
+
+  async getWorkstationTypes(): Promise<WorkstationTypeRecord[]> { return this.repository.listWorkstationTypes(); }
+
+  async createWorkstationType(input: CreateWorkstationTypeInput): Promise<WorkstationTypeRecord> {
+    const code = normalizeCode(input.code);
+    const name = normalizeName(input.name);
+    const existing = await this.repository.findWorkstationTypeByCode(code);
+    if (existing) throw new ProductionOpsValidationError(`a workstation type with code "${code}" already exists`);
+    return this.repository.insertWorkstationType({ id: randomUUID(), code, name });
+  }
+
+  async getOperations(): Promise<OperationRecord[]> { return this.repository.listOperations(); }
+
+  async createOperation(input: CreateOperationInput): Promise<OperationRecord> {
+    const code = normalizeCode(input.code);
+    const name = normalizeName(input.name);
+    const existing = await this.repository.findOperationByCode(code);
+    if (existing) throw new ProductionOpsValidationError(`an operation with code "${code}" already exists`);
+    if (input.defaultWorkCenterId) {
+      const wc = await this.repository.findWorkCenterById(input.defaultWorkCenterId);
+      if (!wc) throw new ProductionOpsNotFoundError(`work center ${input.defaultWorkCenterId} does not exist`);
+    }
+    return this.repository.insertOperation({ id: randomUUID(), code, name, defaultWorkCenterId: input.defaultWorkCenterId, standardTimeMinutes: input.standardTimeMinutes });
   }
 }
 
