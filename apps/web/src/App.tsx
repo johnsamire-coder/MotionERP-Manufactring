@@ -14,6 +14,7 @@ import { OrganizationPage } from './app/pages/OrganizationPage';
 import { ManufacturingPage } from './app/pages/ManufacturingPage';
 import { BomPage } from './app/pages/BomPage';
 import { WorkOrderPage } from './app/pages/WorkOrderPage';
+import { SetupPage } from './app/pages/SetupPage';
 type PageKey =
   | 'dashboard' | 'organization'
   | 'manufacturing' | 'planning' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
@@ -112,6 +113,8 @@ const DEDICATED_PAGES: Partial<Record<PageKey, () => JSX.Element>> = {
   production_ops: ProductionOpsPage,
   bom: BomPage,
   work_order: WorkOrderPage,
+  workstation: SetupPage,
+  operation: SetupPage,
   sales: SalesPage,
   delivery: DeliveryPage,
   material: MaterialPage,
@@ -255,5 +258,6 @@ export function App(): JSX.Element {
     </section>
   </div>;
 }
+
 
 

@@ -886,7 +886,22 @@
                                      "close":  "Close",
                                      "noWorkOrder":  "No work orders yet",
                                      "noBomWarning":  "You need an approved BOM for this item to create a work order"
-                                 }
+                                 },
+                  "setup":  {
+                                "eyebrow":  "Manufacturing Setup",
+                                "title":  "Workstations \u0026 Operations",
+                                "description":  "Workstation type classifications and standard operation templates used across BOMs and job cards",
+                                "workstationTypes":  "Workstation Types",
+                                "addWorkstationType":  "Add Workstation Type",
+                                "code":  "Code",
+                                "name":  "Name",
+                                "operations":  "Operations",
+                                "addOperation":  "Add Operation",
+                                "defaultWorkCenter":  "Default Work Center (optional)",
+                                "standardTime":  "Standard Time (minutes, optional)",
+                                "noWorkstationTypes":  "No workstation types yet",
+                                "noOperations":  "No operations yet"
+                            }
               },
     "footer":  {
                    "demo":  "Motion ERP آ· Demo workspace",
