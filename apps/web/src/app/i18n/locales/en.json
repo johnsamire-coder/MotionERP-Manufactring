@@ -1,4 +1,4 @@
-﻿{
+{
     "app":  {
                 "name":  "Motion ERP",
                 "language":  "Language",
@@ -927,6 +927,7 @@
                                          "submit":  "Submit",
                                          "noForecasts":  "No forecasts yet"
                                      },
+                  "production_plan":  {"eyebrow":"Material Planning","title":"Production Plan","description":"Create and submit a production plan, then generate work orders automatically","listTitle":"Production Plan List","createPlan":"Create New Production Plan","planNumber":"Plan No.","planBy":"Plan Based On","jobOrder":"Job Order","materialRequest":"Material Request","salesForecast":"Sales Forecast","activity":"Activity (Company/Branch)","fromDate":"From Date","toDate":"To Date","addLine":"Add Item","productItem":"Product Item","bom":"Bill of Materials (BOM)","plannedQty":"Planned Quantity","finishedGoodsWarehouse":"Finished Goods Warehouse","status":"Status","submit":"Submit","createWorkOrders":"Create Work Orders","noPlans":"No production plans yet","noBomWarning":"No approved BOM exists for this item","noWarehouseWarning":"Select a finished goods warehouse before saving"},
                   "material_request":  {
                                            "eyebrow":  "Material Planning",
                                            "title":  "Material Request",

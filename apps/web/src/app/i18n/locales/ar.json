@@ -1,4 +1,4 @@
-﻿{
+{
     "app":  {
                 "name":  "موشن ERP",
                 "language":  "اللغة",
@@ -927,6 +927,7 @@
                                          "submit":  "اعتماد",
                                          "noForecasts":  "لا توجد توقعات بعد"
                                      },
+                  "production_plan":  {"eyebrow":"التخطيط المادي","title":"خطة الإنتاج (Production Plan)","description":"إنشاء خطة إنتاج واعتمادها ثم توليد أوامر التشغيل تلقائيا","listTitle":"قائمة خطط الإنتاج","createPlan":"إنشاء خطة إنتاج جديدة","planNumber":"رقم الخطة","planBy":"بناء على","jobOrder":"أمر التشغيل","materialRequest":"طلب الخامات","salesForecast":"توقعات المبيعات","activity":"النشاط (الشركة/الفرع)","fromDate":"من تاريخ","toDate":"إلى تاريخ","addLine":"إضافة صنف","productItem":"الصنف المنتج","bom":"قائمة المكونات (BOM)","plannedQty":"الكمية المخططة","finishedGoodsWarehouse":"مخزن المنتج التام","status":"الحالة","submit":"اعتماد","createWorkOrders":"إنشاء أوامر التشغيل","noPlans":"لا توجد خطط إنتاج بعد","noBomWarning":"لا توجد BOM معتمدة لهذا الصنف","noWarehouseWarning":"يجب اختيار مخزن المنتج التام قبل الحفظ"},
                   "material_request":  {
                                            "eyebrow":  "التخطيط المادي",
                                            "title":  "طلبات الخامات (Material Request)",
