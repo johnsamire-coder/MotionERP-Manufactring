@@ -16,6 +16,7 @@ import { SalesForecastPage } from './app/pages/SalesForecastPage';
 import { MaterialRequestPage } from './app/pages/MaterialRequestPage';
 import { WorkOrderPage } from './app/pages/WorkOrderPage';
 import { SetupPage } from './app/pages/SetupPage';
+import { ProductionPlanPage } from './app/pages/ProductionPlanPage';
 type PageKey =
   | 'dashboard' | 'organization'
   | 'manufacturing' | 'planning' | 'sales_forecast' | 'material_request_mp' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
@@ -112,6 +113,7 @@ const ALL_KEYS: PageKey[] = [
 const DEDICATED_PAGES: Partial<Record<PageKey, () => JSX.Element>> = {
   organization: OrganizationPage,
   manufacturing: ManufacturingPage,
+  planning: ProductionPlanPage,
   production_ops: ProductionOpsPage,
   bom: BomPage,
   sales_forecast: SalesForecastPage,
