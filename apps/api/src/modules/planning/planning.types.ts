@@ -42,3 +42,23 @@ export interface CreateMaterialRequestInput {
   orgNodeId: string; purpose?: MaterialRequestPurpose; requiredByDate?: string;
   jobOrderReference?: string; lines: MaterialRequestLineInput[];
 }
+
+export type ProductionPlanBy = 'job_order' | 'material_request' | 'sales_forecast';
+export type ProductionPlanStatus = 'draft' | 'submitted' | 'completed' | 'closed';
+
+export interface ProductionPlanItemRecord {
+  id: string; productionPlanId: string; productItemId: string; bomId: string;
+  qtyToPlan: string; warehouseId: string | null; workOrderId: string | null; lineNumber: number;
+}
+export interface ProductionPlanItemInput {
+  productItemId: string; bomId: string; qtyToPlan: string; warehouseId?: string;
+}
+
+export interface ProductionPlanRecord {
+  id: string; planNumber: string; orgNodeId: string; planBy: ProductionPlanBy;
+  fromDate: string; toDate: string; status: ProductionPlanStatus; items: ProductionPlanItemRecord[];
+}
+export interface CreateProductionPlanInput {
+  orgNodeId: string; planBy?: ProductionPlanBy; fromDate: string; toDate: string;
+  items: ProductionPlanItemInput[];
+}

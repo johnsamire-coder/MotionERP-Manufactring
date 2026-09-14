@@ -1,9 +1,9 @@
 ﻿import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { UseFilters } from '@nestjs/common';
-import { CreateMaterialRequestDto, CreateSalesForecastDto } from './planning.dto';
+import { CreateMaterialRequestDto, CreateProductionPlanDto, CreateSalesForecastDto } from './planning.dto';
 import { PlanningExceptionFilter } from './planning.exception-filter';
 import { PlanningService } from './planning.service';
-import type { MaterialRequestRecord, SalesForecastRecord } from './planning.types';
+import type { MaterialRequestRecord, ProductionPlanRecord, SalesForecastRecord } from './planning.types';
 
 @Controller({ path: 'planning', version: '1' })
 @UseFilters(PlanningExceptionFilter)
@@ -57,5 +57,34 @@ export class PlanningController {
   @Post('material-requests/:id/submit') @HttpCode(200)
   async submitMaterialRequest(@Param('id', ParseUUIDPipe) id: string): Promise<{ materialRequest: MaterialRequestRecord }> {
     return { materialRequest: await this.service.submitMaterialRequest(id) };
+  }
+
+  @Get('production-plans')
+  async productionPlans(): Promise<{ productionPlans: ProductionPlanRecord[] }> {
+    return { productionPlans: await this.service.getProductionPlans() };
+  }
+
+  @Get('production-plans/:id')
+  async productionPlanById(@Param('id', ParseUUIDPipe) id: string): Promise<{ productionPlan: ProductionPlanRecord }> {
+    return { productionPlan: await this.service.getProductionPlan(id) };
+  }
+
+  @Post('production-plans') @HttpCode(201)
+  async createProductionPlan(@Body() dto: CreateProductionPlanDto): Promise<{ productionPlan: ProductionPlanRecord }> {
+    const created = await this.service.createProductionPlan({
+      orgNodeId: dto.orgNodeId, planBy: dto.planBy, fromDate: dto.fromDate, toDate: dto.toDate,
+      items: dto.items.map((it) => ({ productItemId: it.productItemId, bomId: it.bomId, qtyToPlan: it.qtyToPlan, warehouseId: it.warehouseId })),
+    });
+    return { productionPlan: created };
+  }
+
+  @Post('production-plans/:id/submit') @HttpCode(200)
+  async submitProductionPlan(@Param('id', ParseUUIDPipe) id: string): Promise<{ productionPlan: ProductionPlanRecord }> {
+    return { productionPlan: await this.service.submitProductionPlan(id) };
+  }
+
+  @Post('production-plans/:id/create-work-orders') @HttpCode(200)
+  async createWorkOrdersFromPlan(@Param('id', ParseUUIDPipe) id: string): Promise<{ productionPlan: ProductionPlanRecord }> {
+    return { productionPlan: await this.service.createWorkOrdersFromPlan(id) };
   }
 }

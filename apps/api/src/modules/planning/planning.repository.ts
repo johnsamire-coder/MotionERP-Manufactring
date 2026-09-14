@@ -1,10 +1,12 @@
 ﻿import { Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
-import { planningMaterialRequest, planningMaterialRequestLine, salesForecast, salesForecastLine } from './planning.schema';
+import { planningMaterialRequest, planningMaterialRequestLine, productionPlan, productionPlanItem, salesForecast, salesForecastLine } from './planning.schema';
 import type {
   CreateMaterialRequestInput, MaterialRequestLineInput, MaterialRequestLineRecord,
   MaterialRequestRecord, MaterialRequestStatus,
+  CreateProductionPlanInput, ProductionPlanItemInput, ProductionPlanItemRecord,
+  ProductionPlanRecord, ProductionPlanStatus,
   CreateSalesForecastInput, SalesForecastLineInput, SalesForecastLineRecord,
   SalesForecastRecord, SalesForecastStatus,
 } from './planning.types';
@@ -63,6 +65,31 @@ function toMrLineRecord(row: MrLineRow): MaterialRequestLineRecord {
   return {
     id: row.id, materialRequestId: row.materialRequestId, itemId: row.itemId, warehouseId: row.warehouseId,
     quantity: row.quantity, scheduleDate: row.scheduleDate ? row.scheduleDate.toISOString() : null, lineNumber: row.lineNumber,
+  };
+}
+
+const ppColumns = {
+  id: productionPlan.id, planNumber: productionPlan.planNumber, orgNodeId: productionPlan.orgNodeId,
+  planBy: productionPlan.planBy, fromDate: productionPlan.fromDate, toDate: productionPlan.toDate, status: productionPlan.status,
+};
+const ppItemColumns = {
+  id: productionPlanItem.id, productionPlanId: productionPlanItem.productionPlanId, productItemId: productionPlanItem.productItemId,
+  bomId: productionPlanItem.bomId, qtyToPlan: productionPlanItem.qtyToPlan, warehouseId: productionPlanItem.warehouseId,
+  workOrderId: productionPlanItem.workOrderId, lineNumber: productionPlanItem.lineNumber,
+};
+
+interface PpRow {
+  id: string; planNumber: string; orgNodeId: string; planBy: string; fromDate: Date; toDate: Date; status: string;
+}
+interface PpItemRow {
+  id: string; productionPlanId: string; productItemId: string; bomId: string;
+  qtyToPlan: string; warehouseId: string | null; workOrderId: string | null; lineNumber: number;
+}
+
+function toPpItemRecord(row: PpItemRow): ProductionPlanItemRecord {
+  return {
+    id: row.id, productionPlanId: row.productionPlanId, productItemId: row.productItemId, bomId: row.bomId,
+    qtyToPlan: row.qtyToPlan, warehouseId: row.warehouseId, workOrderId: row.workOrderId, lineNumber: row.lineNumber,
   };
 }
 
@@ -198,5 +225,72 @@ export class PlanningRepository {
     const rows = await this.database.db.update(planningMaterialRequest).set({ status }).where(eq(planningMaterialRequest.id, id)).returning(mrColumns);
     const lines = await this.listMrLines(id);
     return this.toMrRecord(rows[0]!, lines);
+  }
+
+  async listProductionPlans(): Promise<ProductionPlanRecord[]> {
+    const rows = await this.database.db.select(ppColumns).from(productionPlan).orderBy(asc(productionPlan.planNumber));
+    const results: ProductionPlanRecord[] = [];
+    for (const row of rows) {
+      const items = await this.listPpItems(row.id);
+      results.push(this.toPpRecord(row, items));
+    }
+    return results;
+  }
+
+  async findProductionPlanById(id: string): Promise<ProductionPlanRecord | null> {
+    const rows = await this.database.db.select(ppColumns).from(productionPlan).where(eq(productionPlan.id, id)).limit(1);
+    if (!rows[0]) return null;
+    const items = await this.listPpItems(id);
+    return this.toPpRecord(rows[0], items);
+  }
+
+  async countProductionPlans(): Promise<number> {
+    const rows = await this.database.db.select({ id: productionPlan.id }).from(productionPlan);
+    return rows.length;
+  }
+
+  private async listPpItems(productionPlanId: string): Promise<ProductionPlanItemRecord[]> {
+    const rows = await this.database.db.select(ppItemColumns).from(productionPlanItem)
+      .where(eq(productionPlanItem.productionPlanId, productionPlanId)).orderBy(asc(productionPlanItem.lineNumber));
+    return rows.map(toPpItemRecord);
+  }
+
+  private toPpRecord(row: PpRow, items: ProductionPlanItemRecord[]): ProductionPlanRecord {
+    return {
+      id: row.id, planNumber: row.planNumber, orgNodeId: row.orgNodeId, planBy: row.planBy as ProductionPlanRecord['planBy'],
+      fromDate: row.fromDate.toISOString(), toDate: row.toDate.toISOString(), status: row.status as ProductionPlanStatus, items,
+    };
+  }
+
+  async insertProductionPlan(input: CreateProductionPlanInput & { id: string; planNumber: string }): Promise<ProductionPlanRecord> {
+    const rows = await this.database.db.insert(productionPlan).values({
+      id: input.id, planNumber: input.planNumber, orgNodeId: input.orgNodeId, planBy: input.planBy ?? 'job_order',
+      fromDate: new Date(input.fromDate), toDate: new Date(input.toDate),
+    }).returning(ppColumns);
+    const inserted = rows[0]!;
+    let lineNumber = 1;
+    for (const it of input.items) {
+      await this.insertPpItem(inserted.id, it, lineNumber);
+      lineNumber += 1;
+    }
+    const items = await this.listPpItems(inserted.id);
+    return this.toPpRecord(inserted, items);
+  }
+
+  private async insertPpItem(productionPlanId: string, input: ProductionPlanItemInput, lineNumber: number): Promise<void> {
+    await this.database.db.insert(productionPlanItem).values({
+      productionPlanId, productItemId: input.productItemId, bomId: input.bomId,
+      qtyToPlan: input.qtyToPlan, warehouseId: input.warehouseId ?? null, lineNumber,
+    });
+  }
+
+  async setProductionPlanStatus(id: string, status: ProductionPlanStatus): Promise<ProductionPlanRecord> {
+    const rows = await this.database.db.update(productionPlan).set({ status }).where(eq(productionPlan.id, id)).returning(ppColumns);
+    const items = await this.listPpItems(id);
+    return this.toPpRecord(rows[0]!, items);
+  }
+
+  async setPpItemWorkOrder(itemId: string, workOrderId: string): Promise<void> {
+    await this.database.db.update(productionPlanItem).set({ workOrderId }).where(eq(productionPlanItem.id, itemId));
   }
 }

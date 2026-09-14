@@ -42,3 +42,23 @@ export class CreateMaterialRequestDto {
   @Type(() => MaterialRequestLineDto)
   lines!: MaterialRequestLineDto[];
 }
+
+export class ProductionPlanItemDto {
+  @IsUUID() productItemId!: string;
+  @IsUUID() bomId!: string;
+  @IsNumberString() qtyToPlan!: string;
+  @IsOptional() @IsUUID() warehouseId?: string;
+}
+
+const PLAN_BY = ['job_order', 'material_request', 'sales_forecast'] as const;
+
+export class CreateProductionPlanDto {
+  @IsUUID() orgNodeId!: string;
+  @IsOptional() @IsIn(PLAN_BY) planBy?: (typeof PLAN_BY)[number];
+  @IsString() fromDate!: string;
+  @IsString() toDate!: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductionPlanItemDto)
+  items!: ProductionPlanItemDto[];
+}

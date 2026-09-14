@@ -2,11 +2,18 @@
 import { Injectable } from '@nestjs/common';
 import { PlanningNotFoundError, PlanningValidationError } from './planning.errors';
 import { PlanningRepository } from './planning.repository';
-import type { CreateMaterialRequestInput, CreateSalesForecastInput, MaterialRequestRecord, SalesForecastRecord } from './planning.types';
+import { ProductionOpsService } from '../production_ops/production_ops.service';
+import type {
+  CreateMaterialRequestInput, CreateProductionPlanInput, CreateSalesForecastInput,
+  MaterialRequestRecord, ProductionPlanRecord, SalesForecastRecord,
+} from './planning.types';
 
 @Injectable()
 export class PlanningService {
-  constructor(private readonly repository: PlanningRepository) {}
+  constructor(
+    private readonly repository: PlanningRepository,
+    private readonly productionOpsService: ProductionOpsService,
+  ) {}
 
   async getSalesForecasts(): Promise<SalesForecastRecord[]> { return this.repository.listSalesForecasts(); }
 
@@ -65,7 +72,58 @@ export class PlanningService {
   async submitMaterialRequest(id: string): Promise<MaterialRequestRecord> {
     const found = await this.repository.findMaterialRequestById(id);
     if (!found) throw new PlanningNotFoundError(`material request ${id} does not exist`);
-    if (found.status !== 'draft') throw new PlanningValidationError(`material request ${id} is \"${found.status}\" and cannot be submitted (must be \"draft\")`);
+    if (found.status !== 'draft') throw new PlanningValidationError(`material request ${id} is "${found.status}" and cannot be submitted (must be "draft")`);
     return this.repository.setMaterialRequestStatus(id, 'submitted');
+  }
+
+  async getProductionPlans(): Promise<ProductionPlanRecord[]> { return this.repository.listProductionPlans(); }
+
+  async getProductionPlan(id: string): Promise<ProductionPlanRecord> {
+    const found = await this.repository.findProductionPlanById(id);
+    if (!found) throw new PlanningNotFoundError(`production plan ${id} does not exist`);
+    return found;
+  }
+
+  async createProductionPlan(input: CreateProductionPlanInput): Promise<ProductionPlanRecord> {
+    if (!input.items || input.items.length === 0) {
+      throw new PlanningValidationError('a production plan must have at least one item');
+    }
+    if (new Date(input.toDate) < new Date(input.fromDate)) {
+      throw new PlanningValidationError('toDate cannot be before fromDate');
+    }
+    for (const it of input.items) {
+      const qty = Number(it.qtyToPlan);
+      if (!Number.isFinite(qty) || qty <= 0) throw new PlanningValidationError('every production plan item quantity must be positive');
+    }
+    const sequence = (await this.repository.countProductionPlans()) + 1;
+    const year = new Date().getFullYear();
+    const planNumber = `PP-${year}-${String(sequence).padStart(6, '0')}`;
+    return this.repository.insertProductionPlan({ id: randomUUID(), planNumber, ...input });
+  }
+
+  async submitProductionPlan(id: string): Promise<ProductionPlanRecord> {
+    const found = await this.repository.findProductionPlanById(id);
+    if (!found) throw new PlanningNotFoundError(`production plan ${id} does not exist`);
+    if (found.status !== 'draft') throw new PlanningValidationError(`production plan ${id} is "${found.status}" and cannot be submitted (must be "draft")`);
+    return this.repository.setProductionPlanStatus(id, 'submitted');
+  }
+
+  async createWorkOrdersFromPlan(id: string): Promise<ProductionPlanRecord> {
+    const plan = await this.repository.findProductionPlanById(id);
+    if (!plan) throw new PlanningNotFoundError(`production plan ${id} does not exist`);
+    if (plan.status !== 'submitted') throw new PlanningValidationError(`production plan ${id} is "${plan.status}" and cannot generate work orders (must be "submitted")`);
+    for (const it of plan.items) {
+      if (it.workOrderId) continue;
+      if (!it.warehouseId) throw new PlanningValidationError(`item ${it.id} has no finished goods warehouse set; cannot create a work order for it`);
+      const wo = await this.productionOpsService.createWorkOrder({
+        productItemId: it.productItemId, bomId: it.bomId, orgNodeId: plan.orgNodeId,
+        qtyToManufacture: it.qtyToPlan, finishedGoodsWarehouseId: it.warehouseId,
+      });
+      await this.repository.setPpItemWorkOrder(it.id, wo.id);
+    }
+    const updated = await this.repository.findProductionPlanById(id);
+    const allDone = updated!.items.every((it) => it.workOrderId);
+    if (allDone) return this.repository.setProductionPlanStatus(id, 'completed');
+    return updated!;
   }
 }

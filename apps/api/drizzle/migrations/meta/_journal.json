@@ -204,6 +204,13 @@
       "when": 1789391107807,
       "tag": "0028_sharp_hawkeye",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1789392588956,
+      "tag": "0029_fearless_killraven",
+      "breakpoints": true
     }
   ]
 }

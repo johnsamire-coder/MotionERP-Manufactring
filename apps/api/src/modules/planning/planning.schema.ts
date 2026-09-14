@@ -118,3 +118,54 @@ export const planningMaterialRequestLine = planningSchema.table('material_reques
 
 export type PlanningMaterialRequest = typeof planningMaterialRequest.$inferSelect;
 export type PlanningMaterialRequestLine = typeof planningMaterialRequestLine.$inferSelect;
+
+/**
+ * Production Plan — ERPNext parity build (14 Sep 2026): the third and final
+ * Material Planning master, consuming the previous two (Sales Forecast,
+ * Material Request) plus Job Order (our Sales Order equivalent) as its
+ * "Production Plan By" source. Each item line points to a specific
+ * APPROVED BOM (validated at Work Order creation time, same rule as
+ * Work Order itself) and can spawn a real Work Order via the "Create Work
+ * Orders" action — same cross-module pattern as elsewhere (D2/D20).
+ */
+export const productionPlan = planningSchema.table('production_plan', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  planNumber: text('plan_number').notNull(),
+  orgNodeId: uuid('org_node_id')
+    .notNull()
+    .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  planBy: text('plan_by').notNull().default('job_order'),
+  fromDate: timestamp('from_date', { withTimezone: true }).notNull(),
+  toDate: timestamp('to_date', { withTimezone: true }).notNull(),
+  status: text('status').notNull().default('draft'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('production_plan_number_unique').on(t.planNumber),
+  check('production_plan_by_valid', sql`${t.planBy} in ('job_order', 'material_request', 'sales_forecast')`),
+  check('production_plan_status_valid', sql`${t.status} in ('draft', 'submitted', 'completed', 'closed')`),
+  check('production_plan_dates_valid', sql`${t.toDate} >= ${t.fromDate}`),
+  index('production_plan_org_node_idx').on(t.orgNodeId),
+]);
+
+export const productionPlanItem = planningSchema.table('production_plan_item', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  productionPlanId: uuid('production_plan_id')
+    .notNull()
+    .references(() => productionPlan.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  productItemId: uuid('product_item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  bomId: uuid('bom_id').notNull(),
+  qtyToPlan: numeric('qty_to_plan', { precision: 24, scale: 6 }).notNull(),
+  warehouseId: uuid('warehouse_id').references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  workOrderId: uuid('work_order_id'),
+  lineNumber: integer('line_number').notNull().default(0),
+}, (t) => [
+  check('production_plan_item_qty_positive', sql`${t.qtyToPlan} > 0`),
+  index('production_plan_item_plan_idx').on(t.productionPlanId),
+  index('production_plan_item_product_idx').on(t.productItemId),
+]);
+
+export type ProductionPlan = typeof productionPlan.$inferSelect;
+export type ProductionPlanItem = typeof productionPlanItem.$inferSelect;
