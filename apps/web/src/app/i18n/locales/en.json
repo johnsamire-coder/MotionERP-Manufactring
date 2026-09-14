@@ -55,7 +55,8 @@
                        "helpText":  "Explore the Motion ERP workspace and keep every team aligned.",
                        "helpAction":  "View guide",
                        "systemOperational":  "All systems operational",
-                       "sales_forecast":  "Sales Forecast"
+                       "sales_forecast":  "Sales Forecast",
+                       "material_request_mp":  "Material Request"
                    },
     "common":  {
                    "viewAll":  "View all",
@@ -925,7 +926,29 @@
                                          "status":  "Status",
                                          "submit":  "Submit",
                                          "noForecasts":  "No forecasts yet"
-                                     }
+                                     },
+                  "material_request":  {
+                                           "eyebrow":  "Material Planning",
+                                           "title":  "Material Request",
+                                           "description":  "Request material issue, transfer, or purchase, as an input to the production plan",
+                                           "listTitle":  "Material Request List",
+                                           "createRequest":  "Create New Request",
+                                           "requestNumber":  "Request No.",
+                                           "activity":  "Activity (Company/Branch)",
+                                           "purpose":  "Purpose",
+                                           "purchase":  "Purchase",
+                                           "materialTransfer":  "Material Transfer",
+                                           "materialIssue":  "Material Issue",
+                                           "manufacture":  "Manufacture",
+                                           "jobOrderReference":  "Job Order Reference (optional)",
+                                           "requiredByDate":  "Required By Date (optional)",
+                                           "addLine":  "Add Item",
+                                           "item":  "Item",
+                                           "quantity":  "Quantity",
+                                           "status":  "Status",
+                                           "submit":  "Submit",
+                                           "noRequests":  "No requests yet"
+                                       }
               },
     "footer":  {
                    "demo":  "Motion ERP آ· Demo workspace",

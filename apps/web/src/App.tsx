@@ -13,11 +13,12 @@ import { OrganizationPage } from './app/pages/OrganizationPage';
 import { ManufacturingPage } from './app/pages/ManufacturingPage';
 import { BomPage } from './app/pages/BomPage';
 import { SalesForecastPage } from './app/pages/SalesForecastPage';
+import { MaterialRequestPage } from './app/pages/MaterialRequestPage';
 import { WorkOrderPage } from './app/pages/WorkOrderPage';
 import { SetupPage } from './app/pages/SetupPage';
 type PageKey =
   | 'dashboard' | 'organization'
-  | 'manufacturing' | 'planning' | 'sales_forecast' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
+  | 'manufacturing' | 'planning' | 'sales_forecast' | 'material_request_mp' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
   | 'sales' | 'customer' | 'sales_order' | 'delivery' | 'sales_invoice' | 'sales_partner' | 'sales_person'
   | 'purchasing' | 'supplier' | 'material' | 'request_for_quotation' | 'supplier_quotation' | 'purchase_order' | 'purchase_receipt' | 'purchase_invoice'
   | 'inventory' | 'stock_entry' | 'stock_reconciliation' | 'serial_no' | 'batch' | 'price_list'
@@ -40,6 +41,7 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
     docs: [
       { key: 'planning', icon: 'clock' },
       { key: 'sales_forecast', icon: 'clock' },
+      { key: 'material_request_mp', icon: 'clock' },
       { key: 'bom', icon: 'layers' },
       { key: 'work_order', icon: 'factory' },
       { key: 'production_ops', icon: 'check' },
@@ -113,6 +115,7 @@ const DEDICATED_PAGES: Partial<Record<PageKey, () => JSX.Element>> = {
   production_ops: ProductionOpsPage,
   bom: BomPage,
   sales_forecast: SalesForecastPage,
+  material_request_mp: MaterialRequestPage,
   work_order: WorkOrderPage,
   workstation: SetupPage,
   operation: SetupPage,

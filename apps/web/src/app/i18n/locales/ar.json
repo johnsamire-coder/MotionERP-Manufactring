@@ -55,7 +55,8 @@
                        "helpText":  "استكشف مساحة عمل موشن ERP وحافظ على توافق جميع الفرق.",
                        "helpAction":  "عرض الدليل",
                        "systemOperational":  "جميع الأنظمة تعمل",
-                       "sales_forecast":  "توقعات المبيعات"
+                       "sales_forecast":  "توقعات المبيعات",
+                       "material_request_mp":  "طلبات الخامات"
                    },
     "common":  {
                    "viewAll":  "عرض الكل",
@@ -925,7 +926,29 @@
                                          "status":  "الحالة",
                                          "submit":  "اعتماد",
                                          "noForecasts":  "لا توجد توقعات بعد"
-                                     }
+                                     },
+                  "material_request":  {
+                                           "eyebrow":  "التخطيط المادي",
+                                           "title":  "طلبات الخامات (Material Request)",
+                                           "description":  "طلب صرف أو تحويل أو شراء الخامات كمدخل لخطة الإنتاج",
+                                           "listTitle":  "قائمة طلبات الخامات",
+                                           "createRequest":  "إنشاء طلب جديد",
+                                           "requestNumber":  "رقم الطلب",
+                                           "activity":  "النشاط (الشركة/الفرع)",
+                                           "purpose":  "الغرض",
+                                           "purchase":  "شراء",
+                                           "materialTransfer":  "تحويل مخزني",
+                                           "materialIssue":  "صرف",
+                                           "manufacture":  "تصنيع",
+                                           "jobOrderReference":  "مرجع أمر التشغيل (اختياري)",
+                                           "requiredByDate":  "مطلوب بحلول تاريخ (اختياري)",
+                                           "addLine":  "إضافة صنف",
+                                           "item":  "الصنف",
+                                           "quantity":  "الكمية",
+                                           "status":  "الحالة",
+                                           "submit":  "اعتماد",
+                                           "noRequests":  "لا توجد طلبات بعد"
+                                       }
               },
     "footer":  {
                    "demo":  "موشن ERP · مساحة تجريبية",
