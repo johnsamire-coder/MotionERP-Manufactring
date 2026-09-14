@@ -48,7 +48,7 @@
                        "hr":  "HR",
                        "attendance":  "Attendance",
                        "leave_application":  "Leave Application",
-                       "auth":  "Users & Permissions",
+                       "auth":  "Users \u0026 Permissions",
                        "reports":  "Reports",
                        "settings":  "Settings",
                        "helpTitle":  "Need a hand?",
@@ -202,7 +202,7 @@
                   },
     "pages":  {
                   "inventory":  {
-                                    "eyebrow":  "Materials & stock",
+                                    "eyebrow":  "Materials \u0026 stock",
                                     "title":  "Inventory",
                                     "description":  "See material availability, stock movements, and replenishment priorities.",
                                     "action":  "Add item",
@@ -275,7 +275,7 @@
                                                   }
                                 },
                   "purchasing":  {
-                                     "eyebrow":  "Sourcing & suppliers",
+                                     "eyebrow":  "Sourcing \u0026 suppliers",
                                      "title":  "Purchasing",
                                      "description":  "Coordinate purchase requests, supplier relationships, and incoming materials.",
                                      "action":  "Create request",
@@ -306,7 +306,7 @@
                                                }
                                  },
                   "reports":  {
-                                  "eyebrow":  "Insights & analytics",
+                                  "eyebrow":  "Insights \u0026 analytics",
                                   "title":  "Reports",
                                   "description":  "Turn operational data into clear decisions for every team and leadership group.",
                                   "action":  "Create report",
@@ -369,7 +369,7 @@
                                },
                   "sales":  {
                                 "eyebrow":  "Commercial Operations",
-                                "title":  "Sales & Job Orders",
+                                "title":  "Sales \u0026 Job Orders",
                                 "description":  "Manage customers, issue quotations, approve orders, and generate Job Orders",
                                 "customers":  {
                                                   "title":  "Customers",
@@ -389,7 +389,7 @@
                                                    "direction":  "Direction",
                                                    "total":  "Total",
                                                    "status":  "Status",
-                                                   "approve":  "Approve & Create Job Order",
+                                                   "approve":  "Approve \u0026 Create Job Order",
                                                    "outgoing":  "Outgoing (Customer)",
                                                    "incoming":  "Incoming (Supplier)",
                                                    "poReference":  "Customer PO Ref",
@@ -425,7 +425,7 @@
                                    "title":  "Production Planning",
                                    "description":  "Set priorities, execution methods (Internal / Subcontracted / Mixed), and manage capacities for Job Orders",
                                    "table":  {
-                                                 "title":  "Job Orders & Production Plans",
+                                                 "title":  "Job Orders \u0026 Production Plans",
                                                  "jobOrder":  "Job Order No.",
                                                  "customer":  "Customer",
                                                  "priority":  "Priority",
@@ -454,7 +454,7 @@
                                             }
                                },
                   "technical":  {
-                                    "eyebrow":  "Engineering & Specifications",
+                                    "eyebrow":  "Engineering \u0026 Specifications",
                                     "title":  "Technical Office",
                                     "description":  "Attach Shop Drawings, Cutting Lists, and manage versioned Bill of Materials (BOM) per Job Order",
                                     "docs":  {
@@ -491,8 +491,8 @@
                                              }
                                 },
                   "material":  {
-                                   "eyebrow":  "Inventory & Production Control",
-                                   "title":  "Material Requests & Deviation Control",
+                                   "eyebrow":  "Inventory \u0026 Production Control",
+                                   "title":  "Material Requests \u0026 Deviation Control",
                                    "description":  "Request raw materials against BOMs, enforce human review on BOM budget overruns, and issue stock",
                                    "table":  {
                                                  "title":  "Material Requests Queue",
@@ -508,7 +508,7 @@
                                                 "newRequest":  "New Material Request",
                                                 "qtyPlanned":  "Planned Qty",
                                                 "qtyRequested":  "Requested Qty",
-                                                "reason":  "Deviation Reason (Required if requested > planned)",
+                                                "reason":  "Deviation Reason (Required if requested \u003e planned)",
                                                 "approveDeviation":  "Approve Deviation",
                                                 "issueStock":  "Issue Stock",
                                                 "save":  "Submit Request",
@@ -520,17 +520,17 @@
                                },
                   "production_ops":  {
                                          "eyebrow":  "Shop Floor Control",
-                                         "title":  "Work Stations & Production Operations",
-                                         "description":  "Configure factory work centers, define step sequences per Job Order, and track real-time labor & overhead costs",
+                                         "title":  "Work Stations \u0026 Production Operations",
+                                         "description":  "Configure factory work centers, define step sequences per Job Order, and track real-time labor \u0026 overhead costs",
                                          "workCenters":  {
-                                                             "title":  "Work Centers & Machinery",
+                                                             "title":  "Work Centers \u0026 Machinery",
                                                              "addCenter":  "Add Work Center",
                                                              "code":  "Code",
                                                              "name":  "Work Center Name",
                                                              "ratePerMinute":  "Cost / Min (EGP)"
                                                          },
                                          "steps":  {
-                                                       "title":  "Production Steps & Routing",
+                                                       "title":  "Production Steps \u0026 Routing",
                                                        "addStep":  "Add Production Step",
                                                        "sequence":  "Seq",
                                                        "stepName":  "Step Name",
@@ -540,7 +540,18 @@
                                                        "status":  "Status",
                                                        "action":  "Control",
                                                        "start":  "Start Step",
-                                                       "complete":  "Complete Step"
+                                                       "complete":  "Complete Step",
+                                                       "workOrder":  "Work Order (optional)",
+                                                       "forQty":  "Target Qty",
+                                                       "completedQty":  "Completed Qty",
+                                                       "operator":  "Operator (optional)",
+                                                       "timeLogs":  "Time Logs",
+                                                       "addTimeLog":  "Log Actual Time",
+                                                       "fromTime":  "From",
+                                                       "toTime":  "To",
+                                                       "completedQtyLog":  "Completed Qty (this log)",
+                                                       "noTimeLogs":  "No time logs yet",
+                                                       "viewLogs":  "View Logs"
                                                    },
                                          "cost":  {
                                                       "summaryTitle":  "Live Labor Cost Tracker",
@@ -559,8 +570,8 @@
                                                   }
                                      },
                   "quality":  {
-                                  "eyebrow":  "Quality Assurance & SLA Rules",
-                                  "title":  "Quality Control & Escalation Engine",
+                                  "eyebrow":  "Quality Assurance \u0026 SLA Rules",
+                                  "title":  "Quality Control \u0026 Escalation Engine",
                                   "description":  "Define inspection points, enforce resolution SLAs, and automate overdue escalation to management",
                                   "inspectionPoints":  {
                                                            "title":  "Inspection Points Configuration",
@@ -570,7 +581,7 @@
                                                            "targetMins":  "Target Time (Mins)"
                                                        },
                                   "workflows":  {
-                                                    "title":  "Quality Workflows & Escalation Queue",
+                                                    "title":  "Quality Workflows \u0026 Escalation Queue",
                                                     "startWorkflow":  "Trigger Inspection",
                                                     "point":  "Inspection Point",
                                                     "assignedTo":  "Assigned Officer",
@@ -590,19 +601,19 @@
                                            }
                               },
                   "costing":  {
-                                  "eyebrow":  "Cost Engineering & Variance Analysis",
-                                  "title":  "Unit Cost Estimator & Job Variance",
+                                  "eyebrow":  "Cost Engineering \u0026 Variance Analysis",
+                                  "title":  "Unit Cost Estimator \u0026 Job Variance",
                                   "description":  "Standard product unit cost calculator (Excel model) and Job Order estimated vs actual variance report",
                                   "tabs":  {
                                                "estimator":  "Unit Cost Estimator (Excel Model)",
                                                "variance":  "Job Order Variance Analysis"
                                            },
                                   "estimator":  {
-                                                    "productTitle":  "Product Specification & Batch Size",
-                                                    "rawMaterials":  "Raw Materials (Sheet Metal & Profiles)",
-                                                    "accessories":  "Hardware & Accessories",
-                                                    "consumables":  "Consumables & Paint Coating",
-                                                    "operations":  "Work Center Operations & Time",
+                                                    "productTitle":  "Product Specification \u0026 Batch Size",
+                                                    "rawMaterials":  "Raw Materials (Sheet Metal \u0026 Profiles)",
+                                                    "accessories":  "Hardware \u0026 Accessories",
+                                                    "consumables":  "Consumables \u0026 Paint Coating",
+                                                    "operations":  "Work Center Operations \u0026 Time",
                                                     "length":  "L (m)",
                                                     "width":  "W (m)",
                                                     "height":  "H (m)",
@@ -616,7 +627,7 @@
                                                     "stdMins":  "Minutes",
                                                     "ratePerMin":  "Rate/Min (EGP)",
                                                     "directCost":  "Direct Unit Cost",
-                                                    "overheadCost":  "Overhead & Depreciation (20%)",
+                                                    "overheadCost":  "Overhead \u0026 Depreciation (20%)",
                                                     "totalUnitCost":  "Total Estimated Unit Cost"
                                                 },
                                   "variance":  {
@@ -635,20 +646,20 @@
                                            }
                               },
                   "delivery":  {
-                                   "eyebrow":  "Logistics & Client Handover",
-                                   "title":  "Delivery & Installation Control",
+                                   "eyebrow":  "Logistics \u0026 Client Handover",
+                                   "title":  "Delivery \u0026 Installation Control",
                                    "description":  "Manage shipping delivery orders, site installation reports, and customer acceptance certificates",
                                    "orders":  {
-                                                  "title":  "Delivery Orders & Logistics",
+                                                  "title":  "Delivery Orders \u0026 Logistics",
                                                   "createOrder":  "New Delivery Order",
                                                   "orderNo":  "Delivery Order No.",
                                                   "address":  "Delivery Site Address",
-                                                  "driver":  "Driver & Vehicle",
+                                                  "driver":  "Driver \u0026 Vehicle",
                                                   "status":  "Status",
                                                   "action":  "Action"
                                               },
                                    "handover":  {
-                                                    "title":  "Site Installation & Handover Protocols",
+                                                    "title":  "Site Installation \u0026 Handover Protocols",
                                                     "addReceipt":  "Record Delivery Receipt",
                                                     "addReport":  "Record Installation Protocol",
                                                     "receiptNo":  "Receipt No.",
@@ -665,8 +676,8 @@
                                             }
                                },
                   "accounting":  {
-                                     "eyebrow":  "Financial Ledgers & Treasury",
-                                     "title":  "Accounting, Treasury & Retention",
+                                     "eyebrow":  "Financial Ledgers \u0026 Treasury",
+                                     "title":  "Accounting, Treasury \u0026 Retention",
                                      "description":  "Manage Chart of Accounts, balanced double-entry journals, customer collections, and retention release cycles",
                                      "coa":  {
                                                  "title":  "Chart of Accounts",
@@ -686,7 +697,7 @@
                                                      "post":  "Post Entry"
                                                  },
                                      "treasury":  {
-                                                      "title":  "Customer Collections & Retention Release",
+                                                      "title":  "Customer Collections \u0026 Retention Release",
                                                       "addCollection":  "Record Collection",
                                                       "addRetention":  "Record Retention Hold",
                                                       "collNo":  "Collection No.",
@@ -704,8 +715,8 @@
                                               }
                                  },
                   "hr":  {
-                             "eyebrow":  "Human Capital & Incentives",
-                             "title":  "HR, Payroll & Sales Commissions",
+                             "eyebrow":  "Human Capital \u0026 Incentives",
+                             "title":  "HR, Payroll \u0026 Sales Commissions",
                              "description":  "Manage employees, configure sales commission rules (sales vs collections), and generate monthly payrolls",
                              "employees":  {
                                                "title":  "Employees Directory",
@@ -716,7 +727,7 @@
                                                "baseSalary":  "Base Salary (EGP)"
                                            },
                              "commissions":  {
-                                                 "title":  "Commission Rules & Earned Ledger",
+                                                 "title":  "Commission Rules \u0026 Earned Ledger",
                                                  "addRule":  "Set Commission Rule",
                                                  "ruleBasis":  "Commission Basis",
                                                  "ratePct":  "Rate %",
@@ -741,8 +752,8 @@
                                       }
                          },
                   "auth":  {
-                               "eyebrow":  "Security & RBAC Controls",
-                               "title":  "Users, Roles & Permissions",
+                               "eyebrow":  "Security \u0026 RBAC Controls",
+                               "title":  "Users, Roles \u0026 Permissions",
                                "description":  "Manage user accounts, assign roles, configure action-resource permissions, and set financial value limits",
                                "users":  {
                                              "title":  "User Accounts",
@@ -752,7 +763,7 @@
                                              "status":  "Status"
                                          },
                                "roles":  {
-                                             "title":  "System Roles & Value Limits",
+                                             "title":  "System Roles \u0026 Value Limits",
                                              "addRole":  "Create Role",
                                              "addPermission":  "Grant Permission",
                                              "code":  "Role Code",
@@ -770,7 +781,7 @@
                                         }
                            },
                   "organization":  {
-                                       "eyebrow":  "Corporate Structure & Hierarchy",
+                                       "eyebrow":  "Corporate Structure \u0026 Hierarchy",
                                        "title":  "Organization Core",
                                        "description":  "Manage multi-company node tree, parent-child rules, facilities, and organizational units",
                                        "tree":  {
@@ -815,7 +826,7 @@
                                                  }
                                     },
                   "expenses":  {
-                                   "eyebrow":  "Cost Accounting & Matrix Analysis",
+                                   "eyebrow":  "Cost Accounting \u0026 Matrix Analysis",
                                    "title":  "Production Expenses Analysis",
                                    "description":  "Record daily production expenses, auto-generate accounting journal entries, allocate costs to Job Orders, and export Excel matrix sheets",
                                    "table":  {
@@ -825,20 +836,20 @@
                                                  "description":  "Description / Details",
                                                  "totalAmount":  "Total Amount (EGP)",
                                                  "jobOrder":  "Linked Job Order",
-                                                 "transport":  "Freight & Transport",
+                                                 "transport":  "Freight \u0026 Transport",
                                                  "samples":  "Samples",
                                                  "electricity":  "Electricity",
                                                  "packaging":  "Packaging",
-                                                 "paint":  "Paint & Coating",
-                                                 "wages":  "Wages & Supervision",
-                                                 "gratuity":  "Gratuity & Other",
+                                                 "paint":  "Paint \u0026 Coating",
+                                                 "wages":  "Wages \u0026 Supervision",
+                                                 "gratuity":  "Gratuity \u0026 Other",
                                                  "totals":  "Monthly Category Totals"
                                              },
                                    "form":  {
-                                                "title":  "Record Expense & Create Journal Entry",
+                                                "title":  "Record Expense \u0026 Create Journal Entry",
                                                 "amount":  "Amount (EGP)",
                                                 "category":  "Expense Category",
-                                                "save":  "Save & Post to JO Cost",
+                                                "save":  "Save \u0026 Post to JO Cost",
                                                 "cancel":  "Cancel",
                                                 "loading":  "Processing...",
                                                 "empty":  "No production expenses recorded for this period",
@@ -846,7 +857,7 @@
                                             }
                                },
                   "bom":  {
-                              "eyebrow":  "Engineering & Manufacturing",
+                              "eyebrow":  "Engineering \u0026 Manufacturing",
                               "title":  "Bill of Materials (BOM)",
                               "description":  "Create and approve bills of materials per product item, with multi-version support and a default version",
                               "listTitle":  "Bill of Materials List",

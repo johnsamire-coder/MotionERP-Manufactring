@@ -1,31 +1,25 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 
 interface JobOrderRecord { id: string; jobOrderNumber: string; }
-interface WorkCenterRecord { id: string; code: string; name: string; ratePerMinute?: string; costPerMinute?: string; status: string; }
+interface WorkOrderRecord { id: string; workOrderNumber: string; }
+interface EmployeeRecord { id: string; code: string; name: string; }
+interface WorkCenterRecord { id: string; code: string; name: string; ratePerMinute?: string; status: string; }
+interface TimeLogRecord {
+  id: string; productionStepId: string; fromTime: string; toTime: string | null;
+  timeInMinutes: string | null; completedQuantity: string | null; processLossQuantity: string | null;
+}
 interface ProductionStepRecord {
-  id: string;
-  jobOrderReference: string;
-  workCenterId: string;
-  sequence: number;
-  operationName?: string;
-  name?: string;
-  standardTimeMinutes?: string;
-  standardMinutes?: string;
-  actualMinutes?: string;
-  actualTimeMinutes?: string;
-  status: 'pending' | 'in_progress' | 'completed';
+  id: string; jobOrderReference: string; workOrderId: string | null; workCenterId: string;
+  operationName: string; standardTimeMinutes: string; actualTimeMinutes: string | null;
+  forQuantity: string | null; completedQuantity: string; operatorEmployeeId: string | null;
+  sequence: number; status: 'pending' | 'in_progress' | 'done';
 }
 
 interface LaborCostSummary {
-  jobOrderReference: string;
-  totalStandardMinutes: number;
-  totalActualMinutes: number;
-  totalStandardCost: number;
-  totalActualCost: number;
-  completedSteps: number;
-  totalSteps: number;
+  jobOrderReference: string; totalStandardMinutes: number; totalActualMinutes: number;
+  totalStandardCost: number; totalActualCost: number; stepsCount: number; stepsDone: number;
 }
 
 function nextCode(prefix: string, existingCodes: string[]): string {
@@ -36,6 +30,8 @@ function nextCode(prefix: string, existingCodes: string[]): string {
 export function ProductionOpsPage(): JSX.Element {
   const { t, i18n } = useTranslation();
   const [jobOrders, setJobOrders] = useState<JobOrderRecord[]>([]);
+  const [workOrders, setWorkOrders] = useState<WorkOrderRecord[]>([]);
+  const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [workCenters, setWorkCenters] = useState<WorkCenterRecord[]>([]);
   const [steps, setSteps] = useState<ProductionStepRecord[]>([]);
   const [costSummary, setCostSummary] = useState<LaborCostSummary | null>(null);
@@ -47,22 +43,30 @@ export function ProductionOpsPage(): JSX.Element {
   const [showWcForm, setShowWcForm] = useState(false);
   const [showStepForm, setShowStepForm] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState<string | null>(null);
+  const [showLogsForStep, setShowLogsForStep] = useState<string | null>(null);
+  const [timeLogs, setTimeLogs] = useState<TimeLogRecord[]>([]);
+  const [showLogForm, setShowLogForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
-  // Work Center Form
   const [wcCode, setWcCode] = useState('');
   const [wcName, setWcName] = useState('');
   const [wcCostPerMin, setWcCostPerMin] = useState('2.5');
 
-  // Production Step Form
   const [selectedWcId, setSelectedWcId] = useState('');
   const [stepName, setStepName] = useState('');
   const [stdMins, setStdMins] = useState('30');
+  const [selectedWorkOrderId, setSelectedWorkOrderId] = useState('');
+  const [forQty, setForQty] = useState('');
+  const [operatorId, setOperatorId] = useState('');
 
-  // Complete Step Modal
   const [actualMinsInput, setActualMinsInput] = useState('30');
+
+  const [logFromTime, setLogFromTime] = useState('');
+  const [logToTime, setLogToTime] = useState('');
+  const [logMinutes, setLogMinutes] = useState('');
+  const [logQty, setLogQty] = useState('');
 
   async function getActiveOrgId(): Promise<string> {
     if (orgNodeId) return orgNodeId;
@@ -85,12 +89,16 @@ export function ProductionOpsPage(): JSX.Element {
     setLoading(true);
     setError(null);
     try {
-      const [joRes, wcRes] = await Promise.all([
+      const [joRes, woRes, empRes, wcRes] = await Promise.all([
         api.get<{ jobOrders: JobOrderRecord[] }>('/sales/job-orders'),
+        api.get<{ workOrders: WorkOrderRecord[] }>('/production-ops/work-orders'),
+        api.get<{ employees: EmployeeRecord[] }>('/hr/employees'),
         api.get<{ workCenters: WorkCenterRecord[] }>('/production-ops/work-centers'),
       ]);
       await getActiveOrgId();
       setJobOrders(joRes.jobOrders);
+      setWorkOrders(woRes.workOrders);
+      setEmployees(empRes.employees);
       setWorkCenters(wcRes.workCenters);
 
       const activeJO = selectedJO || (joRes.jobOrders[0]?.jobOrderNumber ?? '');
@@ -155,10 +163,12 @@ export function ProductionOpsPage(): JSX.Element {
     try {
       await api.post('/production-ops/steps', {
         jobOrderReference: selectedJO,
+        workOrderId: selectedWorkOrderId || undefined,
         workCenterId: selectedWcId,
-        sequence: steps.length + 1,
         operationName: stepName,
         standardTimeMinutes: String(stdMins),
+        forQuantity: forQty || undefined,
+        operatorEmployeeId: operatorId || undefined,
       });
       setStepName(''); setShowStepForm(false);
       setFormSuccess(t('pages.production_ops.form.success'));
@@ -187,9 +197,44 @@ export function ProductionOpsPage(): JSX.Element {
     } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
   }
 
+  async function openLogsForStep(stepId: string): Promise<void> {
+    setShowLogsForStep(stepId);
+    setShowLogForm(false);
+    try {
+      const res = await api.get<{ timeLogs: TimeLogRecord[] }>(`/production-ops/steps/${stepId}/time-logs`);
+      setTimeLogs(res.timeLogs ?? []);
+    } catch {
+      setTimeLogs([]);
+    }
+  }
+
+  async function handleAddTimeLog(e: React.FormEvent): Promise<void> {
+    e.preventDefault();
+    if (!showLogsForStep) return;
+    setFormError(null); setFormSuccess(null); setSubmitting(true);
+    try {
+      await api.post('/production-ops/time-logs', {
+        productionStepId: showLogsForStep,
+        fromTime: new Date(logFromTime).toISOString(),
+        toTime: logToTime ? new Date(logToTime).toISOString() : undefined,
+        timeInMinutes: logMinutes || undefined,
+        completedQuantity: logQty || undefined,
+      });
+      setLogFromTime(''); setLogToTime(''); setLogMinutes(''); setLogQty('');
+      setShowLogForm(false);
+      setFormSuccess(t('pages.production_ops.form.success'));
+      await openLogsForStep(showLogsForStep);
+      await loadJoData(selectedJO);
+    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
+  }
+
   const wcLabel = (id: string): string => workCenters.find((w) => w.id === id)?.name ?? id;
+  const woLabel = (id: string | null): string => (id ? (workOrders.find((w) => w.id === id)?.workOrderNumber ?? id) : '—');
+  const empLabel = (id: string | null): string => (id ? (employees.find((e) => e.id === id)?.name ?? id) : '—');
   const inputStyle = { padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1' };
   const labelStyle = { fontSize: 12, color: '#64748b' };
+
+  if (loading) return <p style={{ padding: 40, textAlign: 'center' }}>{t('pages.production_ops.form.loading')}</p>;
 
   return (
     <section className="module-page">
@@ -201,13 +246,13 @@ export function ProductionOpsPage(): JSX.Element {
         </div>
       </div>
 
+      {error && <p style={{ color: '#b91c1c', padding: '8px 0' }}>{error}</p>}
       {formError && <p style={{ color: '#b91c1c', padding: '8px 0' }}>{formError}</p>}
       {formSuccess && <p style={{ color: '#166534', padding: '8px 0' }}>{formSuccess}</p>}
 
-      {/* JO Selector & Live Labor Cost Summary Card */}
       <div style={{ background: '#fff', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-          <label style={{ ...labelStyle, fontSize: 14, fontWeight: 'bold' }}>رقم أمر التشغيل (Job Order):</label>
+          <label style={{ ...labelStyle, fontSize: 14, fontWeight: 'bold' }}>Job Order:</label>
           <select value={selectedJO} onChange={(e) => { void handleJoChange(e.target.value); }} style={{ ...inputStyle, minWidth: 220, fontSize: 14, fontWeight: 'bold' }}>
             {jobOrders.map((jo) => <option key={jo.id} value={jo.jobOrderNumber}>{jo.jobOrderNumber}</option>)}
           </select>
@@ -235,7 +280,6 @@ export function ProductionOpsPage(): JSX.Element {
         )}
       </div>
 
-      {/* 1. Work Centers Section */}
       <article className="panel module-panel" style={{ marginBottom: 20 }}>
         <div className="panel__head">
           <div>
@@ -268,21 +312,18 @@ export function ProductionOpsPage(): JSX.Element {
             <span>{t('pages.production_ops.workCenters.code')}</span>
             <span>{t('pages.production_ops.workCenters.name')}</span>
             <span>{t('pages.production_ops.workCenters.ratePerMinute')}</span>
-            <span>الحالة</span>
           </div>
           {workCenters.length === 0 && <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.production_ops.form.empty')}</p>}
           {workCenters.map((wc) => (
             <div className="placeholder-table__row" key={wc.id}>
               <span><b>{wc.code}</b></span>
               <span>{wc.name}</span>
-              <span><b>{wc.ratePerMinute ?? wc.costPerMinute ?? '0'} EGP / min</b></span>
-              <span><span className="status status--success"><i />{wc.status}</span></span>
+              <span><b>{wc.ratePerMinute ?? '0'} EGP / min</b></span>
             </div>
           ))}
         </div>
       </article>
 
-      {/* 2. Production Steps Section */}
       <article className="panel module-panel">
         <div className="panel__head">
           <div>
@@ -308,6 +349,24 @@ export function ProductionOpsPage(): JSX.Element {
               <label style={labelStyle}>{t('pages.production_ops.steps.stdMins')}</label>
               <input type="number" min="1" step="any" value={stdMins} onChange={(e) => setStdMins(e.target.value)} required style={{ ...inputStyle, width: 120 }} />
             </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={labelStyle}>{t('pages.production_ops.steps.forQty')}</label>
+              <input type="number" min="0" step="any" value={forQty} onChange={(e) => setForQty(e.target.value)} style={{ ...inputStyle, width: 120 }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={labelStyle}>{t('pages.production_ops.steps.workOrder')}</label>
+              <select value={selectedWorkOrderId} onChange={(e) => setSelectedWorkOrderId(e.target.value)} style={{ ...inputStyle, minWidth: 160 }}>
+                <option value="">—</option>
+                {workOrders.map((wo) => <option key={wo.id} value={wo.id}>{wo.workOrderNumber}</option>)}
+              </select>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={labelStyle}>{t('pages.production_ops.steps.operator')}</label>
+              <select value={operatorId} onChange={(e) => setOperatorId(e.target.value)} style={{ ...inputStyle, minWidth: 160 }}>
+                <option value="">—</option>
+                {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
+              </select>
+            </div>
             <button type="submit" disabled={submitting} className="primary-button" style={{ height: 38 }}>{t('pages.production_ops.form.save')}</button>
           </form>
         )}
@@ -317,50 +376,55 @@ export function ProductionOpsPage(): JSX.Element {
             <span>{t('pages.production_ops.steps.sequence')}</span>
             <span>{t('pages.production_ops.steps.stepName')}</span>
             <span>{t('pages.production_ops.steps.workCenter')}</span>
-            <span>{t('pages.production_ops.steps.stdMins')}</span>
-            <span>{t('pages.production_ops.steps.actMins')}</span>
+            <span>{t('pages.production_ops.steps.workOrder')}</span>
+            <span>{t('pages.production_ops.steps.operator')}</span>
+            <span>{t('pages.production_ops.steps.completedQty')}</span>
             <span>{t('pages.production_ops.steps.status')}</span>
             <span>{t('pages.production_ops.steps.action')}</span>
           </div>
 
           {steps.length === 0 && <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.production_ops.form.empty')}</p>}
 
-          {steps.map((st) => {
-            const displayStepName = st.operationName ?? st.name ?? '—';
-            const displayStdMins = st.standardTimeMinutes ?? st.standardMinutes ?? '0';
-            const displayActMins = st.actualTimeMinutes ?? st.actualMinutes;
-            return (
-              <div className="placeholder-table__row" key={st.id}>
-                <span><b>#{st.sequence}</b></span>
-                <span><b>{displayStepName}</b></span>
-                <span>{wcLabel(st.workCenterId)}</span>
-                <span>{displayStdMins} min</span>
-                <span><b>{displayActMins ? `${displayActMins} min` : '—'}</b></span>
-                <span>
-                  <span className={`status status--${st.status === 'completed' ? 'success' : st.status === 'in_progress' ? 'warning' : 'neutral'}`}>
-                    <i />{st.status}
-                  </span>
+          {steps.map((st) => (
+            <div className="placeholder-table__row" key={st.id}>
+              <span><b>#{st.sequence}</b></span>
+              <span><b>{st.operationName}</b></span>
+              <span>{wcLabel(st.workCenterId)}</span>
+              <span>{woLabel(st.workOrderId)}</span>
+              <span>{empLabel(st.operatorEmployeeId)}</span>
+              <span>{st.completedQuantity}{st.forQuantity ? ` / ${st.forQuantity}` : ''}</span>
+              <span>
+                <span className={`status status--${st.status === 'done' ? 'success' : st.status === 'in_progress' ? 'warning' : 'neutral'}`}>
+                  <i />{st.status}
                 </span>
-                <span>
-                  {st.status === 'pending' && (
-                    <button className="filter-button" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { void handleStartStep(st.id); }}>
-                      {t('pages.production_ops.steps.start')}
-                    </button>
-                  )}
-                  {st.status === 'in_progress' && (
-                    <button className="primary-button" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { setActualMinsInput(displayStdMins); setShowCompleteModal(st.id); }}>
+              </span>
+              <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {st.status === 'pending' && (
+                  <button className="filter-button" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { void handleStartStep(st.id); }}>
+                    {t('pages.production_ops.steps.start')}
+                  </button>
+                )}
+                {st.status === 'in_progress' && (
+                  <>
+                    <button className="primary-button" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { setActualMinsInput(st.standardTimeMinutes); setShowCompleteModal(st.id); }}>
                       {t('pages.production_ops.steps.complete')}
                     </button>
-                  )}
-                  {st.status === 'completed' && <span style={{ fontSize: 12, color: '#166534', fontWeight: 'bold' }}>مُكتمَل ✓</span>}
-                </span>
-              </div>
-            );
-          })}
+                    <button className="filter-button" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { void openLogsForStep(st.id); }}>
+                      {t('pages.production_ops.steps.viewLogs')}
+                    </button>
+                  </>
+                )}
+                {st.status === 'done' && (
+                  <button className="filter-button" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { void openLogsForStep(st.id); }}>
+                    {t('pages.production_ops.steps.viewLogs')}
+                  </button>
+                )}
+              </span>
+            </div>
+          ))}
         </div>
       </article>
 
-      {/* Complete Step Modal */}
       {showCompleteModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: '#fff', padding: 24, borderRadius: 8, width: 380, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -378,9 +442,56 @@ export function ProductionOpsPage(): JSX.Element {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 10 }}>
               <button className="filter-button" onClick={() => setShowCompleteModal(null)}>{t('pages.production_ops.form.cancel')}</button>
               <button className="primary-button" disabled={submitting} onClick={() => { void handleCompleteStep(showCompleteModal); }}>
-                إغلاق وحساب التكلفة
+                {t('pages.production_ops.steps.complete')}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showLogsForStep && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ background: '#fff', padding: 24, borderRadius: 8, width: 480, maxHeight: '80vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3>{t('pages.production_ops.steps.timeLogs')}</h3>
+              <button className="filter-button" onClick={() => { setShowLogsForStep(null); setShowLogForm(false); }}>{t('pages.production_ops.form.cancel')}</button>
+            </div>
+
+            {timeLogs.length === 0 && <p style={{ color: '#94a3b8', textAlign: 'center', padding: '10px 0' }}>{t('pages.production_ops.steps.noTimeLogs')}</p>}
+            {timeLogs.map((log) => (
+              <div key={log.id} style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: 10, fontSize: 13 }}>
+                <div><b>{t('pages.production_ops.steps.fromTime')}:</b> {new Date(log.fromTime).toLocaleString()}</div>
+                {log.toTime && <div><b>{t('pages.production_ops.steps.toTime')}:</b> {new Date(log.toTime).toLocaleString()}</div>}
+                {log.timeInMinutes && <div><b>{t('pages.production_ops.steps.stdMins')}:</b> {log.timeInMinutes} min</div>}
+                {log.completedQuantity && <div><b>{t('pages.production_ops.steps.completedQtyLog')}:</b> {log.completedQuantity}</div>}
+              </div>
+            ))}
+
+            {!showLogForm && (
+              <button className="primary-button" onClick={() => setShowLogForm(true)}>+ {t('pages.production_ops.steps.addTimeLog')}</button>
+            )}
+
+            {showLogForm && (
+              <form onSubmit={(e) => { void handleAddTimeLog(e); }} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div>
+                  <label style={labelStyle}>{t('pages.production_ops.steps.fromTime')}</label>
+                  <input type="datetime-local" value={logFromTime} onChange={(e) => setLogFromTime(e.target.value)} required style={{ ...inputStyle, width: '100%' }} />
+                </div>
+                <div>
+                  <label style={labelStyle}>{t('pages.production_ops.steps.toTime')}</label>
+                  <input type="datetime-local" value={logToTime} onChange={(e) => setLogToTime(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+                </div>
+                <div>
+                  <label style={labelStyle}>{t('pages.production_ops.steps.stdMins')}</label>
+                  <input type="number" min="0" step="any" value={logMinutes} onChange={(e) => setLogMinutes(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+                </div>
+                <div>
+                  <label style={labelStyle}>{t('pages.production_ops.steps.completedQtyLog')}</label>
+                  <input type="number" min="0" step="any" value={logQty} onChange={(e) => setLogQty(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+                </div>
+                <button type="submit" disabled={submitting} className="primary-button">{t('pages.production_ops.form.save')}</button>
+              </form>
+            )}
           </div>
         </div>
       )}
