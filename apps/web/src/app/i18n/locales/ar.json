@@ -54,7 +54,8 @@
                        "helpTitle":  "هل تحتاج إلى مساعدة؟",
                        "helpText":  "استكشف مساحة عمل موشن ERP وحافظ على توافق جميع الفرق.",
                        "helpAction":  "عرض الدليل",
-                       "systemOperational":  "جميع الأنظمة تعمل"
+                       "systemOperational":  "جميع الأنظمة تعمل",
+                       "sales_forecast":  "توقعات المبيعات"
                    },
     "common":  {
                    "viewAll":  "عرض الكل",
@@ -901,7 +902,30 @@
                                 "standardTime":  "الزمن المعياري بالدقائق (اختياري)",
                                 "noWorkstationTypes":  "لا توجد أنواع محطات بعد",
                                 "noOperations":  "لا توجد عمليات بعد"
-                            }
+                            },
+                  "sales_forecast":  {
+                                         "eyebrow":  "التخطيط المادي",
+                                         "title":  "توقعات المبيعات (Sales Forecast)",
+                                         "description":  "توقع الطلب حسب فئة الصنف والفترة الزمنية كأساس لخطة الإنتاج",
+                                         "listTitle":  "قائمة توقعات المبيعات",
+                                         "createForecast":  "إنشاء توقع جديد",
+                                         "forecastNumber":  "رقم التوقع",
+                                         "itemCategory":  "فئة الصنف",
+                                         "activity":  "النشاط (الشركة/الفرع)",
+                                         "fromDate":  "من تاريخ",
+                                         "toDate":  "إلى تاريخ",
+                                         "periodicity":  "الدورية",
+                                         "monthly":  "شهري",
+                                         "quarterly":  "ربع سنوي",
+                                         "halfYearly":  "نصف سنوي",
+                                         "yearly":  "سنوي",
+                                         "addLine":  "إضافة صنف",
+                                         "item":  "الصنف",
+                                         "forecastQty":  "الكمية المتوقعة",
+                                         "status":  "الحالة",
+                                         "submit":  "اعتماد",
+                                         "noForecasts":  "لا توجد توقعات بعد"
+                                     }
               },
     "footer":  {
                    "demo":  "موشن ERP · مساحة تجريبية",

@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES, directionOf, type SupportedLanguage } from './app/i18n/config';
 import { InventoryPage } from './app/pages/InventoryPage';
 import { SalesPage } from './app/pages/SalesPage';
-import { PlanningPage } from './app/pages/PlanningPage';
 import { MaterialPage } from './app/pages/MaterialPage';
 import { ProductionOpsPage } from './app/pages/ProductionOpsPage';
 import { DeliveryPage } from './app/pages/DeliveryPage';
@@ -13,11 +12,12 @@ import { AuthPage } from './app/pages/AuthPage';
 import { OrganizationPage } from './app/pages/OrganizationPage';
 import { ManufacturingPage } from './app/pages/ManufacturingPage';
 import { BomPage } from './app/pages/BomPage';
+import { SalesForecastPage } from './app/pages/SalesForecastPage';
 import { WorkOrderPage } from './app/pages/WorkOrderPage';
 import { SetupPage } from './app/pages/SetupPage';
 type PageKey =
   | 'dashboard' | 'organization'
-  | 'manufacturing' | 'planning' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
+  | 'manufacturing' | 'planning' | 'sales_forecast' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
   | 'sales' | 'customer' | 'sales_order' | 'delivery' | 'sales_invoice' | 'sales_partner' | 'sales_person'
   | 'purchasing' | 'supplier' | 'material' | 'request_for_quotation' | 'supplier_quotation' | 'purchase_order' | 'purchase_receipt' | 'purchase_invoice'
   | 'inventory' | 'stock_entry' | 'stock_reconciliation' | 'serial_no' | 'batch' | 'price_list'
@@ -39,6 +39,7 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
     key: 'manufacturing', icon: 'factory',
     docs: [
       { key: 'planning', icon: 'clock' },
+      { key: 'sales_forecast', icon: 'clock' },
       { key: 'bom', icon: 'layers' },
       { key: 'work_order', icon: 'factory' },
       { key: 'production_ops', icon: 'check' },
@@ -109,9 +110,9 @@ const ALL_KEYS: PageKey[] = [
 const DEDICATED_PAGES: Partial<Record<PageKey, () => JSX.Element>> = {
   organization: OrganizationPage,
   manufacturing: ManufacturingPage,
-  planning: PlanningPage,
   production_ops: ProductionOpsPage,
   bom: BomPage,
+  sales_forecast: SalesForecastPage,
   work_order: WorkOrderPage,
   workstation: SetupPage,
   operation: SetupPage,

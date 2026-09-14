@@ -54,7 +54,8 @@
                        "helpTitle":  "Need a hand?",
                        "helpText":  "Explore the Motion ERP workspace and keep every team aligned.",
                        "helpAction":  "View guide",
-                       "systemOperational":  "All systems operational"
+                       "systemOperational":  "All systems operational",
+                       "sales_forecast":  "Sales Forecast"
                    },
     "common":  {
                    "viewAll":  "View all",
@@ -901,7 +902,30 @@
                                 "standardTime":  "Standard Time (minutes, optional)",
                                 "noWorkstationTypes":  "No workstation types yet",
                                 "noOperations":  "No operations yet"
-                            }
+                            },
+                  "sales_forecast":  {
+                                         "eyebrow":  "Material Planning",
+                                         "title":  "Sales Forecast",
+                                         "description":  "Forecast demand by item category and period, as a basis for the production plan",
+                                         "listTitle":  "Sales Forecast List",
+                                         "createForecast":  "Create New Forecast",
+                                         "forecastNumber":  "Forecast No.",
+                                         "itemCategory":  "Item Category",
+                                         "activity":  "Activity (Company/Branch)",
+                                         "fromDate":  "From Date",
+                                         "toDate":  "To Date",
+                                         "periodicity":  "Periodicity",
+                                         "monthly":  "Monthly",
+                                         "quarterly":  "Quarterly",
+                                         "halfYearly":  "Half-Yearly",
+                                         "yearly":  "Yearly",
+                                         "addLine":  "Add Item",
+                                         "item":  "Item",
+                                         "forecastQty":  "Forecast Quantity",
+                                         "status":  "Status",
+                                         "submit":  "Submit",
+                                         "noForecasts":  "No forecasts yet"
+                                     }
               },
     "footer":  {
                    "demo":  "Motion ERP آ· Demo workspace",
