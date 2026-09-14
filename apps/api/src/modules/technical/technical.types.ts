@@ -1,6 +1,6 @@
-export type DocumentType = 'shop_drawing' | 'cutting_list' | 'other';
+﻿export type DocumentType = 'shop_drawing' | 'cutting_list' | 'other';
 export type BomStatus = 'draft' | 'approved' | 'archived';
-
+export type ConsumeComponentsBasedOn = 'bom' | 'material_transferred_for_manufacture';
 export interface TechnicalDocumentRecord {
   id: string; jobOrderReference: string; orgNodeId: string | null; documentType: DocumentType;
   fileReference: string; version: number; note: string | null; createdAt: string;
@@ -8,13 +8,19 @@ export interface TechnicalDocumentRecord {
 export interface CreateTechnicalDocumentInput {
   jobOrderReference: string; documentType: DocumentType; fileReference: string; note?: string;
 }
-
 export interface BomLineRecord { id: string; bomId: string; componentItemId: string; quantity: string; lineNumber: number; }
 export interface BomRecord {
-  id: string; jobOrderReference: string; orgNodeId: string | null; productItemId: string; version: number;
-  outputQuantity: string; status: BomStatus; lines: BomLineRecord[];
+  id: string; productItemId: string; orgNodeId: string; version: number; outputQuantity: string;
+  isActive: boolean; isDefault: boolean; isPhantomBom: boolean; allowAlternativeItem: boolean;
+  qualityInspectionRequired: boolean; consumeComponentsBasedOn: ConsumeComponentsBasedOn;
+  defaultSourceWarehouseId: string | null; defaultTargetWarehouseId: string | null;
+  status: BomStatus; lines: BomLineRecord[];
 }
 export interface CreateBomLineInput { componentItemId: string; quantity: string; }
 export interface CreateBomInput {
-  jobOrderReference: string; productItemId: string; outputQuantity?: string; lines: CreateBomLineInput[];
+  productItemId: string; orgNodeId: string; outputQuantity?: string;
+  isActive?: boolean; isDefault?: boolean; isPhantomBom?: boolean; allowAlternativeItem?: boolean;
+  qualityInspectionRequired?: boolean; consumeComponentsBasedOn?: ConsumeComponentsBasedOn;
+  defaultSourceWarehouseId?: string; defaultTargetWarehouseId?: string;
+  lines: CreateBomLineInput[];
 }

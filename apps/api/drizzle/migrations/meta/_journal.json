@@ -162,6 +162,13 @@
       "when": 1789245487080,
       "tag": "0022_shiny_gwen_stacy",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1789300387578,
+      "tag": "0023_watery_scarlet_spider",
+      "breakpoints": true
     }
   ]
 }

@@ -1,27 +1,32 @@
-import { Injectable } from '@nestjs/common';
-import { asc, eq } from 'drizzle-orm';
+﻿import { Injectable } from '@nestjs/common';
+import { and, asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import { bom, bomLine, technicalDocument } from './technical.schema';
 import type {
-  BomLineRecord, BomRecord, BomStatus, CreateBomInput, CreateTechnicalDocumentInput,
+  BomLineRecord, BomRecord, BomStatus, ConsumeComponentsBasedOn, CreateBomInput, CreateTechnicalDocumentInput,
   DocumentType, TechnicalDocumentRecord,
 } from './technical.types';
-
 const docColumns = {
   id: technicalDocument.id, jobOrderReference: technicalDocument.jobOrderReference, orgNodeId: technicalDocument.orgNodeId,
   documentType: technicalDocument.documentType, fileReference: technicalDocument.fileReference,
   version: technicalDocument.version, note: technicalDocument.note, createdAt: technicalDocument.createdAt,
 };
 const bomColumns = {
-  id: bom.id, jobOrderReference: bom.jobOrderReference, orgNodeId: bom.orgNodeId, productItemId: bom.productItemId,
-  version: bom.version, outputQuantity: bom.outputQuantity, status: bom.status,
+  id: bom.id, productItemId: bom.productItemId, orgNodeId: bom.orgNodeId, version: bom.version,
+  outputQuantity: bom.outputQuantity, isActive: bom.isActive, isDefault: bom.isDefault, isPhantomBom: bom.isPhantomBom,
+  allowAlternativeItem: bom.allowAlternativeItem, qualityInspectionRequired: bom.qualityInspectionRequired,
+  consumeComponentsBasedOn: bom.consumeComponentsBasedOn, defaultSourceWarehouseId: bom.defaultSourceWarehouseId,
+  defaultTargetWarehouseId: bom.defaultTargetWarehouseId, status: bom.status,
 };
 const bomLineColumns = { id: bomLine.id, bomId: bomLine.bomId, componentItemId: bomLine.componentItemId, quantity: bomLine.quantity, lineNumber: bomLine.lineNumber };
-
 interface DocRow { id: string; jobOrderReference: string; orgNodeId: string | null; documentType: string; fileReference: string; version: number; note: string | null; createdAt: Date; }
-interface BomRow { id: string; jobOrderReference: string; orgNodeId: string | null; productItemId: string; version: number; outputQuantity: string; status: string; }
+interface BomRow {
+  id: string; productItemId: string; orgNodeId: string; version: number; outputQuantity: string;
+  isActive: boolean; isDefault: boolean; isPhantomBom: boolean; allowAlternativeItem: boolean;
+  qualityInspectionRequired: boolean; consumeComponentsBasedOn: string;
+  defaultSourceWarehouseId: string | null; defaultTargetWarehouseId: string | null; status: string;
+}
 interface BomLineRow { id: string; bomId: string; componentItemId: string; quantity: string; lineNumber: number; }
-
 function toDocRecord(row: DocRow): TechnicalDocumentRecord {
   return { id: row.id, jobOrderReference: row.jobOrderReference, orgNodeId: row.orgNodeId, documentType: row.documentType as DocumentType,
     fileReference: row.fileReference, version: row.version, note: row.note, createdAt: row.createdAt.toISOString() };
@@ -30,14 +35,17 @@ function toBomLineRecord(row: BomLineRow): BomLineRecord {
   return { id: row.id, bomId: row.bomId, componentItemId: row.componentItemId, quantity: row.quantity, lineNumber: row.lineNumber };
 }
 function toBomRecord(row: BomRow, lines: BomLineRecord[]): BomRecord {
-  return { id: row.id, jobOrderReference: row.jobOrderReference, orgNodeId: row.orgNodeId, productItemId: row.productItemId,
-    version: row.version, outputQuantity: row.outputQuantity, status: row.status as BomStatus, lines };
+  return {
+    id: row.id, productItemId: row.productItemId, orgNodeId: row.orgNodeId, version: row.version, outputQuantity: row.outputQuantity,
+    isActive: row.isActive, isDefault: row.isDefault, isPhantomBom: row.isPhantomBom, allowAlternativeItem: row.allowAlternativeItem,
+    qualityInspectionRequired: row.qualityInspectionRequired, consumeComponentsBasedOn: row.consumeComponentsBasedOn as ConsumeComponentsBasedOn,
+    defaultSourceWarehouseId: row.defaultSourceWarehouseId, defaultTargetWarehouseId: row.defaultTargetWarehouseId,
+    status: row.status as BomStatus, lines,
+  };
 }
-
 @Injectable()
 export class TechnicalRepository {
   constructor(private readonly database: DatabaseService) {}
-
   async listDocuments(jobOrderReference?: string): Promise<TechnicalDocumentRecord[]> {
     const rows = jobOrderReference
       ? await this.database.db.select(docColumns).from(technicalDocument).where(eq(technicalDocument.jobOrderReference, jobOrderReference)).orderBy(asc(technicalDocument.createdAt))
@@ -51,10 +59,9 @@ export class TechnicalRepository {
     }).returning(docColumns);
     return toDocRecord(rows[0]!);
   }
-
-  async listBoms(jobOrderReference?: string): Promise<BomRecord[]> {
-    const boms = jobOrderReference
-      ? await this.database.db.select(bomColumns).from(bom).where(eq(bom.jobOrderReference, jobOrderReference)).orderBy(asc(bom.version))
+  async listBoms(productItemId?: string): Promise<BomRecord[]> {
+    const boms = productItemId
+      ? await this.database.db.select(bomColumns).from(bom).where(eq(bom.productItemId, productItemId)).orderBy(asc(bom.version))
       : await this.database.db.select(bomColumns).from(bom).orderBy(asc(bom.version));
     const allLines = await this.database.db.select(bomLineColumns).from(bomLine).orderBy(asc(bomLine.lineNumber));
     return boms.map((b) => toBomRecord(b, allLines.filter((l) => l.bomId === b.id).map(toBomLineRecord)));
@@ -65,15 +72,22 @@ export class TechnicalRepository {
     const lines = await this.database.db.select(bomLineColumns).from(bomLine).where(eq(bomLine.bomId, id)).orderBy(asc(bomLine.lineNumber));
     return toBomRecord(rows[0], lines.map(toBomLineRecord));
   }
-  async findBomByJobOrderAndVersion(jobOrderReference: string, version: number): Promise<BomRecord | null> {
-    const rows = await this.database.db.select(bomColumns).from(bom).where(eq(bom.jobOrderReference, jobOrderReference)).limit(50);
+  async findBomByItemAndVersion(productItemId: string, version: number): Promise<BomRecord | null> {
+    const rows = await this.database.db.select(bomColumns).from(bom).where(eq(bom.productItemId, productItemId)).limit(200);
     const match = rows.find((r) => r.version === version);
     return match ? toBomRecord(match, []) : null;
   }
-  async insertBom(input: CreateBomInput & { id: string; version: number; orgNodeId: string | null }): Promise<BomRecord> {
+  async clearDefaultForItem(productItemId: string): Promise<void> {
+    await this.database.db.update(bom).set({ isDefault: false }).where(eq(bom.productItemId, productItemId));
+  }
+  async insertBom(input: CreateBomInput & { id: string; version: number }): Promise<BomRecord> {
     const rows = await this.database.db.insert(bom).values({
-      id: input.id, jobOrderReference: input.jobOrderReference, orgNodeId: input.orgNodeId, productItemId: input.productItemId,
-      version: input.version, outputQuantity: input.outputQuantity ?? '1',
+      id: input.id, productItemId: input.productItemId, orgNodeId: input.orgNodeId, version: input.version,
+      outputQuantity: input.outputQuantity ?? '1', isActive: input.isActive ?? true, isDefault: input.isDefault ?? false,
+      isPhantomBom: input.isPhantomBom ?? false, allowAlternativeItem: input.allowAlternativeItem ?? false,
+      qualityInspectionRequired: input.qualityInspectionRequired ?? false,
+      consumeComponentsBasedOn: input.consumeComponentsBasedOn ?? 'bom',
+      defaultSourceWarehouseId: input.defaultSourceWarehouseId ?? null, defaultTargetWarehouseId: input.defaultTargetWarehouseId ?? null,
     }).returning(bomColumns);
     const inserted = rows[0]!;
     const lines: BomLineRecord[] = [];
