@@ -851,7 +851,31 @@
                               "description":  "Create and approve bills of materials per product item, with multi-version support and a default version",
                               "listTitle":  "Bill of Materials List",
                               "createBom":  "Create New BOM"
-                          }
+                          },
+                  "work_order":  {
+                                     "eyebrow":  "Manufacturing Execution",
+                                     "title":  "Work Orders",
+                                     "description":  "Create work orders built on approved BOMs and track their status through to closing",
+                                     "listTitle":  "Work Order List",
+                                     "createWorkOrder":  "Create New Work Order",
+                                     "workOrderNumber":  "Work Order No.",
+                                     "productItem":  "Product Item",
+                                     "bom":  "BOM",
+                                     "activity":  "Activity (Company/Branch)",
+                                     "qty":  "Qty to Manufacture",
+                                     "finishedGoodsWarehouse":  "Finished Goods Warehouse",
+                                     "sourceWarehouse":  "Source Warehouse (optional)",
+                                     "wipWarehouse":  "WIP Warehouse (optional)",
+                                     "jobOrderReference":  "Job Order Reference (optional)",
+                                     "plannedStartDate":  "Planned Start Date (optional)",
+                                     "status":  "Status",
+                                     "start":  "Start",
+                                     "complete":  "Complete",
+                                     "stop":  "Stop",
+                                     "close":  "Close",
+                                     "noWorkOrder":  "No work orders yet",
+                                     "noBomWarning":  "You need an approved BOM for this item to create a work order"
+                                 }
               },
     "footer":  {
                    "demo":  "Motion ERP آ· Demo workspace",
