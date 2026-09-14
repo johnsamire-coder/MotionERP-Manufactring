@@ -1,12 +1,13 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
-import { planningMaterialRequest, planningMaterialRequestLine, productionPlan, productionPlanItem, salesForecast, salesForecastLine } from './planning.schema';
+import { itemLeadTime, planningMaterialRequest, planningMaterialRequestLine, productionPlan, productionPlanItem, salesForecast, salesForecastLine, supplierLeadTime } from './planning.schema';
 import type {
   CreateMaterialRequestInput, MaterialRequestLineInput, MaterialRequestLineRecord,
   MaterialRequestRecord, MaterialRequestStatus,
   CreateProductionPlanInput, ProductionPlanItemInput, ProductionPlanItemRecord,
   ProductionPlanRecord, ProductionPlanStatus,
+  CreateItemLeadTimeInput, ItemLeadTimeRecord, SupplierLeadTimeInput, SupplierLeadTimeRecord,
   CreateSalesForecastInput, SalesForecastLineInput, SalesForecastLineRecord,
   SalesForecastRecord, SalesForecastStatus,
 } from './planning.types';
@@ -91,6 +92,28 @@ function toPpItemRecord(row: PpItemRow): ProductionPlanItemRecord {
     id: row.id, productionPlanId: row.productionPlanId, productItemId: row.productItemId, bomId: row.bomId,
     qtyToPlan: row.qtyToPlan, warehouseId: row.warehouseId, workOrderId: row.workOrderId, lineNumber: row.lineNumber,
   };
+}
+
+const iltColumns = {
+  id: itemLeadTime.id, itemId: itemLeadTime.itemId, orgNodeId: itemLeadTime.orgNodeId,
+  manufacturingTimeHours: itemLeadTime.manufacturingTimeHours, isManufacturingLeadTime: itemLeadTime.isManufacturingLeadTime,
+  manufacturingBufferDays: itemLeadTime.manufacturingBufferDays, purchaseTimeDays: itemLeadTime.purchaseTimeDays,
+  isPurchaseLeadTime: itemLeadTime.isPurchaseLeadTime, purchaseBufferDays: itemLeadTime.purchaseBufferDays,
+};
+const sltColumns = {
+  id: supplierLeadTime.id, itemLeadTimeId: supplierLeadTime.itemLeadTimeId,
+  supplierName: supplierLeadTime.supplierName, leadTimeDays: supplierLeadTime.leadTimeDays,
+};
+
+interface IltRow {
+  id: string; itemId: string; orgNodeId: string;
+  manufacturingTimeHours: string | null; isManufacturingLeadTime: boolean; manufacturingBufferDays: string | null;
+  purchaseTimeDays: string | null; isPurchaseLeadTime: boolean; purchaseBufferDays: string | null;
+}
+interface SltRow { id: string; itemLeadTimeId: string; supplierName: string; leadTimeDays: string; }
+
+function toSltRecord(row: SltRow): SupplierLeadTimeRecord {
+  return { id: row.id, itemLeadTimeId: row.itemLeadTimeId, supplierName: row.supplierName, leadTimeDays: row.leadTimeDays };
 }
 
 @Injectable()
@@ -292,5 +315,58 @@ export class PlanningRepository {
 
   async setPpItemWorkOrder(itemId: string, workOrderId: string): Promise<void> {
     await this.database.db.update(productionPlanItem).set({ workOrderId }).where(eq(productionPlanItem.id, itemId));
+  }
+
+  async listItemLeadTimes(): Promise<ItemLeadTimeRecord[]> {
+    const rows = await this.database.db.select(iltColumns).from(itemLeadTime).orderBy(asc(itemLeadTime.itemId));
+    const results: ItemLeadTimeRecord[] = [];
+    for (const row of rows) {
+      const supplierLeadTimes = await this.listSlt(row.id);
+      results.push(this.toIltRecord(row, supplierLeadTimes));
+    }
+    return results;
+  }
+
+  async findItemLeadTimeById(id: string): Promise<ItemLeadTimeRecord | null> {
+    const rows = await this.database.db.select(iltColumns).from(itemLeadTime).where(eq(itemLeadTime.id, id)).limit(1);
+    if (!rows[0]) return null;
+    const supplierLeadTimes = await this.listSlt(id);
+    return this.toIltRecord(rows[0], supplierLeadTimes);
+  }
+
+  async findItemLeadTimeByItemId(itemId: string): Promise<ItemLeadTimeRecord | null> {
+    const rows = await this.database.db.select(iltColumns).from(itemLeadTime).where(eq(itemLeadTime.itemId, itemId)).limit(1);
+    if (!rows[0]) return null;
+    const supplierLeadTimes = await this.listSlt(rows[0].id);
+    return this.toIltRecord(rows[0], supplierLeadTimes);
+  }
+
+  private async listSlt(itemLeadTimeId: string): Promise<SupplierLeadTimeRecord[]> {
+    const rows = await this.database.db.select(sltColumns).from(supplierLeadTime).where(eq(supplierLeadTime.itemLeadTimeId, itemLeadTimeId));
+    return rows.map(toSltRecord);
+  }
+
+  private toIltRecord(row: IltRow, supplierLeadTimes: SupplierLeadTimeRecord[]): ItemLeadTimeRecord {
+    return {
+      id: row.id, itemId: row.itemId, orgNodeId: row.orgNodeId,
+      manufacturingTimeHours: row.manufacturingTimeHours, isManufacturingLeadTime: row.isManufacturingLeadTime,
+      manufacturingBufferDays: row.manufacturingBufferDays, purchaseTimeDays: row.purchaseTimeDays,
+      isPurchaseLeadTime: row.isPurchaseLeadTime, purchaseBufferDays: row.purchaseBufferDays, supplierLeadTimes,
+    };
+  }
+
+  async insertItemLeadTime(input: CreateItemLeadTimeInput & { id: string }): Promise<ItemLeadTimeRecord> {
+    const rows = await this.database.db.insert(itemLeadTime).values({
+      id: input.id, itemId: input.itemId, orgNodeId: input.orgNodeId,
+      manufacturingTimeHours: input.manufacturingTimeHours ?? null, isManufacturingLeadTime: input.isManufacturingLeadTime ?? false,
+      manufacturingBufferDays: input.manufacturingBufferDays ?? null, purchaseTimeDays: input.purchaseTimeDays ?? null,
+      isPurchaseLeadTime: input.isPurchaseLeadTime ?? false, purchaseBufferDays: input.purchaseBufferDays ?? null,
+    }).returning(iltColumns);
+    const inserted = rows[0]!;
+    for (const s of input.supplierLeadTimes ?? []) {
+      await this.database.db.insert(supplierLeadTime).values({ itemLeadTimeId: inserted.id, supplierName: s.supplierName, leadTimeDays: s.leadTimeDays });
+    }
+    const supplierLeadTimes = await this.listSlt(inserted.id);
+    return this.toIltRecord(inserted, supplierLeadTimes);
   }
 }

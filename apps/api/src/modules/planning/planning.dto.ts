@@ -1,5 +1,5 @@
-﻿import { Type } from 'class-transformer';
-import { IsArray, IsIn, IsNumberString, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsIn, IsNumberString, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 
 const PERIODICITIES = ['monthly', 'quarterly', 'half_yearly', 'yearly'] as const;
 
@@ -61,4 +61,25 @@ export class CreateProductionPlanDto {
   @ValidateNested({ each: true })
   @Type(() => ProductionPlanItemDto)
   items!: ProductionPlanItemDto[];
+}
+
+export class SupplierLeadTimeDto {
+  @IsString() supplierName!: string;
+  @IsNumberString() leadTimeDays!: string;
+}
+
+export class CreateItemLeadTimeDto {
+  @IsUUID() itemId!: string;
+  @IsUUID() orgNodeId!: string;
+  @IsOptional() @IsNumberString() manufacturingTimeHours?: string;
+  @IsOptional() @IsBoolean() isManufacturingLeadTime?: boolean;
+  @IsOptional() @IsNumberString() manufacturingBufferDays?: string;
+  @IsOptional() @IsNumberString() purchaseTimeDays?: string;
+  @IsOptional() @IsBoolean() isPurchaseLeadTime?: boolean;
+  @IsOptional() @IsNumberString() purchaseBufferDays?: string;
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SupplierLeadTimeDto)
+  supplierLeadTimes?: SupplierLeadTimeDto[];
 }

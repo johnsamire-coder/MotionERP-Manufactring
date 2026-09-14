@@ -1,5 +1,5 @@
-﻿import { sql } from 'drizzle-orm';
-import { check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { boolean, check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { item, itemCategory } from '../catalog/catalog.schema';
 import { warehouse } from '../inventory/inventory.schema';
 import { orgNode } from '../organization/organization.schema';
@@ -169,3 +169,48 @@ export const productionPlanItem = planningSchema.table('production_plan_item', {
 
 export type ProductionPlan = typeof productionPlan.$inferSelect;
 export type ProductionPlanItem = typeof productionPlanItem.$inferSelect;
+
+/**
+ * Item Lead Time — ERPNext parity build: fourth Material Planning master.
+ * "Manufacturing Time" and "Purchase Time" are the two ERPNext tabs
+ * (Capacity Planning Detail sub-table deferred to a later iteration — it
+ * needs Work Center linkage and computed formulas, out of scope for this
+ * pass). Supplier is referenced by a plain-text name (not a FK), same D2/D20
+ * pattern as elsewhere, since no dedicated Supplier module link exists yet
+ * for cross-schema references from `planning`.
+ */
+export const itemLeadTime = planningSchema.table('item_lead_time', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  orgNodeId: uuid('org_node_id')
+    .notNull()
+    .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  manufacturingTimeHours: numeric('manufacturing_time_hours', { precision: 12, scale: 4 }),
+  isManufacturingLeadTime: boolean('is_manufacturing_lead_time').notNull().default(false),
+  manufacturingBufferDays: numeric('manufacturing_buffer_days', { precision: 8, scale: 2 }),
+  purchaseTimeDays: numeric('purchase_time_days', { precision: 8, scale: 2 }),
+  isPurchaseLeadTime: boolean('is_purchase_lead_time').notNull().default(false),
+  purchaseBufferDays: numeric('purchase_buffer_days', { precision: 8, scale: 2 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('item_lead_time_item_unique').on(t.itemId),
+  index('item_lead_time_org_node_idx').on(t.orgNodeId),
+]);
+
+export const supplierLeadTime = planningSchema.table('supplier_lead_time', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  itemLeadTimeId: uuid('item_lead_time_id')
+    .notNull()
+    .references(() => itemLeadTime.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  supplierName: text('supplier_name').notNull(),
+  leadTimeDays: numeric('lead_time_days', { precision: 8, scale: 2 }).notNull(),
+}, (t) => [
+  check('supplier_lead_time_days_positive', sql`${t.leadTimeDays} > 0`),
+  index('supplier_lead_time_item_lead_time_idx').on(t.itemLeadTimeId),
+]);
+
+export type ItemLeadTime = typeof itemLeadTime.$inferSelect;
+export type SupplierLeadTime = typeof supplierLeadTime.$inferSelect;

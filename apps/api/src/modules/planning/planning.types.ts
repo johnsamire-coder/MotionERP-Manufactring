@@ -62,3 +62,19 @@ export interface CreateProductionPlanInput {
   orgNodeId: string; planBy?: ProductionPlanBy; fromDate: string; toDate: string;
   items: ProductionPlanItemInput[];
 }
+
+export interface SupplierLeadTimeRecord { id: string; itemLeadTimeId: string; supplierName: string; leadTimeDays: string; }
+export interface SupplierLeadTimeInput { supplierName: string; leadTimeDays: string; }
+
+export interface ItemLeadTimeRecord {
+  id: string; itemId: string; orgNodeId: string;
+  manufacturingTimeHours: string | null; isManufacturingLeadTime: boolean; manufacturingBufferDays: string | null;
+  purchaseTimeDays: string | null; isPurchaseLeadTime: boolean; purchaseBufferDays: string | null;
+  supplierLeadTimes: SupplierLeadTimeRecord[];
+}
+export interface CreateItemLeadTimeInput {
+  itemId: string; orgNodeId: string;
+  manufacturingTimeHours?: string; isManufacturingLeadTime?: boolean; manufacturingBufferDays?: string;
+  purchaseTimeDays?: string; isPurchaseLeadTime?: boolean; purchaseBufferDays?: string;
+  supplierLeadTimes?: SupplierLeadTimeInput[];
+}

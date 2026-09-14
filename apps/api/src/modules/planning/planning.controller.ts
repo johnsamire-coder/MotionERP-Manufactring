@@ -1,9 +1,9 @@
-﻿import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { UseFilters } from '@nestjs/common';
-import { CreateMaterialRequestDto, CreateProductionPlanDto, CreateSalesForecastDto } from './planning.dto';
+import { CreateItemLeadTimeDto, CreateMaterialRequestDto, CreateProductionPlanDto, CreateSalesForecastDto } from './planning.dto';
 import { PlanningExceptionFilter } from './planning.exception-filter';
 import { PlanningService } from './planning.service';
-import type { MaterialRequestRecord, ProductionPlanRecord, SalesForecastRecord } from './planning.types';
+import type { ItemLeadTimeRecord, MaterialRequestRecord, ProductionPlanRecord, SalesForecastRecord } from './planning.types';
 
 @Controller({ path: 'planning', version: '1' })
 @UseFilters(PlanningExceptionFilter)
@@ -86,5 +86,26 @@ export class PlanningController {
   @Post('production-plans/:id/create-work-orders') @HttpCode(200)
   async createWorkOrdersFromPlan(@Param('id', ParseUUIDPipe) id: string): Promise<{ productionPlan: ProductionPlanRecord }> {
     return { productionPlan: await this.service.createWorkOrdersFromPlan(id) };
+  }
+
+  @Get('item-lead-times')
+  async itemLeadTimes(): Promise<{ itemLeadTimes: ItemLeadTimeRecord[] }> {
+    return { itemLeadTimes: await this.service.getItemLeadTimes() };
+  }
+
+  @Get('item-lead-times/:id')
+  async itemLeadTimeById(@Param('id', ParseUUIDPipe) id: string): Promise<{ itemLeadTime: ItemLeadTimeRecord }> {
+    return { itemLeadTime: await this.service.getItemLeadTime(id) };
+  }
+
+  @Post('item-lead-times') @HttpCode(201)
+  async createItemLeadTime(@Body() dto: CreateItemLeadTimeDto): Promise<{ itemLeadTime: ItemLeadTimeRecord }> {
+    const created = await this.service.createItemLeadTime({
+      itemId: dto.itemId, orgNodeId: dto.orgNodeId,
+      manufacturingTimeHours: dto.manufacturingTimeHours, isManufacturingLeadTime: dto.isManufacturingLeadTime, manufacturingBufferDays: dto.manufacturingBufferDays,
+      purchaseTimeDays: dto.purchaseTimeDays, isPurchaseLeadTime: dto.isPurchaseLeadTime, purchaseBufferDays: dto.purchaseBufferDays,
+      supplierLeadTimes: dto.supplierLeadTimes?.map((s) => ({ supplierName: s.supplierName, leadTimeDays: s.leadTimeDays })),
+    });
+    return { itemLeadTime: created };
   }
 }

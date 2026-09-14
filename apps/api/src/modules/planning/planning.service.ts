@@ -1,4 +1,4 @@
-﻿import { randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { PlanningNotFoundError, PlanningValidationError } from './planning.errors';
 import { PlanningRepository } from './planning.repository';
@@ -6,6 +6,7 @@ import { ProductionOpsService } from '../production_ops/production_ops.service';
 import type {
   CreateMaterialRequestInput, CreateProductionPlanInput, CreateSalesForecastInput,
   MaterialRequestRecord, ProductionPlanRecord, SalesForecastRecord,
+  CreateItemLeadTimeInput, ItemLeadTimeRecord,
 } from './planning.types';
 
 @Injectable()
@@ -125,5 +126,23 @@ export class PlanningService {
     const allDone = updated!.items.every((it) => it.workOrderId);
     if (allDone) return this.repository.setProductionPlanStatus(id, 'completed');
     return updated!;
+  }
+
+  async getItemLeadTimes(): Promise<ItemLeadTimeRecord[]> { return this.repository.listItemLeadTimes(); }
+
+  async getItemLeadTime(id: string): Promise<ItemLeadTimeRecord> {
+    const found = await this.repository.findItemLeadTimeById(id);
+    if (!found) throw new PlanningNotFoundError(`item lead time ${id} does not exist`);
+    return found;
+  }
+
+  async createItemLeadTime(input: CreateItemLeadTimeInput): Promise<ItemLeadTimeRecord> {
+    const existing = await this.repository.findItemLeadTimeByItemId(input.itemId);
+    if (existing) throw new PlanningValidationError(`an item lead time record already exists for item ${input.itemId}`);
+    for (const s of input.supplierLeadTimes ?? []) {
+      const days = Number(s.leadTimeDays);
+      if (!Number.isFinite(days) || days <= 0) throw new PlanningValidationError('every supplier lead time must be a positive number of days');
+    }
+    return this.repository.insertItemLeadTime({ id: randomUUID(), ...input });
   }
 }
