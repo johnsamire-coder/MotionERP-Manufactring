@@ -197,6 +197,13 @@
       "when": 1789390111856,
       "tag": "0027_gorgeous_ghost_rider",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1789391107807,
+      "tag": "0028_sharp_hawkeye",
+      "breakpoints": true
     }
   ]
 }

@@ -64,3 +64,57 @@ export const salesForecastLine = planningSchema.table('sales_forecast_line', {
 
 export type SalesForecast = typeof salesForecast.$inferSelect;
 export type SalesForecastLine = typeof salesForecastLine.$inferSelect;
+
+/**
+ * Material Request — ERPNext parity build (14 Sep 2026): the second of
+ * three Material Planning masters. Lives in the `planning` schema (distinct
+ * PostgreSQL schema from `production.material_request`, which is Motion's
+ * own deviation-control feature and is untouched by this build). Variable
+ * name prefixed `planningMaterialRequest` to avoid any naming collision if
+ * both modules are ever imported together.
+ * `purpose` mirrors ERPNext's real options relevant here; Sales Order /
+ * Purchase Order Item linkage is deferred (no such masters exist in Motion
+ * yet) — `jobOrderReference` (plain text, not a FK, same pattern as
+ * elsewhere) is the closest available link back to a source document.
+ */
+export const planningMaterialRequest = planningSchema.table('material_request', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  requestNumber: text('request_number').notNull(),
+  orgNodeId: uuid('org_node_id')
+    .notNull()
+    .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  purpose: text('purpose').notNull().default('manufacture'),
+  transactionDate: timestamp('transaction_date', { withTimezone: true }).notNull().defaultNow(),
+  requiredByDate: timestamp('required_by_date', { withTimezone: true }),
+  jobOrderReference: text('job_order_reference'),
+  status: text('status').notNull().default('draft'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('planning_material_request_number_unique').on(t.requestNumber),
+  check('planning_material_request_purpose_valid', sql`${t.purpose} in ('purchase', 'material_transfer', 'material_issue', 'manufacture')`),
+  check('planning_material_request_status_valid', sql`${t.status} in ('draft', 'submitted', 'cancelled')`),
+  index('planning_material_request_org_node_idx').on(t.orgNodeId),
+  index('planning_material_request_job_order_idx').on(t.jobOrderReference),
+]);
+
+export const planningMaterialRequestLine = planningSchema.table('material_request_line', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  materialRequestId: uuid('material_request_id')
+    .notNull()
+    .references(() => planningMaterialRequest.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  warehouseId: uuid('warehouse_id').references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  quantity: numeric('quantity', { precision: 24, scale: 6 }).notNull(),
+  scheduleDate: timestamp('schedule_date', { withTimezone: true }),
+  lineNumber: integer('line_number').notNull().default(0),
+}, (t) => [
+  check('planning_material_request_line_qty_positive', sql`${t.quantity} > 0`),
+  index('planning_material_request_line_request_idx').on(t.materialRequestId),
+  index('planning_material_request_line_item_idx').on(t.itemId),
+]);
+
+export type PlanningMaterialRequest = typeof planningMaterialRequest.$inferSelect;
+export type PlanningMaterialRequestLine = typeof planningMaterialRequestLine.$inferSelect;

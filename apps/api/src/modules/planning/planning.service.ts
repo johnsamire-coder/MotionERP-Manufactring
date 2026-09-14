@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { PlanningNotFoundError, PlanningValidationError } from './planning.errors';
 import { PlanningRepository } from './planning.repository';
-import type { CreateSalesForecastInput, SalesForecastRecord } from './planning.types';
+import type { CreateMaterialRequestInput, CreateSalesForecastInput, MaterialRequestRecord, SalesForecastRecord } from './planning.types';
 
 @Injectable()
 export class PlanningService {
@@ -38,5 +38,34 @@ export class PlanningService {
     if (!found) throw new PlanningNotFoundError(`sales forecast ${id} does not exist`);
     if (found.status !== 'draft') throw new PlanningValidationError(`sales forecast ${id} is "${found.status}" and cannot be submitted (must be "draft")`);
     return this.repository.setSalesForecastStatus(id, 'submitted');
+  }
+
+  async getMaterialRequests(): Promise<MaterialRequestRecord[]> { return this.repository.listMaterialRequests(); }
+
+  async getMaterialRequest(id: string): Promise<MaterialRequestRecord> {
+    const found = await this.repository.findMaterialRequestById(id);
+    if (!found) throw new PlanningNotFoundError(`material request ${id} does not exist`);
+    return found;
+  }
+
+  async createMaterialRequest(input: CreateMaterialRequestInput): Promise<MaterialRequestRecord> {
+    if (!input.lines || input.lines.length === 0) {
+      throw new PlanningValidationError('a material request must have at least one line');
+    }
+    for (const line of input.lines) {
+      const qty = Number(line.quantity);
+      if (!Number.isFinite(qty) || qty <= 0) throw new PlanningValidationError('every material request line quantity must be positive');
+    }
+    const sequence = (await this.repository.countMaterialRequests()) + 1;
+    const year = new Date().getFullYear();
+    const requestNumber = `MR-${year}-${String(sequence).padStart(6, '0')}`;
+    return this.repository.insertMaterialRequest({ id: randomUUID(), requestNumber, ...input });
+  }
+
+  async submitMaterialRequest(id: string): Promise<MaterialRequestRecord> {
+    const found = await this.repository.findMaterialRequestById(id);
+    if (!found) throw new PlanningNotFoundError(`material request ${id} does not exist`);
+    if (found.status !== 'draft') throw new PlanningValidationError(`material request ${id} is \"${found.status}\" and cannot be submitted (must be \"draft\")`);
+    return this.repository.setMaterialRequestStatus(id, 'submitted');
   }
 }

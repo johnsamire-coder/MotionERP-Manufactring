@@ -22,3 +22,23 @@ export class CreateSalesForecastDto {
   @Type(() => SalesForecastLineDto)
   lines!: SalesForecastLineDto[];
 }
+
+export class MaterialRequestLineDto {
+  @IsUUID() itemId!: string;
+  @IsOptional() @IsUUID() warehouseId?: string;
+  @IsNumberString() quantity!: string;
+  @IsOptional() @IsString() scheduleDate?: string;
+}
+
+const PURPOSES = ['purchase', 'material_transfer', 'material_issue', 'manufacture'] as const;
+
+export class CreateMaterialRequestDto {
+  @IsUUID() orgNodeId!: string;
+  @IsOptional() @IsIn(PURPOSES) purpose?: (typeof PURPOSES)[number];
+  @IsOptional() @IsString() requiredByDate?: string;
+  @IsOptional() @IsString() jobOrderReference?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MaterialRequestLineDto)
+  lines!: MaterialRequestLineDto[];
+}

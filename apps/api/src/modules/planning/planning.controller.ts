@@ -1,9 +1,9 @@
 ﻿import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { UseFilters } from '@nestjs/common';
-import { CreateSalesForecastDto } from './planning.dto';
+import { CreateMaterialRequestDto, CreateSalesForecastDto } from './planning.dto';
 import { PlanningExceptionFilter } from './planning.exception-filter';
 import { PlanningService } from './planning.service';
-import type { SalesForecastRecord } from './planning.types';
+import type { MaterialRequestRecord, SalesForecastRecord } from './planning.types';
 
 @Controller({ path: 'planning', version: '1' })
 @UseFilters(PlanningExceptionFilter)
@@ -33,5 +33,29 @@ export class PlanningController {
   @Post('sales-forecasts/:id/submit') @HttpCode(200)
   async submitSalesForecast(@Param('id', ParseUUIDPipe) id: string): Promise<{ salesForecast: SalesForecastRecord }> {
     return { salesForecast: await this.service.submitSalesForecast(id) };
+  }
+
+  @Get('material-requests')
+  async materialRequests(): Promise<{ materialRequests: MaterialRequestRecord[] }> {
+    return { materialRequests: await this.service.getMaterialRequests() };
+  }
+
+  @Get('material-requests/:id')
+  async materialRequestById(@Param('id', ParseUUIDPipe) id: string): Promise<{ materialRequest: MaterialRequestRecord }> {
+    return { materialRequest: await this.service.getMaterialRequest(id) };
+  }
+
+  @Post('material-requests') @HttpCode(201)
+  async createMaterialRequest(@Body() dto: CreateMaterialRequestDto): Promise<{ materialRequest: MaterialRequestRecord }> {
+    const created = await this.service.createMaterialRequest({
+      orgNodeId: dto.orgNodeId, purpose: dto.purpose, requiredByDate: dto.requiredByDate, jobOrderReference: dto.jobOrderReference,
+      lines: dto.lines.map((l) => ({ itemId: l.itemId, warehouseId: l.warehouseId, quantity: l.quantity, scheduleDate: l.scheduleDate })),
+    });
+    return { materialRequest: created };
+  }
+
+  @Post('material-requests/:id/submit') @HttpCode(200)
+  async submitMaterialRequest(@Param('id', ParseUUIDPipe) id: string): Promise<{ materialRequest: MaterialRequestRecord }> {
+    return { materialRequest: await this.service.submitMaterialRequest(id) };
   }
 }
