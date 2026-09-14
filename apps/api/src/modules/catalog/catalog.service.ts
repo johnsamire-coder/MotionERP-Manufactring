@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+﻿import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CatalogNotFoundError, CatalogValidationError } from './catalog.errors';
 import { CatalogRepository } from './catalog.repository';
@@ -8,7 +8,7 @@ import type {
 } from './catalog.types';
 
 export interface UpdateItemCategoryInput { name?: string; description?: string | null; position?: number; parentId?: string | null; }
-export interface UpdateItemInput { name?: string; description?: string | null; itemType?: ItemType; categoryId?: string; baseUnitId?: string; }
+export interface UpdateItemInput { name?: string; nameAr?: string; nameEn?: string; description?: string | null; itemType?: ItemType; categoryId?: string; baseUnitId?: string; }
 
 function buildCategoryForest(rows: ItemCategoryRecord[]): ItemCategoryTreeNode[] {
   const byId = new Map<string, ItemCategoryTreeNode>();
@@ -151,7 +151,9 @@ export class CatalogService {
       if (!baseUnit) throw new CatalogNotFoundError(`UOM ${patch.baseUnitId} does not exist`);
       fields.baseUnitId = baseUnit.id;
     }
-    if (Object.keys(fields).length === 0) return found;
+    if (patch.nameAr !== undefined) await this.repository.upsertItemTranslation(id, 'ar', normalizeName(patch.nameAr));
+    if (patch.nameEn !== undefined) await this.repository.upsertItemTranslation(id, 'en', normalizeName(patch.nameEn));
+    if (Object.keys(fields).length === 0) return (await this.repository.findItemById(id))!;
     return this.repository.updateItemFields(id, fields);
   }
   async archiveItem(id: string): Promise<ItemRecord> {
@@ -178,3 +180,4 @@ function normalizePosition(raw: number): number {
   if (!Number.isInteger(raw) || raw < 0) throw new CatalogValidationError('position must be a non-negative integer');
   return raw;
 }
+

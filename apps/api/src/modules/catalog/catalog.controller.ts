@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, UseFilters } from '@nestjs/common';
+﻿import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, UseFilters } from '@nestjs/common';
 import { CreateItemCategoryDto, CreateItemDto, CreateUomDto, UpdateItemCategoryDto, UpdateItemDto } from './catalog.dto';
 import { CatalogExceptionFilter } from './catalog.exception-filter';
 import { CatalogService, type UpdateItemCategoryInput, type UpdateItemInput } from './catalog.service';
@@ -86,6 +86,8 @@ export class CatalogController {
   async updateItem(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateItemDto): Promise<{ item: ItemRecord }> {
     const patch: UpdateItemInput = {};
     if (dto.name !== undefined) patch.name = dto.name;
+    if (dto.nameAr !== undefined) patch.nameAr = dto.nameAr;
+    if (dto.nameEn !== undefined) patch.nameEn = dto.nameEn;
     if (dto.description !== undefined) patch.description = dto.description;
     if (dto.itemType !== undefined) patch.itemType = dto.itemType;
     if (dto.categoryId !== undefined) patch.categoryId = dto.categoryId;
@@ -98,3 +100,6 @@ export class CatalogController {
     return { item: await this.service.archiveItem(id) };
   }
 }
+
+
+

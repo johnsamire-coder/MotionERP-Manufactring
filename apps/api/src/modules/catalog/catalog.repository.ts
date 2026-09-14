@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 import { and, asc, eq, ne, sql } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import {
@@ -182,8 +182,15 @@ export class CatalogRepository {
     const rows = await this.database.db.update(item).set(fields).where(eq(item.id, id)).returning(itemColumns);
     return toItemRecord(rows[0]!, rows[0]!.name);
   }
+  async upsertItemTranslation(itemId: string, language: 'ar' | 'en', name: string): Promise<void> {
+    await this.database.db.insert(itemTranslation)
+      .values({ itemId, language, name })
+      .onConflictDoUpdate({ target: [itemTranslation.itemId, itemTranslation.language], set: { name } });
+  }
   async setItemStatus(id: string, status: ItemStatus): Promise<ItemRecord> {
     const rows = await this.database.db.update(item).set({ status }).where(eq(item.id, id)).returning(itemColumns);
     return toItemRecord(rows[0]!, rows[0]!.name);
   }
 }
+
+

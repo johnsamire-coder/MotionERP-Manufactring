@@ -22,7 +22,7 @@ function flattenOrgNodes(nodes: OrgNodeTreeItem[]): OrgNodeTreeItem[] {
   return result;
 }
 
-export function TechnicalPage(): JSX.Element {
+export function BomPage(): JSX.Element {
   const { t, i18n } = useTranslation();
   const [jobOrders, setJobOrders] = useState<JobOrderRecord[]>([]);
   const [items, setItems] = useState<ItemRecord[]>([]);
@@ -143,79 +143,22 @@ export function TechnicalPage(): JSX.Element {
     <section className="module-page">
       <div className="page-intro">
         <div>
-          <span className="eyebrow">{t('pages.technical.eyebrow')}</span>
-          <h1>{t('pages.technical.title')}</h1>
-          <p>{t('pages.technical.description')}</p>
+          <span className="eyebrow">{t('pages.bom.eyebrow')}</span>
+          <h1>{t('pages.bom.title')}</h1>
+          <p>{t('pages.bom.description')}</p>
         </div>
       </div>
 
       {formError && <p style={{ color: '#b91c1c', padding: '8px 0' }}>{formError}</p>}
       {formSuccess && <p style={{ color: '#166534', padding: '8px 0' }}>{formSuccess}</p>}
 
-      <div style={{ background: '#fff', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-        <label style={{ ...labelStyle, fontSize: 14, fontWeight: 'bold' }}>Job Order:</label>
-        <select value={selectedJO} onChange={(e) => setSelectedJO(e.target.value)} style={{ ...inputStyle, minWidth: 220, fontSize: 14, fontWeight: 'bold' }}>
-          {jobOrders.map((jo) => <option key={jo.id} value={jo.jobOrderNumber}>{jo.jobOrderNumber}</option>)}
-        </select>
-      </div>
-
       <article className="panel module-panel">
         <div className="panel__head">
           <div>
-            <span className="panel__eyebrow">Engineering Drawings</span>
-            <h2>{t('pages.technical.docs.title')}</h2>
-          </div>
-          <button className="primary-button" onClick={() => setShowDocForm((v) => !v)}><b>+</b>{t('pages.technical.docs.addDoc')}</button>
-        </div>
-
-        {showDocForm && (
-          <form onSubmit={(e) => { void handleCreateDoc(e); }} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end', padding: '0 0 20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={labelStyle}>{t('pages.technical.docs.docType')}</label>
-              <select value={docType} onChange={(e) => setDocType(e.target.value)} style={inputStyle}>
-                <option value="shop_drawing">{t('pages.technical.docs.shopDrawing')}</option>
-                <option value="cutting_list">{t('pages.technical.docs.cuttingList')}</option>
-                <option value="other">{t('pages.technical.docs.spec')}</option>
-              </select>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={labelStyle}>{t('pages.technical.docs.fileRef')}</label>
-              <input value={fileRef} onChange={(e) => setFileRef(e.target.value)} required placeholder="e.g. //drawings/DWG-JO-001.pdf" style={{ ...inputStyle, minWidth: 240 }} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={labelStyle}>{t('pages.technical.docs.version')}</label>
-              <input value={docVersion} onChange={(e) => setDocVersion(e.target.value)} required style={{ ...inputStyle, width: 80 }} />
-            </div>
-            <button type="submit" disabled={submitting} className="primary-button" style={{ height: 38 }}>{t('pages.technical.form.save')}</button>
-          </form>
-        )}
-
-        <div className="placeholder-table">
-          <div className="placeholder-table__head">
-            <span>{t('pages.technical.docs.docType')}</span>
-            <span>{t('pages.technical.docs.fileRef')}</span>
-            <span>{t('pages.technical.docs.version')}</span>
-          </div>
-          {techDocs.filter((d) => d.jobOrderReference === selectedJO).length === 0 && (
-            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.technical.form.empty')}</p>
-          )}
-          {techDocs.filter((d) => d.jobOrderReference === selectedJO).map((doc) => (
-            <div className="placeholder-table__row" key={doc.id}>
-              <span><b>{t(`pages.technical.docs.${doc.docType === 'shop_drawing' ? 'shopDrawing' : doc.docType === 'cutting_list' ? 'cuttingList' : 'spec'}`)}</b></span>
-              <span><code>{doc.fileRef}</code></span>
-              <span>{doc.version}</span>
-            </div>
-          ))}
-        </div>
-      </article>
-
-      <article className="panel module-panel" style={{ marginTop: 20 }}>
-        <div className="panel__head">
-          <div>
             <span className="panel__eyebrow">Bill of Materials</span>
-            <h2>{t('pages.technical.bom.title')}</h2>
+            <h2>{t('pages.bom.listTitle')}</h2>
           </div>
-          <button className="primary-button" onClick={() => setShowBomForm((v) => !v)}><b>+</b>{t('pages.technical.bom.createBom')}</button>
+          <button className="primary-button" onClick={() => setShowBomForm((v) => !v)}><b>+</b>{t('pages.bom.createBom')}</button>
         </div>
 
         {showBomForm && (
@@ -300,4 +243,7 @@ export function TechnicalPage(): JSX.Element {
     </section>
   );
 }
+
+
+
 

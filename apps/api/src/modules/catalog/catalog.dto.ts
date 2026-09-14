@@ -1,4 +1,4 @@
-import { IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min } from 'class-validator';
+﻿import { IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min } from 'class-validator';
 
 const ITEM_TYPES = ['raw_material', 'finished_product', 'semi_finished_product', 'consumable', 'spare_part', 'service'] as const;
 
@@ -41,9 +41,13 @@ export class CreateItemDto {
 }
 
 export class UpdateItemDto {
+  @IsOptional() @IsString() @MaxLength(255) nameAr?: string;
+  @IsOptional() @IsString() @MaxLength(255) nameEn?: string;
   @IsOptional() @IsString() @MaxLength(255) name?: string;
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsIn(ITEM_TYPES) itemType?: (typeof ITEM_TYPES)[number];
   @IsOptional() @IsUUID() categoryId?: string;
   @IsOptional() @IsUUID() baseUnitId?: string;
 }
+
+
