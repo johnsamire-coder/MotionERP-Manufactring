@@ -59,7 +59,8 @@
     "material_request_mp": "طلبات الخامات",
     "item_lead_time": "مهلة تجهيز الصنف",
     "downtime_entry": "توقفات المحطات",
-    "mps": "الجدول الرئيسي للإنتاج"
+    "mps": "الجدول الرئيسي للإنتاج",
+    "bom_update_tool": "أداة استبدال BOM"
   },
   "common": {
     "viewAll": "عرض الكل",
@@ -1044,6 +1045,17 @@
       "submit": "اعتماد",
       "getProjected": "جلب الكمية المتوقعة بالمخزون",
       "noRecords": "لا توجد جداول بعد"
+    },
+    "bom_update_tool": {
+      "eyebrow": "أدوات التصنيع",
+      "title": "أداة استبدال قائمة المكونات (BOM Update Tool)",
+      "description": "استبدال BOM قائمة بأخرى في كل أوامر التشغيل وخطط الإنتاج التي تستخدمها دفعة واحدة",
+      "currentBom": "BOM الحالية",
+      "newBom": "BOM الجديدة",
+      "replace": "استبدال",
+      "workOrdersUpdated": "عدد أوامر التشغيل المُحدَّثة",
+      "planItemsUpdated": "عدد بنود خطط الإنتاج المُحدَّثة",
+      "selectBom": "اختر BOM"
     }
   },
   "footer": {

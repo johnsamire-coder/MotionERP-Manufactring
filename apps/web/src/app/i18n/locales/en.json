@@ -59,7 +59,8 @@
     "material_request_mp": "Material Request",
     "item_lead_time": "Item Lead Time",
     "downtime_entry": "Downtime Entry",
-    "mps": "Master Production Schedule"
+    "mps": "Master Production Schedule",
+    "bom_update_tool": "BOM Update Tool"
   },
   "common": {
     "viewAll": "View all",
@@ -1044,6 +1045,17 @@
       "submit": "Submit",
       "getProjected": "Get Projected Quantity",
       "noRecords": "No schedules yet"
+    },
+    "bom_update_tool": {
+      "eyebrow": "Manufacturing Tools",
+      "title": "BOM Update Tool",
+      "description": "Replace one BOM with another across all Work Orders and Production Plan items that use it, in a single action",
+      "currentBom": "Current BOM",
+      "newBom": "New BOM",
+      "replace": "Replace",
+      "workOrdersUpdated": "Work Orders Updated",
+      "planItemsUpdated": "Production Plan Items Updated",
+      "selectBom": "Select BOM"
     }
   },
   "footer": {
