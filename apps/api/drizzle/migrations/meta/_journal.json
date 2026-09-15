@@ -232,6 +232,13 @@
       "when": 1789501138601,
       "tag": "0032_modern_boomerang",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1789502504651,
+      "tag": "0033_nappy_hulk",
+      "breakpoints": true
     }
   ]
 }

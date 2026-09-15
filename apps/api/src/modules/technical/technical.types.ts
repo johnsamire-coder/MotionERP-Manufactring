@@ -1,4 +1,4 @@
-﻿export type DocumentType = 'shop_drawing' | 'cutting_list' | 'other';
+export type DocumentType = 'shop_drawing' | 'cutting_list' | 'other';
 export type BomStatus = 'draft' | 'approved' | 'archived';
 export type ConsumeComponentsBasedOn = 'bom' | 'material_transferred_for_manufacture';
 export interface TechnicalDocumentRecord {
@@ -23,4 +23,22 @@ export interface CreateBomInput {
   qualityInspectionRequired?: boolean; consumeComponentsBasedOn?: ConsumeComponentsBasedOn;
   defaultSourceWarehouseId?: string; defaultTargetWarehouseId?: string;
   lines: CreateBomLineInput[];
+}
+
+export interface BomCreatorItemRecord {
+  id: string; bomCreatorId: string; parentId: string | null; componentItemId: string;
+  quantity: string; isSubAssembly: boolean; generatedBomId: string | null; lineNumber: number;
+}
+export interface BomCreatorItemInput {
+  tempId: number; parentTempId?: number; componentItemId: string; quantity: string; isSubAssembly?: boolean;
+}
+
+export interface BomCreatorRecord {
+  id: string; creatorNumber: string; productItemId: string; orgNodeId: string;
+  quantityToProduce: string; allowAlternativeItem: boolean; remarks: string | null;
+  status: 'draft' | 'completed'; items: BomCreatorItemRecord[];
+}
+export interface CreateBomCreatorInput {
+  productItemId: string; orgNodeId: string; quantityToProduce?: string;
+  allowAlternativeItem?: boolean; remarks?: string; items: BomCreatorItemInput[];
 }

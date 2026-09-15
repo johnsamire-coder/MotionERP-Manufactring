@@ -1,5 +1,5 @@
-﻿import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsIn, IsNumberString, IsOptional, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsIn, IsInt, IsNumberString, IsOptional, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
 const DOC_TYPES = ['shop_drawing', 'cutting_list', 'other'] as const;
 const CONSUME_BASED_ON = ['bom', 'material_transferred_for_manufacture'] as const;
 export class CreateTechnicalDocumentDto {
@@ -28,4 +28,24 @@ export class CreateBomDto {
   @ValidateNested({ each: true })
   @Type(() => BomLineDto)
   lines!: BomLineDto[];
+}
+
+export class BomCreatorItemDto {
+  @IsInt() tempId!: number;
+  @IsOptional() @IsInt() parentTempId?: number;
+  @IsUUID() componentItemId!: string;
+  @IsNumberString() quantity!: string;
+  @IsOptional() @IsBoolean() isSubAssembly?: boolean;
+}
+
+export class CreateBomCreatorDto {
+  @IsUUID() productItemId!: string;
+  @IsUUID() orgNodeId!: string;
+  @IsOptional() @IsNumberString() quantityToProduce?: string;
+  @IsOptional() @IsBoolean() allowAlternativeItem?: boolean;
+  @IsOptional() @IsString() remarks?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => BomCreatorItemDto)
+  items!: BomCreatorItemDto[];
 }

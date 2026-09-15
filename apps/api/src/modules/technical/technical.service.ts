@@ -1,10 +1,10 @@
-﻿import { randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { SalesService } from '../sales/sales.service';
 import type { JobOrderRecord } from '../sales/sales.types';
 import { TechnicalNotFoundError, TechnicalValidationError } from './technical.errors';
 import { TechnicalRepository } from './technical.repository';
-import type { BomRecord, CreateBomInput, CreateTechnicalDocumentInput, TechnicalDocumentRecord } from './technical.types';
+import type { BomCreatorRecord, BomRecord, CreateBomCreatorInput, CreateBomInput, CreateTechnicalDocumentInput, TechnicalDocumentRecord } from './technical.types';
 @Injectable()
 export class TechnicalService {
   constructor(
@@ -64,5 +64,70 @@ export class TechnicalService {
     if (!found) throw new TechnicalNotFoundError(`BOM ${id} does not exist`);
     if (found.status !== 'draft') throw new TechnicalValidationError(`BOM ${id} is "${found.status}" and cannot be approved (must be "draft")`);
     return this.repository.setBomStatus(id, 'approved');
+  }
+
+  async getBomCreators(): Promise<BomCreatorRecord[]> { return this.repository.listBomCreators(); }
+
+  async getBomCreator(id: string): Promise<BomCreatorRecord> {
+    const found = await this.repository.findBomCreatorById(id);
+    if (!found) throw new TechnicalNotFoundError(`BOM creator ${id} does not exist`);
+    return found;
+  }
+
+  async createBomCreator(input: CreateBomCreatorInput): Promise<BomCreatorRecord> {
+    if (!input.items || input.items.length === 0) {
+      throw new TechnicalValidationError('a BOM creator must have at least one item');
+    }
+    const tempIds = new Set<number>();
+    for (const it of input.items) {
+      const qty = Number(it.quantity);
+      if (!Number.isFinite(qty) || qty <= 0) throw new TechnicalValidationError('every BOM creator item quantity must be positive');
+      tempIds.add(it.tempId);
+    }
+    for (const it of input.items) {
+      if (it.parentTempId !== undefined && !tempIds.has(it.parentTempId)) {
+        throw new TechnicalValidationError(`parentTempId ${it.parentTempId} does not match any item in this request`);
+      }
+    }
+    const sequence = (await this.repository.countBomCreators()) + 1;
+    const year = new Date().getFullYear();
+    const creatorNumber = `BC-${year}-${String(sequence).padStart(6, '0')}`;
+    return this.repository.insertBomCreator({ id: randomUUID(), creatorNumber, ...input });
+  }
+
+  async createBoms(id: string): Promise<BomCreatorRecord> {
+    const bc = await this.repository.findBomCreatorById(id);
+    if (!bc) throw new TechnicalNotFoundError(`BOM creator ${id} does not exist`);
+    if (bc.status !== 'draft') throw new TechnicalValidationError(`BOM creator ${id} is "${bc.status}" and cannot generate BOMs (must be "draft")`);
+    const childrenOf = new Map<string | null, typeof bc.items>();
+    for (const it of bc.items) {
+      const key = it.parentId;
+      if (!childrenOf.has(key)) childrenOf.set(key, []);
+      childrenOf.get(key)!.push(it);
+    }
+    const topLevel = childrenOf.get(null) ?? [];
+    if (topLevel.length === 0) throw new TechnicalValidationError('the BOM tree has no top-level components');
+    const rootBom = await this.createBom({
+      productItemId: bc.productItemId, orgNodeId: bc.orgNodeId, outputQuantity: bc.quantityToProduce,
+      allowAlternativeItem: bc.allowAlternativeItem,
+      lines: topLevel.map((it) => ({ componentItemId: it.componentItemId, quantity: it.quantity })),
+    });
+    await this.generateSubAssemblyBoms(bc, childrenOf);
+    return this.repository.setBomCreatorStatus(id, 'completed');
+  }
+
+  private async generateSubAssemblyBoms(bc: BomCreatorRecord, childrenOf: Map<string | null, BomCreatorRecord['items']>): Promise<void> {
+    for (const node of bc.items) {
+      if (!node.isSubAssembly) continue;
+      const children = childrenOf.get(node.id) ?? [];
+      if (children.length === 0) {
+        throw new TechnicalValidationError(`sub-assembly item ${node.id} is marked isSubAssembly but has no child components`);
+      }
+      const subBom = await this.createBom({
+        productItemId: node.componentItemId, orgNodeId: bc.orgNodeId, outputQuantity: '1',
+        lines: children.map((c) => ({ componentItemId: c.componentItemId, quantity: c.quantity })),
+      });
+      await this.repository.setBcItemGeneratedBom(node.id, subBom.id);
+    }
   }
 }

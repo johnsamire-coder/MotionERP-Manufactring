@@ -80,3 +80,59 @@ export const bomLine = technicalSchema.table('bom_line', {
 export type TechnicalDocument = typeof technicalDocument.$inferSelect;
 export type Bom = typeof bom.$inferSelect;
 export type BomLine = typeof bomLine.$inferSelect;
+
+/**
+ * BOM Creator — ERPNext parity build: a draft multi-level BOM tree tool
+ * (distinct from a real BOM document). `bomCreatorItem` self-references via
+ * `parentId` to represent unlimited tree depth — a node with `parentId
+ * null` is a direct component of the root product; any node can be marked
+ * `isSubAssembly` to signal it should become its own real BOM document (with
+ * its own children as that BOM's lines) when "Create BOMs" runs. "Update
+ * Cost" is deferred — Motion has no item-pricing system yet to compute
+ * costs from. "Validate BOM Tree" is folded into the createBoms action
+ * itself (structural checks run there, no separate persisted validation
+ * state).
+ */
+export const bomCreator = technicalSchema.table('bom_creator', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  creatorNumber: text('creator_number').notNull(),
+  productItemId: uuid('product_item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  orgNodeId: uuid('org_node_id')
+    .notNull()
+    .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  quantityToProduce: numeric('quantity_to_produce', { precision: 24, scale: 6 }).notNull().default('1'),
+  allowAlternativeItem: boolean('allow_alternative_item').notNull().default(false),
+  remarks: text('remarks'),
+  status: text('status').notNull().default('draft'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('bom_creator_number_unique').on(t.creatorNumber),
+  check('bom_creator_qty_positive', sql`${t.quantityToProduce} > 0`),
+  check('bom_creator_status_valid', sql`${t.status} in ('draft', 'completed')`),
+  index('bom_creator_org_node_idx').on(t.orgNodeId),
+]);
+
+export const bomCreatorItem = technicalSchema.table('bom_creator_item', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  bomCreatorId: uuid('bom_creator_id')
+    .notNull()
+    .references(() => bomCreator.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  parentId: uuid('parent_id'),
+  componentItemId: uuid('component_item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  quantity: numeric('quantity', { precision: 24, scale: 6 }).notNull(),
+  isSubAssembly: boolean('is_sub_assembly').notNull().default(false),
+  generatedBomId: uuid('generated_bom_id'),
+  lineNumber: integer('line_number').notNull().default(0),
+}, (t) => [
+  check('bom_creator_item_qty_positive', sql`${t.quantity} > 0`),
+  index('bom_creator_item_creator_idx').on(t.bomCreatorId),
+  index('bom_creator_item_parent_idx').on(t.parentId),
+]);
+
+export type BomCreator = typeof bomCreator.$inferSelect;
+export type BomCreatorItem = typeof bomCreatorItem.$inferSelect;
