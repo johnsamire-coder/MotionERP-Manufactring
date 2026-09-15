@@ -159,3 +159,29 @@ export type ProductionStep = typeof productionStep.$inferSelect;
 export type ProductionStepTimeLog = typeof productionStepTimeLog.$inferSelect;
 export type WorkstationType = typeof workstationType.$inferSelect;
 export type Operation = typeof operation.$inferSelect;
+
+/**
+ * Downtime Entry — ERPNext parity build: tracks unplanned/planned stoppage
+ * time on a Work Center, with optional operator and root-cause reason.
+ * `stoppageMinutes` is nullable and computed at close time (stopTime -
+ * startTime), matching ERPNext's own auto-computed "Downtime" field.
+ */
+export const downtimeEntry = productionOpsSchema.table('downtime_entry', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  workCenterId: uuid('work_center_id')
+    .notNull()
+    .references(() => workCenter.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  operatorEmployeeId: uuid('operator_employee_id').references(() => employee.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  stopReason: text('stop_reason').notNull(),
+  startTime: timestamp('start_time', { withTimezone: true }).notNull(),
+  stopTime: timestamp('stop_time', { withTimezone: true }),
+  stoppageMinutes: numeric('stoppage_minutes', { precision: 12, scale: 2 }),
+  remarks: text('remarks'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  check('downtime_entry_times_valid', sql`${t.stopTime} is null or ${t.stopTime} >= ${t.startTime}`),
+  index('downtime_entry_work_center_idx').on(t.workCenterId),
+]);
+
+export type DowntimeEntry = typeof downtimeEntry.$inferSelect;

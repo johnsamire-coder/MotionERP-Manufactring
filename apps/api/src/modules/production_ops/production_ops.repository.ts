@@ -1,11 +1,12 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
-import { operation, productionStep, productionStepTimeLog, workCenter, workOrder, workstationType } from './production_ops.schema';
+import { downtimeEntry, operation, productionStep, productionStepTimeLog, workCenter, workOrder, workstationType } from './production_ops.schema';
 import type {
   AddTimeLogInput, CreateOperationInput, CreateProductionStepInput, CreateWorkCenterInput, CreateWorkOrderInput,
   CreateWorkstationTypeInput, OperationRecord, OperationStatus, ProductionStepRecord, ProductionStepStatus,
   ProductionStepTimeLogRecord, WorkCenterRecord, WorkCenterStatus, WorkOrderRecord, WorkOrderStatus,
+  CreateDowntimeEntryInput, DowntimeEntryRecord,
   WorkstationTypeRecord, WorkstationTypeStatus,
 } from './production_ops.types';
 
@@ -93,6 +94,25 @@ function toWsTypeRecord(row: WsTypeRow): WorkstationTypeRecord {
 }
 function toOperationRecord(row: OperationRow): OperationRecord {
   return { id: row.id, code: row.code, name: row.name, defaultWorkCenterId: row.defaultWorkCenterId, standardTimeMinutes: row.standardTimeMinutes, status: row.status as OperationStatus };
+}
+
+const dteColumns = {
+  id: downtimeEntry.id, workCenterId: downtimeEntry.workCenterId, operatorEmployeeId: downtimeEntry.operatorEmployeeId,
+  stopReason: downtimeEntry.stopReason, startTime: downtimeEntry.startTime, stopTime: downtimeEntry.stopTime,
+  stoppageMinutes: downtimeEntry.stoppageMinutes, remarks: downtimeEntry.remarks,
+};
+
+interface DteRow {
+  id: string; workCenterId: string; operatorEmployeeId: string | null; stopReason: string;
+  startTime: Date; stopTime: Date | null; stoppageMinutes: string | null; remarks: string | null;
+}
+
+function toDteRecord(row: DteRow): DowntimeEntryRecord {
+  return {
+    id: row.id, workCenterId: row.workCenterId, operatorEmployeeId: row.operatorEmployeeId, stopReason: row.stopReason,
+    startTime: row.startTime.toISOString(), stopTime: row.stopTime ? row.stopTime.toISOString() : null,
+    stoppageMinutes: row.stoppageMinutes, remarks: row.remarks,
+  };
 }
 
 @Injectable()
@@ -232,5 +252,28 @@ export class ProductionOpsRepository {
       standardTimeMinutes: input.standardTimeMinutes ?? null,
     }).returning(operationColumns);
     return toOperationRecord(rows[0]!);
+  }
+
+  async listDowntimeEntries(): Promise<DowntimeEntryRecord[]> {
+    const rows = await this.database.db.select(dteColumns).from(downtimeEntry).orderBy(asc(downtimeEntry.startTime));
+    return rows.map(toDteRecord);
+  }
+
+  async findDowntimeEntryById(id: string): Promise<DowntimeEntryRecord | null> {
+    const rows = await this.database.db.select(dteColumns).from(downtimeEntry).where(eq(downtimeEntry.id, id)).limit(1);
+    return rows[0] ? toDteRecord(rows[0]) : null;
+  }
+
+  async insertDowntimeEntry(input: CreateDowntimeEntryInput & { id: string }): Promise<DowntimeEntryRecord> {
+    const rows = await this.database.db.insert(downtimeEntry).values({
+      id: input.id, workCenterId: input.workCenterId, operatorEmployeeId: input.operatorEmployeeId ?? null,
+      stopReason: input.stopReason, startTime: new Date(input.startTime), remarks: input.remarks ?? null,
+    }).returning(dteColumns);
+    return toDteRecord(rows[0]!);
+  }
+
+  async closeDowntimeEntry(id: string, stopTime: Date, stoppageMinutes: string): Promise<DowntimeEntryRecord> {
+    const rows = await this.database.db.update(downtimeEntry).set({ stopTime, stoppageMinutes }).where(eq(downtimeEntry.id, id)).returning(dteColumns);
+    return toDteRecord(rows[0]!);
   }
 }

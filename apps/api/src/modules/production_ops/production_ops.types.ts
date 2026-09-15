@@ -57,3 +57,11 @@ export interface OperationRecord {
 export interface CreateOperationInput {
   code: string; name: string; defaultWorkCenterId?: string; standardTimeMinutes?: string;
 }
+
+export interface DowntimeEntryRecord {
+  id: string; workCenterId: string; operatorEmployeeId: string | null; stopReason: string;
+  startTime: string; stopTime: string | null; stoppageMinutes: string | null; remarks: string | null;
+}
+export interface CreateDowntimeEntryInput {
+  workCenterId: string; operatorEmployeeId?: string; stopReason: string; startTime: string; remarks?: string;
+}

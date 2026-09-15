@@ -1,4 +1,4 @@
-﻿import { randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { SalesService } from '../sales/sales.service';
 import { TechnicalService } from '../technical/technical.service';
@@ -9,6 +9,7 @@ import type {
   AddTimeLogInput, CreateOperationInput, CreateProductionStepInput, CreateWorkCenterInput, CreateWorkOrderInput,
   CreateWorkstationTypeInput, JobOrderLaborCost, OperationRecord, ProductionStepRecord, ProductionStepTimeLogRecord,
   WorkCenterRecord, WorkOrderRecord, WorkstationTypeRecord,
+  CreateDowntimeEntryInput, DowntimeEntryRecord,
 } from './production_ops.types';
 
 @Injectable()
@@ -44,13 +45,6 @@ export class ProductionOpsService {
     return found;
   }
 
-  /**
-   * Job Card — extended 14 Sep 2026 to optionally link to a Work Order
-   * (owner's explicit choice, kept optional). When workOrderId is given, it
-   * must reference an existing Work Order — no cross-field consistency check
-   * against jobOrderReference is enforced yet (Motion's jobOrderReference and
-   * ERPNext's Work Order model different things; deferred to a later stage).
-   */
   async addStep(input: CreateProductionStepInput): Promise<ProductionStepRecord> {
     const wc = await this.repository.findWorkCenterById(input.workCenterId);
     if (!wc) throw new ProductionOpsNotFoundError(`work center ${input.workCenterId} does not exist`);
@@ -81,12 +75,6 @@ export class ProductionOpsService {
     return this.repository.recordActualTime(id, actualTimeMinutes);
   }
 
-  /**
-   * A Time Log entry records one shift of actual execution on a Job Card,
-   * matching ERPNext's real Time Logs child table (supports multiple
-   * pause/resume entries per card). Also accumulates completedQuantity on
-   * the parent step when a quantity is reported, without changing status.
-   */
   async addTimeLog(input: AddTimeLogInput): Promise<ProductionStepTimeLogRecord> {
     const step = await this.repository.findStepById(input.productionStepId);
     if (!step) throw new ProductionOpsNotFoundError(`production step ${input.productionStepId} does not exist`);
@@ -209,6 +197,22 @@ export class ProductionOpsService {
       if (!wc) throw new ProductionOpsNotFoundError(`work center ${input.defaultWorkCenterId} does not exist`);
     }
     return this.repository.insertOperation({ id: randomUUID(), code, name, defaultWorkCenterId: input.defaultWorkCenterId, standardTimeMinutes: input.standardTimeMinutes });
+  }
+
+  async getDowntimeEntries(): Promise<DowntimeEntryRecord[]> { return this.repository.listDowntimeEntries(); }
+
+  async createDowntimeEntry(input: CreateDowntimeEntryInput): Promise<DowntimeEntryRecord> {
+    if (!input.stopReason || !input.stopReason.trim()) throw new ProductionOpsValidationError('stopReason is required');
+    return this.repository.insertDowntimeEntry({ id: randomUUID(), ...input });
+  }
+
+  async closeDowntimeEntry(id: string): Promise<DowntimeEntryRecord> {
+    const found = await this.repository.findDowntimeEntryById(id);
+    if (!found) throw new ProductionOpsNotFoundError(`downtime entry ${id} does not exist`);
+    if (found.stopTime) throw new ProductionOpsValidationError(`downtime entry ${id} is already closed`);
+    const stopTime = new Date();
+    const minutes = (stopTime.getTime() - new Date(found.startTime).getTime()) / 60000;
+    return this.repository.closeDowntimeEntry(id, stopTime, minutes.toFixed(2));
   }
 }
 

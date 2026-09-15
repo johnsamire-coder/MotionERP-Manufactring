@@ -1,13 +1,13 @@
-﻿import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseFilters } from '@nestjs/common';
 import {
   AddTimeLogDto, CloseStepDto, CreateOperationDto, CreateProductionStepDto, CreateWorkCenterDto,
-  CreateWorkOrderDto, CreateWorkstationTypeDto,
+  CreateDowntimeEntryDto, CreateWorkOrderDto, CreateWorkstationTypeDto,
 } from './production_ops.dto';
 import { ProductionOpsExceptionFilter } from './production_ops.exception-filter';
 import { ProductionOpsService } from './production_ops.service';
 import type {
   JobOrderLaborCost, OperationRecord, ProductionStepRecord, ProductionStepTimeLogRecord, WorkCenterRecord,
-  WorkOrderRecord, WorkstationTypeRecord,
+  DowntimeEntryRecord, WorkOrderRecord, WorkstationTypeRecord,
 } from './production_ops.types';
 
 @Controller({ path: 'production-ops', version: '1' })
@@ -125,5 +125,24 @@ export class ProductionOpsController {
       code: dto.code, name: dto.name, defaultWorkCenterId: dto.defaultWorkCenterId, standardTimeMinutes: dto.standardTimeMinutes,
     });
     return { operation: created };
+  }
+
+  @Get('downtime-entries')
+  async downtimeEntries(): Promise<{ downtimeEntries: DowntimeEntryRecord[] }> {
+    return { downtimeEntries: await this.service.getDowntimeEntries() };
+  }
+
+  @Post('downtime-entries') @HttpCode(201)
+  async createDowntimeEntry(@Body() dto: CreateDowntimeEntryDto): Promise<{ downtimeEntry: DowntimeEntryRecord }> {
+    const created = await this.service.createDowntimeEntry({
+      workCenterId: dto.workCenterId, operatorEmployeeId: dto.operatorEmployeeId,
+      stopReason: dto.stopReason, startTime: dto.startTime, remarks: dto.remarks,
+    });
+    return { downtimeEntry: created };
+  }
+
+  @Post('downtime-entries/:id/close') @HttpCode(200)
+  async closeDowntimeEntry(@Param('id', ParseUUIDPipe) id: string): Promise<{ downtimeEntry: DowntimeEntryRecord }> {
+    return { downtimeEntry: await this.service.closeDowntimeEntry(id) };
   }
 }

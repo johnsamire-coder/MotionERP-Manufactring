@@ -57,7 +57,8 @@
     "systemOperational": "جميع الأنظمة تعمل",
     "sales_forecast": "توقعات المبيعات",
     "material_request_mp": "طلبات الخامات",
-    "item_lead_time": "مهلة تجهيز الصنف"
+    "item_lead_time": "مهلة تجهيز الصنف",
+    "downtime_entry": "توقفات المحطات"
   },
   "common": {
     "viewAll": "عرض الكل",
@@ -995,6 +996,23 @@
       "supplierName": "اسم المورد",
       "supplierLeadDays": "المهلة بالأيام",
       "noRecords": "لا توجد مهل تجهيز بعد"
+    },
+    "downtime_entry": {
+      "eyebrow": "رقابة أداء المصنع",
+      "title": "توقفات المحطات (Downtime Entry)",
+      "description": "تسجيل فترات توقف محطات العمل وأسبابها، مع حساب مدة التوقف تلقائيًا",
+      "listTitle": "قائمة التوقفات",
+      "createEntry": "تسجيل توقف جديد",
+      "workCenter": "محطة العمل",
+      "operator": "المشغّل (اختياري)",
+      "stopReason": "سبب التوقف",
+      "startTime": "وقت البداية",
+      "stopTime": "وقت النهاية",
+      "duration": "المدة (دقيقة)",
+      "remarks": "ملاحظات (اختياري)",
+      "close": "إغلاق التوقف",
+      "open": "مفتوح",
+      "noEntries": "لا توجد توقفات مسجلة بعد"
     }
   },
   "footer": {

@@ -57,7 +57,8 @@
     "systemOperational": "All systems operational",
     "sales_forecast": "Sales Forecast",
     "material_request_mp": "Material Request",
-    "item_lead_time": "Item Lead Time"
+    "item_lead_time": "Item Lead Time",
+    "downtime_entry": "Downtime Entry"
   },
   "common": {
     "viewAll": "View all",
@@ -995,6 +996,23 @@
       "supplierName": "Supplier Name",
       "supplierLeadDays": "Lead Time (Days)",
       "noRecords": "No item lead time records yet"
+    },
+    "downtime_entry": {
+      "eyebrow": "Plant Floor Control",
+      "title": "Downtime Entry",
+      "description": "Log work center stoppages and their causes, with automatic duration calculation",
+      "listTitle": "Downtime Entry List",
+      "createEntry": "Log New Downtime",
+      "workCenter": "Work Center",
+      "operator": "Operator (optional)",
+      "stopReason": "Stop Reason",
+      "startTime": "Start Time",
+      "stopTime": "Stop Time",
+      "duration": "Duration (min)",
+      "remarks": "Remarks (optional)",
+      "close": "Close Downtime",
+      "open": "Open",
+      "noEntries": "No downtime entries yet"
     }
   },
   "footer": {

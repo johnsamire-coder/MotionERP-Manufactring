@@ -55,3 +55,11 @@ export class CreateOperationDto {
   @IsOptional() @IsUUID() defaultWorkCenterId?: string;
   @IsOptional() @IsNumberString() standardTimeMinutes?: string;
 }
+
+export class CreateDowntimeEntryDto {
+  @IsUUID() workCenterId!: string;
+  @IsOptional() @IsUUID() operatorEmployeeId?: string;
+  @IsString() stopReason!: string;
+  @IsDateString() startTime!: string;
+  @IsOptional() @IsString() remarks?: string;
+}
