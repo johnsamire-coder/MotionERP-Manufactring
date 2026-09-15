@@ -214,3 +214,57 @@ export const supplierLeadTime = planningSchema.table('supplier_lead_time', {
 
 export type ItemLeadTime = typeof itemLeadTime.$inferSelect;
 export type SupplierLeadTime = typeof supplierLeadTime.$inferSelect;
+
+/**
+ * Master Production Schedule — ERPNext parity build: a per-item x period
+ * forecast/plan, feeding Production Plan as an alternative "Plan By" source
+ * alongside Sales Forecast (ERPNext's MPS/Sales Forecast are structurally
+ * near-identical; MPS is scoped to a single item, Sales Forecast to a whole
+ * Item Category). "Distribute Quantities Evenly" is a pure frontend
+ * calculation (no backend state needed) and is not modeled here.
+ */
+export const masterProductionSchedule = planningSchema.table('master_production_schedule', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  mpsNumber: text('mps_number').notNull(),
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  orgNodeId: uuid('org_node_id')
+    .notNull()
+    .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  warehouseId: uuid('warehouse_id').references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  fromDate: timestamp('from_date', { withTimezone: true }).notNull(),
+  toDate: timestamp('to_date', { withTimezone: true }).notNull(),
+  totalForecastQuantity: numeric('total_forecast_quantity', { precision: 24, scale: 6 }),
+  projectedQuantity: numeric('projected_quantity', { precision: 24, scale: 6 }),
+  plannedQuantity: numeric('planned_quantity', { precision: 24, scale: 6 }),
+  status: text('status').notNull().default('draft'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('mps_number_unique').on(t.mpsNumber),
+  check('mps_periodicity_status_valid', sql`${t.status} in ('draft', 'submitted')`),
+  check('mps_dates_valid', sql`${t.toDate} >= ${t.fromDate}`),
+  index('mps_org_node_idx').on(t.orgNodeId),
+  index('mps_item_idx').on(t.itemId),
+]);
+
+export const mpsScheduleLine = planningSchema.table('mps_schedule_line', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  masterProductionScheduleId: uuid('master_production_schedule_id')
+    .notNull()
+    .references(() => masterProductionSchedule.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  period: text('period').notNull(),
+  startDate: timestamp('start_date', { withTimezone: true }).notNull(),
+  endDate: timestamp('end_date', { withTimezone: true }).notNull(),
+  forecastQuantity: numeric('forecast_quantity', { precision: 24, scale: 6 }).notNull(),
+  plannedQuantity: numeric('planned_quantity', { precision: 24, scale: 6 }),
+  lineNumber: integer('line_number').notNull().default(0),
+}, (t) => [
+  check('mps_schedule_line_period_valid', sql`${t.period} in ('week', 'month', 'quarter', 'year')`),
+  check('mps_schedule_line_forecast_qty_positive', sql`${t.forecastQuantity} > 0`),
+  index('mps_schedule_line_mps_idx').on(t.masterProductionScheduleId),
+]);
+
+export type MasterProductionSchedule = typeof masterProductionSchedule.$inferSelect;
+export type MpsScheduleLine = typeof mpsScheduleLine.$inferSelect;

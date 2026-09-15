@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
-import { itemLeadTime, planningMaterialRequest, planningMaterialRequestLine, productionPlan, productionPlanItem, salesForecast, salesForecastLine, supplierLeadTime } from './planning.schema';
+import { itemLeadTime, masterProductionSchedule, mpsScheduleLine, planningMaterialRequest, planningMaterialRequestLine, productionPlan, productionPlanItem, salesForecast, salesForecastLine, supplierLeadTime } from './planning.schema';
 import type {
   CreateMaterialRequestInput, MaterialRequestLineInput, MaterialRequestLineRecord,
   MaterialRequestRecord, MaterialRequestStatus,
   CreateProductionPlanInput, ProductionPlanItemInput, ProductionPlanItemRecord,
   ProductionPlanRecord, ProductionPlanStatus,
   CreateItemLeadTimeInput, ItemLeadTimeRecord, SupplierLeadTimeInput, SupplierLeadTimeRecord,
+  CreateMpsInput, MasterProductionScheduleRecord, MpsScheduleLineInput, MpsScheduleLineRecord, MpsStatus,
   CreateSalesForecastInput, SalesForecastLineInput, SalesForecastLineRecord,
   SalesForecastRecord, SalesForecastStatus,
 } from './planning.types';
@@ -114,6 +115,37 @@ interface SltRow { id: string; itemLeadTimeId: string; supplierName: string; lea
 
 function toSltRecord(row: SltRow): SupplierLeadTimeRecord {
   return { id: row.id, itemLeadTimeId: row.itemLeadTimeId, supplierName: row.supplierName, leadTimeDays: row.leadTimeDays };
+}
+
+const mpsColumns = {
+  id: masterProductionSchedule.id, mpsNumber: masterProductionSchedule.mpsNumber, itemId: masterProductionSchedule.itemId,
+  orgNodeId: masterProductionSchedule.orgNodeId, warehouseId: masterProductionSchedule.warehouseId,
+  fromDate: masterProductionSchedule.fromDate, toDate: masterProductionSchedule.toDate,
+  totalForecastQuantity: masterProductionSchedule.totalForecastQuantity, projectedQuantity: masterProductionSchedule.projectedQuantity,
+  plannedQuantity: masterProductionSchedule.plannedQuantity, status: masterProductionSchedule.status,
+};
+const mpsLineColumns = {
+  id: mpsScheduleLine.id, masterProductionScheduleId: mpsScheduleLine.masterProductionScheduleId, period: mpsScheduleLine.period,
+  startDate: mpsScheduleLine.startDate, endDate: mpsScheduleLine.endDate,
+  forecastQuantity: mpsScheduleLine.forecastQuantity, plannedQuantity: mpsScheduleLine.plannedQuantity, lineNumber: mpsScheduleLine.lineNumber,
+};
+
+interface MpsRow {
+  id: string; mpsNumber: string; itemId: string; orgNodeId: string; warehouseId: string | null;
+  fromDate: Date; toDate: Date; totalForecastQuantity: string | null; projectedQuantity: string | null;
+  plannedQuantity: string | null; status: string;
+}
+interface MpsLineRow {
+  id: string; masterProductionScheduleId: string; period: string; startDate: Date; endDate: Date;
+  forecastQuantity: string; plannedQuantity: string | null; lineNumber: number;
+}
+
+function toMpsLineRecord(row: MpsLineRow): MpsScheduleLineRecord {
+  return {
+    id: row.id, masterProductionScheduleId: row.masterProductionScheduleId, period: row.period as MpsScheduleLineRecord["period"],
+    startDate: row.startDate.toISOString(), endDate: row.endDate.toISOString(),
+    forecastQuantity: row.forecastQuantity, plannedQuantity: row.plannedQuantity, lineNumber: row.lineNumber,
+  };
 }
 
 @Injectable()
@@ -373,5 +405,77 @@ export class PlanningRepository {
   async replaceBomInProductionPlanItems(oldBomId: string, newBomId: string): Promise<number> {
     const rows = await this.database.db.update(productionPlanItem).set({ bomId: newBomId }).where(eq(productionPlanItem.bomId, oldBomId)).returning({ id: productionPlanItem.id });
     return rows.length;
+  }
+
+  async listMps(): Promise<MasterProductionScheduleRecord[]> {
+    const rows = await this.database.db.select(mpsColumns).from(masterProductionSchedule).orderBy(asc(masterProductionSchedule.mpsNumber));
+    const results: MasterProductionScheduleRecord[] = [];
+    for (const row of rows) {
+      const scheduleLines = await this.listMpsLines(row.id);
+      results.push(this.toMpsRecord(row, scheduleLines));
+    }
+    return results;
+  }
+
+  async findMpsById(id: string): Promise<MasterProductionScheduleRecord | null> {
+    const rows = await this.database.db.select(mpsColumns).from(masterProductionSchedule).where(eq(masterProductionSchedule.id, id)).limit(1);
+    if (!rows[0]) return null;
+    const scheduleLines = await this.listMpsLines(id);
+    return this.toMpsRecord(rows[0], scheduleLines);
+  }
+
+  async countMps(): Promise<number> {
+    const rows = await this.database.db.select({ id: masterProductionSchedule.id }).from(masterProductionSchedule);
+    return rows.length;
+  }
+
+  private async listMpsLines(masterProductionScheduleId: string): Promise<MpsScheduleLineRecord[]> {
+    const rows = await this.database.db.select(mpsLineColumns).from(mpsScheduleLine)
+      .where(eq(mpsScheduleLine.masterProductionScheduleId, masterProductionScheduleId)).orderBy(asc(mpsScheduleLine.lineNumber));
+    return rows.map(toMpsLineRecord);
+  }
+
+  private toMpsRecord(row: MpsRow, scheduleLines: MpsScheduleLineRecord[]): MasterProductionScheduleRecord {
+    return {
+      id: row.id, mpsNumber: row.mpsNumber, itemId: row.itemId, orgNodeId: row.orgNodeId, warehouseId: row.warehouseId,
+      fromDate: row.fromDate.toISOString(), toDate: row.toDate.toISOString(),
+      totalForecastQuantity: row.totalForecastQuantity, projectedQuantity: row.projectedQuantity,
+      plannedQuantity: row.plannedQuantity, status: row.status as MpsStatus, scheduleLines,
+    };
+  }
+
+  async insertMps(input: CreateMpsInput & { id: string; mpsNumber: string }): Promise<MasterProductionScheduleRecord> {
+    const rows = await this.database.db.insert(masterProductionSchedule).values({
+      id: input.id, mpsNumber: input.mpsNumber, itemId: input.itemId, orgNodeId: input.orgNodeId, warehouseId: input.warehouseId ?? null,
+      fromDate: new Date(input.fromDate), toDate: new Date(input.toDate),
+      totalForecastQuantity: input.totalForecastQuantity ?? null, plannedQuantity: input.plannedQuantity ?? null,
+    }).returning(mpsColumns);
+    const inserted = rows[0]!;
+    let lineNumber = 1;
+    for (const line of input.scheduleLines) {
+      await this.insertMpsLine(inserted.id, line, lineNumber);
+      lineNumber += 1;
+    }
+    const scheduleLines = await this.listMpsLines(inserted.id);
+    return this.toMpsRecord(inserted, scheduleLines);
+  }
+
+  private async insertMpsLine(masterProductionScheduleId: string, input: MpsScheduleLineInput, lineNumber: number): Promise<void> {
+    await this.database.db.insert(mpsScheduleLine).values({
+      masterProductionScheduleId, period: input.period, startDate: new Date(input.startDate), endDate: new Date(input.endDate),
+      forecastQuantity: input.forecastQuantity, plannedQuantity: input.plannedQuantity ?? null, lineNumber,
+    });
+  }
+
+  async setMpsStatus(id: string, status: MpsStatus): Promise<MasterProductionScheduleRecord> {
+    const rows = await this.database.db.update(masterProductionSchedule).set({ status }).where(eq(masterProductionSchedule.id, id)).returning(mpsColumns);
+    const scheduleLines = await this.listMpsLines(id);
+    return this.toMpsRecord(rows[0]!, scheduleLines);
+  }
+
+  async setMpsProjectedQuantity(id: string, projectedQuantity: string): Promise<MasterProductionScheduleRecord> {
+    const rows = await this.database.db.update(masterProductionSchedule).set({ projectedQuantity }).where(eq(masterProductionSchedule.id, id)).returning(mpsColumns);
+    const scheduleLines = await this.listMpsLines(id);
+    return this.toMpsRecord(rows[0]!, scheduleLines);
   }
 }

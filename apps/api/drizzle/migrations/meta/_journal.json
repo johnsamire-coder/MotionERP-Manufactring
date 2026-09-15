@@ -225,6 +225,13 @@
       "when": 1789483369801,
       "tag": "0031_past_black_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1789501138601,
+      "tag": "0032_modern_boomerang",
+      "breakpoints": true
     }
   ]
 }

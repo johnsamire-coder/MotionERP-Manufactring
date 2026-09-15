@@ -1,11 +1,12 @@
-﻿import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { InventoryModule } from '../inventory/inventory.module';
 import { ProductionOpsModule } from '../production_ops/production_ops.module';
 import { PlanningController } from './planning.controller';
 import { PlanningRepository } from './planning.repository';
 import { PlanningService } from './planning.service';
 
 @Module({
-  imports: [ProductionOpsModule],
+  imports: [ProductionOpsModule, InventoryModule],
   controllers: [PlanningController],
   providers: [PlanningService, PlanningRepository],
   exports: [PlanningService],

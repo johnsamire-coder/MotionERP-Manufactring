@@ -78,3 +78,24 @@ export interface CreateItemLeadTimeInput {
   purchaseTimeDays?: string; isPurchaseLeadTime?: boolean; purchaseBufferDays?: string;
   supplierLeadTimes?: SupplierLeadTimeInput[];
 }
+
+export type MpsPeriod = 'week' | 'month' | 'quarter' | 'year';
+export type MpsStatus = 'draft' | 'submitted';
+
+export interface MpsScheduleLineRecord {
+  id: string; masterProductionScheduleId: string; period: MpsPeriod;
+  startDate: string; endDate: string; forecastQuantity: string; plannedQuantity: string | null; lineNumber: number;
+}
+export interface MpsScheduleLineInput {
+  period: MpsPeriod; startDate: string; endDate: string; forecastQuantity: string; plannedQuantity?: string;
+}
+
+export interface MasterProductionScheduleRecord {
+  id: string; mpsNumber: string; itemId: string; orgNodeId: string; warehouseId: string | null;
+  fromDate: string; toDate: string; totalForecastQuantity: string | null; projectedQuantity: string | null;
+  plannedQuantity: string | null; status: MpsStatus; scheduleLines: MpsScheduleLineRecord[];
+}
+export interface CreateMpsInput {
+  itemId: string; orgNodeId: string; warehouseId?: string; fromDate: string; toDate: string;
+  totalForecastQuantity?: string; plannedQuantity?: string; scheduleLines: MpsScheduleLineInput[];
+}

@@ -83,3 +83,25 @@ export class CreateItemLeadTimeDto {
   @Type(() => SupplierLeadTimeDto)
   supplierLeadTimes?: SupplierLeadTimeDto[];
 }
+
+export class MpsScheduleLineDto {
+  @IsIn(['week', 'month', 'quarter', 'year']) period!: 'week' | 'month' | 'quarter' | 'year';
+  @IsString() startDate!: string;
+  @IsString() endDate!: string;
+  @IsNumberString() forecastQuantity!: string;
+  @IsOptional() @IsNumberString() plannedQuantity?: string;
+}
+
+export class CreateMpsDto {
+  @IsUUID() itemId!: string;
+  @IsUUID() orgNodeId!: string;
+  @IsOptional() @IsUUID() warehouseId?: string;
+  @IsString() fromDate!: string;
+  @IsString() toDate!: string;
+  @IsOptional() @IsNumberString() totalForecastQuantity?: string;
+  @IsOptional() @IsNumberString() plannedQuantity?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MpsScheduleLineDto)
+  scheduleLines!: MpsScheduleLineDto[];
+}

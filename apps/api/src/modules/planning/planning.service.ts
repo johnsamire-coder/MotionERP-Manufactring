@@ -3,10 +3,12 @@ import { Injectable } from '@nestjs/common';
 import { PlanningNotFoundError, PlanningValidationError } from './planning.errors';
 import { PlanningRepository } from './planning.repository';
 import { ProductionOpsService } from '../production_ops/production_ops.service';
+import { InventoryService } from '../inventory/inventory.service';
 import type {
   CreateMaterialRequestInput, CreateProductionPlanInput, CreateSalesForecastInput,
   MaterialRequestRecord, ProductionPlanRecord, SalesForecastRecord,
   CreateItemLeadTimeInput, ItemLeadTimeRecord,
+  CreateMpsInput, MasterProductionScheduleRecord,
 } from './planning.types';
 
 @Injectable()
@@ -14,6 +16,7 @@ export class PlanningService {
   constructor(
     private readonly repository: PlanningRepository,
     private readonly productionOpsService: ProductionOpsService,
+    private readonly inventoryService: InventoryService,
   ) {}
 
   async getSalesForecasts(): Promise<SalesForecastRecord[]> { return this.repository.listSalesForecasts(); }
@@ -148,5 +151,46 @@ export class PlanningService {
 
   async replaceBomInProductionPlanItems(oldBomId: string, newBomId: string): Promise<number> {
     return this.repository.replaceBomInProductionPlanItems(oldBomId, newBomId);
+  }
+
+  async getMpsList(): Promise<MasterProductionScheduleRecord[]> { return this.repository.listMps(); }
+
+  async getMps(id: string): Promise<MasterProductionScheduleRecord> {
+    const found = await this.repository.findMpsById(id);
+    if (!found) throw new PlanningNotFoundError(`master production schedule ${id} does not exist`);
+    return found;
+  }
+
+  async createMps(input: CreateMpsInput): Promise<MasterProductionScheduleRecord> {
+    if (!input.scheduleLines || input.scheduleLines.length === 0) {
+      throw new PlanningValidationError('a master production schedule must have at least one schedule line');
+    }
+    if (new Date(input.toDate) < new Date(input.fromDate)) {
+      throw new PlanningValidationError('toDate cannot be before fromDate');
+    }
+    for (const line of input.scheduleLines) {
+      const qty = Number(line.forecastQuantity);
+      if (!Number.isFinite(qty) || qty <= 0) throw new PlanningValidationError('every schedule line forecast quantity must be positive');
+    }
+    const sequence = (await this.repository.countMps()) + 1;
+    const year = new Date().getFullYear();
+    const mpsNumber = `MPS-${year}-${String(sequence).padStart(6, '0')}`;
+    return this.repository.insertMps({ id: randomUUID(), mpsNumber, ...input });
+  }
+
+  async submitMps(id: string): Promise<MasterProductionScheduleRecord> {
+    const found = await this.repository.findMpsById(id);
+    if (!found) throw new PlanningNotFoundError(`master production schedule ${id} does not exist`);
+    if (found.status !== 'draft') throw new PlanningValidationError(`master production schedule ${id} is "${found.status}" and cannot be submitted (must be "draft")`);
+    return this.repository.setMpsStatus(id, 'submitted');
+  }
+
+  async getProjectedQuantity(id: string): Promise<MasterProductionScheduleRecord> {
+    const found = await this.repository.findMpsById(id);
+    if (!found) throw new PlanningNotFoundError(`master production schedule ${id} does not exist`);
+    if (!found.warehouseId) throw new PlanningValidationError(`master production schedule ${id} has no warehouse set; cannot look up projected quantity`);
+    const balances = await this.inventoryService.getBalances();
+    const match = balances.find((b) => b.itemId === found.itemId && b.warehouseId === found.warehouseId);
+    return this.repository.setMpsProjectedQuantity(id, match ? match.available : '0');
   }
 }

@@ -1,9 +1,9 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { UseFilters } from '@nestjs/common';
-import { CreateItemLeadTimeDto, CreateMaterialRequestDto, CreateProductionPlanDto, CreateSalesForecastDto } from './planning.dto';
+import { CreateItemLeadTimeDto, CreateMaterialRequestDto, CreateMpsDto, CreateProductionPlanDto, CreateSalesForecastDto } from './planning.dto';
 import { PlanningExceptionFilter } from './planning.exception-filter';
 import { PlanningService } from './planning.service';
-import type { ItemLeadTimeRecord, MaterialRequestRecord, ProductionPlanRecord, SalesForecastRecord } from './planning.types';
+import type { ItemLeadTimeRecord, MasterProductionScheduleRecord, MaterialRequestRecord, ProductionPlanRecord, SalesForecastRecord } from './planning.types';
 
 @Controller({ path: 'planning', version: '1' })
 @UseFilters(PlanningExceptionFilter)
@@ -107,5 +107,35 @@ export class PlanningController {
       supplierLeadTimes: dto.supplierLeadTimes?.map((s) => ({ supplierName: s.supplierName, leadTimeDays: s.leadTimeDays })),
     });
     return { itemLeadTime: created };
+  }
+
+  @Get('master-production-schedules')
+  async mpsList(): Promise<{ masterProductionSchedules: MasterProductionScheduleRecord[] }> {
+    return { masterProductionSchedules: await this.service.getMpsList() };
+  }
+
+  @Get('master-production-schedules/:id')
+  async mpsById(@Param('id', ParseUUIDPipe) id: string): Promise<{ masterProductionSchedule: MasterProductionScheduleRecord }> {
+    return { masterProductionSchedule: await this.service.getMps(id) };
+  }
+
+  @Post('master-production-schedules') @HttpCode(201)
+  async createMps(@Body() dto: CreateMpsDto): Promise<{ masterProductionSchedule: MasterProductionScheduleRecord }> {
+    const created = await this.service.createMps({
+      itemId: dto.itemId, orgNodeId: dto.orgNodeId, warehouseId: dto.warehouseId, fromDate: dto.fromDate, toDate: dto.toDate,
+      totalForecastQuantity: dto.totalForecastQuantity, plannedQuantity: dto.plannedQuantity,
+      scheduleLines: dto.scheduleLines.map((l) => ({ period: l.period, startDate: l.startDate, endDate: l.endDate, forecastQuantity: l.forecastQuantity, plannedQuantity: l.plannedQuantity })),
+    });
+    return { masterProductionSchedule: created };
+  }
+
+  @Post('master-production-schedules/:id/submit') @HttpCode(200)
+  async submitMps(@Param('id', ParseUUIDPipe) id: string): Promise<{ masterProductionSchedule: MasterProductionScheduleRecord }> {
+    return { masterProductionSchedule: await this.service.submitMps(id) };
+  }
+
+  @Post('master-production-schedules/:id/get-projected-quantity') @HttpCode(200)
+  async mpsProjectedQuantity(@Param('id', ParseUUIDPipe) id: string): Promise<{ masterProductionSchedule: MasterProductionScheduleRecord }> {
+    return { masterProductionSchedule: await this.service.getProjectedQuantity(id) };
   }
 }
