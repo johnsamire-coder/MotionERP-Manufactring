@@ -214,6 +214,10 @@ export class ProductionOpsService {
     const minutes = (stopTime.getTime() - new Date(found.startTime).getTime()) / 60000;
     return this.repository.closeDowntimeEntry(id, stopTime, minutes.toFixed(2));
   }
+
+  async replaceBomInWorkOrders(oldBomId: string, newBomId: string): Promise<number> {
+    return this.repository.replaceBomInWorkOrders(oldBomId, newBomId);
+  }
 }
 
 function normalizeCode(raw: unknown): string {

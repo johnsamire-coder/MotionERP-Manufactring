@@ -145,4 +145,8 @@ export class PlanningService {
     }
     return this.repository.insertItemLeadTime({ id: randomUUID(), ...input });
   }
+
+  async replaceBomInProductionPlanItems(oldBomId: string, newBomId: string): Promise<number> {
+    return this.repository.replaceBomInProductionPlanItems(oldBomId, newBomId);
+  }
 }

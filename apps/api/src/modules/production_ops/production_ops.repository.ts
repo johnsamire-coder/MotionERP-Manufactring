@@ -276,4 +276,9 @@ export class ProductionOpsRepository {
     const rows = await this.database.db.update(downtimeEntry).set({ stopTime, stoppageMinutes }).where(eq(downtimeEntry.id, id)).returning(dteColumns);
     return toDteRecord(rows[0]!);
   }
+
+  async replaceBomInWorkOrders(oldBomId: string, newBomId: string): Promise<number> {
+    const rows = await this.database.db.update(workOrder).set({ bomId: newBomId }).where(eq(workOrder.bomId, oldBomId)).returning({ id: workOrder.id });
+    return rows.length;
+  }
 }

@@ -369,4 +369,9 @@ export class PlanningRepository {
     const supplierLeadTimes = await this.listSlt(inserted.id);
     return this.toIltRecord(inserted, supplierLeadTimes);
   }
+
+  async replaceBomInProductionPlanItems(oldBomId: string, newBomId: string): Promise<number> {
+    const rows = await this.database.db.update(productionPlanItem).set({ bomId: newBomId }).where(eq(productionPlanItem.bomId, oldBomId)).returning({ id: productionPlanItem.id });
+    return rows.length;
+  }
 }
