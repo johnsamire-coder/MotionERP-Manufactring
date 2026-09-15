@@ -1,959 +1,1005 @@
 {
-    "app":  {
-                "name":  "Motion ERP",
-                "language":  "Language",
-                "languageName":  {
-                                     "en":  "English",
-                                     "ar":  "ط§ظ„ط¹ط±ط¨ظٹط©"
-                                 }
-            },
-    "navigation":  {
-                       "workspace":  "Workspace",
-                       "label":  "Main navigation",
-                       "dashboard":  "Dashboard",
-                       "organization":  "Organization",
-                       "manufacturing":  "Manufacturing",
-                       "planning":  "Production Plan",
-                       "bom":  "Bill of Materials",
-                       "work_order":  "Work Order",
-                       "production_ops":  "Job Card",
-                       "workstation":  "Workstation",
-                       "operation":  "Operation",
-                       "sub_contracting":  "Sub Contracting",
-                       "sales":  "Selling",
-                       "customer":  "Customer",
-                       "sales_order":  "Sales Order",
-                       "delivery":  "Delivery Note",
-                       "sales_invoice":  "Sales Invoice",
-                       "sales_partner":  "Sales Partner",
-                       "sales_person":  "Sales Person",
-                       "purchasing":  "Buying",
-                       "supplier":  "Supplier",
-                       "material":  "Material Request",
-                       "request_for_quotation":  "Request for Quotation",
-                       "supplier_quotation":  "Supplier Quotation",
-                       "purchase_order":  "Purchase Order",
-                       "purchase_receipt":  "Purchase Receipt",
-                       "purchase_invoice":  "Purchase Invoice",
-                       "inventory":  "Stock",
-                       "stock_entry":  "Stock Entry",
-                       "stock_reconciliation":  "Stock Reconciliation",
-                       "serial_no":  "Serial No",
-                       "batch":  "Batch",
-                       "price_list":  "Price List",
-                       "accounting":  "Accounting",
-                       "payment_entry":  "Payment Entry",
-                       "balance_sheet":  "Balance Sheet",
-                       "profit_and_loss":  "Profit and Loss",
-                       "hr":  "HR",
-                       "attendance":  "Attendance",
-                       "leave_application":  "Leave Application",
-                       "auth":  "Users \u0026 Permissions",
-                       "reports":  "Reports",
-                       "settings":  "Settings",
-                       "helpTitle":  "Need a hand?",
-                       "helpText":  "Explore the Motion ERP workspace and keep every team aligned.",
-                       "helpAction":  "View guide",
-                       "systemOperational":  "All systems operational",
-                       "sales_forecast":  "Sales Forecast",
-                       "material_request_mp":  "Material Request"
-                   },
-    "common":  {
-                   "viewAll":  "View all",
-                   "more":  "More options",
-                   "close":  "Close navigation",
-                   "openMenu":  "Open navigation",
-                   "filter":  "Filter",
-                   "ready":  "Ready",
-                   "inReview":  "In review",
-                   "overview":  "Overview",
-                   "comingSoon":  "This screen is coming soon."
-               },
-    "header":  {
-                   "company":  "Motion Medical",
-                   "companyMeta":  "Main organization",
-                   "notifications":  "Notifications",
-                   "user":  "Adam Smith",
-                   "role":  "Operations lead"
-               },
-    "dashboard":  {
-                      "eyebrow":  "Operations overview",
-                      "title":  "Good morning, Adam",
-                      "description":  "Here is what is happening across your manufacturing operations today.",
-                      "demoData":  "Demo data",
-                      "kpis":  {
-                                   "output":  {
-                                                  "label":  "Production output"
-                                              },
-                                   "onTime":  {
-                                                  "label":  "On-time delivery"
-                                              },
-                                   "oee":  {
-                                               "label":  "Overall equipment effectiveness"
-                                           },
-                                   "quality":  {
-                                                   "label":  "First-pass quality"
-                                               },
-                                   "vsLastMonth":  "vs. last month",
-                                   "target":  "vs. target"
-                               },
-                      "orders":  {
-                                     "eyebrow":  "Production control",
-                                     "title":  "Manufacturing orders",
-                                     "order":  "Order",
-                                     "product":  "Product",
-                                     "progress":  "Progress",
-                                     "status":  "Status",
-                                     "rows":  {
-                                                  "mo1048":  {
-                                                                 "id":  "MO-1048",
-                                                                 "product":  "Infusion Pump IP-400",
-                                                                 "line":  "Assembly line A",
-                                                                 "status":  "On track"
-                                                             },
-                                                  "mo1047":  {
-                                                                 "id":  "MO-1047",
-                                                                 "product":  "Patient Monitor PM-20",
-                                                                 "line":  "Assembly line B",
-                                                                 "status":  "In progress"
-                                                             },
-                                                  "mo1046":  {
-                                                                 "id":  "MO-1046",
-                                                                 "product":  "Surgical Table ST-8",
-                                                                 "line":  "Finishing cell",
-                                                                 "status":  "On track"
-                                                             },
-                                                  "mo1045":  {
-                                                                 "id":  "MO-1045",
-                                                                 "product":  "Ventilator VX-2",
-                                                                 "line":  "Assembly line A",
-                                                                 "status":  "Planned"
-                                                             }
-                                              }
-                                 },
-                      "inventory":  {
-                                        "eyebrow":  "Materials",
-                                        "title":  "Inventory status",
-                                        "critical":  {
-                                                         "name":  "Critical stock",
-                                                         "meta":  "Immediate attention",
-                                                         "count":  "04"
-                                                     },
-                                        "low":  {
-                                                    "name":  "Low stock",
-                                                    "meta":  "Reorder recommended",
-                                                    "count":  "12"
-                                                },
-                                        "healthy":  {
-                                                        "name":  "Healthy stock",
-                                                        "meta":  "Within target levels",
-                                                        "count":  "86%"
-                                                    },
-                                        "manage":  "Manage inventory"
-                                    },
-                      "pipeline":  {
-                                       "eyebrow":  "Production flow",
-                                       "title":  "Production pipeline",
-                                       "planned":  "Planned",
-                                       "inProgress":  "In progress",
-                                       "quality":  "Quality check",
-                                       "completed":  "Completed"
-                                   },
-                      "workCenters":  {
-                                          "eyebrow":  "Capacity",
-                                          "title":  "Work centers",
-                                          "assembly":  "Assembly",
-                                          "machining":  "CNC machining",
-                                          "sterilization":  "Sterilization"
-                                      },
-                      "approvals":  {
-                                        "eyebrow":  "Action needed",
-                                        "title":  "Pending approvals",
-                                        "purchase":  {
-                                                         "initials":  "OM",
-                                                         "title":  "Purchase request PR-2084",
-                                                         "meta":  "Omar Mostafa آ· 18 min ago"
-                                                     },
-                                        "change":  {
-                                                       "initials":  "LS",
-                                                       "title":  "Engineering change EC-019",
-                                                       "meta":  "Lina Samir آ· 42 min ago"
-                                                   },
-                                        "quality":  {
-                                                        "initials":  "YH",
-                                                        "title":  "Quality release QR-442",
-                                                        "meta":  "Youssef Hassan آ· 1 hr ago"
-                                                    }
-                                    },
-                      "activity":  {
-                                       "eyebrow":  "Latest updates",
-                                       "title":  "Recent activity",
-                                       "completed":  {
-                                                         "title":  "Order MO-1046 completed",
-                                                         "meta":  "Production آ· 12 minutes ago"
-                                                     },
-                                       "updated":  {
-                                                       "title":  "BOM revision updated",
-                                                       "meta":  "Engineering آ· 35 minutes ago"
-                                                   },
-                                       "alert":  {
-                                                     "title":  "Shortage alert acknowledged",
-                                                     "meta":  "Inventory آ· 1 hour ago"
-                                                 }
-                                   }
-                  },
-    "pages":  {
-                  "inventory":  {
-                                    "eyebrow":  "Materials \u0026 stock",
-                                    "title":  "Inventory",
-                                    "description":  "See material availability, stock movements, and replenishment priorities.",
-                                    "action":  "Add item",
-                                    "stats":  {
-                                                  "primary":  {
-                                                                  "label":  "Total items",
-                                                                  "value":  "4,820",
-                                                                  "trend":  "+3.1%"
-                                                              },
-                                                  "secondary":  {
-                                                                    "label":  "Low stock items",
-                                                                    "value":  "12",
-                                                                    "trend":  "Needs review"
-                                                                },
-                                                  "tertiary":  {
-                                                                   "label":  "Inventory value",
-                                                                   "value":  "$2.4M",
-                                                                   "trend":  "+4.8%"
-                                                               }
-                                              },
-                                    "table":  {
-                                                  "eyebrow":  "Stock overview",
-                                                  "title":  "Inventory items",
-                                                  "columnOne":  "Item",
-                                                  "columnTwo":  "Category",
-                                                  "columnThree":  "On hand",
-                                                  "columnFour":  "Status"
-                                              },
-                                    "form":  {
-                                                 "code":  "Code",
-                                                 "name":  "Name",
-                                                 "category":  "Category",
-                                                 "uom":  "Unit of Measure",
-                                                 "itemType":  "Type",
-                                                 "save":  "Save",
-                                                 "cancel":  "Cancel",
-                                                 "saving":  "Saving...",
-                                                 "addItem":  "Add item",
-                                                 "addCategory":  "Add category",
-                                                 "categoryName":  "Category name",
-                                                 "categoryCode":  "Category code",
-                                                 "warehouses":  "Warehouses",
-                                                 "balances":  "Stock balances",
-                                                 "onHand":  "On hand",
-                                                 "reserved":  "Reserved",
-                                                 "available":  "Available",
-                                                 "recordMovement":  "Record movement",
-                                                 "movementType":  "Movement type",
-                                                 "quantity":  "Quantity",
-                                                 "receipt":  "Receipt",
-                                                 "issue":  "Issue",
-                                                 "item":  "Item",
-                                                 "warehouse":  "Warehouse",
-                                                 "addWarehouse":  "Add warehouse",
-                                                 "warehouseCode":  "Warehouse code",
-                                                 "warehouseName":  "Warehouse name",
-                                                 "loading":  "Loading...",
-                                                 "empty":  "No data yet",
-                                                 "success":  "Saved successfully",
-                                                 "nameAr":  "Arabic name",
-                                                 "nameEn":  "English name"
-                                             },
-                                    "itemTypes":  {
-                                                      "raw_material":  "Raw Material",
-                                                      "finished_product":  "Finished Product",
-                                                      "semi_finished_product":  "Semi-Finished Product",
-                                                      "consumable":  "Consumable",
-                                                      "spare_part":  "Spare Part",
-                                                      "service":  "Service"
-                                                  }
-                                },
-                  "purchasing":  {
-                                     "eyebrow":  "Sourcing \u0026 suppliers",
-                                     "title":  "Purchasing",
-                                     "description":  "Coordinate purchase requests, supplier relationships, and incoming materials.",
-                                     "action":  "Create request",
-                                     "stats":  {
-                                                   "primary":  {
-                                                                   "label":  "Open requests",
-                                                                   "value":  "16",
-                                                                   "trend":  "+4 today"
-                                                               },
-                                                   "secondary":  {
-                                                                     "label":  "Pending orders",
-                                                                     "value":  "28",
-                                                                     "trend":  "7 due this week"
-                                                                 },
-                                                   "tertiary":  {
-                                                                    "label":  "Active suppliers",
-                                                                    "value":  "74",
-                                                                    "trend":  "+5.3%"
-                                                                }
-                                               },
-                                     "table":  {
-                                                   "eyebrow":  "Procurement queue",
-                                                   "title":  "Purchase requests",
-                                                   "columnOne":  "Request",
-                                                   "columnTwo":  "Supplier",
-                                                   "columnThree":  "Amount",
-                                                   "columnFour":  "Status"
-                                               }
-                                 },
-                  "reports":  {
-                                  "eyebrow":  "Insights \u0026 analytics",
-                                  "title":  "Reports",
-                                  "description":  "Turn operational data into clear decisions for every team and leadership group.",
-                                  "action":  "Create report",
-                                  "stats":  {
-                                                "primary":  {
-                                                                "label":  "Saved reports",
-                                                                "value":  "24",
-                                                                "trend":  "+3 this month"
-                                                            },
-                                                "secondary":  {
-                                                                  "label":  "Scheduled",
-                                                                  "value":  "08",
-                                                                  "trend":  "All delivered"
-                                                              },
-                                                "tertiary":  {
-                                                                 "label":  "Shared with team",
-                                                                 "value":  "16",
-                                                                 "trend":  "+2.4%"
-                                                             }
-                                            },
-                                  "table":  {
-                                                "eyebrow":  "Report library",
-                                                "title":  "Recent reports",
-                                                "columnOne":  "Report",
-                                                "columnTwo":  "Owner",
-                                                "columnThree":  "Last run",
-                                                "columnFour":  "Status"
-                                            }
-                              },
-                  "settings":  {
-                                   "eyebrow":  "Workspace configuration",
-                                   "title":  "Settings",
-                                   "description":  "Configure your workspace, preferences, roles, and operational defaults.",
-                                   "action":  "Add setting",
-                                   "stats":  {
-                                                 "primary":  {
-                                                                 "label":  "Configured areas",
-                                                                 "value":  "18",
-                                                                 "trend":  "92% complete"
-                                                             },
-                                                 "secondary":  {
-                                                                   "label":  "Roles",
-                                                                   "value":  "09",
-                                                                   "trend":  "2 pending"
-                                                               },
-                                                 "tertiary":  {
-                                                                  "label":  "Integrations",
-                                                                  "value":  "06",
-                                                                  "trend":  "All healthy"
-                                                              }
-                                             },
-                                   "table":  {
-                                                 "eyebrow":  "Configuration",
-                                                 "title":  "Workspace settings",
-                                                 "columnOne":  "Setting",
-                                                 "columnTwo":  "Area",
-                                                 "columnThree":  "Updated",
-                                                 "columnFour":  "Status"
-                                             }
-                               },
-                  "sales":  {
-                                "eyebrow":  "Commercial Operations",
-                                "title":  "Sales \u0026 Job Orders",
-                                "description":  "Manage customers, issue quotations, approve orders, and generate Job Orders",
-                                "customers":  {
-                                                  "title":  "Customers",
-                                                  "addCustomer":  "Add Customer",
-                                                  "code":  "Code",
-                                                  "name":  "Name",
-                                                  "nameAr":  "Arabic Name",
-                                                  "nameEn":  "English Name",
-                                                  "phone":  "Phone",
-                                                  "status":  "Status"
-                                              },
-                                "quotations":  {
-                                                   "title":  "Quotations",
-                                                   "addQuotation":  "New Quotation",
-                                                   "number":  "Quotation No.",
-                                                   "customer":  "Customer",
-                                                   "direction":  "Direction",
-                                                   "total":  "Total",
-                                                   "status":  "Status",
-                                                   "approve":  "Approve \u0026 Create Job Order",
-                                                   "outgoing":  "Outgoing (Customer)",
-                                                   "incoming":  "Incoming (Supplier)",
-                                                   "poReference":  "Customer PO Ref",
-                                                   "lines":  "Items",
-                                                   "addItem":  "Add Line",
-                                                   "item":  "Item",
-                                                   "qty":  "Qty",
-                                                   "price":  "Unit Price"
-                                               },
-                                "jobOrders":  {
-                                                  "title":  "Job Orders",
-                                                  "addInternal":  "New Internal Order",
-                                                  "number":  "Job Order No.",
-                                                  "source":  "Source",
-                                                  "quotationRef":  "Quotation Ref",
-                                                  "financialReview":  "Financial Review",
-                                                  "passed":  "Passed",
-                                                  "pending":  "Pending",
-                                                  "passReview":  "Pass Financial Review",
-                                                  "approve":  "Approve Job Order",
-                                                  "status":  "Status"
-                                              },
-                                "form":  {
-                                             "save":  "Save",
-                                             "cancel":  "Cancel",
-                                             "loading":  "Loading...",
-                                             "empty":  "No records found",
-                                             "success":  "Action completed successfully"
-                                         }
-                            },
-                  "planning":  {
-                                   "eyebrow":  "Manufacturing Control",
-                                   "title":  "Production Planning",
-                                   "description":  "Set priorities, execution methods (Internal / Subcontracted / Mixed), and manage capacities for Job Orders",
-                                   "table":  {
-                                                 "title":  "Job Orders \u0026 Production Plans",
-                                                 "jobOrder":  "Job Order No.",
-                                                 "customer":  "Customer",
-                                                 "priority":  "Priority",
-                                                 "executionType":  "Execution Method",
-                                                 "internalQty":  "Internal Qty",
-                                                 "externalQty":  "External Qty",
-                                                 "status":  "Status",
-                                                 "action":  "Plan Execution"
-                                             },
-                                   "execution":  {
-                                                     "internal":  "100% Internal",
-                                                     "external":  "100% External (Subcontractor)",
-                                                     "mixed":  "Mixed (Internal + External)"
-                                                 },
-                                   "form":  {
-                                                "title":  "Set Execution Plan",
-                                                "priority":  "Priority Order",
-                                                "executionType":  "Execution Method",
-                                                "internalQty":  "Internal Quantity",
-                                                "externalQty":  "External Quantity",
-                                                "save":  "Save Plan",
-                                                "cancel":  "Cancel",
-                                                "loading":  "Loading...",
-                                                "empty":  "No Job Orders ready for planning",
-                                                "success":  "Production plan saved successfully"
-                                            }
-                               },
-                  "technical":  {
-                                    "eyebrow":  "Engineering \u0026 Specifications",
-                                    "title":  "Technical Office",
-                                    "description":  "Attach Shop Drawings, Cutting Lists, and manage versioned Bill of Materials (BOM) per Job Order",
-                                    "docs":  {
-                                                 "title":  "Technical Documents",
-                                                 "addDoc":  "Attach Document",
-                                                 "docType":  "Type",
-                                                 "fileRef":  "File Reference / Link",
-                                                 "version":  "Version",
-                                                 "shopDrawing":  "Shop Drawing",
-                                                 "cuttingList":  "Cutting List",
-                                                 "spec":  "Specification"
-                                             },
-                                    "bom":  {
-                                                "title":  "Job Order BOM",
-                                                "createBom":  "Create Job Order BOM",
-                                                "version":  "BOM Version",
-                                                "status":  "Status",
-                                                "approve":  "Approve BOM",
-                                                "addItem":  "Add Component",
-                                                "item":  "Component / Raw Material",
-                                                "plannedQty":  "Planned Quantity",
-                                                "productItem":  "Product Item",
-                                                "outputQty":  "Qty to Produce",
-                                                "activity":  "Activity (Company/Branch)",
-                                                "isDefault":  "Set as Default for this Item",
-                                                "noBom":  "No BOM for this item yet"
-                                            },
-                                    "form":  {
-                                                 "save":  "Save",
-                                                 "cancel":  "Cancel",
-                                                 "loading":  "Loading...",
-                                                 "empty":  "No records found",
-                                                 "success":  "Action completed successfully"
-                                             }
-                                },
-                  "material":  {
-                                   "eyebrow":  "Inventory \u0026 Production Control",
-                                   "title":  "Material Requests \u0026 Deviation Control",
-                                   "description":  "Request raw materials against BOMs, enforce human review on BOM budget overruns, and issue stock",
-                                   "table":  {
-                                                 "title":  "Material Requests Queue",
-                                                 "jobOrder":  "Job Order",
-                                                 "item":  "Raw Material",
-                                                 "planned":  "Planned (BOM)",
-                                                 "requested":  "Requested",
-                                                 "issued":  "Issued",
-                                                 "status":  "Status",
-                                                 "action":  "Action"
-                                             },
-                                   "form":  {
-                                                "newRequest":  "New Material Request",
-                                                "qtyPlanned":  "Planned Qty",
-                                                "qtyRequested":  "Requested Qty",
-                                                "reason":  "Deviation Reason (Required if requested \u003e planned)",
-                                                "approveDeviation":  "Approve Deviation",
-                                                "issueStock":  "Issue Stock",
-                                                "save":  "Submit Request",
-                                                "cancel":  "Cancel",
-                                                "loading":  "Loading...",
-                                                "empty":  "No material requests found for this Job Order",
-                                                "success":  "Action completed successfully"
-                                            }
-                               },
-                  "production_ops":  {
-                                         "eyebrow":  "Shop Floor Control",
-                                         "title":  "Work Stations \u0026 Production Operations",
-                                         "description":  "Configure factory work centers, define step sequences per Job Order, and track real-time labor \u0026 overhead costs",
-                                         "workCenters":  {
-                                                             "title":  "Work Centers \u0026 Machinery",
-                                                             "addCenter":  "Add Work Center",
-                                                             "code":  "Code",
-                                                             "name":  "Work Center Name",
-                                                             "ratePerMinute":  "Cost / Min (EGP)"
-                                                         },
-                                         "steps":  {
-                                                       "title":  "Production Steps \u0026 Routing",
-                                                       "addStep":  "Add Production Step",
-                                                       "sequence":  "Seq",
-                                                       "stepName":  "Step Name",
-                                                       "workCenter":  "Work Center",
-                                                       "stdMins":  "Standard Mins",
-                                                       "actMins":  "Actual Mins",
-                                                       "status":  "Status",
-                                                       "action":  "Control",
-                                                       "start":  "Start Step",
-                                                       "complete":  "Complete Step",
-                                                       "workOrder":  "Work Order (optional)",
-                                                       "forQty":  "Target Qty",
-                                                       "completedQty":  "Completed Qty",
-                                                       "operator":  "Operator (optional)",
-                                                       "timeLogs":  "Time Logs",
-                                                       "addTimeLog":  "Log Actual Time",
-                                                       "fromTime":  "From",
-                                                       "toTime":  "To",
-                                                       "completedQtyLog":  "Completed Qty (this log)",
-                                                       "noTimeLogs":  "No time logs yet",
-                                                       "viewLogs":  "View Logs"
-                                                   },
-                                         "cost":  {
-                                                      "summaryTitle":  "Live Labor Cost Tracker",
-                                                      "stdTotalMins":  "Total Std Mins",
-                                                      "actTotalMins":  "Total Act Mins",
-                                                      "stdTotalCost":  "Estimated Labor Cost",
-                                                      "actTotalCost":  "Actual Labor Cost"
-                                                  },
-                                         "form":  {
-                                                      "save":  "Save",
-                                                      "cancel":  "Cancel",
-                                                      "loading":  "Loading...",
-                                                      "empty":  "No records found",
-                                                      "success":  "Action completed successfully",
-                                                      "enterActualMins":  "Enter Actual Minutes Spent"
-                                                  }
-                                     },
-                  "quality":  {
-                                  "eyebrow":  "Quality Assurance \u0026 SLA Rules",
-                                  "title":  "Quality Control \u0026 Escalation Engine",
-                                  "description":  "Define inspection points, enforce resolution SLAs, and automate overdue escalation to management",
-                                  "inspectionPoints":  {
-                                                           "title":  "Inspection Points Configuration",
-                                                           "addPoint":  "Add Inspection Point",
-                                                           "code":  "Code",
-                                                           "name":  "Point Name",
-                                                           "targetMins":  "Target Time (Mins)"
-                                                       },
-                                  "workflows":  {
-                                                    "title":  "Quality Workflows \u0026 Escalation Queue",
-                                                    "startWorkflow":  "Trigger Inspection",
-                                                    "point":  "Inspection Point",
-                                                    "assignedTo":  "Assigned Officer",
-                                                    "escalationLevel":  "SLA Level",
-                                                    "status":  "Status",
-                                                    "action":  "Action",
-                                                    "processOverdue":  "Process Overdue SLAs",
-                                                    "pass":  "Pass Inspection",
-                                                    "fail":  "Reject"
-                                                },
-                                  "form":  {
-                                               "save":  "Save",
-                                               "cancel":  "Cancel",
-                                               "loading":  "Loading...",
-                                               "empty":  "No active quality workflows found",
-                                               "success":  "Action completed successfully"
-                                           }
-                              },
-                  "costing":  {
-                                  "eyebrow":  "Cost Engineering \u0026 Variance Analysis",
-                                  "title":  "Unit Cost Estimator \u0026 Job Variance",
-                                  "description":  "Standard product unit cost calculator (Excel model) and Job Order estimated vs actual variance report",
-                                  "tabs":  {
-                                               "estimator":  "Unit Cost Estimator (Excel Model)",
-                                               "variance":  "Job Order Variance Analysis"
-                                           },
-                                  "estimator":  {
-                                                    "productTitle":  "Product Specification \u0026 Batch Size",
-                                                    "rawMaterials":  "Raw Materials (Sheet Metal \u0026 Profiles)",
-                                                    "accessories":  "Hardware \u0026 Accessories",
-                                                    "consumables":  "Consumables \u0026 Paint Coating",
-                                                    "operations":  "Work Center Operations \u0026 Time",
-                                                    "length":  "L (m)",
-                                                    "width":  "W (m)",
-                                                    "height":  "H (m)",
-                                                    "thickness":  "Thick (mm)",
-                                                    "qty":  "Qty",
-                                                    "scrap":  "Scrap %",
-                                                    "totalQty":  "Total Qty",
-                                                    "price":  "Unit Price",
-                                                    "totalPrice":  "Total (EGP)",
-                                                    "operation":  "Operation / Station",
-                                                    "stdMins":  "Minutes",
-                                                    "ratePerMin":  "Rate/Min (EGP)",
-                                                    "directCost":  "Direct Unit Cost",
-                                                    "overheadCost":  "Overhead \u0026 Depreciation (20%)",
-                                                    "totalUnitCost":  "Total Estimated Unit Cost"
-                                                },
-                                  "variance":  {
-                                                   "joTitle":  "Job Order Cost Comparison",
-                                                   "category":  "Cost Category",
-                                                   "estimatedBudget":  "Estimated Budget (JO)",
-                                                   "actualSpent":  "Actual Spent (Shop Floor)",
-                                                   "varianceAmount":  "Variance (EGP)",
-                                                   "variancePct":  "Variance %",
-                                                   "status":  "Status"
-                                               },
-                                  "form":  {
-                                               "save":  "Save Estimate Template",
-                                               "loading":  "Calculating...",
-                                               "success":  "Calculation completed successfully"
-                                           }
-                              },
-                  "delivery":  {
-                                   "eyebrow":  "Logistics \u0026 Client Handover",
-                                   "title":  "Delivery \u0026 Installation Control",
-                                   "description":  "Manage shipping delivery orders, site installation reports, and customer acceptance certificates",
-                                   "orders":  {
-                                                  "title":  "Delivery Orders \u0026 Logistics",
-                                                  "createOrder":  "New Delivery Order",
-                                                  "orderNo":  "Delivery Order No.",
-                                                  "address":  "Delivery Site Address",
-                                                  "driver":  "Driver \u0026 Vehicle",
-                                                  "status":  "Status",
-                                                  "action":  "Action"
-                                              },
-                                   "handover":  {
-                                                    "title":  "Site Installation \u0026 Handover Protocols",
-                                                    "addReceipt":  "Record Delivery Receipt",
-                                                    "addReport":  "Record Installation Protocol",
-                                                    "receiptNo":  "Receipt No.",
-                                                    "reportNo":  "Protocol No.",
-                                                    "accepted":  "Client Acceptance Status",
-                                                    "notes":  "Client Remarks / Notes"
-                                                },
-                                   "form":  {
-                                                "save":  "Save Document",
-                                                "cancel":  "Cancel",
-                                                "loading":  "Loading...",
-                                                "empty":  "No delivery or installation records for this Job Order",
-                                                "success":  "Action completed successfully"
-                                            }
-                               },
-                  "accounting":  {
-                                     "eyebrow":  "Financial Ledgers \u0026 Treasury",
-                                     "title":  "Accounting, Treasury \u0026 Retention",
-                                     "description":  "Manage Chart of Accounts, balanced double-entry journals, customer collections, and retention release cycles",
-                                     "coa":  {
-                                                 "title":  "Chart of Accounts",
-                                                 "code":  "Account Code",
-                                                 "name":  "Account Name",
-                                                 "type":  "Type",
-                                                 "balance":  "Current Balance",
-                                                 "isLeaf":  "Posting Level"
-                                             },
-                                     "journal":  {
-                                                     "title":  "Double-Entry Journal Entries",
-                                                     "addEntry":  "New Journal Entry",
-                                                     "entryNo":  "Entry No.",
-                                                     "debit":  "Total Debit",
-                                                     "credit":  "Total Credit",
-                                                     "status":  "Status",
-                                                     "post":  "Post Entry"
-                                                 },
-                                     "treasury":  {
-                                                      "title":  "Customer Collections \u0026 Retention Release",
-                                                      "addCollection":  "Record Collection",
-                                                      "addRetention":  "Record Retention Hold",
-                                                      "collNo":  "Collection No.",
-                                                      "retNo":  "Retention No.",
-                                                      "amount":  "Amount",
-                                                      "releasedAmount":  "Released Amount",
-                                                      "release":  "Release Funds"
-                                                  },
-                                     "form":  {
-                                                  "save":  "Save Record",
-                                                  "cancel":  "Cancel",
-                                                  "loading":  "Loading...",
-                                                  "empty":  "No accounting or treasury records found",
-                                                  "success":  "Action completed successfully"
-                                              }
-                                 },
-                  "hr":  {
-                             "eyebrow":  "Human Capital \u0026 Incentives",
-                             "title":  "HR, Payroll \u0026 Sales Commissions",
-                             "description":  "Manage employees, configure sales commission rules (sales vs collections), and generate monthly payrolls",
-                             "employees":  {
-                                               "title":  "Employees Directory",
-                                               "addEmployee":  "Add Employee",
-                                               "code":  "Code",
-                                               "name":  "Name",
-                                               "role":  "Role",
-                                               "baseSalary":  "Base Salary (EGP)"
-                                           },
-                             "commissions":  {
-                                                 "title":  "Commission Rules \u0026 Earned Ledger",
-                                                 "addRule":  "Set Commission Rule",
-                                                 "ruleBasis":  "Commission Basis",
-                                                 "ratePct":  "Rate %",
-                                                 "saleValue":  "Percentage of Sale Value",
-                                                 "collectedAmt":  "Percentage of Actual Collection",
-                                                 "earnedAmount":  "Earned Amount",
-                                                 "status":  "Status"
-                                             },
-                             "payroll":  {
-                                             "title":  "Monthly Payroll Processing",
-                                             "generatePayroll":  "Generate Monthly Payroll",
-                                             "period":  "Month / Year",
-                                             "grossSalary":  "Gross Salary (Base + Commissions)",
-                                             "status":  "Status"
-                                         },
-                             "form":  {
-                                          "save":  "Save Record",
-                                          "cancel":  "Cancel",
-                                          "loading":  "Loading...",
-                                          "empty":  "No records found",
-                                          "success":  "Action completed successfully"
-                                      }
-                         },
-                  "auth":  {
-                               "eyebrow":  "Security \u0026 RBAC Controls",
-                               "title":  "Users, Roles \u0026 Permissions",
-                               "description":  "Manage user accounts, assign roles, configure action-resource permissions, and set financial value limits",
-                               "users":  {
-                                             "title":  "User Accounts",
-                                             "addUser":  "New User",
-                                             "username":  "Username",
-                                             "role":  "Assigned Role",
-                                             "status":  "Status"
-                                         },
-                               "roles":  {
-                                             "title":  "System Roles \u0026 Value Limits",
-                                             "addRole":  "Create Role",
-                                             "addPermission":  "Grant Permission",
-                                             "code":  "Role Code",
-                                             "name":  "Role Name",
-                                             "resource":  "Resource Target",
-                                             "action":  "Action",
-                                             "maxValue":  "Max Value Limit (EGP)"
-                                         },
-                               "form":  {
-                                            "save":  "Save Record",
-                                            "cancel":  "Cancel",
-                                            "loading":  "Loading...",
-                                            "empty":  "No user or permission records found",
-                                            "success":  "Action completed successfully"
-                                        }
-                           },
-                  "organization":  {
-                                       "eyebrow":  "Corporate Structure \u0026 Hierarchy",
-                                       "title":  "Organization Core",
-                                       "description":  "Manage multi-company node tree, parent-child rules, facilities, and organizational units",
-                                       "tree":  {
-                                                    "title":  "Organizational Hierarchy Tree",
-                                                    "addNode":  "Add Organizational Unit",
-                                                    "nodeType":  "Unit Type",
-                                                    "name":  "Unit Name",
-                                                    "parent":  "Parent Unit",
-                                                    "status":  "Status",
-                                                    "actions":  "Actions",
-                                                    "archive":  "Archive Unit"
-                                                },
-                                       "form":  {
-                                                    "save":  "Save Unit",
-                                                    "cancel":  "Cancel",
-                                                    "loading":  "Loading Tree...",
-                                                    "empty":  "No organizational units created yet",
-                                                    "success":  "Action completed successfully"
-                                                }
-                                   },
-                  "manufacturing":  {
-                                        "eyebrow":  "Manufacturing Execution Control",
-                                        "title":  "Manufacturing Control Hub",
-                                        "description":  "Executive oversight of active manufacturing orders, line capacities, material dispatch, and production progress",
-                                        "stats":  {
-                                                      "activeOrders":  "Active Job Orders",
-                                                      "workCenters":  "Operating Work Centers",
-                                                      "materialRequests":  "Active Material Requests",
-                                                      "plannedQty":  "Planned Production Qty"
-                                                  },
-                                        "table":  {
-                                                      "title":  "Live Manufacturing Orders Progress",
-                                                      "orderNo":  "Job Order No.",
-                                                      "customer":  "Client",
-                                                      "plan":  "Planning Status",
-                                                      "progress":  "Execution Progress",
-                                                      "status":  "Status"
-                                                  },
-                                        "form":  {
-                                                     "empty":  "No active manufacturing orders found",
-                                                     "loading":  "Loading manufacturing data..."
-                                                 }
-                                    },
-                  "expenses":  {
-                                   "eyebrow":  "Cost Accounting \u0026 Matrix Analysis",
-                                   "title":  "Production Expenses Analysis",
-                                   "description":  "Record daily production expenses, auto-generate accounting journal entries, allocate costs to Job Orders, and export Excel matrix sheets",
-                                   "table":  {
-                                                 "title":  "Monthly Production Expenses Matrix (Excel Model)",
-                                                 "export":  "Export Excel Sheet",
-                                                 "date":  "Date",
-                                                 "description":  "Description / Details",
-                                                 "totalAmount":  "Total Amount (EGP)",
-                                                 "jobOrder":  "Linked Job Order",
-                                                 "transport":  "Freight \u0026 Transport",
-                                                 "samples":  "Samples",
-                                                 "electricity":  "Electricity",
-                                                 "packaging":  "Packaging",
-                                                 "paint":  "Paint \u0026 Coating",
-                                                 "wages":  "Wages \u0026 Supervision",
-                                                 "gratuity":  "Gratuity \u0026 Other",
-                                                 "totals":  "Monthly Category Totals"
-                                             },
-                                   "form":  {
-                                                "title":  "Record Expense \u0026 Create Journal Entry",
-                                                "amount":  "Amount (EGP)",
-                                                "category":  "Expense Category",
-                                                "save":  "Save \u0026 Post to JO Cost",
-                                                "cancel":  "Cancel",
-                                                "loading":  "Processing...",
-                                                "empty":  "No production expenses recorded for this period",
-                                                "success":  "Expense logged, journal posted, and allocated to Job Order successfully"
-                                            }
-                               },
-                  "bom":  {
-                              "eyebrow":  "Engineering \u0026 Manufacturing",
-                              "title":  "Bill of Materials (BOM)",
-                              "description":  "Create and approve bills of materials per product item, with multi-version support and a default version",
-                              "listTitle":  "Bill of Materials List",
-                              "createBom":  "Create New BOM"
-                          },
-                  "work_order":  {
-                                     "eyebrow":  "Manufacturing Execution",
-                                     "title":  "Work Orders",
-                                     "description":  "Create work orders built on approved BOMs and track their status through to closing",
-                                     "listTitle":  "Work Order List",
-                                     "createWorkOrder":  "Create New Work Order",
-                                     "workOrderNumber":  "Work Order No.",
-                                     "productItem":  "Product Item",
-                                     "bom":  "BOM",
-                                     "activity":  "Activity (Company/Branch)",
-                                     "qty":  "Qty to Manufacture",
-                                     "finishedGoodsWarehouse":  "Finished Goods Warehouse",
-                                     "sourceWarehouse":  "Source Warehouse (optional)",
-                                     "wipWarehouse":  "WIP Warehouse (optional)",
-                                     "jobOrderReference":  "Job Order Reference (optional)",
-                                     "plannedStartDate":  "Planned Start Date (optional)",
-                                     "status":  "Status",
-                                     "start":  "Start",
-                                     "complete":  "Complete",
-                                     "stop":  "Stop",
-                                     "close":  "Close",
-                                     "noWorkOrder":  "No work orders yet",
-                                     "noBomWarning":  "You need an approved BOM for this item to create a work order"
-                                 },
-                  "setup":  {
-                                "eyebrow":  "Manufacturing Setup",
-                                "title":  "Workstations \u0026 Operations",
-                                "description":  "Workstation type classifications and standard operation templates used across BOMs and job cards",
-                                "workstationTypes":  "Workstation Types",
-                                "addWorkstationType":  "Add Workstation Type",
-                                "code":  "Code",
-                                "name":  "Name",
-                                "operations":  "Operations",
-                                "addOperation":  "Add Operation",
-                                "defaultWorkCenter":  "Default Work Center (optional)",
-                                "standardTime":  "Standard Time (minutes, optional)",
-                                "noWorkstationTypes":  "No workstation types yet",
-                                "noOperations":  "No operations yet"
-                            },
-                  "sales_forecast":  {
-                                         "eyebrow":  "Material Planning",
-                                         "title":  "Sales Forecast",
-                                         "description":  "Forecast demand by item category and period, as a basis for the production plan",
-                                         "listTitle":  "Sales Forecast List",
-                                         "createForecast":  "Create New Forecast",
-                                         "forecastNumber":  "Forecast No.",
-                                         "itemCategory":  "Item Category",
-                                         "activity":  "Activity (Company/Branch)",
-                                         "fromDate":  "From Date",
-                                         "toDate":  "To Date",
-                                         "periodicity":  "Periodicity",
-                                         "monthly":  "Monthly",
-                                         "quarterly":  "Quarterly",
-                                         "halfYearly":  "Half-Yearly",
-                                         "yearly":  "Yearly",
-                                         "addLine":  "Add Item",
-                                         "item":  "Item",
-                                         "forecastQty":  "Forecast Quantity",
-                                         "status":  "Status",
-                                         "submit":  "Submit",
-                                         "noForecasts":  "No forecasts yet"
-                                     },
-                  "production_plan":  {"eyebrow":"Material Planning","title":"Production Plan","description":"Create and submit a production plan, then generate work orders automatically","listTitle":"Production Plan List","createPlan":"Create New Production Plan","planNumber":"Plan No.","planBy":"Plan Based On","jobOrder":"Job Order","materialRequest":"Material Request","salesForecast":"Sales Forecast","activity":"Activity (Company/Branch)","fromDate":"From Date","toDate":"To Date","addLine":"Add Item","productItem":"Product Item","bom":"Bill of Materials (BOM)","plannedQty":"Planned Quantity","finishedGoodsWarehouse":"Finished Goods Warehouse","status":"Status","submit":"Submit","createWorkOrders":"Create Work Orders","noPlans":"No production plans yet","noBomWarning":"No approved BOM exists for this item","noWarehouseWarning":"Select a finished goods warehouse before saving"},
-                  "material_request":  {
-                                           "eyebrow":  "Material Planning",
-                                           "title":  "Material Request",
-                                           "description":  "Request material issue, transfer, or purchase, as an input to the production plan",
-                                           "listTitle":  "Material Request List",
-                                           "createRequest":  "Create New Request",
-                                           "requestNumber":  "Request No.",
-                                           "activity":  "Activity (Company/Branch)",
-                                           "purpose":  "Purpose",
-                                           "purchase":  "Purchase",
-                                           "materialTransfer":  "Material Transfer",
-                                           "materialIssue":  "Material Issue",
-                                           "manufacture":  "Manufacture",
-                                           "jobOrderReference":  "Job Order Reference (optional)",
-                                           "requiredByDate":  "Required By Date (optional)",
-                                           "addLine":  "Add Item",
-                                           "item":  "Item",
-                                           "quantity":  "Quantity",
-                                           "status":  "Status",
-                                           "submit":  "Submit",
-                                           "noRequests":  "No requests yet"
-                                       }
-              },
-    "footer":  {
-                   "demo":  "Motion ERP آ· Demo workspace",
-                   "version":  "v0.1 foundation",
-                   "updated":  "Last synced just now"
-               }
+  "app": {
+    "name": "Motion ERP",
+    "language": "Language",
+    "languageName": {
+      "en": "English",
+      "ar": "ط§ظ„ط¹ط±ط¨ظٹط©"
+    }
+  },
+  "navigation": {
+    "workspace": "Workspace",
+    "label": "Main navigation",
+    "dashboard": "Dashboard",
+    "organization": "Organization",
+    "manufacturing": "Manufacturing",
+    "planning": "Production Plan",
+    "bom": "Bill of Materials",
+    "work_order": "Work Order",
+    "production_ops": "Job Card",
+    "workstation": "Workstation",
+    "operation": "Operation",
+    "sub_contracting": "Sub Contracting",
+    "sales": "Selling",
+    "customer": "Customer",
+    "sales_order": "Sales Order",
+    "delivery": "Delivery Note",
+    "sales_invoice": "Sales Invoice",
+    "sales_partner": "Sales Partner",
+    "sales_person": "Sales Person",
+    "purchasing": "Buying",
+    "supplier": "Supplier",
+    "material": "Material Request",
+    "request_for_quotation": "Request for Quotation",
+    "supplier_quotation": "Supplier Quotation",
+    "purchase_order": "Purchase Order",
+    "purchase_receipt": "Purchase Receipt",
+    "purchase_invoice": "Purchase Invoice",
+    "inventory": "Stock",
+    "stock_entry": "Stock Entry",
+    "stock_reconciliation": "Stock Reconciliation",
+    "serial_no": "Serial No",
+    "batch": "Batch",
+    "price_list": "Price List",
+    "accounting": "Accounting",
+    "payment_entry": "Payment Entry",
+    "balance_sheet": "Balance Sheet",
+    "profit_and_loss": "Profit and Loss",
+    "hr": "HR",
+    "attendance": "Attendance",
+    "leave_application": "Leave Application",
+    "auth": "Users & Permissions",
+    "reports": "Reports",
+    "settings": "Settings",
+    "helpTitle": "Need a hand?",
+    "helpText": "Explore the Motion ERP workspace and keep every team aligned.",
+    "helpAction": "View guide",
+    "systemOperational": "All systems operational",
+    "sales_forecast": "Sales Forecast",
+    "material_request_mp": "Material Request",
+    "item_lead_time": "Item Lead Time"
+  },
+  "common": {
+    "viewAll": "View all",
+    "more": "More options",
+    "close": "Close navigation",
+    "openMenu": "Open navigation",
+    "filter": "Filter",
+    "ready": "Ready",
+    "inReview": "In review",
+    "overview": "Overview",
+    "comingSoon": "This screen is coming soon."
+  },
+  "header": {
+    "company": "Motion Medical",
+    "companyMeta": "Main organization",
+    "notifications": "Notifications",
+    "user": "Adam Smith",
+    "role": "Operations lead"
+  },
+  "dashboard": {
+    "eyebrow": "Operations overview",
+    "title": "Good morning, Adam",
+    "description": "Here is what is happening across your manufacturing operations today.",
+    "demoData": "Demo data",
+    "kpis": {
+      "output": {
+        "label": "Production output"
+      },
+      "onTime": {
+        "label": "On-time delivery"
+      },
+      "oee": {
+        "label": "Overall equipment effectiveness"
+      },
+      "quality": {
+        "label": "First-pass quality"
+      },
+      "vsLastMonth": "vs. last month",
+      "target": "vs. target"
+    },
+    "orders": {
+      "eyebrow": "Production control",
+      "title": "Manufacturing orders",
+      "order": "Order",
+      "product": "Product",
+      "progress": "Progress",
+      "status": "Status",
+      "rows": {
+        "mo1048": {
+          "id": "MO-1048",
+          "product": "Infusion Pump IP-400",
+          "line": "Assembly line A",
+          "status": "On track"
+        },
+        "mo1047": {
+          "id": "MO-1047",
+          "product": "Patient Monitor PM-20",
+          "line": "Assembly line B",
+          "status": "In progress"
+        },
+        "mo1046": {
+          "id": "MO-1046",
+          "product": "Surgical Table ST-8",
+          "line": "Finishing cell",
+          "status": "On track"
+        },
+        "mo1045": {
+          "id": "MO-1045",
+          "product": "Ventilator VX-2",
+          "line": "Assembly line A",
+          "status": "Planned"
+        }
+      }
+    },
+    "inventory": {
+      "eyebrow": "Materials",
+      "title": "Inventory status",
+      "critical": {
+        "name": "Critical stock",
+        "meta": "Immediate attention",
+        "count": "04"
+      },
+      "low": {
+        "name": "Low stock",
+        "meta": "Reorder recommended",
+        "count": "12"
+      },
+      "healthy": {
+        "name": "Healthy stock",
+        "meta": "Within target levels",
+        "count": "86%"
+      },
+      "manage": "Manage inventory"
+    },
+    "pipeline": {
+      "eyebrow": "Production flow",
+      "title": "Production pipeline",
+      "planned": "Planned",
+      "inProgress": "In progress",
+      "quality": "Quality check",
+      "completed": "Completed"
+    },
+    "workCenters": {
+      "eyebrow": "Capacity",
+      "title": "Work centers",
+      "assembly": "Assembly",
+      "machining": "CNC machining",
+      "sterilization": "Sterilization"
+    },
+    "approvals": {
+      "eyebrow": "Action needed",
+      "title": "Pending approvals",
+      "purchase": {
+        "initials": "OM",
+        "title": "Purchase request PR-2084",
+        "meta": "Omar Mostafa آ· 18 min ago"
+      },
+      "change": {
+        "initials": "LS",
+        "title": "Engineering change EC-019",
+        "meta": "Lina Samir آ· 42 min ago"
+      },
+      "quality": {
+        "initials": "YH",
+        "title": "Quality release QR-442",
+        "meta": "Youssef Hassan آ· 1 hr ago"
+      }
+    },
+    "activity": {
+      "eyebrow": "Latest updates",
+      "title": "Recent activity",
+      "completed": {
+        "title": "Order MO-1046 completed",
+        "meta": "Production آ· 12 minutes ago"
+      },
+      "updated": {
+        "title": "BOM revision updated",
+        "meta": "Engineering آ· 35 minutes ago"
+      },
+      "alert": {
+        "title": "Shortage alert acknowledged",
+        "meta": "Inventory آ· 1 hour ago"
+      }
+    }
+  },
+  "pages": {
+    "inventory": {
+      "eyebrow": "Materials & stock",
+      "title": "Inventory",
+      "description": "See material availability, stock movements, and replenishment priorities.",
+      "action": "Add item",
+      "stats": {
+        "primary": {
+          "label": "Total items",
+          "value": "4,820",
+          "trend": "+3.1%"
+        },
+        "secondary": {
+          "label": "Low stock items",
+          "value": "12",
+          "trend": "Needs review"
+        },
+        "tertiary": {
+          "label": "Inventory value",
+          "value": "$2.4M",
+          "trend": "+4.8%"
+        }
+      },
+      "table": {
+        "eyebrow": "Stock overview",
+        "title": "Inventory items",
+        "columnOne": "Item",
+        "columnTwo": "Category",
+        "columnThree": "On hand",
+        "columnFour": "Status"
+      },
+      "form": {
+        "code": "Code",
+        "name": "Name",
+        "category": "Category",
+        "uom": "Unit of Measure",
+        "itemType": "Type",
+        "save": "Save",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "addItem": "Add item",
+        "addCategory": "Add category",
+        "categoryName": "Category name",
+        "categoryCode": "Category code",
+        "warehouses": "Warehouses",
+        "balances": "Stock balances",
+        "onHand": "On hand",
+        "reserved": "Reserved",
+        "available": "Available",
+        "recordMovement": "Record movement",
+        "movementType": "Movement type",
+        "quantity": "Quantity",
+        "receipt": "Receipt",
+        "issue": "Issue",
+        "item": "Item",
+        "warehouse": "Warehouse",
+        "addWarehouse": "Add warehouse",
+        "warehouseCode": "Warehouse code",
+        "warehouseName": "Warehouse name",
+        "loading": "Loading...",
+        "empty": "No data yet",
+        "success": "Saved successfully",
+        "nameAr": "Arabic name",
+        "nameEn": "English name"
+      },
+      "itemTypes": {
+        "raw_material": "Raw Material",
+        "finished_product": "Finished Product",
+        "semi_finished_product": "Semi-Finished Product",
+        "consumable": "Consumable",
+        "spare_part": "Spare Part",
+        "service": "Service"
+      }
+    },
+    "purchasing": {
+      "eyebrow": "Sourcing & suppliers",
+      "title": "Purchasing",
+      "description": "Coordinate purchase requests, supplier relationships, and incoming materials.",
+      "action": "Create request",
+      "stats": {
+        "primary": {
+          "label": "Open requests",
+          "value": "16",
+          "trend": "+4 today"
+        },
+        "secondary": {
+          "label": "Pending orders",
+          "value": "28",
+          "trend": "7 due this week"
+        },
+        "tertiary": {
+          "label": "Active suppliers",
+          "value": "74",
+          "trend": "+5.3%"
+        }
+      },
+      "table": {
+        "eyebrow": "Procurement queue",
+        "title": "Purchase requests",
+        "columnOne": "Request",
+        "columnTwo": "Supplier",
+        "columnThree": "Amount",
+        "columnFour": "Status"
+      }
+    },
+    "reports": {
+      "eyebrow": "Insights & analytics",
+      "title": "Reports",
+      "description": "Turn operational data into clear decisions for every team and leadership group.",
+      "action": "Create report",
+      "stats": {
+        "primary": {
+          "label": "Saved reports",
+          "value": "24",
+          "trend": "+3 this month"
+        },
+        "secondary": {
+          "label": "Scheduled",
+          "value": "08",
+          "trend": "All delivered"
+        },
+        "tertiary": {
+          "label": "Shared with team",
+          "value": "16",
+          "trend": "+2.4%"
+        }
+      },
+      "table": {
+        "eyebrow": "Report library",
+        "title": "Recent reports",
+        "columnOne": "Report",
+        "columnTwo": "Owner",
+        "columnThree": "Last run",
+        "columnFour": "Status"
+      }
+    },
+    "settings": {
+      "eyebrow": "Workspace configuration",
+      "title": "Settings",
+      "description": "Configure your workspace, preferences, roles, and operational defaults.",
+      "action": "Add setting",
+      "stats": {
+        "primary": {
+          "label": "Configured areas",
+          "value": "18",
+          "trend": "92% complete"
+        },
+        "secondary": {
+          "label": "Roles",
+          "value": "09",
+          "trend": "2 pending"
+        },
+        "tertiary": {
+          "label": "Integrations",
+          "value": "06",
+          "trend": "All healthy"
+        }
+      },
+      "table": {
+        "eyebrow": "Configuration",
+        "title": "Workspace settings",
+        "columnOne": "Setting",
+        "columnTwo": "Area",
+        "columnThree": "Updated",
+        "columnFour": "Status"
+      }
+    },
+    "sales": {
+      "eyebrow": "Commercial Operations",
+      "title": "Sales & Job Orders",
+      "description": "Manage customers, issue quotations, approve orders, and generate Job Orders",
+      "customers": {
+        "title": "Customers",
+        "addCustomer": "Add Customer",
+        "code": "Code",
+        "name": "Name",
+        "nameAr": "Arabic Name",
+        "nameEn": "English Name",
+        "phone": "Phone",
+        "status": "Status"
+      },
+      "quotations": {
+        "title": "Quotations",
+        "addQuotation": "New Quotation",
+        "number": "Quotation No.",
+        "customer": "Customer",
+        "direction": "Direction",
+        "total": "Total",
+        "status": "Status",
+        "approve": "Approve & Create Job Order",
+        "outgoing": "Outgoing (Customer)",
+        "incoming": "Incoming (Supplier)",
+        "poReference": "Customer PO Ref",
+        "lines": "Items",
+        "addItem": "Add Line",
+        "item": "Item",
+        "qty": "Qty",
+        "price": "Unit Price"
+      },
+      "jobOrders": {
+        "title": "Job Orders",
+        "addInternal": "New Internal Order",
+        "number": "Job Order No.",
+        "source": "Source",
+        "quotationRef": "Quotation Ref",
+        "financialReview": "Financial Review",
+        "passed": "Passed",
+        "pending": "Pending",
+        "passReview": "Pass Financial Review",
+        "approve": "Approve Job Order",
+        "status": "Status"
+      },
+      "form": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No records found",
+        "success": "Action completed successfully"
+      }
+    },
+    "planning": {
+      "eyebrow": "Manufacturing Control",
+      "title": "Production Planning",
+      "description": "Set priorities, execution methods (Internal / Subcontracted / Mixed), and manage capacities for Job Orders",
+      "table": {
+        "title": "Job Orders & Production Plans",
+        "jobOrder": "Job Order No.",
+        "customer": "Customer",
+        "priority": "Priority",
+        "executionType": "Execution Method",
+        "internalQty": "Internal Qty",
+        "externalQty": "External Qty",
+        "status": "Status",
+        "action": "Plan Execution"
+      },
+      "execution": {
+        "internal": "100% Internal",
+        "external": "100% External (Subcontractor)",
+        "mixed": "Mixed (Internal + External)"
+      },
+      "form": {
+        "title": "Set Execution Plan",
+        "priority": "Priority Order",
+        "executionType": "Execution Method",
+        "internalQty": "Internal Quantity",
+        "externalQty": "External Quantity",
+        "save": "Save Plan",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No Job Orders ready for planning",
+        "success": "Production plan saved successfully"
+      }
+    },
+    "technical": {
+      "eyebrow": "Engineering & Specifications",
+      "title": "Technical Office",
+      "description": "Attach Shop Drawings, Cutting Lists, and manage versioned Bill of Materials (BOM) per Job Order",
+      "docs": {
+        "title": "Technical Documents",
+        "addDoc": "Attach Document",
+        "docType": "Type",
+        "fileRef": "File Reference / Link",
+        "version": "Version",
+        "shopDrawing": "Shop Drawing",
+        "cuttingList": "Cutting List",
+        "spec": "Specification"
+      },
+      "bom": {
+        "title": "Job Order BOM",
+        "createBom": "Create Job Order BOM",
+        "version": "BOM Version",
+        "status": "Status",
+        "approve": "Approve BOM",
+        "addItem": "Add Component",
+        "item": "Component / Raw Material",
+        "plannedQty": "Planned Quantity",
+        "productItem": "Product Item",
+        "outputQty": "Qty to Produce",
+        "activity": "Activity (Company/Branch)",
+        "isDefault": "Set as Default for this Item",
+        "noBom": "No BOM for this item yet"
+      },
+      "form": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No records found",
+        "success": "Action completed successfully"
+      }
+    },
+    "material": {
+      "eyebrow": "Inventory & Production Control",
+      "title": "Material Requests & Deviation Control",
+      "description": "Request raw materials against BOMs, enforce human review on BOM budget overruns, and issue stock",
+      "table": {
+        "title": "Material Requests Queue",
+        "jobOrder": "Job Order",
+        "item": "Raw Material",
+        "planned": "Planned (BOM)",
+        "requested": "Requested",
+        "issued": "Issued",
+        "status": "Status",
+        "action": "Action"
+      },
+      "form": {
+        "newRequest": "New Material Request",
+        "qtyPlanned": "Planned Qty",
+        "qtyRequested": "Requested Qty",
+        "reason": "Deviation Reason (Required if requested > planned)",
+        "approveDeviation": "Approve Deviation",
+        "issueStock": "Issue Stock",
+        "save": "Submit Request",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No material requests found for this Job Order",
+        "success": "Action completed successfully"
+      }
+    },
+    "production_ops": {
+      "eyebrow": "Shop Floor Control",
+      "title": "Work Stations & Production Operations",
+      "description": "Configure factory work centers, define step sequences per Job Order, and track real-time labor & overhead costs",
+      "workCenters": {
+        "title": "Work Centers & Machinery",
+        "addCenter": "Add Work Center",
+        "code": "Code",
+        "name": "Work Center Name",
+        "ratePerMinute": "Cost / Min (EGP)"
+      },
+      "steps": {
+        "title": "Production Steps & Routing",
+        "addStep": "Add Production Step",
+        "sequence": "Seq",
+        "stepName": "Step Name",
+        "workCenter": "Work Center",
+        "stdMins": "Standard Mins",
+        "actMins": "Actual Mins",
+        "status": "Status",
+        "action": "Control",
+        "start": "Start Step",
+        "complete": "Complete Step",
+        "workOrder": "Work Order (optional)",
+        "forQty": "Target Qty",
+        "completedQty": "Completed Qty",
+        "operator": "Operator (optional)",
+        "timeLogs": "Time Logs",
+        "addTimeLog": "Log Actual Time",
+        "fromTime": "From",
+        "toTime": "To",
+        "completedQtyLog": "Completed Qty (this log)",
+        "noTimeLogs": "No time logs yet",
+        "viewLogs": "View Logs"
+      },
+      "cost": {
+        "summaryTitle": "Live Labor Cost Tracker",
+        "stdTotalMins": "Total Std Mins",
+        "actTotalMins": "Total Act Mins",
+        "stdTotalCost": "Estimated Labor Cost",
+        "actTotalCost": "Actual Labor Cost"
+      },
+      "form": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No records found",
+        "success": "Action completed successfully",
+        "enterActualMins": "Enter Actual Minutes Spent"
+      }
+    },
+    "quality": {
+      "eyebrow": "Quality Assurance & SLA Rules",
+      "title": "Quality Control & Escalation Engine",
+      "description": "Define inspection points, enforce resolution SLAs, and automate overdue escalation to management",
+      "inspectionPoints": {
+        "title": "Inspection Points Configuration",
+        "addPoint": "Add Inspection Point",
+        "code": "Code",
+        "name": "Point Name",
+        "targetMins": "Target Time (Mins)"
+      },
+      "workflows": {
+        "title": "Quality Workflows & Escalation Queue",
+        "startWorkflow": "Trigger Inspection",
+        "point": "Inspection Point",
+        "assignedTo": "Assigned Officer",
+        "escalationLevel": "SLA Level",
+        "status": "Status",
+        "action": "Action",
+        "processOverdue": "Process Overdue SLAs",
+        "pass": "Pass Inspection",
+        "fail": "Reject"
+      },
+      "form": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No active quality workflows found",
+        "success": "Action completed successfully"
+      }
+    },
+    "costing": {
+      "eyebrow": "Cost Engineering & Variance Analysis",
+      "title": "Unit Cost Estimator & Job Variance",
+      "description": "Standard product unit cost calculator (Excel model) and Job Order estimated vs actual variance report",
+      "tabs": {
+        "estimator": "Unit Cost Estimator (Excel Model)",
+        "variance": "Job Order Variance Analysis"
+      },
+      "estimator": {
+        "productTitle": "Product Specification & Batch Size",
+        "rawMaterials": "Raw Materials (Sheet Metal & Profiles)",
+        "accessories": "Hardware & Accessories",
+        "consumables": "Consumables & Paint Coating",
+        "operations": "Work Center Operations & Time",
+        "length": "L (m)",
+        "width": "W (m)",
+        "height": "H (m)",
+        "thickness": "Thick (mm)",
+        "qty": "Qty",
+        "scrap": "Scrap %",
+        "totalQty": "Total Qty",
+        "price": "Unit Price",
+        "totalPrice": "Total (EGP)",
+        "operation": "Operation / Station",
+        "stdMins": "Minutes",
+        "ratePerMin": "Rate/Min (EGP)",
+        "directCost": "Direct Unit Cost",
+        "overheadCost": "Overhead & Depreciation (20%)",
+        "totalUnitCost": "Total Estimated Unit Cost"
+      },
+      "variance": {
+        "joTitle": "Job Order Cost Comparison",
+        "category": "Cost Category",
+        "estimatedBudget": "Estimated Budget (JO)",
+        "actualSpent": "Actual Spent (Shop Floor)",
+        "varianceAmount": "Variance (EGP)",
+        "variancePct": "Variance %",
+        "status": "Status"
+      },
+      "form": {
+        "save": "Save Estimate Template",
+        "loading": "Calculating...",
+        "success": "Calculation completed successfully"
+      }
+    },
+    "delivery": {
+      "eyebrow": "Logistics & Client Handover",
+      "title": "Delivery & Installation Control",
+      "description": "Manage shipping delivery orders, site installation reports, and customer acceptance certificates",
+      "orders": {
+        "title": "Delivery Orders & Logistics",
+        "createOrder": "New Delivery Order",
+        "orderNo": "Delivery Order No.",
+        "address": "Delivery Site Address",
+        "driver": "Driver & Vehicle",
+        "status": "Status",
+        "action": "Action"
+      },
+      "handover": {
+        "title": "Site Installation & Handover Protocols",
+        "addReceipt": "Record Delivery Receipt",
+        "addReport": "Record Installation Protocol",
+        "receiptNo": "Receipt No.",
+        "reportNo": "Protocol No.",
+        "accepted": "Client Acceptance Status",
+        "notes": "Client Remarks / Notes"
+      },
+      "form": {
+        "save": "Save Document",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No delivery or installation records for this Job Order",
+        "success": "Action completed successfully"
+      }
+    },
+    "accounting": {
+      "eyebrow": "Financial Ledgers & Treasury",
+      "title": "Accounting, Treasury & Retention",
+      "description": "Manage Chart of Accounts, balanced double-entry journals, customer collections, and retention release cycles",
+      "coa": {
+        "title": "Chart of Accounts",
+        "code": "Account Code",
+        "name": "Account Name",
+        "type": "Type",
+        "balance": "Current Balance",
+        "isLeaf": "Posting Level"
+      },
+      "journal": {
+        "title": "Double-Entry Journal Entries",
+        "addEntry": "New Journal Entry",
+        "entryNo": "Entry No.",
+        "debit": "Total Debit",
+        "credit": "Total Credit",
+        "status": "Status",
+        "post": "Post Entry"
+      },
+      "treasury": {
+        "title": "Customer Collections & Retention Release",
+        "addCollection": "Record Collection",
+        "addRetention": "Record Retention Hold",
+        "collNo": "Collection No.",
+        "retNo": "Retention No.",
+        "amount": "Amount",
+        "releasedAmount": "Released Amount",
+        "release": "Release Funds"
+      },
+      "form": {
+        "save": "Save Record",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No accounting or treasury records found",
+        "success": "Action completed successfully"
+      }
+    },
+    "hr": {
+      "eyebrow": "Human Capital & Incentives",
+      "title": "HR, Payroll & Sales Commissions",
+      "description": "Manage employees, configure sales commission rules (sales vs collections), and generate monthly payrolls",
+      "employees": {
+        "title": "Employees Directory",
+        "addEmployee": "Add Employee",
+        "code": "Code",
+        "name": "Name",
+        "role": "Role",
+        "baseSalary": "Base Salary (EGP)"
+      },
+      "commissions": {
+        "title": "Commission Rules & Earned Ledger",
+        "addRule": "Set Commission Rule",
+        "ruleBasis": "Commission Basis",
+        "ratePct": "Rate %",
+        "saleValue": "Percentage of Sale Value",
+        "collectedAmt": "Percentage of Actual Collection",
+        "earnedAmount": "Earned Amount",
+        "status": "Status"
+      },
+      "payroll": {
+        "title": "Monthly Payroll Processing",
+        "generatePayroll": "Generate Monthly Payroll",
+        "period": "Month / Year",
+        "grossSalary": "Gross Salary (Base + Commissions)",
+        "status": "Status"
+      },
+      "form": {
+        "save": "Save Record",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No records found",
+        "success": "Action completed successfully"
+      }
+    },
+    "auth": {
+      "eyebrow": "Security & RBAC Controls",
+      "title": "Users, Roles & Permissions",
+      "description": "Manage user accounts, assign roles, configure action-resource permissions, and set financial value limits",
+      "users": {
+        "title": "User Accounts",
+        "addUser": "New User",
+        "username": "Username",
+        "role": "Assigned Role",
+        "status": "Status"
+      },
+      "roles": {
+        "title": "System Roles & Value Limits",
+        "addRole": "Create Role",
+        "addPermission": "Grant Permission",
+        "code": "Role Code",
+        "name": "Role Name",
+        "resource": "Resource Target",
+        "action": "Action",
+        "maxValue": "Max Value Limit (EGP)"
+      },
+      "form": {
+        "save": "Save Record",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "empty": "No user or permission records found",
+        "success": "Action completed successfully"
+      }
+    },
+    "organization": {
+      "eyebrow": "Corporate Structure & Hierarchy",
+      "title": "Organization Core",
+      "description": "Manage multi-company node tree, parent-child rules, facilities, and organizational units",
+      "tree": {
+        "title": "Organizational Hierarchy Tree",
+        "addNode": "Add Organizational Unit",
+        "nodeType": "Unit Type",
+        "name": "Unit Name",
+        "parent": "Parent Unit",
+        "status": "Status",
+        "actions": "Actions",
+        "archive": "Archive Unit"
+      },
+      "form": {
+        "save": "Save Unit",
+        "cancel": "Cancel",
+        "loading": "Loading Tree...",
+        "empty": "No organizational units created yet",
+        "success": "Action completed successfully"
+      }
+    },
+    "manufacturing": {
+      "eyebrow": "Manufacturing Execution Control",
+      "title": "Manufacturing Control Hub",
+      "description": "Executive oversight of active manufacturing orders, line capacities, material dispatch, and production progress",
+      "stats": {
+        "activeOrders": "Active Job Orders",
+        "workCenters": "Operating Work Centers",
+        "materialRequests": "Active Material Requests",
+        "plannedQty": "Planned Production Qty"
+      },
+      "table": {
+        "title": "Live Manufacturing Orders Progress",
+        "orderNo": "Job Order No.",
+        "customer": "Client",
+        "plan": "Planning Status",
+        "progress": "Execution Progress",
+        "status": "Status"
+      },
+      "form": {
+        "empty": "No active manufacturing orders found",
+        "loading": "Loading manufacturing data..."
+      }
+    },
+    "expenses": {
+      "eyebrow": "Cost Accounting & Matrix Analysis",
+      "title": "Production Expenses Analysis",
+      "description": "Record daily production expenses, auto-generate accounting journal entries, allocate costs to Job Orders, and export Excel matrix sheets",
+      "table": {
+        "title": "Monthly Production Expenses Matrix (Excel Model)",
+        "export": "Export Excel Sheet",
+        "date": "Date",
+        "description": "Description / Details",
+        "totalAmount": "Total Amount (EGP)",
+        "jobOrder": "Linked Job Order",
+        "transport": "Freight & Transport",
+        "samples": "Samples",
+        "electricity": "Electricity",
+        "packaging": "Packaging",
+        "paint": "Paint & Coating",
+        "wages": "Wages & Supervision",
+        "gratuity": "Gratuity & Other",
+        "totals": "Monthly Category Totals"
+      },
+      "form": {
+        "title": "Record Expense & Create Journal Entry",
+        "amount": "Amount (EGP)",
+        "category": "Expense Category",
+        "save": "Save & Post to JO Cost",
+        "cancel": "Cancel",
+        "loading": "Processing...",
+        "empty": "No production expenses recorded for this period",
+        "success": "Expense logged, journal posted, and allocated to Job Order successfully"
+      }
+    },
+    "bom": {
+      "eyebrow": "Engineering & Manufacturing",
+      "title": "Bill of Materials (BOM)",
+      "description": "Create and approve bills of materials per product item, with multi-version support and a default version",
+      "listTitle": "Bill of Materials List",
+      "createBom": "Create New BOM"
+    },
+    "work_order": {
+      "eyebrow": "Manufacturing Execution",
+      "title": "Work Orders",
+      "description": "Create work orders built on approved BOMs and track their status through to closing",
+      "listTitle": "Work Order List",
+      "createWorkOrder": "Create New Work Order",
+      "workOrderNumber": "Work Order No.",
+      "productItem": "Product Item",
+      "bom": "BOM",
+      "activity": "Activity (Company/Branch)",
+      "qty": "Qty to Manufacture",
+      "finishedGoodsWarehouse": "Finished Goods Warehouse",
+      "sourceWarehouse": "Source Warehouse (optional)",
+      "wipWarehouse": "WIP Warehouse (optional)",
+      "jobOrderReference": "Job Order Reference (optional)",
+      "plannedStartDate": "Planned Start Date (optional)",
+      "status": "Status",
+      "start": "Start",
+      "complete": "Complete",
+      "stop": "Stop",
+      "close": "Close",
+      "noWorkOrder": "No work orders yet",
+      "noBomWarning": "You need an approved BOM for this item to create a work order"
+    },
+    "setup": {
+      "eyebrow": "Manufacturing Setup",
+      "title": "Workstations & Operations",
+      "description": "Workstation type classifications and standard operation templates used across BOMs and job cards",
+      "workstationTypes": "Workstation Types",
+      "addWorkstationType": "Add Workstation Type",
+      "code": "Code",
+      "name": "Name",
+      "operations": "Operations",
+      "addOperation": "Add Operation",
+      "defaultWorkCenter": "Default Work Center (optional)",
+      "standardTime": "Standard Time (minutes, optional)",
+      "noWorkstationTypes": "No workstation types yet",
+      "noOperations": "No operations yet"
+    },
+    "sales_forecast": {
+      "eyebrow": "Material Planning",
+      "title": "Sales Forecast",
+      "description": "Forecast demand by item category and period, as a basis for the production plan",
+      "listTitle": "Sales Forecast List",
+      "createForecast": "Create New Forecast",
+      "forecastNumber": "Forecast No.",
+      "itemCategory": "Item Category",
+      "activity": "Activity (Company/Branch)",
+      "fromDate": "From Date",
+      "toDate": "To Date",
+      "periodicity": "Periodicity",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "halfYearly": "Half-Yearly",
+      "yearly": "Yearly",
+      "addLine": "Add Item",
+      "item": "Item",
+      "forecastQty": "Forecast Quantity",
+      "status": "Status",
+      "submit": "Submit",
+      "noForecasts": "No forecasts yet"
+    },
+    "production_plan": {
+      "eyebrow": "Material Planning",
+      "title": "Production Plan",
+      "description": "Create and submit a production plan, then generate work orders automatically",
+      "listTitle": "Production Plan List",
+      "createPlan": "Create New Production Plan",
+      "planNumber": "Plan No.",
+      "planBy": "Plan Based On",
+      "jobOrder": "Job Order",
+      "materialRequest": "Material Request",
+      "salesForecast": "Sales Forecast",
+      "activity": "Activity (Company/Branch)",
+      "fromDate": "From Date",
+      "toDate": "To Date",
+      "addLine": "Add Item",
+      "productItem": "Product Item",
+      "bom": "Bill of Materials (BOM)",
+      "plannedQty": "Planned Quantity",
+      "finishedGoodsWarehouse": "Finished Goods Warehouse",
+      "status": "Status",
+      "submit": "Submit",
+      "createWorkOrders": "Create Work Orders",
+      "noPlans": "No production plans yet",
+      "noBomWarning": "No approved BOM exists for this item",
+      "noWarehouseWarning": "Select a finished goods warehouse before saving"
+    },
+    "material_request": {
+      "eyebrow": "Material Planning",
+      "title": "Material Request",
+      "description": "Request material issue, transfer, or purchase, as an input to the production plan",
+      "listTitle": "Material Request List",
+      "createRequest": "Create New Request",
+      "requestNumber": "Request No.",
+      "activity": "Activity (Company/Branch)",
+      "purpose": "Purpose",
+      "purchase": "Purchase",
+      "materialTransfer": "Material Transfer",
+      "materialIssue": "Material Issue",
+      "manufacture": "Manufacture",
+      "jobOrderReference": "Job Order Reference (optional)",
+      "requiredByDate": "Required By Date (optional)",
+      "addLine": "Add Item",
+      "item": "Item",
+      "quantity": "Quantity",
+      "status": "Status",
+      "submit": "Submit",
+      "noRequests": "No requests yet"
+    },
+    "item_lead_time": {
+      "eyebrow": "Material Planning",
+      "title": "Item Lead Time",
+      "description": "Define manufacturing and purchase lead time, buffer days, and per-supplier lead time for each item",
+      "listTitle": "Item Lead Time List",
+      "createRecord": "Add Item Lead Time",
+      "item": "Item",
+      "activity": "Activity (Company/Branch)",
+      "manufacturingTime": "Manufacturing Time (Hours)",
+      "isManufacturingLeadTime": "Set as Manufacturing Lead Time",
+      "manufacturingBuffer": "Manufacturing Buffer (Days)",
+      "purchaseTime": "Purchase Time (Days)",
+      "isPurchaseLeadTime": "Set as Purchase Lead Time",
+      "purchaseBuffer": "Purchase Buffer (Days)",
+      "suppliers": "Supplier Lead Times",
+      "addSupplier": "Add Supplier",
+      "supplierName": "Supplier Name",
+      "supplierLeadDays": "Lead Time (Days)",
+      "noRecords": "No item lead time records yet"
+    }
+  },
+  "footer": {
+    "demo": "Motion ERP آ· Demo workspace",
+    "version": "v0.1 foundation",
+    "updated": "Last synced just now"
+  }
 }
