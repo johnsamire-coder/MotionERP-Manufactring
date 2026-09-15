@@ -16,12 +16,13 @@ import { SalesForecastPage } from './app/pages/SalesForecastPage';
 import { MaterialRequestPage } from './app/pages/MaterialRequestPage';
 import { ItemLeadTimePage } from './app/pages/ItemLeadTimePage';
 import { DowntimeEntryPage } from './app/pages/DowntimeEntryPage';
+import { MpsPage } from './app/pages/MpsPage';
 import { WorkOrderPage } from './app/pages/WorkOrderPage';
 import { SetupPage } from './app/pages/SetupPage';
 import { ProductionPlanPage } from './app/pages/ProductionPlanPage';
 type PageKey =
   | 'dashboard' | 'organization'
-  | 'manufacturing' | 'planning' | 'sales_forecast' | 'material_request_mp' | 'item_lead_time' | 'downtime_entry' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
+  | 'manufacturing' | 'planning' | 'sales_forecast' | 'material_request_mp' | 'item_lead_time' | 'downtime_entry' | 'mps' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
   | 'sales' | 'customer' | 'sales_order' | 'delivery' | 'sales_invoice' | 'sales_partner' | 'sales_person'
   | 'purchasing' | 'supplier' | 'material' | 'request_for_quotation' | 'supplier_quotation' | 'purchase_order' | 'purchase_receipt' | 'purchase_invoice'
   | 'inventory' | 'stock_entry' | 'stock_reconciliation' | 'serial_no' | 'batch' | 'price_list'
@@ -47,6 +48,7 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
       { key: 'material_request_mp', icon: 'clock' },
       { key: 'item_lead_time', icon: 'clock' },
       { key: 'downtime_entry', icon: 'clock' },
+      { key: 'mps', icon: 'clock' },
       { key: 'bom', icon: 'layers' },
       { key: 'work_order', icon: 'factory' },
       { key: 'production_ops', icon: 'check' },
@@ -124,6 +126,7 @@ const DEDICATED_PAGES: Partial<Record<PageKey, () => JSX.Element>> = {
   material_request_mp: MaterialRequestPage,
   item_lead_time: ItemLeadTimePage,
   downtime_entry: DowntimeEntryPage,
+  mps: MpsPage,
   work_order: WorkOrderPage,
   workstation: SetupPage,
   operation: SetupPage,

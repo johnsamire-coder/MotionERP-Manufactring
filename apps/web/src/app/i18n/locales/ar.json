@@ -58,7 +58,8 @@
     "sales_forecast": "توقعات المبيعات",
     "material_request_mp": "طلبات الخامات",
     "item_lead_time": "مهلة تجهيز الصنف",
-    "downtime_entry": "توقفات المحطات"
+    "downtime_entry": "توقفات المحطات",
+    "mps": "الجدول الرئيسي للإنتاج"
   },
   "common": {
     "viewAll": "عرض الكل",
@@ -1013,6 +1014,36 @@
       "close": "إغلاق التوقف",
       "open": "مفتوح",
       "noEntries": "لا توجد توقفات مسجلة بعد"
+    },
+    "mps": {
+      "eyebrow": "التخطيط المادي",
+      "title": "الجدول الرئيسي للإنتاج (Master Production Schedule)",
+      "description": "خطة إنتاج رئيسية على مستوى صنف واحد موزعة على فترات زمنية، كمصدر بديل لخطة الإنتاج",
+      "listTitle": "قائمة الجداول",
+      "createMps": "إنشاء جدول جديد",
+      "mpsNumber": "رقم الجدول",
+      "item": "الصنف",
+      "activity": "النشاط (الشركة/الفرع)",
+      "warehouse": "المخزن (اختياري)",
+      "fromDate": "من تاريخ",
+      "toDate": "إلى تاريخ",
+      "totalForecastQty": "إجمالي الكمية المتوقعة",
+      "projectedQty": "الكمية المتوقعة بالمخزون",
+      "plannedQty": "الكمية المخططة",
+      "scheduleLines": "جدول التوزيع على الفترات",
+      "addLine": "إضافة فترة",
+      "period": "الفترة",
+      "week": "أسبوع",
+      "month": "شهر",
+      "quarter": "ربع سنة",
+      "year": "سنة",
+      "startDate": "تاريخ البداية",
+      "endDate": "تاريخ النهاية",
+      "forecastQty": "الكمية المتوقعة",
+      "status": "الحالة",
+      "submit": "اعتماد",
+      "getProjected": "جلب الكمية المتوقعة بالمخزون",
+      "noRecords": "لا توجد جداول بعد"
     }
   },
   "footer": {

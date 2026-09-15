@@ -58,7 +58,8 @@
     "sales_forecast": "Sales Forecast",
     "material_request_mp": "Material Request",
     "item_lead_time": "Item Lead Time",
-    "downtime_entry": "Downtime Entry"
+    "downtime_entry": "Downtime Entry",
+    "mps": "Master Production Schedule"
   },
   "common": {
     "viewAll": "View all",
@@ -1013,6 +1014,36 @@
       "close": "Close Downtime",
       "open": "Open",
       "noEntries": "No downtime entries yet"
+    },
+    "mps": {
+      "eyebrow": "Material Planning",
+      "title": "Master Production Schedule",
+      "description": "A single-item production schedule distributed across time periods, as an alternative source for Production Plan",
+      "listTitle": "MPS List",
+      "createMps": "Create New Schedule",
+      "mpsNumber": "MPS No.",
+      "item": "Item",
+      "activity": "Activity (Company/Branch)",
+      "warehouse": "Warehouse (optional)",
+      "fromDate": "From Date",
+      "toDate": "To Date",
+      "totalForecastQty": "Total Forecast Quantity",
+      "projectedQty": "Projected Quantity",
+      "plannedQty": "Planned Quantity",
+      "scheduleLines": "Schedule",
+      "addLine": "Add Period",
+      "period": "Period",
+      "week": "Week",
+      "month": "Month",
+      "quarter": "Quarter",
+      "year": "Year",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "forecastQty": "Forecast Quantity",
+      "status": "Status",
+      "submit": "Submit",
+      "getProjected": "Get Projected Quantity",
+      "noRecords": "No schedules yet"
     }
   },
   "footer": {
