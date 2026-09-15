@@ -60,7 +60,8 @@
     "item_lead_time": "Item Lead Time",
     "downtime_entry": "Downtime Entry",
     "mps": "Master Production Schedule",
-    "bom_update_tool": "BOM Update Tool"
+    "bom_update_tool": "BOM Update Tool",
+    "bom_creator": "BOM Creator"
   },
   "common": {
     "viewAll": "View all",
@@ -1056,6 +1057,27 @@
       "workOrdersUpdated": "Work Orders Updated",
       "planItemsUpdated": "Production Plan Items Updated",
       "selectBom": "Select BOM"
+    },
+    "bom_creator": {
+      "eyebrow": "Manufacturing Tools",
+      "title": "BOM Creator",
+      "description": "Build a multi-level bill of materials tree, and generate all the resulting BOM documents at once",
+      "listTitle": "BOM Creator List",
+      "createNew": "Create New",
+      "productItem": "Product Item",
+      "activity": "Activity (Company/Branch)",
+      "qtyToProduce": "Quantity To Produce",
+      "treeItems": "Component Tree",
+      "addItem": "Add Item",
+      "component": "Component",
+      "parent": "Belongs Under (blank = top-level item)",
+      "topLevel": "Top-level item (directly under the product)",
+      "quantity": "Quantity",
+      "isSubAssembly": "Sub-assembly (a separate BOM will be generated for it)",
+      "status": "Status",
+      "createBoms": "Create BOMs",
+      "generatedBom": "Generated BOM",
+      "noRecords": "No BOM creators yet"
     }
   },
   "footer": {

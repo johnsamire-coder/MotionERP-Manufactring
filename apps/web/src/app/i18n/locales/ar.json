@@ -60,7 +60,8 @@
     "item_lead_time": "مهلة تجهيز الصنف",
     "downtime_entry": "توقفات المحطات",
     "mps": "الجدول الرئيسي للإنتاج",
-    "bom_update_tool": "أداة استبدال BOM"
+    "bom_update_tool": "أداة استبدال BOM",
+    "bom_creator": "أداة إنشاء BOM"
   },
   "common": {
     "viewAll": "عرض الكل",
@@ -1056,6 +1057,27 @@
       "workOrdersUpdated": "عدد أوامر التشغيل المُحدَّثة",
       "planItemsUpdated": "عدد بنود خطط الإنتاج المُحدَّثة",
       "selectBom": "اختر BOM"
+    },
+    "bom_creator": {
+      "eyebrow": "أدوات التصنيع",
+      "title": "أداة إنشاء قوائم المكونات (BOM Creator)",
+      "description": "بناء شجرة قائمة مكونات متعددة المستويات، وتوليد كل مستندات BOM اللازمة دفعة واحدة",
+      "listTitle": "قائمة أدوات الإنشاء",
+      "createNew": "إنشاء أداة جديدة",
+      "productItem": "الصنف المنتج",
+      "activity": "النشاط (الشركة/الفرع)",
+      "qtyToProduce": "الكمية المطلوب إنتاجها",
+      "treeItems": "شجرة المكونات",
+      "addItem": "إضافة عنصر",
+      "component": "المكوّن",
+      "parent": "يتبع (اختياري = عنصر رئيسي)",
+      "topLevel": "عنصر رئيسي (تحت المنتج مباشرة)",
+      "quantity": "الكمية",
+      "isSubAssembly": "مجموعة فرعية (سيتم إنشاء BOM منفصلة لها)",
+      "status": "الحالة",
+      "createBoms": "إنشاء قوائم المكونات",
+      "generatedBom": "BOM المُولَّدة",
+      "noRecords": "لا توجد أدوات إنشاء بعد"
     }
   },
   "footer": {
