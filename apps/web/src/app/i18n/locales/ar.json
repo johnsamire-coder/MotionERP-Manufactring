@@ -66,7 +66,9 @@
                        "report_work_order_summary":  "ملخص أوامر التشغيل",
                        "report_downtime_analysis":  "تحليل التوقفات",
                        "report_job_card_summary":  "ملخص بطاقات العمل",
-                       "report_production_analytics":  "تحليلات الإنتاج"
+                       "report_production_analytics":  "تحليلات الإنتاج",
+                       "report_bom_operations_time":  "زمن عمليات BOM",
+                       "report_consumed_materials":  "المواد المستهلكة"
                    },
     "common":  {
                    "viewAll":  "ط¹ط±ط¶ ط§ظ„ظƒظ„",
@@ -1095,7 +1097,18 @@
                                   "standardTime":  "الزمن المعياري (دقيقة)",
                                   "actualTime":  "الزمن الفعلي (دقيقة)",
                                   "productionAnalyticsTitle":  "تحليلات الإنتاج (Production Analytics)",
-                                  "month":  "الشهر"
+                                  "month":  "الشهر",
+                                  "bomOperationsTimeTitle":  "زمن عمليات BOM (BOM Operations Time)",
+                                  "filterBom":  "قائمة المكونات (BOM)",
+                                  "componentItem":  "الصنف المكون",
+                                  "note":  "ملاحظة: النظام لا يربط عمليات محددة بكل بند BOM حاليا الجدول يعرض بنود الـBOM وكمياتها كأقرب مكافئ متاح.",
+                                  "consumedMaterialsTitle":  "المواد المستهلكة لأوامر التشغيل (Work Order Consumed Materials)",
+                                  "excessOnly":  "عرض الانحراف الزائد فقط",
+                                  "jobOrder":  "أمر الشغل",
+                                  "item":  "الصنف",
+                                  "plannedQty":  "الكمية المخططة",
+                                  "actualUsedQty":  "الكمية المستخدمة فعليا",
+                                  "deviation":  "الانحراف"
                               }
               },
     "footer":  {

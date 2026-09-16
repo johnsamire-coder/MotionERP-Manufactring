@@ -66,7 +66,9 @@
                        "report_work_order_summary":  "Work Order Summary",
                        "report_downtime_analysis":  "Downtime Analysis",
                        "report_job_card_summary":  "Job Card Summary",
-                       "report_production_analytics":  "Production Analytics"
+                       "report_production_analytics":  "Production Analytics",
+                       "report_bom_operations_time":  "BOM Operations Time",
+                       "report_consumed_materials":  "Consumed Materials"
                    },
     "common":  {
                    "viewAll":  "View all",
@@ -1095,7 +1097,18 @@
                                   "standardTime":  "Standard Time (min)",
                                   "actualTime":  "Actual Time (min)",
                                   "productionAnalyticsTitle":  "Production Analytics",
-                                  "month":  "Month"
+                                  "month":  "Month",
+                                  "bomOperationsTimeTitle":  "BOM Operations Time",
+                                  "filterBom":  "BOM",
+                                  "componentItem":  "Component Item",
+                                  "note":  "Note: the system does not yet link specific operations to individual BOM lines; this table shows BOM lines and quantities as the closest available equivalent.",
+                                  "consumedMaterialsTitle":  "Work Order Consumed Materials",
+                                  "excessOnly":  "Show Excess Materials Consumed Only",
+                                  "jobOrder":  "Job Order",
+                                  "item":  "Item",
+                                  "plannedQty":  "Planned Qty",
+                                  "actualUsedQty":  "Actual Used Qty",
+                                  "deviation":  "Deviation"
                               }
               },
     "footer":  {
