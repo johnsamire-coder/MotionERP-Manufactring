@@ -10,3 +10,4 @@ allowBuilds:
   '@embedded-postgres/darwin-arm64': true
   '@nestjs/core': false
   bcrypt: false
+  core-js: true

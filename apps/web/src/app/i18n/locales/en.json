@@ -61,7 +61,8 @@
                        "downtime_entry":  "Downtime Entry",
                        "mps":  "Master Production Schedule",
                        "bom_update_tool":  "BOM Update Tool",
-                       "bom_creator":  "BOM Creator"
+                       "bom_creator":  "BOM Creator",
+                       "report_bom_search":  "BOM Search"
                    },
     "common":  {
                    "viewAll":  "View all",
@@ -312,37 +313,6 @@
                                                    "columnFour":  "Status"
                                                }
                                  },
-                  "reports":  {
-                                  "eyebrow":  "Insights \u0026 analytics",
-                                  "title":  "Reports",
-                                  "description":  "Turn operational data into clear decisions for every team and leadership group.",
-                                  "action":  "Create report",
-                                  "stats":  {
-                                                "primary":  {
-                                                                "label":  "Saved reports",
-                                                                "value":  "24",
-                                                                "trend":  "+3 this month"
-                                                            },
-                                                "secondary":  {
-                                                                  "label":  "Scheduled",
-                                                                  "value":  "08",
-                                                                  "trend":  "All delivered"
-                                                              },
-                                                "tertiary":  {
-                                                                 "label":  "Shared with team",
-                                                                 "value":  "16",
-                                                                 "trend":  "+2.4%"
-                                                             }
-                                            },
-                                  "table":  {
-                                                "eyebrow":  "Report library",
-                                                "title":  "Recent reports",
-                                                "columnOne":  "Report",
-                                                "columnTwo":  "Owner",
-                                                "columnThree":  "Last run",
-                                                "columnFour":  "Status"
-                                            }
-                              },
                   "settings":  {
                                    "eyebrow":  "Workspace configuration",
                                    "title":  "Settings",
@@ -1091,7 +1061,20 @@
                                       "createBoms":  "Create BOMs",
                                       "generatedBom":  "Generated BOM",
                                       "noRecords":  "No BOM creators yet"
-                                  }
+                                  },
+                  "reports":  {
+                                  "eyebrow":  "Manufacturing Reports",
+                                  "bomSearchTitle":  "BOM Search",
+                                  "filterByItem":  "Item (as component or product)",
+                                  "bomNumber":  "BOM No.",
+                                  "productItem":  "Product Item",
+                                  "role":  "Role",
+                                  "asProduct":  "As Product",
+                                  "asComponent":  "As Component",
+                                  "version":  "Version",
+                                  "status":  "Status",
+                                  "noResults":  "No results"
+                              }
               },
     "footer":  {
                    "demo":  "Motion ERP ط¢آ· Demo workspace",

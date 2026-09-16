@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES, directionOf, type SupportedLanguage } from './app/i18n/config';
 import { InventoryPage } from './app/pages/InventoryPage';
@@ -19,12 +19,13 @@ import { DowntimeEntryPage } from './app/pages/DowntimeEntryPage';
 import { MpsPage } from './app/pages/MpsPage';
 import { BomUpdateToolPage } from './app/pages/BomUpdateToolPage';
 import { BomCreatorPage } from './app/pages/BomCreatorPage';
+import { ReportBomSearchPage } from './app/pages/ReportBomSearchPage';
 import { WorkOrderPage } from './app/pages/WorkOrderPage';
 import { SetupPage } from './app/pages/SetupPage';
 import { ProductionPlanPage } from './app/pages/ProductionPlanPage';
 type PageKey =
   | 'dashboard' | 'organization'
-  | 'manufacturing' | 'planning' | 'sales_forecast' | 'material_request_mp' | 'item_lead_time' | 'downtime_entry' | 'mps' | 'bom_update_tool' | 'bom_creator' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
+  | 'manufacturing' | 'planning' | 'sales_forecast' | 'material_request_mp' | 'item_lead_time' | 'downtime_entry' | 'mps' | 'bom_update_tool' | 'bom_creator' | 'report_bom_search' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
   | 'sales' | 'customer' | 'sales_order' | 'delivery' | 'sales_invoice' | 'sales_partner' | 'sales_person'
   | 'purchasing' | 'supplier' | 'material' | 'request_for_quotation' | 'supplier_quotation' | 'purchase_order' | 'purchase_receipt' | 'purchase_invoice'
   | 'inventory' | 'stock_entry' | 'stock_reconciliation' | 'serial_no' | 'batch' | 'price_list'
@@ -53,6 +54,7 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
       { key: 'mps', icon: 'clock' },
       { key: 'bom_update_tool', icon: 'clock' },
       { key: 'bom_creator', icon: 'clock' },
+      { key: 'report_bom_search', icon: 'clock' },
       { key: 'bom', icon: 'layers' },
       { key: 'work_order', icon: 'factory' },
       { key: 'production_ops', icon: 'check' },
@@ -133,6 +135,7 @@ const DEDICATED_PAGES: Partial<Record<PageKey, () => JSX.Element>> = {
   mps: MpsPage,
   bom_update_tool: BomUpdateToolPage,
   bom_creator: BomCreatorPage,
+  report_bom_search: ReportBomSearchPage,
   work_order: WorkOrderPage,
   workstation: SetupPage,
   operation: SetupPage,
@@ -269,13 +272,13 @@ export function App(): JSX.Element {
         <div className="topbar__actions">
           <button className="company-switcher"><span className="company-logo">M</span><span><b>{t('header.company')}</b><small>{t('header.companyMeta')}</small></span><Icon name="chevron" size={14} /></button>
           <span className="topbar-divider" />
-          <label className="language-select"><span>🌐</span><select aria-label={t('app.language')} value={i18n.language} onChange={(event) => { void i18n.changeLanguage(event.target.value as SupportedLanguage); }}>{SUPPORTED_LANGUAGES.map((language) => <option key={language} value={language}>{t(`app.languageName.${language}`)}</option>)}</select></label>
+          <label className="language-select"><span>ًںŒگ</span><select aria-label={t('app.language')} value={i18n.language} onChange={(event) => { void i18n.changeLanguage(event.target.value as SupportedLanguage); }}>{SUPPORTED_LANGUAGES.map((language) => <option key={language} value={language}>{t(`app.languageName.${language}`)}</option>)}</select></label>
           <button className="notification icon-button" aria-label={t('header.notifications')}><Icon name="bell" size={18} /><i /></button>
           <button className="profile"><span className="avatar">AS</span><span className="profile__copy"><b>{t('header.user')}</b><small>{t('header.role')}</small></span><Icon name="chevron" size={14} /></button>
         </div>
       </header>
       <main className="content">{page === 'dashboard' ? <Dashboard onNavigate={navigate} /> : Dedicated ? <Dedicated /> : <ComingSoonPage page={page} />}</main>
-      <footer className="app-footer"><span>{t('footer.demo')} · <b>{t('footer.version')}</b></span><span>{t('footer.updated')}</span></footer>
+      <footer className="app-footer"><span>{t('footer.demo')} آ· <b>{t('footer.version')}</b></span><span>{t('footer.updated')}</span></footer>
     </section>
   </div>;
 }
