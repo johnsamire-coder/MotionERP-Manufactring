@@ -9,6 +9,7 @@ import type {
   MaterialRequestRecord, ProductionPlanRecord, SalesForecastRecord,
   CreateItemLeadTimeInput, ItemLeadTimeRecord,
   CreateMpsInput, MasterProductionScheduleRecord,
+  SalesForecastPeriodLineInput, SalesForecastPeriodLineRecord,
 } from './planning.types';
 
 @Injectable()
@@ -192,5 +193,19 @@ export class PlanningService {
     const balances = await this.inventoryService.getBalances();
     const match = balances.find((b) => b.itemId === found.itemId && b.warehouseId === found.warehouseId);
     return this.repository.setMpsProjectedQuantity(id, match ? match.available : '0');
+  }
+
+  async getPeriodLines(salesForecastId: string): Promise<SalesForecastPeriodLineRecord[]> {
+    await this.getSalesForecast(salesForecastId);
+    return this.repository.listPeriodLines(salesForecastId);
+  }
+
+  async setPeriodLines(salesForecastId: string, lines: SalesForecastPeriodLineInput[]): Promise<SalesForecastPeriodLineRecord[]> {
+    await this.getSalesForecast(salesForecastId);
+    for (const line of lines) {
+      const qty = Number(line.forecastQuantity);
+      if (!Number.isFinite(qty) || qty <= 0) throw new PlanningValidationError('every period line forecast quantity must be positive');
+    }
+    return this.repository.setPeriodLines(salesForecastId, lines);
   }
 }

@@ -34,7 +34,7 @@ export class TechnicalController {
       allowAlternativeItem: dto.allowAlternativeItem, qualityInspectionRequired: dto.qualityInspectionRequired,
       consumeComponentsBasedOn: dto.consumeComponentsBasedOn,
       defaultSourceWarehouseId: dto.defaultSourceWarehouseId, defaultTargetWarehouseId: dto.defaultTargetWarehouseId,
-      lines: dto.lines.map((l) => ({ componentItemId: l.componentItemId, quantity: l.quantity })),
+      lines: dto.lines.map((l) => ({ componentItemId: l.componentItemId, quantity: l.quantity, operationId: l.operationId, standardTimeMinutes: l.standardTimeMinutes })),
     });
     return { bom: created };
   }

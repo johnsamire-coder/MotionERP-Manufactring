@@ -11,6 +11,8 @@ export class CreateTechnicalDocumentDto {
 export class BomLineDto {
   @IsUUID() componentItemId!: string;
   @IsNumberString() quantity!: string;
+  @IsOptional() @IsUUID() operationId?: string;
+  @IsOptional() @IsNumberString() standardTimeMinutes?: string;
 }
 export class CreateBomDto {
   @IsUUID() productItemId!: string;
@@ -35,6 +37,8 @@ export class BomCreatorItemDto {
   @IsOptional() @IsInt() parentTempId?: number;
   @IsUUID() componentItemId!: string;
   @IsNumberString() quantity!: string;
+  @IsOptional() @IsUUID() operationId?: string;
+  @IsOptional() @IsNumberString() standardTimeMinutes?: string;
   @IsOptional() @IsBoolean() isSubAssembly?: boolean;
 }
 

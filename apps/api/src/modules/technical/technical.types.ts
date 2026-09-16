@@ -8,7 +8,7 @@ export interface TechnicalDocumentRecord {
 export interface CreateTechnicalDocumentInput {
   jobOrderReference: string; documentType: DocumentType; fileReference: string; note?: string;
 }
-export interface BomLineRecord { id: string; bomId: string; componentItemId: string; quantity: string; lineNumber: number; }
+export interface BomLineRecord { id: string; bomId: string; componentItemId: string; quantity: string; lineNumber: number; operationId: string | null; standardTimeMinutes: string | null; }
 export interface BomRecord {
   id: string; productItemId: string; orgNodeId: string; version: number; outputQuantity: string;
   isActive: boolean; isDefault: boolean; isPhantomBom: boolean; allowAlternativeItem: boolean;
@@ -16,7 +16,7 @@ export interface BomRecord {
   defaultSourceWarehouseId: string | null; defaultTargetWarehouseId: string | null;
   status: BomStatus; lines: BomLineRecord[];
 }
-export interface CreateBomLineInput { componentItemId: string; quantity: string; }
+export interface CreateBomLineInput { componentItemId: string; quantity: string; operationId?: string; standardTimeMinutes?: string; }
 export interface CreateBomInput {
   productItemId: string; orgNodeId: string; outputQuantity?: string;
   isActive?: boolean; isDefault?: boolean; isPhantomBom?: boolean; allowAlternativeItem?: boolean;

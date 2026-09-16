@@ -19,7 +19,7 @@ const bomColumns = {
   consumeComponentsBasedOn: bom.consumeComponentsBasedOn, defaultSourceWarehouseId: bom.defaultSourceWarehouseId,
   defaultTargetWarehouseId: bom.defaultTargetWarehouseId, status: bom.status,
 };
-const bomLineColumns = { id: bomLine.id, bomId: bomLine.bomId, componentItemId: bomLine.componentItemId, quantity: bomLine.quantity, lineNumber: bomLine.lineNumber };
+const bomLineColumns = { id: bomLine.id, bomId: bomLine.bomId, componentItemId: bomLine.componentItemId, quantity: bomLine.quantity, lineNumber: bomLine.lineNumber, operationId: bomLine.operationId, standardTimeMinutes: bomLine.standardTimeMinutes };
 interface DocRow { id: string; jobOrderReference: string; orgNodeId: string | null; documentType: string; fileReference: string; version: number; note: string | null; createdAt: Date; }
 interface BomRow {
   id: string; productItemId: string; orgNodeId: string; version: number; outputQuantity: string;
@@ -27,13 +27,13 @@ interface BomRow {
   qualityInspectionRequired: boolean; consumeComponentsBasedOn: string;
   defaultSourceWarehouseId: string | null; defaultTargetWarehouseId: string | null; status: string;
 }
-interface BomLineRow { id: string; bomId: string; componentItemId: string; quantity: string; lineNumber: number; }
+interface BomLineRow { id: string; bomId: string; componentItemId: string; quantity: string; lineNumber: number; operationId: string | null; standardTimeMinutes: string | null; }
 function toDocRecord(row: DocRow): TechnicalDocumentRecord {
   return { id: row.id, jobOrderReference: row.jobOrderReference, orgNodeId: row.orgNodeId, documentType: row.documentType as DocumentType,
     fileReference: row.fileReference, version: row.version, note: row.note, createdAt: row.createdAt.toISOString() };
 }
 function toBomLineRecord(row: BomLineRow): BomLineRecord {
-  return { id: row.id, bomId: row.bomId, componentItemId: row.componentItemId, quantity: row.quantity, lineNumber: row.lineNumber };
+  return { id: row.id, bomId: row.bomId, componentItemId: row.componentItemId, quantity: row.quantity, lineNumber: row.lineNumber, operationId: row.operationId, standardTimeMinutes: row.standardTimeMinutes };
 }
 function toBomRecord(row: BomRow, lines: BomLineRecord[]): BomRecord {
   return {
@@ -114,6 +114,7 @@ export class TechnicalRepository {
     for (const line of input.lines) {
       const lineRows = await this.database.db.insert(bomLine).values({
         bomId: inserted.id, componentItemId: line.componentItemId, quantity: line.quantity, lineNumber,
+        operationId: line.operationId ?? null, standardTimeMinutes: line.standardTimeMinutes ?? null,
       }).returning(bomLineColumns);
       lines.push(toBomLineRecord(lineRows[0]!));
       lineNumber += 1;

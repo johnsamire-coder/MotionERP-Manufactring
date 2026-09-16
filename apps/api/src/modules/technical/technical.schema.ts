@@ -1,4 +1,4 @@
-﻿import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { boolean, check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { item } from '../catalog/catalog.schema';
 import { warehouse } from '../inventory/inventory.schema';
@@ -72,6 +72,8 @@ export const bomLine = technicalSchema.table('bom_line', {
     .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   quantity: numeric('quantity', { precision: 24, scale: 6 }).notNull(),
   lineNumber: integer('line_number').notNull().default(0),
+  operationId: uuid('operation_id'),
+  standardTimeMinutes: numeric('standard_time_minutes', { precision: 12, scale: 4 }),
 }, (t) => [
   check('bom_line_quantity_positive', sql`${t.quantity} > 0`),
   index('bom_line_bom_idx').on(t.bomId),

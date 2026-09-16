@@ -99,3 +99,10 @@ export interface CreateMpsInput {
   itemId: string; orgNodeId: string; warehouseId?: string; fromDate: string; toDate: string;
   totalForecastQuantity?: string; plannedQuantity?: string; scheduleLines: MpsScheduleLineInput[];
 }
+
+export interface SalesForecastPeriodLineRecord {
+  id: string; salesForecastId: string; periodName: string; forecastQuantity: string; plannedQuantity: string | null; lineNumber: number;
+}
+export interface SalesForecastPeriodLineInput {
+  periodName: string; forecastQuantity: string; plannedQuantity?: string;
+}

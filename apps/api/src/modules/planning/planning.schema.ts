@@ -268,3 +268,27 @@ export const mpsScheduleLine = planningSchema.table('mps_schedule_line', {
 
 export type MasterProductionSchedule = typeof masterProductionSchedule.$inferSelect;
 export type MpsScheduleLine = typeof mpsScheduleLine.$inferSelect;
+
+/**
+ * Sales Forecast Period Distribution — ERPNext parity addition: allows
+ * spreading a Sales Forecast's total quantity across explicit named
+ * periods (matching ERPNext's "Period Distribution" table), separate from
+ * the per-item `sales_forecast_line` quantities. "Distribute Quantities
+ * Evenly" is a pure frontend calculation over these rows, not a stored
+ * server action.
+ */
+export const salesForecastPeriodLine = planningSchema.table('sales_forecast_period_line', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  salesForecastId: uuid('sales_forecast_id')
+    .notNull()
+    .references(() => salesForecast.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  periodName: text('period_name').notNull(),
+  forecastQuantity: numeric('forecast_quantity', { precision: 24, scale: 6 }).notNull(),
+  plannedQuantity: numeric('planned_quantity', { precision: 24, scale: 6 }),
+  lineNumber: integer('line_number').notNull().default(0),
+}, (t) => [
+  check('sales_forecast_period_line_qty_positive', sql`${t.forecastQuantity} > 0`),
+  index('sales_forecast_period_line_forecast_idx').on(t.salesForecastId),
+]);
+
+export type SalesForecastPeriodLine = typeof salesForecastPeriodLine.$inferSelect;

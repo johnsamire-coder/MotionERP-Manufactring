@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
-import { itemLeadTime, masterProductionSchedule, mpsScheduleLine, planningMaterialRequest, planningMaterialRequestLine, productionPlan, productionPlanItem, salesForecast, salesForecastLine, supplierLeadTime } from './planning.schema';
+import { itemLeadTime, masterProductionSchedule, mpsScheduleLine, planningMaterialRequest, planningMaterialRequestLine, productionPlan, productionPlanItem, salesForecast, salesForecastLine, salesForecastPeriodLine, supplierLeadTime } from './planning.schema';
 import type {
   CreateMaterialRequestInput, MaterialRequestLineInput, MaterialRequestLineRecord,
   MaterialRequestRecord, MaterialRequestStatus,
@@ -9,6 +9,7 @@ import type {
   ProductionPlanRecord, ProductionPlanStatus,
   CreateItemLeadTimeInput, ItemLeadTimeRecord, SupplierLeadTimeInput, SupplierLeadTimeRecord,
   CreateMpsInput, MasterProductionScheduleRecord, MpsScheduleLineInput, MpsScheduleLineRecord, MpsStatus,
+  SalesForecastPeriodLineInput, SalesForecastPeriodLineRecord,
   CreateSalesForecastInput, SalesForecastLineInput, SalesForecastLineRecord,
   SalesForecastRecord, SalesForecastStatus,
 } from './planning.types';
@@ -477,5 +478,25 @@ export class PlanningRepository {
     const rows = await this.database.db.update(masterProductionSchedule).set({ projectedQuantity }).where(eq(masterProductionSchedule.id, id)).returning(mpsColumns);
     const scheduleLines = await this.listMpsLines(id);
     return this.toMpsRecord(rows[0]!, scheduleLines);
+  }
+
+  async listPeriodLines(salesForecastId: string): Promise<SalesForecastPeriodLineRecord[]> {
+    const rows = await this.database.db.select({
+      id: salesForecastPeriodLine.id, salesForecastId: salesForecastPeriodLine.salesForecastId, periodName: salesForecastPeriodLine.periodName,
+      forecastQuantity: salesForecastPeriodLine.forecastQuantity, plannedQuantity: salesForecastPeriodLine.plannedQuantity, lineNumber: salesForecastPeriodLine.lineNumber,
+    }).from(salesForecastPeriodLine).where(eq(salesForecastPeriodLine.salesForecastId, salesForecastId)).orderBy(asc(salesForecastPeriodLine.lineNumber));
+    return rows;
+  }
+
+  async setPeriodLines(salesForecastId: string, inputLines: SalesForecastPeriodLineInput[]): Promise<SalesForecastPeriodLineRecord[]> {
+    await this.database.db.delete(salesForecastPeriodLine).where(eq(salesForecastPeriodLine.salesForecastId, salesForecastId));
+    let lineNumber = 1;
+    for (const line of inputLines) {
+      await this.database.db.insert(salesForecastPeriodLine).values({
+        salesForecastId, periodName: line.periodName, forecastQuantity: line.forecastQuantity, plannedQuantity: line.plannedQuantity ?? null, lineNumber,
+      });
+      lineNumber += 1;
+    }
+    return this.listPeriodLines(salesForecastId);
   }
 }
