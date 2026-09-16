@@ -49,7 +49,7 @@
                        "attendance":  "ط§ظ„ط­ط¶ظˆط± ظˆط§ظ„ط§ظ†طµط±ط§ظپ",
                        "leave_application":  "ط·ظ„ط¨ ط¥ط¬ط§ط²ط©",
                        "auth":  "ط§ظ„ظ…ط³طھط®ط¯ظ…ظˆظ† ظˆط§ظ„طµظ„ط§ط­ظٹط§طھ",
-                       "reports":  "ط§ظ„طھظ‚ط§ط±ظٹط±",
+                       "reports":  "التقارير",
                        "settings":  "ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ",
                        "helpTitle":  "ظ‡ظ„ طھط­طھط§ط¬ ط¥ظ„ظ‰ ظ…ط³ط§ط¹ط¯ط©طں",
                        "helpText":  "ط§ط³طھظƒط´ظپ ظ…ط³ط§ط­ط© ط¹ظ…ظ„ ظ…ظˆط´ظ† ERP ظˆط­ط§ظپط¸ ط¹ظ„ظ‰ طھظˆط§ظپظ‚ ط¬ظ…ظٹط¹ ط§ظ„ظپط±ظ‚.",
@@ -62,7 +62,10 @@
                        "mps":  "ط§ظ„ط¬ط¯ظˆظ„ ط§ظ„ط±ط¦ظٹط³ظٹ ظ„ظ„ط¥ظ†طھط§ط¬",
                        "bom_update_tool":  "ط£ط¯ط§ط© ط§ط³طھط¨ط¯ط§ظ„ BOM",
                        "bom_creator":  "ط£ط¯ط§ط© ط¥ظ†ط´ط§ط، BOM",
-                       "report_bom_search":  "بحث BOM"
+                       "report_bom_search":  "بحث BOM",
+                       "report_work_order_summary":  "ملخص أوامر التشغيل",
+                       "report_downtime_analysis":  "تحليل التوقفات",
+                       "report_job_card_summary":  "ملخص بطاقات العمل"
                    },
     "common":  {
                    "viewAll":  "ط¹ط±ط¶ ط§ظ„ظƒظ„",
@@ -1073,7 +1076,23 @@
                                   "asComponent":  "كمكون",
                                   "version":  "الإصدار",
                                   "status":  "الحالة",
-                                  "noResults":  "لا توجد نتائج"
+                                  "noResults":  "لا توجد نتائج",
+                                  "workOrderSummaryTitle":  "ملخص أوامر التشغيل (Work Order Summary)",
+                                  "filterStatus":  "الحالة",
+                                  "all":  "الكل",
+                                  "workOrderNumber":  "رقم أمر التشغيل",
+                                  "qty":  "الكمية",
+                                  "totalQty":  "إجمالي الكمية",
+                                  "downtimeAnalysisTitle":  "تحليل توقفات المحطات (Downtime Analysis)",
+                                  "filterWorkCenter":  "محطة العمل",
+                                  "stopReason":  "سبب التوقف",
+                                  "duration":  "المدة (دقيقة)",
+                                  "totalDuration":  "إجمالي مدة التوقف (دقيقة)",
+                                  "jobCardSummaryTitle":  "ملخص بطاقات العمل (Job Card Summary)",
+                                  "operation":  "العملية",
+                                  "workCenter":  "محطة العمل",
+                                  "standardTime":  "الزمن المعياري (دقيقة)",
+                                  "actualTime":  "الزمن الفعلي (دقيقة)"
                               }
               },
     "footer":  {

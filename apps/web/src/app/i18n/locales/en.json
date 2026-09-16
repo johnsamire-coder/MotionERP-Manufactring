@@ -62,7 +62,10 @@
                        "mps":  "Master Production Schedule",
                        "bom_update_tool":  "BOM Update Tool",
                        "bom_creator":  "BOM Creator",
-                       "report_bom_search":  "BOM Search"
+                       "report_bom_search":  "BOM Search",
+                       "report_work_order_summary":  "Work Order Summary",
+                       "report_downtime_analysis":  "Downtime Analysis",
+                       "report_job_card_summary":  "Job Card Summary"
                    },
     "common":  {
                    "viewAll":  "View all",
@@ -1073,7 +1076,23 @@
                                   "asComponent":  "As Component",
                                   "version":  "Version",
                                   "status":  "Status",
-                                  "noResults":  "No results"
+                                  "noResults":  "No results",
+                                  "workOrderSummaryTitle":  "Work Order Summary",
+                                  "filterStatus":  "Status",
+                                  "all":  "All",
+                                  "workOrderNumber":  "Work Order No.",
+                                  "qty":  "Qty",
+                                  "totalQty":  "Total Qty",
+                                  "downtimeAnalysisTitle":  "Downtime Analysis",
+                                  "filterWorkCenter":  "Work Center",
+                                  "stopReason":  "Stop Reason",
+                                  "duration":  "Duration (min)",
+                                  "totalDuration":  "Total Downtime (min)",
+                                  "jobCardSummaryTitle":  "Job Card Summary",
+                                  "operation":  "Operation",
+                                  "workCenter":  "Work Center",
+                                  "standardTime":  "Standard Time (min)",
+                                  "actualTime":  "Actual Time (min)"
                               }
               },
     "footer":  {
