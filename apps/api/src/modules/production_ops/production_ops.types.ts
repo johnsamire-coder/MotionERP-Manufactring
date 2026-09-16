@@ -41,6 +41,7 @@ export interface WorkOrderRecord {
   sourceWarehouseId: string | null; wipWarehouseId: string | null; finishedGoodsWarehouseId: string;
   plannedStartDate: string | null; actualStartDate: string | null; actualEndDate: string | null;
   status: WorkOrderStatus;
+  createdAt: string;
 }
 export interface CreateWorkOrderInput {
   productItemId: string; bomId: string; orgNodeId: string; jobOrderReference?: string;

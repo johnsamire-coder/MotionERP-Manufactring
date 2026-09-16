@@ -65,7 +65,8 @@
                        "report_bom_search":  "BOM Search",
                        "report_work_order_summary":  "Work Order Summary",
                        "report_downtime_analysis":  "Downtime Analysis",
-                       "report_job_card_summary":  "Job Card Summary"
+                       "report_job_card_summary":  "Job Card Summary",
+                       "report_production_analytics":  "Production Analytics"
                    },
     "common":  {
                    "viewAll":  "View all",
@@ -1092,7 +1093,9 @@
                                   "operation":  "Operation",
                                   "workCenter":  "Work Center",
                                   "standardTime":  "Standard Time (min)",
-                                  "actualTime":  "Actual Time (min)"
+                                  "actualTime":  "Actual Time (min)",
+                                  "productionAnalyticsTitle":  "Production Analytics",
+                                  "month":  "Month"
                               }
               },
     "footer":  {

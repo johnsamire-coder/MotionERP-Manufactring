@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import { downtimeEntry, operation, productionStep, productionStepTimeLog, workCenter, workOrder, workstationType } from './production_ops.schema';
@@ -29,6 +29,7 @@ const woColumns = {
   id: workOrder.id, workOrderNumber: workOrder.workOrderNumber, productItemId: workOrder.productItemId, bomId: workOrder.bomId,
   orgNodeId: workOrder.orgNodeId, jobOrderReference: workOrder.jobOrderReference, qtyToManufacture: workOrder.qtyToManufacture,
   sourceWarehouseId: workOrder.sourceWarehouseId, wipWarehouseId: workOrder.wipWarehouseId, finishedGoodsWarehouseId: workOrder.finishedGoodsWarehouseId,
+  createdAt: workOrder.createdAt,
   plannedStartDate: workOrder.plannedStartDate, actualStartDate: workOrder.actualStartDate, actualEndDate: workOrder.actualEndDate,
   status: workOrder.status,
 };
@@ -54,6 +55,7 @@ interface WoRow {
   id: string; workOrderNumber: string; productItemId: string; bomId: string; orgNodeId: string;
   jobOrderReference: string | null; qtyToManufacture: string;
   sourceWarehouseId: string | null; wipWarehouseId: string | null; finishedGoodsWarehouseId: string;
+  createdAt: Date;
   plannedStartDate: Date | null; actualStartDate: Date | null; actualEndDate: Date | null; status: string;
 }
 interface WsTypeRow { id: string; code: string; name: string; status: string; }
@@ -86,7 +88,7 @@ function toWoRecord(row: WoRow): WorkOrderRecord {
     plannedStartDate: row.plannedStartDate ? row.plannedStartDate.toISOString() : null,
     actualStartDate: row.actualStartDate ? row.actualStartDate.toISOString() : null,
     actualEndDate: row.actualEndDate ? row.actualEndDate.toISOString() : null,
-    status: row.status as WorkOrderStatus,
+    status: row.status as WorkOrderStatus, createdAt: row.createdAt.toISOString(),
   };
 }
 function toWsTypeRecord(row: WsTypeRow): WorkstationTypeRecord {

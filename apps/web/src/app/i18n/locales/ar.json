@@ -65,7 +65,8 @@
                        "report_bom_search":  "بحث BOM",
                        "report_work_order_summary":  "ملخص أوامر التشغيل",
                        "report_downtime_analysis":  "تحليل التوقفات",
-                       "report_job_card_summary":  "ملخص بطاقات العمل"
+                       "report_job_card_summary":  "ملخص بطاقات العمل",
+                       "report_production_analytics":  "تحليلات الإنتاج"
                    },
     "common":  {
                    "viewAll":  "ط¹ط±ط¶ ط§ظ„ظƒظ„",
@@ -1092,7 +1093,9 @@
                                   "operation":  "العملية",
                                   "workCenter":  "محطة العمل",
                                   "standardTime":  "الزمن المعياري (دقيقة)",
-                                  "actualTime":  "الزمن الفعلي (دقيقة)"
+                                  "actualTime":  "الزمن الفعلي (دقيقة)",
+                                  "productionAnalyticsTitle":  "تحليلات الإنتاج (Production Analytics)",
+                                  "month":  "الشهر"
                               }
               },
     "footer":  {
