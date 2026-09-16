@@ -54,7 +54,7 @@ export function ReportLayout({ title, companyName, logoUrl, filename, exportHead
     <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #e2e8f0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {logoUrl && <img src={logoUrl} alt="logo" style={{ height: 40, width: 40, objectFit: 'contain', borderRadius: 4 }} />}
+          {logoUrl && <img src={logoUrl} alt="logo" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} style={{ height: 40, width: 40, objectFit: 'contain', borderRadius: 4 }} />}
           <div>
             <div style={{ fontSize: 12, color: '#64748b' }}>{companyName ?? 'Motion ERP'}</div>
             <h2 style={{ margin: '2px 0 0', fontSize: 18 }}>{title}</h2>

@@ -69,7 +69,8 @@
                        "report_production_analytics":  "Production Analytics",
                        "report_bom_operations_time":  "BOM Operations Time",
                        "report_consumed_materials":  "Consumed Materials",
-                       "report_production_planning":  "Production Planning"
+                       "report_production_planning":  "Production Planning",
+                       "report_forecasting":  "Forecasting"
                    },
     "common":  {
                    "viewAll":  "View all",
@@ -1115,7 +1116,12 @@
                                   "includeSubAssembly":  "Include Sub-assembly Raw Materials",
                                   "requiredQty":  "Required Qty",
                                   "availableQty":  "Available Qty",
-                                  "shortfall":  "Shortfall"
+                                  "shortfall":  "Shortfall",
+                                  "forecastingTitle":  "Exponential Smoothing Forecasting",
+                                  "smoothingConstant":  "Smoothing Constant (Alpha)",
+                                  "historicalQty":  "Historical Quantities",
+                                  "forecastedQty":  "Forecasted Quantity",
+                                  "note2":  "The forecast is built on Sales Forecast line entries used as a simplified historical series per item."
                               }
               },
     "footer":  {

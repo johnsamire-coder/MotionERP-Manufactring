@@ -27,12 +27,13 @@ import { ReportProductionAnalyticsPage } from './app/pages/ReportProductionAnaly
 import { ReportBomOperationsTimePage } from './app/pages/ReportBomOperationsTimePage';
 import { ReportConsumedMaterialsPage } from './app/pages/ReportConsumedMaterialsPage';
 import { ReportProductionPlanningPage } from './app/pages/ReportProductionPlanningPage';
+import { ReportForecastingPage } from './app/pages/ReportForecastingPage';
 import { WorkOrderPage } from './app/pages/WorkOrderPage';
 import { SetupPage } from './app/pages/SetupPage';
 import { ProductionPlanPage } from './app/pages/ProductionPlanPage';
 type PageKey =
   | 'dashboard' | 'organization'
-  | 'manufacturing' | 'planning' | 'sales_forecast' | 'material_request_mp' | 'item_lead_time' | 'downtime_entry' | 'mps' | 'bom_update_tool' | 'bom_creator' | 'report_bom_search' | 'report_work_order_summary' | 'report_downtime_analysis' | 'report_job_card_summary' | 'report_production_analytics' | 'report_bom_operations_time' | 'report_consumed_materials' | 'report_production_planning' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
+  | 'manufacturing' | 'planning' | 'sales_forecast' | 'material_request_mp' | 'item_lead_time' | 'downtime_entry' | 'mps' | 'bom_update_tool' | 'bom_creator' | 'report_bom_search' | 'report_work_order_summary' | 'report_downtime_analysis' | 'report_job_card_summary' | 'report_production_analytics' | 'report_bom_operations_time' | 'report_consumed_materials' | 'report_production_planning' | 'report_forecasting' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
   | 'sales' | 'customer' | 'sales_order' | 'delivery' | 'sales_invoice' | 'sales_partner' | 'sales_person'
   | 'purchasing' | 'supplier' | 'material' | 'request_for_quotation' | 'supplier_quotation' | 'purchase_order' | 'purchase_receipt' | 'purchase_invoice'
   | 'inventory' | 'stock_entry' | 'stock_reconciliation' | 'serial_no' | 'batch' | 'price_list'
@@ -127,6 +128,7 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
     { key: 'report_bom_operations_time', icon: 'clock' },
     { key: 'report_consumed_materials', icon: 'clock' },
     { key: 'report_production_planning', icon: 'clock' },
+    { key: 'report_forecasting', icon: 'clock' },
   ] },
 ];
 const BOTTOM_ITEMS: ReadonlyArray<{ key: PageKey; icon: IconName }> = [
@@ -158,6 +160,7 @@ const DEDICATED_PAGES: Partial<Record<PageKey, () => JSX.Element>> = {
   report_bom_operations_time: ReportBomOperationsTimePage,
   report_consumed_materials: ReportConsumedMaterialsPage,
   report_production_planning: ReportProductionPlanningPage,
+  report_forecasting: ReportForecastingPage,
   work_order: WorkOrderPage,
   workstation: SetupPage,
   operation: SetupPage,
