@@ -1,4 +1,4 @@
-﻿import { IsBoolean, IsDateString, IsIn, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
+import { IsBoolean, IsDateString, IsIn, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
 
 export class CreateWorkCenterDto {
   @Matches(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/) @MaxLength(64) @IsString() code!: string;
@@ -42,6 +42,10 @@ export class CreateWorkOrderDto {
   @IsOptional() @IsUUID() wipWarehouseId?: string;
   @IsUUID() finishedGoodsWarehouseId!: string;
   @IsOptional() @IsDateString() plannedStartDate?: string;
+  @IsOptional() @IsBoolean() useMultiLevelBom?: boolean;
+  @IsOptional() @IsBoolean() considerScrapItems?: boolean;
+  @IsOptional() @IsNumberString() materialConsumptionPercentage?: string;
+  @IsOptional() @IsIn(['transfer', 'move']) materialTransferMode?: 'transfer' | 'move';
 }
 
 export class CreateWorkstationTypeDto {

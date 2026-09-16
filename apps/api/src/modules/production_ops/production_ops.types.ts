@@ -1,4 +1,4 @@
-﻿export type WorkCenterStatus = 'active' | 'inactive' | 'archived';
+export type WorkCenterStatus = 'active' | 'inactive' | 'archived';
 export type ProductionStepStatus = 'pending' | 'in_progress' | 'done';
 export type WorkOrderStatus = 'not_started' | 'in_progress' | 'completed' | 'stopped' | 'closed';
 export type WorkstationTypeStatus = 'active' | 'inactive';
@@ -35,18 +35,21 @@ export interface JobOrderLaborCost {
   totalStandardCost: string; totalActualCost: string; stepsCount: number; stepsDone: number;
 }
 
+export type MaterialTransferMode = 'transfer' | 'move';
 export interface WorkOrderRecord {
   id: string; workOrderNumber: string; productItemId: string; bomId: string; orgNodeId: string;
   jobOrderReference: string | null; qtyToManufacture: string;
   sourceWarehouseId: string | null; wipWarehouseId: string | null; finishedGoodsWarehouseId: string;
   plannedStartDate: string | null; actualStartDate: string | null; actualEndDate: string | null;
   status: WorkOrderStatus;
+  useMultiLevelBom: boolean; considerScrapItems: boolean; materialConsumptionPercentage: string; materialTransferMode: MaterialTransferMode;
   createdAt: string;
 }
 export interface CreateWorkOrderInput {
   productItemId: string; bomId: string; orgNodeId: string; jobOrderReference?: string;
   qtyToManufacture: string; sourceWarehouseId?: string; wipWarehouseId?: string; finishedGoodsWarehouseId: string;
   plannedStartDate?: string;
+  useMultiLevelBom?: boolean; considerScrapItems?: boolean; materialConsumptionPercentage?: string; materialTransferMode?: MaterialTransferMode;
 }
 
 export interface WorkstationTypeRecord { id: string; code: string; name: string; status: WorkstationTypeStatus; }

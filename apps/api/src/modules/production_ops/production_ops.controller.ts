@@ -83,6 +83,8 @@ export class ProductionOpsController {
       productItemId: dto.productItemId, bomId: dto.bomId, orgNodeId: dto.orgNodeId, jobOrderReference: dto.jobOrderReference,
       qtyToManufacture: dto.qtyToManufacture, sourceWarehouseId: dto.sourceWarehouseId, wipWarehouseId: dto.wipWarehouseId,
       finishedGoodsWarehouseId: dto.finishedGoodsWarehouseId, plannedStartDate: dto.plannedStartDate,
+      useMultiLevelBom: dto.useMultiLevelBom, considerScrapItems: dto.considerScrapItems,
+      materialConsumptionPercentage: dto.materialConsumptionPercentage, materialTransferMode: dto.materialTransferMode,
     });
     return { workOrder: created };
   }

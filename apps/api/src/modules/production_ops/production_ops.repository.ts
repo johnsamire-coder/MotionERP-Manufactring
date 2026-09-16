@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import { downtimeEntry, operation, productionStep, productionStepTimeLog, workCenter, workOrder, workstationType } from './production_ops.schema';
@@ -6,6 +6,7 @@ import type {
   AddTimeLogInput, CreateOperationInput, CreateProductionStepInput, CreateWorkCenterInput, CreateWorkOrderInput,
   CreateWorkstationTypeInput, OperationRecord, OperationStatus, ProductionStepRecord, ProductionStepStatus,
   ProductionStepTimeLogRecord, WorkCenterRecord, WorkCenterStatus, WorkOrderRecord, WorkOrderStatus,
+  MaterialTransferMode,
   CreateDowntimeEntryInput, DowntimeEntryRecord,
   WorkstationTypeRecord, WorkstationTypeStatus,
 } from './production_ops.types';
@@ -30,6 +31,8 @@ const woColumns = {
   orgNodeId: workOrder.orgNodeId, jobOrderReference: workOrder.jobOrderReference, qtyToManufacture: workOrder.qtyToManufacture,
   sourceWarehouseId: workOrder.sourceWarehouseId, wipWarehouseId: workOrder.wipWarehouseId, finishedGoodsWarehouseId: workOrder.finishedGoodsWarehouseId,
   createdAt: workOrder.createdAt,
+  useMultiLevelBom: workOrder.useMultiLevelBom, considerScrapItems: workOrder.considerScrapItems,
+  materialConsumptionPercentage: workOrder.materialConsumptionPercentage, materialTransferMode: workOrder.materialTransferMode,
   plannedStartDate: workOrder.plannedStartDate, actualStartDate: workOrder.actualStartDate, actualEndDate: workOrder.actualEndDate,
   status: workOrder.status,
 };
@@ -56,7 +59,7 @@ interface WoRow {
   jobOrderReference: string | null; qtyToManufacture: string;
   sourceWarehouseId: string | null; wipWarehouseId: string | null; finishedGoodsWarehouseId: string;
   createdAt: Date;
-  plannedStartDate: Date | null; actualStartDate: Date | null; actualEndDate: Date | null; status: string;
+  plannedStartDate: Date | null; actualStartDate: Date | null; actualEndDate: Date | null; status: string; useMultiLevelBom: boolean; considerScrapItems: boolean; materialConsumptionPercentage: string; materialTransferMode: string;
 }
 interface WsTypeRow { id: string; code: string; name: string; status: string; }
 interface OperationRow { id: string; code: string; name: string; defaultWorkCenterId: string | null; standardTimeMinutes: string | null; status: string; }
@@ -89,6 +92,8 @@ function toWoRecord(row: WoRow): WorkOrderRecord {
     actualStartDate: row.actualStartDate ? row.actualStartDate.toISOString() : null,
     actualEndDate: row.actualEndDate ? row.actualEndDate.toISOString() : null,
     status: row.status as WorkOrderStatus, createdAt: row.createdAt.toISOString(),
+    useMultiLevelBom: row.useMultiLevelBom, considerScrapItems: row.considerScrapItems,
+    materialConsumptionPercentage: row.materialConsumptionPercentage, materialTransferMode: row.materialTransferMode as MaterialTransferMode,
   };
 }
 function toWsTypeRecord(row: WsTypeRow): WorkstationTypeRecord {
@@ -211,6 +216,8 @@ export class ProductionOpsRepository {
       sourceWarehouseId: input.sourceWarehouseId ?? null, wipWarehouseId: input.wipWarehouseId ?? null,
       finishedGoodsWarehouseId: input.finishedGoodsWarehouseId,
       plannedStartDate: input.plannedStartDate ? new Date(input.plannedStartDate) : null,
+      useMultiLevelBom: input.useMultiLevelBom ?? false, considerScrapItems: input.considerScrapItems ?? false,
+      materialConsumptionPercentage: input.materialConsumptionPercentage ?? '100', materialTransferMode: input.materialTransferMode ?? 'transfer',
     }).returning(woColumns);
     return toWoRecord(rows[0]!);
   }

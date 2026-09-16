@@ -1,4 +1,4 @@
-﻿import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { boolean, check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { item } from '../catalog/catalog.schema';
 import { employee } from '../hr/hr.schema';
@@ -56,6 +56,10 @@ export const workOrder = productionOpsSchema.table('work_order', {
   plannedStartDate: timestamp('planned_start_date', { withTimezone: true }),
   actualStartDate: timestamp('actual_start_date', { withTimezone: true }),
   actualEndDate: timestamp('actual_end_date', { withTimezone: true }),
+  useMultiLevelBom: boolean('use_multi_level_bom').notNull().default(false),
+  considerScrapItems: boolean('consider_scrap_items').notNull().default(false),
+  materialConsumptionPercentage: numeric('material_consumption_percentage', { precision: 6, scale: 2 }).notNull().default('100'),
+  materialTransferMode: text('material_transfer_mode').notNull().default('transfer'),
   status: text('status').notNull().default('not_started'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -63,6 +67,7 @@ export const workOrder = productionOpsSchema.table('work_order', {
   unique('work_order_number_unique').on(t.workOrderNumber),
   check('work_order_qty_positive', sql`${t.qtyToManufacture} > 0`),
   check('work_order_status_valid', sql`${t.status} in ('not_started', 'in_progress', 'completed', 'stopped', 'closed')`),
+  check('work_order_material_transfer_mode_valid', sql`${t.materialTransferMode} in ('transfer', 'move')`),
   index('work_order_product_item_idx').on(t.productItemId),
   index('work_order_bom_idx').on(t.bomId),
   index('work_order_org_node_idx').on(t.orgNodeId),
