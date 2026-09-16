@@ -1,4 +1,4 @@
-export const ORG_NODE_STATUSES = ['active', 'inactive', 'archived'] as const;
+﻿export const ORG_NODE_STATUSES = ['active', 'inactive', 'archived'] as const;
 export type OrgNodeStatus = (typeof ORG_NODE_STATUSES)[number];
 
 /** One organizational node as stored (flat). */

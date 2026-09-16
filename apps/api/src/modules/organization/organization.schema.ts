@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+﻿import { sql } from 'drizzle-orm';
 import {
   boolean,
   check,
@@ -13,7 +13,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 /**
- * Organizational core — Architecture Decisions D10.
+ * Organizational core â€” Architecture Decisions D10.
  *
  * ONE generic node table represents every level of every company/group structure
  * (group, legal company, activity, branch, region, site, factory, department,
@@ -21,7 +21,7 @@ import {
  * are added as ROWS in `org_node_type`, never as new tables or DDL changes.
  *
  * Lives in the `platform` schema because the org tree spans the whole group and
- * is the anchor that future per-company operational tables point at — it does
+ * is the anchor that future per-company operational tables point at â€” it does
  * not itself belong to a single company (D8 / D9).
  */
 export const platformSchema = pgSchema('platform');
@@ -38,7 +38,7 @@ export const orgNodeType = platformSchema.table('org_node_type', {
 /**
  * Allowed parent/child type pairs (D10: "each node type has clear rules about
  * who may be its parent"). A row (child_type = X, parent_type = Y) means a node
- * of type X may have a parent of type Y. Extensible as data — adding or removing
+ * of type X may have a parent of type Y. Extensible as data â€” adding or removing
  * a rule never touches the `org_node` table structure.
  */
 export const orgNodeParentRule = platformSchema.table(
@@ -74,7 +74,7 @@ export const orgNode = platformSchema.table(
     position: integer('position').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-    /** Who created/updated the row. No FK yet — the users table does not exist. */
+    /** Who created/updated the row. No FK yet â€” the users table does not exist. */
     createdBy: uuid('created_by'),
     updatedBy: uuid('updated_by'),
   },
