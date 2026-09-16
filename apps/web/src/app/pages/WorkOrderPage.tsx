@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 
@@ -46,6 +46,10 @@ export function WorkOrderPage(): JSX.Element {
   const [sourceWarehouseId, setSourceWarehouseId] = useState('');
   const [wipWarehouseId, setWipWarehouseId] = useState('');
   const [jobOrderReference, setJobOrderReference] = useState('');
+  const [useMultiLevelBom, setUseMultiLevelBom] = useState(false);
+  const [considerScrapItems, setConsiderScrapItems] = useState(false);
+  const [materialConsumptionPercentage, setMaterialConsumptionPercentage] = useState('100');
+  const [materialTransferMode, setMaterialTransferMode] = useState('transfer');
 
   const approvedBomsForItem = boms.filter((b) => b.productItemId === productItemId && b.status === 'approved');
 
@@ -95,6 +99,7 @@ export function WorkOrderPage(): JSX.Element {
         sourceWarehouseId: sourceWarehouseId || undefined,
         wipWarehouseId: wipWarehouseId || undefined,
         jobOrderReference: jobOrderReference || undefined,
+        useMultiLevelBom, considerScrapItems, materialConsumptionPercentage, materialTransferMode,
       });
       setShowForm(false);
       setFormSuccess(t('pages.work_order.createWorkOrder'));
@@ -198,6 +203,28 @@ export function WorkOrderPage(): JSX.Element {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.work_order.jobOrderReference')}</label>
                 <input value={jobOrderReference} onChange={(e) => setJobOrderReference(e.target.value)} placeholder="JO-2026-000001" style={{ ...inputStyle, width: 160 }} />
+              </div>
+            </div>
+
+            <div style={{ background: '#f8fafc', padding: 16, borderRadius: 6, border: '1px solid #e2e8f0', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'end' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+                <input type="checkbox" checked={useMultiLevelBom} onChange={(e) => setUseMultiLevelBom(e.target.checked)} />
+                {t('pages.work_order.useMultiLevelBom')}
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+                <input type="checkbox" checked={considerScrapItems} onChange={(e) => setConsiderScrapItems(e.target.checked)} />
+                {t('pages.work_order.considerScrapItems')}
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={labelStyle}>{t('pages.work_order.materialConsumptionPercentage')}</label>
+                <input type="number" min="0" max="200" step="any" value={materialConsumptionPercentage} onChange={(e) => setMaterialConsumptionPercentage(e.target.value)} style={{ ...inputStyle, width: 100 }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={labelStyle}>{t('pages.work_order.materialTransferMode')}</label>
+                <select value={materialTransferMode} onChange={(e) => setMaterialTransferMode(e.target.value)} style={{ ...inputStyle, width: 120 }}>
+                  <option value="transfer">{t('pages.work_order.transferMode')}</option>
+                  <option value="move">{t('pages.work_order.moveMode')}</option>
+                </select>
               </div>
             </div>
 
