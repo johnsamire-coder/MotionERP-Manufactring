@@ -68,7 +68,8 @@
                        "report_job_card_summary":  "Job Card Summary",
                        "report_production_analytics":  "Production Analytics",
                        "report_bom_operations_time":  "BOM Operations Time",
-                       "report_consumed_materials":  "Consumed Materials"
+                       "report_consumed_materials":  "Consumed Materials",
+                       "report_production_planning":  "Production Planning"
                    },
     "common":  {
                    "viewAll":  "View all",
@@ -1108,7 +1109,13 @@
                                   "item":  "Item",
                                   "plannedQty":  "Planned Qty",
                                   "actualUsedQty":  "Actual Used Qty",
-                                  "deviation":  "Deviation"
+                                  "deviation":  "Deviation",
+                                  "productionPlanningReportTitle":  "Production Planning Report",
+                                  "filterPlan":  "Production Plan",
+                                  "includeSubAssembly":  "Include Sub-assembly Raw Materials",
+                                  "requiredQty":  "Required Qty",
+                                  "availableQty":  "Available Qty",
+                                  "shortfall":  "Shortfall"
                               }
               },
     "footer":  {

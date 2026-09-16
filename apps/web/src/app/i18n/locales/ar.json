@@ -68,7 +68,8 @@
                        "report_job_card_summary":  "ملخص بطاقات العمل",
                        "report_production_analytics":  "تحليلات الإنتاج",
                        "report_bom_operations_time":  "زمن عمليات BOM",
-                       "report_consumed_materials":  "المواد المستهلكة"
+                       "report_consumed_materials":  "المواد المستهلكة",
+                       "report_production_planning":  "تخطيط الإنتاج"
                    },
     "common":  {
                    "viewAll":  "ط¹ط±ط¶ ط§ظ„ظƒظ„",
@@ -1108,7 +1109,13 @@
                                   "item":  "الصنف",
                                   "plannedQty":  "الكمية المخططة",
                                   "actualUsedQty":  "الكمية المستخدمة فعليا",
-                                  "deviation":  "الانحراف"
+                                  "deviation":  "الانحراف",
+                                  "productionPlanningReportTitle":  "تقرير تخطيط الإنتاج (Production Planning Report)",
+                                  "filterPlan":  "خطة الإنتاج",
+                                  "includeSubAssembly":  "تضمين خامات المجموعات الفرعية",
+                                  "requiredQty":  "الكمية المطلوبة",
+                                  "availableQty":  "الكمية المتاحة بالمخزون",
+                                  "shortfall":  "النقص"
                               }
               },
     "footer":  {
