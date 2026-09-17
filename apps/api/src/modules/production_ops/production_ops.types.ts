@@ -1,4 +1,4 @@
-export type WorkCenterStatus = 'active' | 'inactive' | 'archived';
+﻿export type WorkCenterStatus = 'active' | 'inactive' | 'archived';
 export type ProductionStepStatus = 'pending' | 'in_progress' | 'done';
 export type WorkOrderStatus = 'not_started' | 'in_progress' | 'completed' | 'stopped' | 'closed';
 export type WorkstationTypeStatus = 'active' | 'inactive';
@@ -43,6 +43,7 @@ export interface WorkOrderRecord {
   plannedStartDate: string | null; actualStartDate: string | null; actualEndDate: string | null;
   status: WorkOrderStatus;
   useMultiLevelBom: boolean; considerScrapItems: boolean; materialConsumptionPercentage: string; materialTransferMode: MaterialTransferMode;
+  trackOperations: boolean;
   createdAt: string;
 }
 export interface CreateWorkOrderInput {
@@ -50,6 +51,7 @@ export interface CreateWorkOrderInput {
   qtyToManufacture: string; sourceWarehouseId?: string; wipWarehouseId?: string; finishedGoodsWarehouseId: string;
   plannedStartDate?: string;
   useMultiLevelBom?: boolean; considerScrapItems?: boolean; materialConsumptionPercentage?: string; materialTransferMode?: MaterialTransferMode;
+  trackOperations?: boolean; operations?: WorkOrderOperationInput[];
 }
 
 export interface WorkstationTypeRecord { id: string; code: string; name: string; status: WorkstationTypeStatus; }
@@ -68,4 +70,12 @@ export interface DowntimeEntryRecord {
 }
 export interface CreateDowntimeEntryInput {
   workCenterId: string; operatorEmployeeId?: string; stopReason: string; startTime: string; remarks?: string;
+}
+
+export interface WorkOrderOperationRecord {
+  id: string; workOrderId: string; name: string; workCenterId: string | null;
+  plannedStartTime: string | null; plannedEndTime: string | null; processLossQuantity: string | null; sequentialOrder: number;
+}
+export interface WorkOrderOperationInput {
+  name: string; workCenterId?: string; plannedStartTime?: string; plannedEndTime?: string; processLossQuantity?: string;
 }

@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+﻿import { sql } from 'drizzle-orm';
 import { boolean, check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { item } from '../catalog/catalog.schema';
 import { employee } from '../hr/hr.schema';
@@ -28,11 +28,11 @@ export const workCenter = productionOpsSchema.table('work_center', {
 ]);
 
 /**
- * Work Order — ERPNext parity build (13 Sep 2026): built strictly on top of
+ * Work Order â€” ERPNext parity build (13 Sep 2026): built strictly on top of
  * an approved BOM (bomId mandatory, matching ERPNext's mandatory "BOM No"),
  * matching ERPNext's real Work Order fields for Materials/warehouses/status.
  * jobOrderReference is a Motion-specific addition kept optional from day one
- * (owner's explicit choice) — it plays no role in ERPNext's own lifecycle.
+ * (owner's explicit choice) â€” it plays no role in ERPNext's own lifecycle.
  */
 export const workOrder = productionOpsSchema.table('work_order', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -60,6 +60,7 @@ export const workOrder = productionOpsSchema.table('work_order', {
   considerScrapItems: boolean('consider_scrap_items').notNull().default(false),
   materialConsumptionPercentage: numeric('material_consumption_percentage', { precision: 6, scale: 2 }).notNull().default('100'),
   materialTransferMode: text('material_transfer_mode').notNull().default('transfer'),
+  trackOperations: boolean('track_operations').notNull().default(false),
   status: text('status').notNull().default('not_started'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -75,9 +76,9 @@ export const workOrder = productionOpsSchema.table('work_order', {
 ]);
 
 /**
- * Job Card — extended 14 Sep 2026 for ERPNext parity: workOrderId is an
+ * Job Card â€” extended 14 Sep 2026 for ERPNext parity: workOrderId is an
  * OPTIONAL link (owner's explicit choice, consistent with Work Order's own
- * optional jobOrderReference) — jobOrderReference remains mandatory and
+ * optional jobOrderReference) â€” jobOrderReference remains mandatory and
  * unchanged so existing labor-cost-by-job-order reporting keeps working.
  * forQuantity/completedQuantity/processLossQuantity/allowOverproduction and
  * operatorEmployeeId are ERPNext's real Job Card fields. Workstation Type
@@ -114,7 +115,7 @@ export const productionStep = productionOpsSchema.table('production_step', {
   index('production_step_org_node_idx').on(t.orgNodeId),
 ]);
 
-/** Time Logs — ERPNext's real per-shift execution record for a Job Card. Multiple entries per step are expected (pause/resume). */
+/** Time Logs â€” ERPNext's real per-shift execution record for a Job Card. Multiple entries per step are expected (pause/resume). */
 export const productionStepTimeLog = productionOpsSchema.table('production_step_time_log', {
   id: uuid('id').primaryKey().defaultRandom(),
   productionStepId: uuid('production_step_id')
@@ -130,7 +131,7 @@ export const productionStepTimeLog = productionOpsSchema.table('production_step_
   index('production_step_time_log_step_idx').on(t.productionStepId),
 ]);
 
-/** Workstation Type — ERPNext Setup master: a simple classification for workstations (Machine / Assembly Line / ...). */
+/** Workstation Type â€” ERPNext Setup master: a simple classification for workstations (Machine / Assembly Line / ...). */
 export const workstationType = productionOpsSchema.table('workstation_type', {
   id: uuid('id').primaryKey().defaultRandom(),
   code: text('code').notNull(),
@@ -143,7 +144,7 @@ export const workstationType = productionOpsSchema.table('workstation_type', {
   check('workstation_type_status_valid', sql`${t.status} in ('active', 'inactive')`),
 ]);
 
-/** Operation — ERPNext Setup master: a reusable operation template (name, default work center, standard time) referenced from BOM Operations and Job Cards. */
+/** Operation â€” ERPNext Setup master: a reusable operation template (name, default work center, standard time) referenced from BOM Operations and Job Cards. */
 export const operation = productionOpsSchema.table('operation', {
   id: uuid('id').primaryKey().defaultRandom(),
   code: text('code').notNull(),
@@ -166,7 +167,7 @@ export type WorkstationType = typeof workstationType.$inferSelect;
 export type Operation = typeof operation.$inferSelect;
 
 /**
- * Downtime Entry — ERPNext parity build: tracks unplanned/planned stoppage
+ * Downtime Entry â€” ERPNext parity build: tracks unplanned/planned stoppage
  * time on a Work Center, with optional operator and root-cause reason.
  * `stoppageMinutes` is nullable and computed at close time (stopTime -
  * startTime), matching ERPNext's own auto-computed "Downtime" field.
@@ -190,3 +191,26 @@ export const downtimeEntry = productionOpsSchema.table('downtime_entry', {
 ]);
 
 export type DowntimeEntry = typeof downtimeEntry.$inferSelect;
+
+/**
+ * Work Order Operations — ERPNext parity: embedded operations breakdown
+ * within a Work Order, shown when trackOperations is true. Real FK to
+ * work_order and work_center since both live in this same module (no
+ * cross-module boundary issue).
+ */
+export const workOrderOperation = productionOpsSchema.table('work_order_operation', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  workOrderId: uuid('work_order_id')
+    .notNull()
+    .references(() => workOrder.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  name: text('name').notNull(),
+  workCenterId: uuid('work_center_id').references(() => workCenter.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  plannedStartTime: timestamp('planned_start_time', { withTimezone: true }),
+  plannedEndTime: timestamp('planned_end_time', { withTimezone: true }),
+  processLossQuantity: numeric('process_loss_quantity', { precision: 24, scale: 6 }),
+  sequentialOrder: integer('sequential_order').notNull().default(0),
+}, (t) => [
+  index('work_order_operation_wo_idx').on(t.workOrderId),
+]);
+
+export type WorkOrderOperation = typeof workOrderOperation.$inferSelect;
