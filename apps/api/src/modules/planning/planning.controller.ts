@@ -1,9 +1,9 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { UseFilters } from '@nestjs/common';
-import { CreateItemLeadTimeDto, CreateMaterialRequestDto, CreateMpsDto, CreateProductionPlanDto, CreateSalesForecastDto } from './planning.dto';
+import { CreateItemLeadTimeDto, CreateMaterialRequestDto, CreateMpsDto, CreateProductionPlanDto, CreateSalesForecastDto, SetPeriodLinesDto } from './planning.dto';
 import { PlanningExceptionFilter } from './planning.exception-filter';
 import { PlanningService } from './planning.service';
-import type { ItemLeadTimeRecord, MasterProductionScheduleRecord, MaterialRequestRecord, ProductionPlanRecord, SalesForecastRecord } from './planning.types';
+import type { ItemLeadTimeRecord, MasterProductionScheduleRecord, MaterialRequestRecord, ProductionPlanRecord, SalesForecastPeriodLineRecord, SalesForecastRecord } from './planning.types';
 
 @Controller({ path: 'planning', version: '1' })
 @UseFilters(PlanningExceptionFilter)
@@ -137,5 +137,16 @@ export class PlanningController {
   @Post('master-production-schedules/:id/get-projected-quantity') @HttpCode(200)
   async mpsProjectedQuantity(@Param('id', ParseUUIDPipe) id: string): Promise<{ masterProductionSchedule: MasterProductionScheduleRecord }> {
     return { masterProductionSchedule: await this.service.getProjectedQuantity(id) };
+  }
+
+  @Get('sales-forecasts/:id/period-lines')
+  async periodLines(@Param('id', ParseUUIDPipe) id: string): Promise<{ periodLines: SalesForecastPeriodLineRecord[] }> {
+    return { periodLines: await this.service.getPeriodLines(id) };
+  }
+
+  @Post('sales-forecasts/:id/period-lines') @HttpCode(200)
+  async setPeriodLines(@Param('id', ParseUUIDPipe) id: string, @Body() dto: SetPeriodLinesDto): Promise<{ periodLines: SalesForecastPeriodLineRecord[] }> {
+    const periodLines = await this.service.setPeriodLines(id, dto.lines.map((l) => ({ periodName: l.periodName, forecastQuantity: l.forecastQuantity, plannedQuantity: l.plannedQuantity })));
+    return { periodLines };
   }
 }

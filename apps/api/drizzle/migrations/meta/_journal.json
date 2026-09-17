@@ -253,6 +253,13 @@
       "when": 1789588952850,
       "tag": "0035_condemned_veda",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1789590289898,
+      "tag": "0036_bizarre_the_captain",
+      "breakpoints": true
     }
   ]
 }

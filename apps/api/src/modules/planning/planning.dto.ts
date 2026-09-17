@@ -105,3 +105,16 @@ export class CreateMpsDto {
   @Type(() => MpsScheduleLineDto)
   scheduleLines!: MpsScheduleLineDto[];
 }
+
+export class SalesForecastPeriodLineDto {
+  @IsString() periodName!: string;
+  @IsNumberString() forecastQuantity!: string;
+  @IsOptional() @IsNumberString() plannedQuantity?: string;
+}
+
+export class SetPeriodLinesDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SalesForecastPeriodLineDto)
+  lines!: SalesForecastPeriodLineDto[];
+}
