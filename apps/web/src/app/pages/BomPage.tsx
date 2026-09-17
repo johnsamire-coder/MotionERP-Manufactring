@@ -29,6 +29,7 @@ export function BomPage(): JSX.Element {
   const [items, setItems] = useState<ItemRecord[]>([]);
   const [techDocs, setTechDocs] = useState<TechDocRecord[]>([]);
   const [boms, setBoms] = useState<BomRecord[]>([]);
+  const [operations, setOperations] = useState<OperationRecord[]>([]);
   const [orgNodes, setOrgNodes] = useState<OrgNodeTreeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,12 +56,13 @@ export function BomPage(): JSX.Element {
     setError(null);
     try {
       const lang = i18n.language.startsWith('ar') ? 'ar' : 'en';
-      const [joRes, itemsRes, docsRes, bomsRes, orgRes] = await Promise.all([
+      const [joRes, itemsRes, docsRes, bomsRes, orgRes, opsRes] = await Promise.all([
         api.get<{ jobOrders: JobOrderRecord[] }>('/sales/job-orders'),
         api.get<{ items: ItemRecord[] }>(`/catalog/items?lang=${lang}`),
         api.get<{ documents: TechDocRecord[] }>('/technical/documents'),
         api.get<{ boms: BomRecord[] }>('/technical/boms'),
         api.get<{ tree: OrgNodeTreeItem[] }>('/organization/tree'),
+        api.get<{ operations: OperationRecord[] }>('/production-ops/operations'),
       ]);
       setJobOrders(joRes.jobOrders);
       setItems(itemsRes.items);
@@ -68,6 +70,7 @@ export function BomPage(): JSX.Element {
       setBoms(bomsRes.boms);
       const flatOrgNodes = flattenOrgNodes(orgRes.tree);
       setOrgNodes(flatOrgNodes);
+      setOperations(opsRes.operations);
       if (!selectedJO && joRes.jobOrders[0]) setSelectedJO(joRes.jobOrders[0].jobOrderNumber);
       if (!bomProductItemId && itemsRes.items[0]) setBomProductItemId(itemsRes.items[0].id);
       const lastOrgNode = flatOrgNodes[flatOrgNodes.length - 1];
@@ -118,7 +121,7 @@ export function BomPage(): JSX.Element {
         orgNodeId: bomOrgNodeId,
         outputQuantity: bomOutputQty,
         isDefault: bomIsDefault,
-        lines: bomLines.map((l) => ({ componentItemId: l.itemId, quantity: l.quantity })),
+        lines: bomLines.map((l) => ({ componentItemId: l.itemId, quantity: l.quantity, operationId: l.operationId || undefined, standardTimeMinutes: l.standardTimeMinutes || undefined })),
       });
       setShowBomForm(false);
       setFormSuccess(t('pages.technical.form.success'));
@@ -201,6 +204,11 @@ export function BomPage(): JSX.Element {
                     {items.map((it) => <option key={it.id} value={it.id}>{it.name} ({it.code})</option>)}
                   </select>
                   <input type="number" min="0.01" step="any" value={line.quantity} onChange={(e) => updateBomLine(idx, 'quantity', e.target.value)} required style={{ ...inputStyle, width: 140 }} />
+                  <select value={line.operationId} onChange={(e) => updateBomLine(idx, 'operationId', e.target.value)} style={{ ...inputStyle, width: 150 }}>
+                    <option value="">{t('pages.technical.bom.noOperation')}</option>
+                    {operations.map((op) => <option key={op.id} value={op.id}>{op.name}</option>)}
+                  </select>
+                  <input type="number" min="0" step="any" placeholder={t('pages.technical.bom.standardTime')} value={line.standardTimeMinutes} onChange={(e) => updateBomLine(idx, 'standardTimeMinutes', e.target.value)} style={{ ...inputStyle, width: 110 }} />
                 </div>
               ))}
 
