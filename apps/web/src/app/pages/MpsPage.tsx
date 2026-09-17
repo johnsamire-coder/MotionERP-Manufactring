@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 
@@ -40,6 +40,7 @@ export function MpsPage(): JSX.Element {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [lines, setLines] = useState<MpsLineInput[]>([{ period: 'month', startDate: '', endDate: '', forecastQuantity: '100' }]);
+  const [mpsDistributeTotal, setMpsDistributeTotal] = useState('');
 
   async function loadAll(): Promise<void> {
     setLoading(true);
@@ -70,6 +71,13 @@ export function MpsPage(): JSX.Element {
   useEffect(() => { void loadAll(); }, [i18n.language]);
 
   function addLine(): void { setLines([...lines, { period: 'month', startDate: '', endDate: '', forecastQuantity: '100' }]); }
+
+  function distributeMpsEvenly(): void {
+    const total = Number(mpsDistributeTotal) || 0;
+    if (lines.length === 0) return;
+    const share = (total / lines.length).toFixed(4);
+    setLines(lines.map((l) => ({ ...l, forecastQuantity: share })));
+  }
 
   function updateLine(index: number, field: keyof MpsLineInput, value: string): void {
     const updated = [...lines];
@@ -161,7 +169,7 @@ export function MpsPage(): JSX.Element {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.mps.warehouse')}</label>
                 <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} style={{ ...inputStyle, minWidth: 160 }}>
-                  <option value="">—</option>
+                  <option value="">â€”</option>
                   {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
                 </select>
               </div>
@@ -191,6 +199,8 @@ export function MpsPage(): JSX.Element {
                 </div>
               ))}
               <button type="button" onClick={addLine} className="filter-button">+ {t('pages.mps.addLine')}</button>
+              <input type="number" min="0" step="any" placeholder={t('pages.mps.totalToDistribute')} value={mpsDistributeTotal} onChange={(e) => setMpsDistributeTotal(e.target.value)} style={{ ...inputStyle, width: 140, marginInlineStart: 8 }} />
+              <button type="button" onClick={distributeMpsEvenly} className="filter-button">{t('pages.mps.distributeEvenly')}</button>
             </div>
 
             <button type="submit" disabled={submitting} className="primary-button" style={{ alignSelf: 'flex-start' }}>{t('pages.technical.form.save')}</button>
@@ -211,8 +221,8 @@ export function MpsPage(): JSX.Element {
             <div className="placeholder-table__row" key={r.id}>
               <span><b>{r.mpsNumber}</b></span>
               <span>{itemLabel(r.itemId)}</span>
-              <span>{r.totalForecastQuantity ?? '—'}</span>
-              <span>{r.projectedQuantity ?? '—'}</span>
+              <span>{r.totalForecastQuantity ?? 'â€”'}</span>
+              <span>{r.projectedQuantity ?? 'â€”'}</span>
               <span><span className={`status status--${r.status === 'submitted' ? 'success' : 'neutral'}`}><i />{r.status}</span></span>
               <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 <button className="filter-button" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { void handleGetProjected(r.id); }}>{t('pages.mps.getProjected')}</button>

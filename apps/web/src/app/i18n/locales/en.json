@@ -465,7 +465,10 @@
                                                 "outputQty":  "Qty to Produce",
                                                 "activity":  "Activity (Company/Branch)",
                                                 "isDefault":  "Set as Default for this Item",
-                                                "noBom":  "No BOM for this item yet"
+                                                "noBom":  "No BOM for this item yet",
+                                                "operation":  "Operation (optional)",
+                                                "standardTime":  "Standard Time (min)",
+                                                "noOperation":  "No Operation"
                                             },
                                     "form":  {
                                                  "save":  "Save",
@@ -1048,7 +1051,9 @@
                               "status":  "Status",
                               "submit":  "Submit",
                               "getProjected":  "Get Projected Quantity",
-                              "noRecords":  "No schedules yet"
+                              "noRecords":  "No schedules yet",
+                              "distributeEvenly":  "Distribute Quantities Evenly",
+                              "totalToDistribute":  "Total To Distribute"
                           },
                   "bom_update_tool":  {
                                           "eyebrow":  "Manufacturing Tools",

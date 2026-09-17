@@ -6,7 +6,8 @@ interface JobOrderRecord { id: string; jobOrderNumber: string; customerId?: stri
 interface ItemRecord { id: string; code: string; name: string; }
 interface TechDocRecord { id: string; jobOrderReference: string; docType: string; fileRef: string; version: string; createdAt: string; }
 interface OrgNodeTreeItem { id: string; name: string; nodeType: string; children: OrgNodeTreeItem[]; }
-interface BomLineInput { itemId: string; quantity: string; }
+interface BomLineInput { itemId: string; quantity: string; operationId: string; standardTimeMinutes: string; }
+interface OperationRecord { id: string; code: string; name: string; }
 interface BomLineRecord { id: string; componentItemId: string; quantity: string; lineNumber: number; }
 interface BomRecord {
   id: string; productItemId: string; orgNodeId: string; version: number; outputQuantity: string;
@@ -47,7 +48,7 @@ export function BomPage(): JSX.Element {
   const [bomOrgNodeId, setBomOrgNodeId] = useState('');
   const [bomOutputQty, setBomOutputQty] = useState('1');
   const [bomIsDefault, setBomIsDefault] = useState(true);
-  const [bomLines, setBomLines] = useState<BomLineInput[]>([{ itemId: '', quantity: '1' }]);
+  const [bomLines, setBomLines] = useState<BomLineInput[]>([{ itemId: '', quantity: '1', operationId: '', standardTimeMinutes: '' }]);
 
   async function loadAll(): Promise<void> {
     setLoading(true);
@@ -72,7 +73,7 @@ export function BomPage(): JSX.Element {
       const lastOrgNode = flatOrgNodes[flatOrgNodes.length - 1];
       if (!bomOrgNodeId && lastOrgNode) setBomOrgNodeId(lastOrgNode.id);
       if (bomLines[0] && !bomLines[0].itemId && itemsRes.items[0]) {
-        setBomLines([{ itemId: itemsRes.items[0].id, quantity: '1' }]);
+        setBomLines([{ itemId: itemsRes.items[0].id, quantity: '1', operationId: '', standardTimeMinutes: '' }]);
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to load technical data');
@@ -96,7 +97,7 @@ export function BomPage(): JSX.Element {
 
   function addBomLine(): void {
     const defaultItem = items[0]?.id ?? '';
-    setBomLines([...bomLines, { itemId: defaultItem, quantity: '1' }]);
+    setBomLines([...bomLines, { itemId: defaultItem, quantity: '1', operationId: '', standardTimeMinutes: '' }]);
   }
 
   function updateBomLine(index: number, field: keyof BomLineInput, value: string): void {
