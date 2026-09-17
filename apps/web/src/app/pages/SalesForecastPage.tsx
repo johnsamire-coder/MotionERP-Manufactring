@@ -7,6 +7,8 @@ interface ItemCategoryRecord { id: string; code: string; name: string; }
 interface OrgNodeTreeItem { id: string; name: string; nodeType: string; children: OrgNodeTreeItem[]; }
 interface SfLineInput { itemId: string; forecastQuantity: string; }
 interface SfLineRecord { id: string; itemId: string; forecastQuantity: string; }
+interface PeriodLineInput { periodName: string; forecastQuantity: string; }
+interface PeriodLineRecord { id: string; periodName: string; forecastQuantity: string; }
 interface SalesForecastRecord {
   id: string; forecastNumber: string; orgNodeId: string; itemCategoryId: string;
   fromDate: string; toDate: string; forecastPeriodicity: string; status: string; lines: SfLineRecord[];
@@ -40,6 +42,11 @@ export function SalesForecastPage(): JSX.Element {
   const [toDate, setToDate] = useState('');
   const [periodicity, setPeriodicity] = useState('quarterly');
   const [lines, setLines] = useState<SfLineInput[]>([{ itemId: '', forecastQuantity: '1' }]);
+  const [periodModalFor, setPeriodModalFor] = useState<string | null>(null);
+  const [periodRows, setPeriodRows] = useState<PeriodLineInput[]>([]);
+  const [periodSubmitting, setPeriodSubmitting] = useState(false);
+  const [periodError, setPeriodError] = useState<string | null>(null);
+  const [distributeTotal, setDistributeTotal] = useState('');
 
   async function loadAll(): Promise<void> {
     setLoading(true);
@@ -107,6 +114,41 @@ export function SalesForecastPage(): JSX.Element {
       setFormSuccess(t('pages.sales_forecast.submit'));
       await loadAll();
     } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
+  }
+
+  async function openPeriodModal(forecastId: string): Promise<void> {
+    setPeriodModalFor(forecastId);
+    setPeriodError(null);
+    try {
+      const res = await api.get<{ periodLines: PeriodLineRecord[] }>(`/planning/sales-forecasts/${forecastId}/period-lines`);
+      setPeriodRows(res.periodLines.length > 0 ? res.periodLines.map((p) => ({ periodName: p.periodName, forecastQuantity: p.forecastQuantity })) : [{ periodName: '', forecastQuantity: '0' }]);
+    } catch { setPeriodRows([{ periodName: '', forecastQuantity: '0' }]); }
+  }
+
+  function addPeriodRow(): void { setPeriodRows([...periodRows, { periodName: '', forecastQuantity: '0' }]); }
+  function updatePeriodRow(idx: number, field: keyof PeriodLineInput, value: string): void {
+    const updated = [...periodRows];
+    const current = updated[idx];
+    if (current) { updated[idx] = { ...current, [field]: value }; setPeriodRows(updated); }
+  }
+  function removePeriodRow(idx: number): void { setPeriodRows(periodRows.filter((_, i) => i !== idx)); }
+
+  function distributeEvenly(): void {
+    const total = Number(distributeTotal) || 0;
+    if (periodRows.length === 0) return;
+    const share = (total / periodRows.length).toFixed(4);
+    setPeriodRows(periodRows.map((r) => ({ ...r, forecastQuantity: share })));
+  }
+
+  async function savePeriodLines(): Promise<void> {
+    if (!periodModalFor) return;
+    setPeriodSubmitting(true); setPeriodError(null);
+    try {
+      await api.post(`/planning/sales-forecasts/${periodModalFor}/period-lines`, {
+        lines: periodRows.filter((r) => r.periodName).map((r) => ({ periodName: r.periodName, forecastQuantity: r.forecastQuantity })),
+      });
+      setPeriodModalFor(null);
+    } catch (err) { setPeriodError(err instanceof ApiError ? err.message : 'Failed'); } finally { setPeriodSubmitting(false); }
   }
 
   const itemLabel = (id: string): string => items.find((it) => it.id === id)?.name ?? id;
@@ -219,11 +261,43 @@ export function SalesForecastPage(): JSX.Element {
                     {t('pages.sales_forecast.submit')}
                   </button>
                 )}
+                <button className="filter-button" style={{ fontSize: 12, padding: '4px 10px', marginInlineStart: 6 }} onClick={() => { void openPeriodModal(sf.id); }}>
+                  {t('pages.sales_forecast.manageDistribution')}
+                </button>
               </span>
             </div>
           ))}
         </div>
       </article>
+
+      {periodModalFor && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ background: '#fff', padding: 24, borderRadius: 8, width: 460, maxHeight: '80vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3>{t('pages.sales_forecast.periodDistribution')}</h3>
+              <button className="filter-button" onClick={() => setPeriodModalFor(null)}>x</button>
+            </div>
+
+            {periodError && <p style={{ color: '#b91c1c', fontSize: 13 }}>{periodError}</p>}
+
+            {periodRows.map((row, idx) => (
+              <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input placeholder={t('pages.sales_forecast.periodName')} value={row.periodName} onChange={(e) => updatePeriodRow(idx, 'periodName', e.target.value)} style={{ ...inputStyle, flex: 2 }} />
+                <input type='number' min='0' step='any' value={row.forecastQuantity} onChange={(e) => updatePeriodRow(idx, 'forecastQuantity', e.target.value)} style={{ ...inputStyle, width: 100 }} />
+                <button type='button' className="filter-button" onClick={() => removePeriodRow(idx)}>x</button>
+              </div>
+            ))}
+            <button type='button' onClick={addPeriodRow} className="filter-button">+ {t('pages.sales_forecast.addPeriod')}</button>
+
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: '#f8fafc', padding: 10, borderRadius: 6 }}>
+              <input type='number' min='0' step='any' placeholder="Total" value={distributeTotal} onChange={(e) => setDistributeTotal(e.target.value)} style={{ ...inputStyle, width: 100 }} />
+              <button type='button' className="filter-button" onClick={distributeEvenly}>{t('pages.sales_forecast.distributeEvenly')}</button>
+            </div>
+
+            <button type='button' disabled={periodSubmitting} className="primary-button" onClick={() => { void savePeriodLines(); }}>{t('pages.sales_forecast.savePeriods')}</button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
