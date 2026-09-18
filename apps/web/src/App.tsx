@@ -32,13 +32,15 @@ import { WorkOrderPage } from './app/pages/WorkOrderPage';
 import { SetupPage } from './app/pages/SetupPage';
 import { ProductionPlanPage } from './app/pages/ProductionPlanPage';
 import { ItemPricePage } from './app/pages/ItemPricePage';
+import { StockEntryPage } from './app/pages/StockEntryPage';
+import { StockLedgerPage } from './app/pages/StockLedgerPage';
 import { QuotationPage } from './app/pages/QuotationPage';
 type PageKey =
   | 'dashboard' | 'organization'
   | 'manufacturing' | 'planning' | 'sales_forecast' | 'material_request_mp' | 'item_lead_time' | 'downtime_entry' | 'mps' | 'bom_update_tool' | 'bom_creator' | 'report_bom_search' | 'report_work_order_summary' | 'report_downtime_analysis' | 'report_job_card_summary' | 'report_production_analytics' | 'report_bom_operations_time' | 'report_consumed_materials' | 'report_production_planning' | 'report_forecasting' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
   | 'selling' | 'customer' | 'quotation' | 'sales_order' | 'delivery' | 'sales_invoice' | 'sales_partner' | 'sales_person'
   | 'buying' | 'supplier' | 'material' | 'request_for_quotation' | 'supplier_quotation' | 'purchase_order' | 'purchase_receipt' | 'purchase_invoice'
-  | 'stock' | 'stock_entry' | 'stock_reconciliation' | 'serial_no' | 'batch' | 'item_price' | 'price_list'
+  | 'stock' | 'stock_entry' | 'stock_ledger' | 'stock_reconciliation' | 'serial_no' | 'batch' | 'item_price' | 'price_list'
   | 'accounts' | 'payment_entry' | 'balance_sheet' | 'profit_and_loss'
   | 'hr' | 'attendance' | 'leave_application'
   | 'auth'
@@ -100,6 +102,8 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
     key: 'stock', icon: 'box',
     docs: [
       { key: 'item_price', icon: 'chart' },
+      { key: 'stock_entry', icon: 'box' },
+      { key: 'stock_ledger', icon: 'layers' },
       { key: 'stock_entry', icon: 'box' },
       { key: 'stock_reconciliation', icon: 'check' },
       { key: 'serial_no', icon: 'layers' },
@@ -170,6 +174,8 @@ const DEDICATED_PAGES: Partial<Record<PageKey, () => JSX.Element>> = {
   operation: SetupPage,
   quotation: QuotationPage,
   item_price: ItemPricePage,
+  stock_entry: StockEntryPage,
+  stock_ledger: StockLedgerPage,
   selling: SalesPage,
   delivery: DeliveryPage,
   material: MaterialPage,

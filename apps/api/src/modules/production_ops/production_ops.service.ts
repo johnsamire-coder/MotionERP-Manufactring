@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { SalesService } from '../sales/sales.service';
 import { TechnicalService } from '../technical/technical.service';
+import { InventoryService } from '../inventory/inventory.service';
 import { ProductionOpsNotFoundError, ProductionOpsValidationError } from './production_ops.errors';
 import { ProductionOpsRepository } from './production_ops.repository';
 import type { JobOrderRecord } from '../sales/sales.types';
@@ -238,4 +239,5 @@ function normalizeName(raw: unknown): string {
   if (trimmed.length === 0) throw new ProductionOpsValidationError('name must not be blank');
   return trimmed;
 }
+
 

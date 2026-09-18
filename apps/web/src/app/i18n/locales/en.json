@@ -33,7 +33,6 @@
     "purchase_order": "Purchase Order",
     "purchase_receipt": "Purchase Receipt",
     "purchase_invoice": "Purchase Invoice",
-    "stock_entry": "Stock Entry",
     "stock_reconciliation": "Stock Reconciliation",
     "serial_no": "Serial No",
     "batch": "Batch",
@@ -72,7 +71,9 @@
     "stock": "Stock",
     "accounts": "Accounts",
     "quotation": "Quotation",
-    "item_price": "Item Price"
+    "item_price": "Item Price",
+    "stock_entry": "Stock Entry",
+    "stock_ledger": "Stock Ledger"
   },
   "common": {
     "viewAll": "View all",
