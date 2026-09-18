@@ -39,6 +39,10 @@ import { PurchaseOrderPage } from './app/pages/PurchaseOrderPage';
 import { PurchaseReceiptPage } from './app/pages/PurchaseReceiptPage';
 import { PaymentEntryPage } from './app/pages/PaymentEntryPage';
 import { StockReconciliationPage } from './app/pages/StockReconciliationPage';
+import { ProfitAndLossPage } from './app/pages/ProfitAndLossPage';
+import { BalanceSheetPage } from './app/pages/BalanceSheetPage';
+import { AttendancePage } from './app/pages/AttendancePage';
+import { LeaveApplicationPage } from './app/pages/LeaveApplicationPage';
 import { QuotationPage } from './app/pages/QuotationPage';
 type PageKey =
   | 'dashboard' | 'organization'
@@ -46,8 +50,8 @@ type PageKey =
   | 'selling' | 'customer' | 'quotation' | 'sales_order' | 'delivery' | 'sales_invoice_page' | 'sales_invoice' | 'sales_partner' | 'sales_person'
   | 'buying' | 'supplier' | 'material' | 'request_for_quotation' | 'supplier_quotation' | 'purchase_order_page' | 'purchase_order' | 'purchase_receipt_page' | 'purchase_receipt' | 'purchase_invoice'
   | 'stock' | 'stock_entry' | 'stock_ledger' | 'stock_reconciliation_page' | 'stock_reconciliation' | 'serial_no' | 'batch' | 'item_price' | 'price_list'
-  | 'accounts' | 'payment_entry_page' | 'payment_entry' | 'balance_sheet' | 'profit_and_loss'
-  | 'hr' | 'attendance' | 'leave_application'
+  | 'accounts' | 'payment_entry_page' | 'payment_entry' | 'balance_sheet_page' | 'balance_sheet_page' | 'balance_sheet' | 'profit_and_loss_page' | 'profit_and_loss'
+  | 'hr' | 'attendance_page' | 'attendance_page' | 'attendance' | 'leave_application_page' | 'leave_application'
   | 'auth'
   | 'reports' | 'settings';
 type IconName =
@@ -120,14 +124,14 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
     key: 'accounts', icon: 'building',
     docs: [
       { key: 'payment_entry_page', icon: 'chart' },
-      { key: 'balance_sheet', icon: 'chart' },
-      { key: 'profit_and_loss', icon: 'chart' },
+      { key: 'balance_sheet_page', icon: 'chart' },
+      { key: 'profit_and_loss_page', icon: 'chart' },
     ],
   },
   {
     key: 'hr', icon: 'building',
     docs: [
-      { key: 'attendance', icon: 'clock' },
+      { key: 'attendance_page', icon: 'clock' },
       { key: 'leave_application', icon: 'clock' },
     ],
   },
@@ -186,6 +190,10 @@ const DEDICATED_PAGES: Partial<Record<PageKey, () => JSX.Element>> = {
   purchase_receipt_page: PurchaseReceiptPage,
   payment_entry_page: PaymentEntryPage,
   stock_reconciliation_page: StockReconciliationPage,
+  profit_and_loss_page: ProfitAndLossPage,
+  balance_sheet_page: BalanceSheetPage,
+  attendance_page: AttendancePage,
+  leave_application_page: LeaveApplicationPage,
   selling: SalesPage,
   delivery: DeliveryPage,
   material: MaterialPage,

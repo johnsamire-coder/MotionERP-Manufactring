@@ -78,7 +78,11 @@
     "purchase_order_page": "Purchase Order",
     "purchase_receipt_page": "Purchase Receipt",
     "payment_entry_page": "Payment Entry",
-    "stock_reconciliation_page": "Stock Reconciliation"
+    "stock_reconciliation_page": "Stock Reconciliation",
+    "profit_and_loss_page": "Profit and Loss",
+    "balance_sheet_page": "Balance Sheet",
+    "attendance_page": "Attendance",
+    "leave_application_page": "Leave Application"
   },
   "common": {
     "viewAll": "View all",

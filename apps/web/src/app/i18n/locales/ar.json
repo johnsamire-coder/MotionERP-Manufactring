@@ -78,7 +78,11 @@
     "purchase_order_page": "أمر الشراء",
     "purchase_receipt_page": "إذن استلام المشتريات",
     "payment_entry_page": "قيد الدفع",
-    "stock_reconciliation_page": "تسوية المخزون"
+    "stock_reconciliation_page": "تسوية المخزون",
+    "profit_and_loss_page": "الأرباح والخسائر",
+    "balance_sheet_page": "الميزانية العمومية",
+    "attendance_page": "حضور وانصراف",
+    "leave_application_page": "طلبات الإجازات"
   },
   "common": {
     "viewAll": "ط·آ¹ط·آ±ط·آ¶ ط·آ§ط¸â€‍ط¸ئ’ط¸â€‍",
