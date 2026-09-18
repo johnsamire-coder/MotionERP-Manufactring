@@ -82,7 +82,9 @@
     "profit_and_loss_page": "Profit and Loss",
     "balance_sheet_page": "Balance Sheet",
     "attendance_page": "Attendance",
-    "leave_application_page": "Leave Application"
+    "leave_application_page": "Leave Application",
+    "overhead_allocation_page": "Overhead Allocation",
+    "overhead_allocation": "Overhead Allocation"
   },
   "common": {
     "viewAll": "View all",

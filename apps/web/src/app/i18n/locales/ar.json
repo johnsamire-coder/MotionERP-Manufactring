@@ -82,7 +82,9 @@
     "profit_and_loss_page": "الأرباح والخسائر",
     "balance_sheet_page": "الميزانية العمومية",
     "attendance_page": "حضور وانصراف",
-    "leave_application_page": "طلبات الإجازات"
+    "leave_application_page": "طلبات الإجازات",
+    "overhead_allocation_page": "توزيع المصروفات العامة والتكاليف",
+    "overhead_allocation": "توزيع المصروفات العامة والتكاليف"
   },
   "common": {
     "viewAll": "ط·آ¹ط·آ±ط·آ¶ ط·آ§ط¸â€‍ط¸ئ’ط¸â€‍",

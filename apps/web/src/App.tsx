@@ -44,6 +44,7 @@ import { BalanceSheetPage } from './app/pages/BalanceSheetPage';
 import { AttendancePage } from './app/pages/AttendancePage';
 import { LeaveApplicationPage } from './app/pages/LeaveApplicationPage';
 import { QuotationPage } from './app/pages/QuotationPage';
+import { OverheadAllocationPage } from './app/pages/OverheadAllocationPage';
 type PageKey =
   | 'dashboard' | 'organization'
   | 'manufacturing' | 'planning' | 'sales_forecast' | 'material_request_mp' | 'item_lead_time' | 'downtime_entry' | 'mps' | 'bom_update_tool' | 'bom_creator' | 'report_bom_search' | 'report_work_order_summary' | 'report_downtime_analysis' | 'report_job_card_summary' | 'report_production_analytics' | 'report_bom_operations_time' | 'report_consumed_materials' | 'report_production_planning' | 'report_forecasting' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
@@ -51,6 +52,7 @@ type PageKey =
   | 'buying' | 'supplier' | 'material' | 'request_for_quotation' | 'supplier_quotation' | 'purchase_order_page' | 'purchase_order' | 'purchase_receipt_page' | 'purchase_receipt' | 'purchase_invoice'
   | 'stock' | 'stock_entry' | 'stock_ledger' | 'stock_reconciliation_page' | 'stock_reconciliation' | 'serial_no' | 'batch' | 'item_price' | 'price_list'
   | 'accounts' | 'payment_entry_page' | 'payment_entry' | 'balance_sheet_page' | 'balance_sheet_page' | 'balance_sheet' | 'profit_and_loss_page' | 'profit_and_loss'
+  | 'overhead_allocation_page' | 'overhead_allocation'
   | 'hr' | 'attendance_page' | 'attendance_page' | 'attendance' | 'leave_application_page' | 'leave_application'
   | 'auth'
   | 'reports' | 'settings';
@@ -126,6 +128,7 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
       { key: 'payment_entry_page', icon: 'chart' },
       { key: 'balance_sheet_page', icon: 'chart' },
       { key: 'profit_and_loss_page', icon: 'chart' },
+        { key: 'overhead_allocation_page', icon: 'chart' },
     ],
   },
   {
@@ -191,6 +194,7 @@ const DEDICATED_PAGES: Partial<Record<PageKey, () => JSX.Element>> = {
   payment_entry_page: PaymentEntryPage,
   stock_reconciliation_page: StockReconciliationPage,
   profit_and_loss_page: ProfitAndLossPage,
+    overhead_allocation_page: OverheadAllocationPage,
   balance_sheet_page: BalanceSheetPage,
   attendance_page: AttendancePage,
   leave_application_page: LeaveApplicationPage,
