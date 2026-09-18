@@ -906,7 +906,11 @@
       "workCenter": "Work Center",
       "processLoss": "Process Loss",
       "addOperation": "Add Operation",
-      "noWorkCenter": "No Work Center"
+      "noWorkCenter": "No Work Center",
+      "kpiTotal": "Total Orders",
+      "kpiInProgress": "In Progress",
+      "kpiCompleted": "Completed",
+      "kpiPlannedQty": "Total Planned Qty"
     },
     "setup": {
       "eyebrow": "Manufacturing Setup",
@@ -976,7 +980,17 @@
       "createWorkOrders": "Create Work Orders",
       "noPlans": "No production plans yet",
       "noBomWarning": "No approved BOM exists for this item",
-      "noWarehouseWarning": "Select a finished goods warehouse before saving"
+      "noWarehouseWarning": "Select a finished goods warehouse before saving",
+      "getItemsFrom": "Get Items From...",
+      "fromMaterialRequest": "Material Request",
+      "fromJobOrder": "Job Order",
+      "fromAllBoms": "All Items with Approved BOMs",
+      "selectMatReq": "Select Material Request to pull items from",
+      "materialRequirements": "Material Requirements",
+      "requiredQty": "Required Qty",
+      "availableStock": "Available Stock",
+      "shortage": "Shortage",
+      "sufficientStock": "Stock is sufficient, no shortage"
     },
     "material_request": {
       "eyebrow": "Material Planning",
@@ -1018,7 +1032,15 @@
       "addSupplier": "Add Supplier",
       "supplierName": "Supplier Name",
       "supplierLeadDays": "Lead Time (Days)",
-      "noRecords": "No item lead time records yet"
+      "noRecords": "No item lead time records yet",
+      "capacityPlanning": "Capacity & Load Planning Analysis",
+      "targetQty": "Target Quantity",
+      "workCenter": "Target Work Center",
+      "totalTimeRequired": "Total Time Required",
+      "totalLaborCost": "Projected Labor Cost",
+      "loadAnalysis": "Capacity Load Analysis",
+      "safeLoad": "✓ Safe (Within daily shift capacity)",
+      "overloadWarning": "⚠ Overload! Exceeds standard daily shift (8 hrs). Plan overtime or distribute load."
     },
     "downtime_entry": {
       "eyebrow": "Plant Floor Control",

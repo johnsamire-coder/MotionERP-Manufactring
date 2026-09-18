@@ -5,6 +5,7 @@ import { api, ApiError } from '../api/client';
 interface ItemRecord { id: string; code: string; name: string; }
 interface OrgNodeTreeItem { id: string; name: string; nodeType: string; children: OrgNodeTreeItem[]; }
 interface SupplierLeadInput { supplierName: string; leadTimeDays: string; }
+interface WorkCenterRecord { id: string; code: string; name: string; ratePerMinute?: string; }
 interface SupplierLeadRecord { id: string; supplierName: string; leadTimeDays: string; }
 interface ItemLeadTimeRecord {
   id: string; itemId: string; orgNodeId: string;
@@ -27,6 +28,10 @@ export function ItemLeadTimePage(): JSX.Element {
   const [items, setItems] = useState<ItemRecord[]>([]);
   const [orgNodes, setOrgNodes] = useState<OrgNodeTreeItem[]>([]);
   const [records, setRecords] = useState<ItemLeadTimeRecord[]>([]);
+  const [workCenters, setWorkCenters] = useState<WorkCenterRecord[]>([]);
+  const [calcItemId, setCalcItemId] = useState('');
+  const [calcQty, setCalcQty] = useState('100');
+  const [calcWcId, setCalcWcId] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -49,16 +54,20 @@ export function ItemLeadTimePage(): JSX.Element {
     setError(null);
     try {
       const lang = i18n.language.startsWith('ar') ? 'ar' : 'en';
-      const [itemsRes, orgRes, iltRes] = await Promise.all([
+      const [itemsRes, orgRes, iltRes, wcRes] = await Promise.all([
         api.get<{ items: ItemRecord[] }>(`/catalog/items?lang=${lang}`),
         api.get<{ tree: OrgNodeTreeItem[] }>('/organization/tree'),
         api.get<{ itemLeadTimes: ItemLeadTimeRecord[] }>('/planning/item-lead-times'),
+        api.get<{ workCenters: WorkCenterRecord[] }>('/production-ops/work-centers').catch(() => ({ workCenters: [] })),
       ]);
       setItems(itemsRes.items);
       const flatOrgNodes = flattenOrgNodes(orgRes.tree);
       setOrgNodes(flatOrgNodes);
       setRecords(iltRes.itemLeadTimes);
+      setWorkCenters(wcRes.workCenters || []);
       if (!itemId && itemsRes.items[0]) setItemId(itemsRes.items[0].id);
+      if (!calcItemId && itemsRes.items[0]) setCalcItemId(itemsRes.items[0].id);
+      if (!calcWcId && wcRes.workCenters && wcRes.workCenters[0]) setCalcWcId(wcRes.workCenters[0].id);
       const lastOrgNode = flatOrgNodes[flatOrgNodes.length - 1];
       if (!orgNodeId && lastOrgNode) setOrgNodeId(lastOrgNode.id);
     } catch (err) {
@@ -215,6 +224,87 @@ export function ItemLeadTimePage(): JSX.Element {
             </div>
           ))}
         </div>
+      </article>
+
+      {/* Capacity Planning & Load Analysis Card - ERPNext Parity */}
+      <article className="panel module-panel" style={{ marginTop: 24, border: '1px solid #cbd5e1', borderRadius: 8, padding: 20, background: '#f8fafc' }}>
+        <div className="panel__head" style={{ marginBottom: 16 }}>
+          <div>
+            <span className="panel__eyebrow" style={{ color: '#0369a1', fontWeight: 'bold' }}>⚡ ERPNext Parity Feature</span>
+            <h2 style={{ fontSize: 18, margin: '4px 0 0' }}>{t('pages.item_lead_time.capacityPlanning')}</h2>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={labelStyle}>{t('pages.item_lead_time.item')}</label>
+            <select value={calcItemId} onChange={(e) => setCalcItemId(e.target.value)} style={{ ...inputStyle, width: '100%' }}>
+              {items.map((it) => (
+                <option key={it.id} value={it.id}>{it.name} ({it.code})</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={labelStyle}>{t('pages.item_lead_time.targetQty')}</label>
+            <input
+              type="number"
+              min="1"
+              step="any"
+              value={calcQty}
+              onChange={(e) => setCalcQty(e.target.value)}
+              style={{ ...inputStyle, width: '100%' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={labelStyle}>{t('pages.item_lead_time.workCenter')}</label>
+            <select value={calcWcId} onChange={(e) => setCalcWcId(e.target.value)} style={{ ...inputStyle, width: '100%' }}>
+              <option value="">— {t('pages.work_order.noWorkCenter')} —</option>
+              {workCenters.map((wc) => (
+                <option key={wc.id} value={wc.id}>{wc.name} ({wc.code})</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {(() => {
+          const selectedRecord = records.find((r) => r.itemId === calcItemId);
+          const selectedWc = workCenters.find((w) => w.id === calcWcId);
+          const qty = parseFloat(calcQty || '0');
+          const mfgHoursPerUnit = parseFloat(selectedRecord?.manufacturingTimeHours || '0.5');
+          const bufferDays = parseFloat(selectedRecord?.manufacturingBufferDays || '0');
+          const totalHours = (qty * mfgHoursPerUnit) + (bufferDays * 8);
+          const totalMinutes = totalHours * 60;
+          const ratePerMin = parseFloat(selectedWc?.ratePerMinute || '2.5');
+          const totalCost = totalMinutes * ratePerMin;
+          const isOverloaded = totalHours > 8;
+
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+              <div style={{ background: '#fff', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 12, color: '#64748b' }}>{t('pages.item_lead_time.totalTimeRequired')}</span>
+                <div style={{ fontSize: 20, fontWeight: 'bold', color: '#0f172a', marginTop: 4 }}>
+                  {totalHours.toFixed(1)} hrs <span style={{ fontSize: 13, color: '#64748b' }}>({totalMinutes.toFixed(0)} mins)</span>
+                </div>
+              </div>
+
+              <div style={{ background: '#fff', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 12, color: '#64748b' }}>{t('pages.item_lead_time.totalLaborCost')}</span>
+                <div style={{ fontSize: 20, fontWeight: 'bold', color: '#0369a1', marginTop: 4 }}>
+                  {totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
+                </div>
+              </div>
+
+              <div style={{ background: isOverloaded ? '#fef2f2' : '#f0fdf4', padding: 16, borderRadius: 8, border: '1px solid ' + (isOverloaded ? '#fecaca' : '#bbf7d0') }}>
+                <span style={{ fontSize: 12, color: isOverloaded ? '#991b1b' : '#166534', fontWeight: 'bold' }}>{t('pages.item_lead_time.loadAnalysis')}</span>
+                <div style={{ fontSize: 13, fontWeight: '500', color: isOverloaded ? '#b91c1c' : '#15803d', marginTop: 4 }}>
+                  {isOverloaded ? t('pages.item_lead_time.overloadWarning') : t('pages.item_lead_time.safeLoad')}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </article>
     </section>
   );

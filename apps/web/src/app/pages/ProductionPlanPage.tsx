@@ -25,6 +25,34 @@ interface BomRecord {
   status: string;
   isDefault: boolean;
 }
+interface MaterialRequestLineRecord {
+  id: string;
+  itemId: string;
+  quantity: string;
+  warehouseId: string | null;
+}
+interface MaterialRequestRecord {
+  id: string;
+  requestNumber: string;
+  purpose: string;
+  status: string;
+  lines?: MaterialRequestLineRecord[];
+}
+interface StockBalanceRecord {
+  itemId: string;
+  warehouseId: string;
+  quantityOnHand: string;
+}
+interface BomLineRecord {
+  componentItemId: string;
+  quantity: string;
+}
+interface MaterialRequirement {
+  itemId: string;
+  requiredQty: number;
+  availableStock: number;
+  shortage: number;
+}
 interface ProductionPlanItemInput {
   productItemId: string;
   bomId: string;
@@ -78,6 +106,10 @@ export function ProductionPlanPage(): JSX.Element {
   const [planBy, setPlanBy] = useState('job_order');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [matRequests, setMatRequests] = useState<MaterialRequestRecord[]>([]);
+  const [showMatReqModal, setShowMatReqModal] = useState<ProductionPlanRecord | null>(null);
+  const [calculatedReqs, setCalculatedReqs] = useState<MaterialRequirement[]>([]);
+  const [loadingReqs, setLoadingReqs] = useState(false);
   const [lines, setLines] = useState<ProductionPlanItemInput[]>([
     { productItemId: '', bomId: '', qtyToPlan: '1', warehouseId: '' },
   ]);
@@ -129,6 +161,88 @@ export function ProductionPlanPage(): JSX.Element {
 
   function approvedBomsForItem(productItemId: string): BomRecord[] {
     return boms.filter((bom) => bom.productItemId === productItemId && bom.status === 'approved');
+  }
+
+  async function pullFromMaterialRequest(mrId: string): Promise<void> {
+    if (!mrId) return;
+    try {
+      const res = await api.get<{ materialRequest: MaterialRequestRecord }>('/planning/material-requests/' + mrId);
+      const mr = res.materialRequest;
+      if (mr && mr.lines && mr.lines.length > 0) {
+        const newLines: ProductionPlanItemInput[] = mr.lines.map((l) => {
+          const approvedBom = approvedBomsForItem(l.itemId)[0];
+          return {
+            productItemId: l.itemId,
+            bomId: approvedBom?.id ?? '',
+            qtyToPlan: l.quantity,
+            warehouseId: l.warehouseId || warehouses[0]?.id || '',
+          };
+        });
+        setLines(newLines.length > 0 ? newLines : lines);
+        setFormSuccess(t('pages.technical.form.success'));
+      }
+    } catch {
+      setFormError('Failed to pull items from Material Request');
+    }
+  }
+
+  function pullAllApprovedBomItems(): void {
+    const uniqueItemIds = Array.from(new Set(boms.filter((b) => b.status === 'approved').map((b) => b.productItemId)));
+    if (uniqueItemIds.length === 0) return;
+    const newLines: ProductionPlanItemInput[] = uniqueItemIds.map((itemId) => {
+      const defaultBom = boms.find((b) => b.productItemId === itemId && b.status === 'approved' && b.isDefault) || approvedBomsForItem(itemId)[0];
+      return {
+        productItemId: itemId,
+        bomId: defaultBom?.id ?? '',
+        qtyToPlan: '10',
+        warehouseId: warehouses[0]?.id || '',
+      };
+    });
+    setLines(newLines);
+  }
+
+  async function openMaterialRequirements(plan: ProductionPlanRecord): Promise<void> {
+    setShowMatReqModal(plan);
+    setLoadingReqs(true);
+    setCalculatedReqs([]);
+    try {
+      // 1. جلب بنود الـ BOMs والأرصدة
+      const [bomsDetailsRes, stockRes] = await Promise.all([
+        Promise.all(plan.items.map((item) => api.get<{ bom: { lines: BomLineRecord[] } }>('/technical/boms/' + item.bomId).catch(() => ({ bom: { lines: [] } })))),
+        api.get<{ balances: StockBalanceRecord[] }>('/inventory/stock-balances').catch(() => ({ balances: [] })),
+      ]);
+
+      // 2. تجميع الاحتياجات الإجمالية لكل مادة خام
+      const reqMap = new Map<string, number>();
+      plan.items.forEach((planItem, idx) => {
+        const bomDetail = bomsDetailsRes[idx];
+        const planQty = parseFloat(planItem.qtyToPlan || '0');
+        if (bomDetail?.bom?.lines) {
+          bomDetail.bom.lines.forEach((line) => {
+            const lineQty = parseFloat(line.quantity || '0');
+            const totalRequired = planQty * lineQty;
+            reqMap.set(line.componentItemId, (reqMap.get(line.componentItemId) || 0) + totalRequired);
+          });
+        }
+      });
+
+      // 3. مطابقة الاحتياجات مع الأرصدة المتوفرة بالمخازن
+      const results: MaterialRequirement[] = [];
+      const stockBalances = stockRes.balances || [];
+      reqMap.forEach((requiredQty, itemId) => {
+        const availableStock = stockBalances
+          .filter((sb) => sb.itemId === itemId)
+          .reduce((sum, sb) => sum + parseFloat(sb.quantityOnHand || '0'), 0);
+        const shortage = Math.max(0, requiredQty - availableStock);
+        results.push({ itemId, requiredQty, availableStock, shortage });
+      });
+
+      setCalculatedReqs(results);
+    } catch {
+      setCalculatedReqs([]);
+    } finally {
+      setLoadingReqs(false);
+    }
   }
 
   function addLine(): void {
@@ -504,6 +618,14 @@ export function ProductionPlanPage(): JSX.Element {
                     </span>
                   </span>
                   <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="filter-button"
+                      style={{ fontSize: 12, padding: '4px 8px', background: '#f1f5f9' }}
+                      onClick={() => { void openMaterialRequirements(plan); }}
+                    >
+                      📊 {t('pages.production_plan.materialRequirements')}
+                    </button>
                     {plan.status === 'draft' && (
                       <button
                         className="primary-button"

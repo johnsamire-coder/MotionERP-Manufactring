@@ -122,6 +122,11 @@ export function WorkOrderPage(): JSX.Element {
   const labelStyle = { fontSize: 12, color: '#64748b' };
   const statusTone = (s: string): string => s === 'completed' || s === 'closed' ? 'success' : s === 'stopped' ? 'warning' : s === 'in_progress' ? 'warning' : 'neutral';
 
+  const kpiTotal = workOrders.length;
+  const kpiInProgress = workOrders.filter((w) => w.status === 'in_progress').length;
+  const kpiCompleted = workOrders.filter((w) => w.status === 'completed' || w.status === 'closed').length;
+  const kpiPlannedQty = workOrders.reduce((sum, w) => sum + parseFloat(w.qtyToManufacture || '0'), 0);
+
   if (loading) return <p style={{ padding: 40, textAlign: 'center' }}>{t('pages.technical.form.loading')}</p>;
 
   return (
@@ -231,6 +236,26 @@ export function WorkOrderPage(): JSX.Element {
             <button type="submit" disabled={submitting || approvedBomsForItem.length === 0} className="primary-button" style={{ alignSelf: 'flex-start' }}>{t('pages.technical.form.save')}</button>
           </form>
         )}
+
+        {/* KPI Row - ERPNext Parity */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16, margin: '10px 0 24px' }}>
+          <div style={{ padding: 16, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8 }}>
+            <span style={{ fontSize: 12, color: '#64748b' }}>{t('pages.work_order.kpiTotal')}</span>
+            <div style={{ fontSize: 22, fontWeight: 'bold', color: '#0f172a', marginTop: 4 }}>{kpiTotal}</div>
+          </div>
+          <div style={{ padding: 16, background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: 8 }}>
+            <span style={{ fontSize: 12, color: '#b45309' }}>{t('pages.work_order.kpiInProgress')}</span>
+            <div style={{ fontSize: 22, fontWeight: 'bold', color: '#b45309', marginTop: 4 }}>{kpiInProgress}</div>
+          </div>
+          <div style={{ padding: 16, background: '#f0fdf4', border: '1px solid #dcfce7', borderRadius: 8 }}>
+            <span style={{ fontSize: 12, color: '#166534' }}>{t('pages.work_order.kpiCompleted')}</span>
+            <div style={{ fontSize: 22, fontWeight: 'bold', color: '#15803d', marginTop: 4 }}>{kpiCompleted}</div>
+          </div>
+          <div style={{ padding: 16, background: '#f0f9ff', border: '1px solid #e0f2fe', borderRadius: 8 }}>
+            <span style={{ fontSize: 12, color: '#0369a1' }}>{t('pages.work_order.kpiPlannedQty')}</span>
+            <div style={{ fontSize: 22, fontWeight: 'bold', color: '#0369a1', marginTop: 4 }}>{kpiPlannedQty.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</div>
+          </div>
+        </div>
 
         <div className="placeholder-table">
           <div className="placeholder-table__head">
