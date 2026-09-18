@@ -8,6 +8,7 @@ import { ProductionOpsService } from './production_ops.service';
 import type {
   JobOrderLaborCost, OperationRecord, ProductionStepRecord, ProductionStepTimeLogRecord, WorkCenterRecord,
   DowntimeEntryRecord, WorkOrderRecord, WorkstationTypeRecord,
+  WorkOrderOperationRecord,
 } from './production_ops.types';
 
 @Controller({ path: 'production-ops', version: '1' })
@@ -85,8 +86,14 @@ export class ProductionOpsController {
       finishedGoodsWarehouseId: dto.finishedGoodsWarehouseId, plannedStartDate: dto.plannedStartDate,
       useMultiLevelBom: dto.useMultiLevelBom, considerScrapItems: dto.considerScrapItems,
       materialConsumptionPercentage: dto.materialConsumptionPercentage, materialTransferMode: dto.materialTransferMode,
+      trackOperations: dto.trackOperations, operations: dto.operations,
     });
     return { workOrder: created };
+  }
+
+  @Get('work-orders/:id/operations')
+  async workOrderOperations(@Param('id', ParseUUIDPipe) id: string): Promise<{ operations: WorkOrderOperationRecord[] }> {
+    return { operations: await this.service.getWorkOrderOperations(id) };
   }
 
   @Post('work-orders/:id/start') @HttpCode(200)

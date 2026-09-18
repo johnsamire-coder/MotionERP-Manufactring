@@ -10,6 +10,7 @@ import type {
   CreateWorkstationTypeInput, JobOrderLaborCost, OperationRecord, ProductionStepRecord, ProductionStepTimeLogRecord,
   WorkCenterRecord, WorkOrderRecord, WorkstationTypeRecord,
   CreateDowntimeEntryInput, DowntimeEntryRecord,
+  WorkOrderOperationRecord,
 } from './production_ops.types';
 
 @Injectable()
@@ -147,6 +148,11 @@ export class ProductionOpsService {
     const year = new Date().getFullYear();
     const workOrderNumber = `MFG-WO-${year}-${String(sequence).padStart(6, '0')}`;
     return this.repository.insertWorkOrder({ id: randomUUID(), workOrderNumber, ...input });
+  }
+
+  async getWorkOrderOperations(workOrderId: string): Promise<WorkOrderOperationRecord[]> {
+    await this.getWorkOrder(workOrderId);
+    return this.repository.listWorkOrderOperations(workOrderId);
   }
 
   async startWorkOrder(id: string): Promise<WorkOrderRecord> {

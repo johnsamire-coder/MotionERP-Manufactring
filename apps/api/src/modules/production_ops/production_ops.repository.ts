@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import { downtimeEntry, operation, productionStep, productionStepTimeLog, workCenter, workOrder, workOrderOperation, workstationType } from './production_ops.schema';
@@ -125,6 +125,25 @@ function toDteRecord(row: DteRow): DowntimeEntryRecord {
   };
 }
 
+const wooColumns = {
+  id: workOrderOperation.id, workOrderId: workOrderOperation.workOrderId, name: workOrderOperation.name,
+  workCenterId: workOrderOperation.workCenterId, plannedStartTime: workOrderOperation.plannedStartTime,
+  plannedEndTime: workOrderOperation.plannedEndTime, processLossQuantity: workOrderOperation.processLossQuantity,
+  sequentialOrder: workOrderOperation.sequentialOrder,
+};
+interface WooRow {
+  id: string; workOrderId: string; name: string; workCenterId: string | null;
+  plannedStartTime: Date | null; plannedEndTime: Date | null; processLossQuantity: string | null; sequentialOrder: number;
+}
+function toWooRecord(row: WooRow): WorkOrderOperationRecord {
+  return {
+    id: row.id, workOrderId: row.workOrderId, name: row.name, workCenterId: row.workCenterId,
+    plannedStartTime: row.plannedStartTime ? row.plannedStartTime.toISOString() : null,
+    plannedEndTime: row.plannedEndTime ? row.plannedEndTime.toISOString() : null,
+    processLossQuantity: row.processLossQuantity, sequentialOrder: row.sequentialOrder,
+  };
+}
+
 @Injectable()
 export class ProductionOpsRepository {
   constructor(private readonly database: DatabaseService) {}
@@ -223,7 +242,11 @@ export class ProductionOpsRepository {
       materialConsumptionPercentage: input.materialConsumptionPercentage ?? '100', materialTransferMode: input.materialTransferMode ?? 'transfer',
       trackOperations: input.trackOperations ?? false,
     }).returning(woColumns);
-    return toWoRecord(rows[0]!);
+    const created = toWoRecord(rows[0]!);
+    if (input.operations && input.operations.length > 0) {
+      await this.insertWorkOrderOperations(created.id, input.operations);
+    }
+    return created;
   }
   async setWorkOrderStatus(id: string, status: WorkOrderStatus): Promise<WorkOrderRecord> {
     const rows = await this.database.db.update(workOrder).set({ status }).where(eq(workOrder.id, id)).returning(woColumns);
@@ -293,5 +316,25 @@ export class ProductionOpsRepository {
   async replaceBomInWorkOrders(oldBomId: string, newBomId: string): Promise<number> {
     const rows = await this.database.db.update(workOrder).set({ bomId: newBomId }).where(eq(workOrder.bomId, oldBomId)).returning({ id: workOrder.id });
     return rows.length;
+  }
+
+  async listWorkOrderOperations(workOrderId: string): Promise<WorkOrderOperationRecord[]> {
+    const rows = await this.database.db.select(wooColumns).from(workOrderOperation)
+      .where(eq(workOrderOperation.workOrderId, workOrderId)).orderBy(asc(workOrderOperation.sequentialOrder));
+    return rows.map(toWooRecord);
+  }
+
+  async insertWorkOrderOperations(workOrderId: string, inputOps: WorkOrderOperationInput[]): Promise<WorkOrderOperationRecord[]> {
+    let sequentialOrder = 1;
+    for (const op of inputOps) {
+      await this.database.db.insert(workOrderOperation).values({
+        workOrderId, name: op.name, workCenterId: op.workCenterId ?? null,
+        plannedStartTime: op.plannedStartTime ? new Date(op.plannedStartTime) : null,
+        plannedEndTime: op.plannedEndTime ? new Date(op.plannedEndTime) : null,
+        processLossQuantity: op.processLossQuantity ?? null, sequentialOrder,
+      });
+      sequentialOrder += 1;
+    }
+    return this.listWorkOrderOperations(workOrderId);
   }
 }

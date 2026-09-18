@@ -1,4 +1,13 @@
-import { IsBoolean, IsDateString, IsIn, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
+import { IsArray, IsBoolean, IsDateString, IsIn, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class WorkOrderOperationDto {
+  @IsString() name!: string;
+  @IsOptional() @IsUUID() workCenterId?: string;
+  @IsOptional() @IsDateString() plannedStartTime?: string;
+  @IsOptional() @IsDateString() plannedEndTime?: string;
+  @IsOptional() @IsNumberString() processLossQuantity?: string;
+}
 
 export class CreateWorkCenterDto {
   @Matches(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/) @MaxLength(64) @IsString() code!: string;
@@ -46,6 +55,8 @@ export class CreateWorkOrderDto {
   @IsOptional() @IsBoolean() considerScrapItems?: boolean;
   @IsOptional() @IsNumberString() materialConsumptionPercentage?: string;
   @IsOptional() @IsIn(['transfer', 'move']) materialTransferMode?: 'transfer' | 'move';
+  @IsOptional() @IsBoolean() trackOperations?: boolean;
+  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => WorkOrderOperationDto) operations?: WorkOrderOperationDto[];
 }
 
 export class CreateWorkstationTypeDto {
