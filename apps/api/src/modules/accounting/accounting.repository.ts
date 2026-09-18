@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, gte, lte } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import { accountType, chartOfAccounts, journalEntry, journalLine } from './accounting.schema';
 import type {
