@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
-import { downtimeEntry, operation, productionStep, productionStepTimeLog, workCenter, workOrder, workOrderOperation, workstationType } from './production_ops.schema';
+import { downtimeEntry, operation, productionStep, productionStepTimeLog, workCenter, workOrder, workOrderOperation, workstationType, productionStepMaterial } from './production_ops.schema';
 import type {
   AddTimeLogInput, CreateOperationInput, CreateProductionStepInput, CreateWorkCenterInput, CreateWorkOrderInput,
   CreateWorkstationTypeInput, OperationRecord, OperationStatus, ProductionStepRecord, ProductionStepStatus,
@@ -9,7 +9,7 @@ import type {
   MaterialTransferMode,
   WorkOrderOperationInput, WorkOrderOperationRecord,
   CreateDowntimeEntryInput, DowntimeEntryRecord,
-  WorkstationTypeRecord, WorkstationTypeStatus,
+  WorkstationTypeRecord, WorkstationTypeStatus, ProductionStepMaterialRecord, ProductionStepMaterialInput,
 } from './production_ops.types';
 
 const wcColumns = { id: workCenter.id, code: workCenter.code, name: workCenter.name, orgNodeId: workCenter.orgNodeId, ratePerMinute: workCenter.ratePerMinute, status: workCenter.status };
@@ -85,6 +85,19 @@ function toTimeLogRecord(row: TimeLogRow): ProductionStepTimeLogRecord {
     completedQuantity: row.completedQuantity, processLossQuantity: row.processLossQuantity,
   };
 }
+interface PsmRow {
+  id: string; productionStepId: string; itemId: string; requiredQuantity: string;
+  consumedQuantity: string; warehouseId: string | null; lineNumber: number;
+}
+
+function toPsmRecord(row: PsmRow): ProductionStepMaterialRecord {
+  return {
+    id: row.id, productionStepId: row.productionStepId, itemId: row.itemId,
+    requiredQuantity: row.requiredQuantity, consumedQuantity: row.consumedQuantity,
+    warehouseId: row.warehouseId, lineNumber: row.lineNumber,
+  };
+}
+
 function toWoRecord(row: WoRow): WorkOrderRecord {
   return {
     id: row.id, workOrderNumber: row.workOrderNumber, productItemId: row.productItemId, bomId: row.bomId, orgNodeId: row.orgNodeId,
@@ -338,3 +351,4 @@ export class ProductionOpsRepository {
     return this.listWorkOrderOperations(workOrderId);
   }
 }
+

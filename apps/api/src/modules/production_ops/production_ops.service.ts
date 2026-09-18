@@ -10,7 +10,7 @@ import type {
   CreateWorkstationTypeInput, JobOrderLaborCost, OperationRecord, ProductionStepRecord, ProductionStepTimeLogRecord,
   WorkCenterRecord, WorkOrderRecord, WorkstationTypeRecord,
   CreateDowntimeEntryInput, DowntimeEntryRecord,
-  WorkOrderOperationRecord,
+  WorkOrderOperationRecord, ProductionStepMaterialRecord, ProductionStepMaterialInput,
 } from './production_ops.types';
 
 @Injectable()
@@ -238,3 +238,4 @@ function normalizeName(raw: unknown): string {
   if (trimmed.length === 0) throw new ProductionOpsValidationError('name must not be blank');
   return trimmed;
 }
+

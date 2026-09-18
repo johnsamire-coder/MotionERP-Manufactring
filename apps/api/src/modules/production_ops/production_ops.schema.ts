@@ -1,4 +1,4 @@
-﻿import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { boolean, check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { item } from '../catalog/catalog.schema';
 import { employee } from '../hr/hr.schema';
@@ -214,3 +214,26 @@ export const workOrderOperation = productionOpsSchema.table('work_order_operatio
 ]);
 
 export type WorkOrderOperation = typeof workOrderOperation.$inferSelect;
+
+/**
+ * Job Card Raw Materials — ERPNext parity: tracks required vs actual consumed raw materials
+ * for each individual Job Card (Production Step).
+ */
+export const productionStepMaterial = productionOpsSchema.table('production_step_material', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  productionStepId: uuid('production_step_id')
+    .notNull()
+    .references(() => productionStep.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  requiredQuantity: numeric('required_quantity', { precision: 24, scale: 6 }).notNull(),
+  consumedQuantity: numeric('consumed_quantity', { precision: 24, scale: 6 }).notNull().default('0'),
+  warehouseId: uuid('warehouse_id').references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  lineNumber: integer('line_number').notNull().default(0),
+}, (t) => [
+  index('production_step_material_step_idx').on(t.productionStepId),
+  index('production_step_material_item_idx').on(t.itemId),
+]);
+
+export type ProductionStepMaterial = typeof productionStepMaterial.$inferSelect;

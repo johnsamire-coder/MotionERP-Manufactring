@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 
@@ -6,6 +6,12 @@ interface JobOrderRecord { id: string; jobOrderNumber: string; }
 interface WorkOrderRecord { id: string; workOrderNumber: string; }
 interface EmployeeRecord { id: string; code: string; name: string; }
 interface WorkCenterRecord { id: string; code: string; name: string; ratePerMinute?: string; status: string; }
+interface ItemRecord { id: string; code: string; name: string; }
+interface WarehouseRecord { id: string; code: string; name: string; }
+interface StepMaterialRecord {
+  id: string; productionStepId: string; itemId: string;
+  requiredQuantity: string; consumedQuantity: string; warehouseId: string | null; lineNumber: number;
+}
 interface TimeLogRecord {
   id: string; productionStepId: string; fromTime: string; toTime: string | null;
   timeInMinutes: string | null; completedQuantity: string | null; processLossQuantity: string | null;
@@ -44,6 +50,15 @@ export function ProductionOpsPage(): JSX.Element {
   const [showStepForm, setShowStepForm] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState<string | null>(null);
   const [showLogsForStep, setShowLogsForStep] = useState<string | null>(null);
+  const [items, setItems] = useState<ItemRecord[]>([]);
+  const [warehouses, setWarehouses] = useState<WarehouseRecord[]>([]);
+  const [showMaterialsForStep, setShowMaterialsForStep] = useState<string | null>(null);
+  const [stepMaterials, setStepMaterials] = useState<StepMaterialRecord[]>([]);
+  const [showMatForm, setShowMatForm] = useState(false);
+  const [matItemId, setMatItemId] = useState('');
+  const [matReqQty, setMatReqQty] = useState('');
+  const [matConsQty, setMatConsQty] = useState('0');
+  const [matWhId, setMatWhId] = useState('');
   const [timeLogs, setTimeLogs] = useState<TimeLogRecord[]>([]);
   const [showLogForm, setShowLogForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -196,6 +211,48 @@ export function ProductionOpsPage(): JSX.Element {
       await loadJoData(selectedJO);
     } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
   }
+
+  async function openMaterialsForStep(stepId: string): Promise<void> {
+    setShowMaterialsForStep(stepId);
+    setShowMatForm(false);
+    try {
+      const res = await api.get<{ materials: StepMaterialRecord[] }>(`/production-ops/steps/${stepId}/materials`);
+      setStepMaterials(res.materials);
+    } catch {
+      setStepMaterials([]);
+    }
+  }
+
+  async function handleAddMaterial(e: React.FormEvent): Promise<void> {
+    e.preventDefault();
+    if (!showMaterialsForStep || !matItemId || !matReqQty) return;
+    setSubmitting(true);
+    try {
+      const payload = {
+        materials: [
+          {
+            itemId: matItemId,
+            requiredQuantity: matReqQty,
+            consumedQuantity: matConsQty || '0',
+            warehouseId: matWhId || undefined,
+          },
+        ],
+      };
+      await api.post(`/production-ops/steps/${showMaterialsForStep}/materials`, payload);
+      const res = await api.get<{ materials: StepMaterialRecord[] }>(`/production-ops/steps/${showMaterialsForStep}/materials`);
+      setStepMaterials(res.materials);
+      setShowMatForm(false);
+      setMatReqQty('');
+      setMatConsQty('0');
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Failed to add material');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const itemLabel = (id: string): string => items.find((it) => it.id === id)?.name ?? id;
+  const whLabel = (id: string | null): string => (id ? (warehouses.find((w) => w.id === id)?.name ?? id) : '—');
 
   async function openLogsForStep(stepId: string): Promise<void> {
     setShowLogsForStep(stepId);
@@ -498,3 +555,6 @@ export function ProductionOpsPage(): JSX.Element {
     </section>
   );
 }
+
+
+

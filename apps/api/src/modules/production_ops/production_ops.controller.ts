@@ -2,12 +2,13 @@ import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, Use
 import {
   AddTimeLogDto, CloseStepDto, CreateOperationDto, CreateProductionStepDto, CreateWorkCenterDto,
   CreateDowntimeEntryDto, CreateWorkOrderDto, CreateWorkstationTypeDto,
+  AddStepMaterialsDto,
 } from './production_ops.dto';
 import { ProductionOpsExceptionFilter } from './production_ops.exception-filter';
 import { ProductionOpsService } from './production_ops.service';
 import type {
   JobOrderLaborCost, OperationRecord, ProductionStepRecord, ProductionStepTimeLogRecord, WorkCenterRecord,
-  DowntimeEntryRecord, WorkOrderRecord, WorkstationTypeRecord,
+  DowntimeEntryRecord, WorkOrderRecord, WorkstationTypeRecord, ProductionStepMaterialRecord,
   WorkOrderOperationRecord,
 } from './production_ops.types';
 
@@ -155,3 +156,6 @@ export class ProductionOpsController {
     return { downtimeEntry: await this.service.closeDowntimeEntry(id) };
   }
 }
+
+
+

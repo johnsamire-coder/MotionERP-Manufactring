@@ -1,6 +1,17 @@
 import { IsArray, IsBoolean, IsDateString, IsIn, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
+export class ProductionStepMaterialDto {
+  @IsUUID() itemId!: string;
+  @IsNumberString() requiredQuantity!: string;
+  @IsOptional() @IsNumberString() consumedQuantity?: string;
+  @IsOptional() @IsUUID() warehouseId?: string;
+}
+
+export class AddStepMaterialsDto {
+  @IsArray() @ValidateNested({ each: true }) @Type(() => ProductionStepMaterialDto) materials!: ProductionStepMaterialDto[];
+}
+
 export class WorkOrderOperationDto {
   @IsString() name!: string;
   @IsOptional() @IsUUID() workCenterId?: string;
@@ -78,3 +89,4 @@ export class CreateDowntimeEntryDto {
   @IsDateString() startTime!: string;
   @IsOptional() @IsString() remarks?: string;
 }
+

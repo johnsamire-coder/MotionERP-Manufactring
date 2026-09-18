@@ -1,4 +1,4 @@
-﻿export type WorkCenterStatus = 'active' | 'inactive' | 'archived';
+export type WorkCenterStatus = 'active' | 'inactive' | 'archived';
 export type ProductionStepStatus = 'pending' | 'in_progress' | 'done';
 export type WorkOrderStatus = 'not_started' | 'in_progress' | 'completed' | 'stopped' | 'closed';
 export type WorkstationTypeStatus = 'active' | 'inactive';
@@ -78,4 +78,21 @@ export interface WorkOrderOperationRecord {
 }
 export interface WorkOrderOperationInput {
   name: string; workCenterId?: string; plannedStartTime?: string; plannedEndTime?: string; processLossQuantity?: string;
+}
+
+export interface ProductionStepMaterialRecord {
+  id: string;
+  productionStepId: string;
+  itemId: string;
+  requiredQuantity: string;
+  consumedQuantity: string;
+  warehouseId: string | null;
+  lineNumber: number;
+}
+
+export interface ProductionStepMaterialInput {
+  itemId: string;
+  requiredQuantity: string;
+  consumedQuantity?: string;
+  warehouseId?: string;
 }
