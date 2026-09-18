@@ -73,7 +73,12 @@
     "quotation": "Quotation",
     "item_price": "Item Price",
     "stock_entry": "Stock Entry",
-    "stock_ledger": "Stock Ledger"
+    "stock_ledger": "Stock Ledger",
+    "sales_invoice_page": "Sales Invoice",
+    "purchase_order_page": "Purchase Order",
+    "purchase_receipt_page": "Purchase Receipt",
+    "payment_entry_page": "Payment Entry",
+    "stock_reconciliation_page": "Stock Reconciliation"
   },
   "common": {
     "viewAll": "View all",

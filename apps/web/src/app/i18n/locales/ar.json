@@ -73,7 +73,12 @@
     "quotation": "عروض الأسعار",
     "item_price": "سعر الصنف",
     "stock_entry": "حركة مخزنية",
-    "stock_ledger": "دفتر المخزون"
+    "stock_ledger": "دفتر المخزون",
+    "sales_invoice_page": "فاتورة المبيعات",
+    "purchase_order_page": "أمر الشراء",
+    "purchase_receipt_page": "إذن استلام المشتريات",
+    "payment_entry_page": "قيد الدفع",
+    "stock_reconciliation_page": "تسوية المخزون"
   },
   "common": {
     "viewAll": "ط·آ¹ط·آ±ط·آ¶ ط·آ§ط¸â€‍ط¸ئ’ط¸â€‍",

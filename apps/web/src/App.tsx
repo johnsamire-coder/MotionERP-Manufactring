@@ -34,14 +34,19 @@ import { ProductionPlanPage } from './app/pages/ProductionPlanPage';
 import { ItemPricePage } from './app/pages/ItemPricePage';
 import { StockEntryPage } from './app/pages/StockEntryPage';
 import { StockLedgerPage } from './app/pages/StockLedgerPage';
+import { SalesInvoicePage } from './app/pages/SalesInvoicePage';
+import { PurchaseOrderPage } from './app/pages/PurchaseOrderPage';
+import { PurchaseReceiptPage } from './app/pages/PurchaseReceiptPage';
+import { PaymentEntryPage } from './app/pages/PaymentEntryPage';
+import { StockReconciliationPage } from './app/pages/StockReconciliationPage';
 import { QuotationPage } from './app/pages/QuotationPage';
 type PageKey =
   | 'dashboard' | 'organization'
   | 'manufacturing' | 'planning' | 'sales_forecast' | 'material_request_mp' | 'item_lead_time' | 'downtime_entry' | 'mps' | 'bom_update_tool' | 'bom_creator' | 'report_bom_search' | 'report_work_order_summary' | 'report_downtime_analysis' | 'report_job_card_summary' | 'report_production_analytics' | 'report_bom_operations_time' | 'report_consumed_materials' | 'report_production_planning' | 'report_forecasting' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
-  | 'selling' | 'customer' | 'quotation' | 'sales_order' | 'delivery' | 'sales_invoice' | 'sales_partner' | 'sales_person'
-  | 'buying' | 'supplier' | 'material' | 'request_for_quotation' | 'supplier_quotation' | 'purchase_order' | 'purchase_receipt' | 'purchase_invoice'
-  | 'stock' | 'stock_entry' | 'stock_ledger' | 'stock_reconciliation' | 'serial_no' | 'batch' | 'item_price' | 'price_list'
-  | 'accounts' | 'payment_entry' | 'balance_sheet' | 'profit_and_loss'
+  | 'selling' | 'customer' | 'quotation' | 'sales_order' | 'delivery' | 'sales_invoice_page' | 'sales_invoice' | 'sales_partner' | 'sales_person'
+  | 'buying' | 'supplier' | 'material' | 'request_for_quotation' | 'supplier_quotation' | 'purchase_order_page' | 'purchase_order' | 'purchase_receipt_page' | 'purchase_receipt' | 'purchase_invoice'
+  | 'stock' | 'stock_entry' | 'stock_ledger' | 'stock_reconciliation_page' | 'stock_reconciliation' | 'serial_no' | 'batch' | 'item_price' | 'price_list'
+  | 'accounts' | 'payment_entry_page' | 'payment_entry' | 'balance_sheet' | 'profit_and_loss'
   | 'hr' | 'attendance' | 'leave_application'
   | 'auth'
   | 'reports' | 'settings';
@@ -81,7 +86,7 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
       { key: 'customer', icon: 'building' },
       { key: 'sales_order', icon: 'selling' },
       { key: 'delivery', icon: 'cart' },
-      { key: 'sales_invoice', icon: 'chart' },
+      { key: 'sales_invoice_page', icon: 'chart' },
       { key: 'sales_partner', icon: 'building' },
       { key: 'sales_person', icon: 'building' },
     ],
@@ -93,8 +98,8 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
       { key: 'material', icon: 'box' },
       { key: 'request_for_quotation', icon: 'selling' },
       { key: 'supplier_quotation', icon: 'selling' },
-      { key: 'purchase_order', icon: 'cart' },
-      { key: 'purchase_receipt', icon: 'box' },
+      { key: 'purchase_order_page', icon: 'cart' },
+      { key: 'purchase_receipt_page', icon: 'box' },
       { key: 'purchase_invoice', icon: 'chart' },
     ],
   },
@@ -105,7 +110,7 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
       { key: 'stock_entry', icon: 'box' },
       { key: 'stock_ledger', icon: 'layers' },
       { key: 'stock_entry', icon: 'box' },
-      { key: 'stock_reconciliation', icon: 'check' },
+      { key: 'stock_reconciliation_page', icon: 'check' },
       { key: 'serial_no', icon: 'layers' },
       { key: 'batch', icon: 'layers' },
       { key: 'price_list', icon: 'chart' },
@@ -114,7 +119,7 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
   {
     key: 'accounts', icon: 'building',
     docs: [
-      { key: 'payment_entry', icon: 'chart' },
+      { key: 'payment_entry_page', icon: 'chart' },
       { key: 'balance_sheet', icon: 'chart' },
       { key: 'profit_and_loss', icon: 'chart' },
     ],
@@ -176,6 +181,11 @@ const DEDICATED_PAGES: Partial<Record<PageKey, () => JSX.Element>> = {
   item_price: ItemPricePage,
   stock_entry: StockEntryPage,
   stock_ledger: StockLedgerPage,
+  sales_invoice_page: SalesInvoicePage,
+  purchase_order_page: PurchaseOrderPage,
+  purchase_receipt_page: PurchaseReceiptPage,
+  payment_entry_page: PaymentEntryPage,
+  stock_reconciliation_page: StockReconciliationPage,
   selling: SalesPage,
   delivery: DeliveryPage,
   material: MaterialPage,
