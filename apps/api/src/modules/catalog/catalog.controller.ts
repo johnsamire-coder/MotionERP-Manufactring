@@ -1,8 +1,8 @@
-﻿import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, UseFilters } from '@nestjs/common';
 import { CreateItemCategoryDto, CreateItemDto, CreateUomDto, UpdateItemCategoryDto, UpdateItemDto } from './catalog.dto';
 import { CatalogExceptionFilter } from './catalog.exception-filter';
 import { CatalogService, type UpdateItemCategoryInput, type UpdateItemInput } from './catalog.service';
-import type { ItemCategoryRecord, ItemCategoryTreeNode, ItemRecord, Language, UomClassRecord, UomRecord } from './catalog.types';
+import type { ItemCategoryRecord, ItemCategoryTreeNode, ItemRecord, ItemPriceRecord, PriceListType, Language, UomClassRecord, UomRecord } from './catalog.types';
 
 function parseLang(lang?: string): Language { return lang === 'ar' ? 'ar' : 'en'; }
 
@@ -100,6 +100,7 @@ export class CatalogController {
     return { item: await this.service.archiveItem(id) };
   }
 }
+
 
 
 

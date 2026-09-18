@@ -1,4 +1,4 @@
-﻿import { randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CatalogNotFoundError, CatalogValidationError } from './catalog.errors';
 import { CatalogRepository } from './catalog.repository';
@@ -180,4 +180,5 @@ function normalizePosition(raw: number): number {
   if (!Number.isInteger(raw) || raw < 0) throw new CatalogValidationError('position must be a non-negative integer');
   return raw;
 }
+
 

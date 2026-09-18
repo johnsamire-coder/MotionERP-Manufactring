@@ -274,6 +274,13 @@
       "when": 1789713284459,
       "tag": "0038_happy_chronomancer",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1789720113356,
+      "tag": "0039_cheerful_blackheart",
+      "breakpoints": true
     }
   ]
 }

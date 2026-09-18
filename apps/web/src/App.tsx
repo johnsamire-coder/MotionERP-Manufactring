@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES, directionOf, type SupportedLanguage } from './app/i18n/config';
 import { InventoryPage } from './app/pages/InventoryPage';
@@ -31,18 +31,20 @@ import { ReportForecastingPage } from './app/pages/ReportForecastingPage';
 import { WorkOrderPage } from './app/pages/WorkOrderPage';
 import { SetupPage } from './app/pages/SetupPage';
 import { ProductionPlanPage } from './app/pages/ProductionPlanPage';
+import { ItemPricePage } from './app/pages/ItemPricePage';
+import { QuotationPage } from './app/pages/QuotationPage';
 type PageKey =
   | 'dashboard' | 'organization'
   | 'manufacturing' | 'planning' | 'sales_forecast' | 'material_request_mp' | 'item_lead_time' | 'downtime_entry' | 'mps' | 'bom_update_tool' | 'bom_creator' | 'report_bom_search' | 'report_work_order_summary' | 'report_downtime_analysis' | 'report_job_card_summary' | 'report_production_analytics' | 'report_bom_operations_time' | 'report_consumed_materials' | 'report_production_planning' | 'report_forecasting' | 'production_ops' | 'bom' | 'work_order' | 'workstation' | 'operation' | 'sub_contracting'
-  | 'sales' | 'customer' | 'sales_order' | 'delivery' | 'sales_invoice' | 'sales_partner' | 'sales_person'
-  | 'purchasing' | 'supplier' | 'material' | 'request_for_quotation' | 'supplier_quotation' | 'purchase_order' | 'purchase_receipt' | 'purchase_invoice'
-  | 'inventory' | 'stock_entry' | 'stock_reconciliation' | 'serial_no' | 'batch' | 'price_list'
-  | 'accounting' | 'payment_entry' | 'balance_sheet' | 'profit_and_loss'
+  | 'selling' | 'customer' | 'quotation' | 'sales_order' | 'delivery' | 'sales_invoice' | 'sales_partner' | 'sales_person'
+  | 'buying' | 'supplier' | 'material' | 'request_for_quotation' | 'supplier_quotation' | 'purchase_order' | 'purchase_receipt' | 'purchase_invoice'
+  | 'stock' | 'stock_entry' | 'stock_reconciliation' | 'serial_no' | 'batch' | 'item_price' | 'price_list'
+  | 'accounts' | 'payment_entry' | 'balance_sheet' | 'profit_and_loss'
   | 'hr' | 'attendance' | 'leave_application'
   | 'auth'
   | 'reports' | 'settings';
 type IconName =
-  | 'grid' | 'building' | 'factory' | 'box' | 'cart' | 'sales' | 'chart' | 'settings'
+  | 'grid' | 'building' | 'factory' | 'box' | 'cart' | 'selling' | 'chart' | 'settings'
   | 'menu' | 'chevron' | 'bell' | 'arrow' | 'more' | 'check' | 'clock' | 'alert' | 'layers' | 'close';
 interface NavDoc { key: PageKey; icon: IconName; }
 interface NavModule { key: PageKey; icon: IconName; docs: NavDoc[]; }
@@ -71,10 +73,11 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
     ],
   },
   {
-    key: 'sales', icon: 'sales',
+    key: 'selling', icon: 'selling',
     docs: [
+      { key: 'quotation', icon: 'chart' },
       { key: 'customer', icon: 'building' },
-      { key: 'sales_order', icon: 'sales' },
+      { key: 'sales_order', icon: 'selling' },
       { key: 'delivery', icon: 'cart' },
       { key: 'sales_invoice', icon: 'chart' },
       { key: 'sales_partner', icon: 'building' },
@@ -82,20 +85,21 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
     ],
   },
   {
-    key: 'purchasing', icon: 'cart',
+    key: 'buying', icon: 'cart',
     docs: [
       { key: 'supplier', icon: 'building' },
       { key: 'material', icon: 'box' },
-      { key: 'request_for_quotation', icon: 'sales' },
-      { key: 'supplier_quotation', icon: 'sales' },
+      { key: 'request_for_quotation', icon: 'selling' },
+      { key: 'supplier_quotation', icon: 'selling' },
       { key: 'purchase_order', icon: 'cart' },
       { key: 'purchase_receipt', icon: 'box' },
       { key: 'purchase_invoice', icon: 'chart' },
     ],
   },
   {
-    key: 'inventory', icon: 'box',
+    key: 'stock', icon: 'box',
     docs: [
+      { key: 'item_price', icon: 'chart' },
       { key: 'stock_entry', icon: 'box' },
       { key: 'stock_reconciliation', icon: 'check' },
       { key: 'serial_no', icon: 'layers' },
@@ -104,7 +108,7 @@ const NAV_MODULES: ReadonlyArray<NavModule> = [
     ],
   },
   {
-    key: 'accounting', icon: 'building',
+    key: 'accounts', icon: 'building',
     docs: [
       { key: 'payment_entry', icon: 'chart' },
       { key: 'balance_sheet', icon: 'chart' },
@@ -164,11 +168,13 @@ const DEDICATED_PAGES: Partial<Record<PageKey, () => JSX.Element>> = {
   work_order: WorkOrderPage,
   workstation: SetupPage,
   operation: SetupPage,
-  sales: SalesPage,
+  quotation: QuotationPage,
+  item_price: ItemPricePage,
+  selling: SalesPage,
   delivery: DeliveryPage,
   material: MaterialPage,
-  inventory: InventoryPage,
-  accounting: AccountingPage,
+  stock: InventoryPage,
+  accounts: AccountingPage,
   hr: HrPage,
   auth: AuthPage,
 };
@@ -188,7 +194,7 @@ function Icon({ name, size = 18 }: { name: IconName; size?: number }): JSX.Eleme
       return <svg {...props}><path d="m3.5 7.5 8.5-4 8.5 4v9l-8.5 4-8.5-4v-9Z" /><path d="m3.5 7.5 8.5 4 8.5-4M12 11.5v9" /></svg>;
     case 'cart':
       return <svg {...props}><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 1.9-1.4L20.5 8H6" /><circle cx="9" cy="19" r="1.2" /><circle cx="17" cy="19" r="1.2" /></svg>;
-    case 'sales':
+    case 'selling':
       return <svg {...props}><path d="M4 19V5M4 19h17M8 15l3-4 3 2 5-6M16 7h3v3" /></svg>;
     case 'chart':
       return <svg {...props}><path d="M4 20V10M10 20V4M16 20v-7M22 20V7" /></svg>;
@@ -239,7 +245,7 @@ function Dashboard({ onNavigate }: { onNavigate: (page: PageKey) => void }): JSX
   return <>
     <section className="page-intro"><div><span className="eyebrow">{t('dashboard.eyebrow')}</span><h1>{t('dashboard.title')}</h1><p>{t('dashboard.description')}</p></div><span className="demo-badge"><i />{t('dashboard.demoData')}</span></section>
     <section className="kpi-grid">{kpiKeys.map((key, index) => <article className="kpi" key={key}><span className={`kpi__icon kpi__icon--${kpiTones[index]}`}><Icon name={kpiIcons[index] ?? 'grid'} size={18} /></span><div><p>{t(`dashboard.kpis.${key}.label`)}</p><strong>{kpiValues[index]}</strong><small><b>{trendValues[index]}</b> {t(index === 0 ? 'dashboard.kpis.vsLastMonth' : 'dashboard.kpis.target')}</small></div></article>)}</section>
-    <section className="dashboard-grid dashboard-grid--wide"><article className="panel"><PanelTitle eyebrow={t('dashboard.orders.eyebrow')} title={t('dashboard.orders.title')} action={<button className="link-button" onClick={() => onNavigate('manufacturing')}>{t('common.viewAll')}<Icon name="arrow" size={14} /></button>} /><div className="orders"><div className="orders__row orders__row--head"><span>{t('dashboard.orders.order')}</span><span>{t('dashboard.orders.product')}</span><span>{t('dashboard.orders.progress')}</span><span>{t('dashboard.orders.status')}</span></div>{orderKeys.map((key, index) => <div className="orders__row" key={key}><b className="order-id">{t(`dashboard.orders.rows.${key}.id`)}</b><span><b>{t(`dashboard.orders.rows.${key}.product`)}</b><small>{t(`dashboard.orders.rows.${key}.line`)}</small></span><span><i className="progress"><em style={{ inlineSize: `${progress[index]}%` }} /></i><small>{progress[index]}%</small></span><Status tone={statusTones[index] ?? 'neutral'}>{t(`dashboard.orders.rows.${key}.status`)}</Status></div>)}</div></article><article className="panel"><PanelTitle eyebrow={t('dashboard.inventory.eyebrow')} title={t('dashboard.inventory.title')} action={<button className="icon-button" aria-label={t('common.more')}><Icon name="more" /></button>} /><div className="inventory-list">{(['critical', 'low', 'healthy'] as const).map((key) => <div className="inventory-item" key={key}><span className={`inventory-icon inventory-icon--${key}`}><Icon name={key === 'healthy' ? 'check' : 'alert'} size={15} /></span><span><b>{t(`dashboard.inventory.${key}.name`)}</b><small>{t(`dashboard.inventory.${key}.meta`)}</small></span><strong>{t(`dashboard.inventory.${key}.count`)}</strong></div>)}</div><button className="panel-link" onClick={() => onNavigate('inventory')}>{t('dashboard.inventory.manage')}<Icon name="arrow" size={14} /></button></article></section>
+    <section className="dashboard-grid dashboard-grid--wide"><article className="panel"><PanelTitle eyebrow={t('dashboard.orders.eyebrow')} title={t('dashboard.orders.title')} action={<button className="link-button" onClick={() => onNavigate('manufacturing')}>{t('common.viewAll')}<Icon name="arrow" size={14} /></button>} /><div className="orders"><div className="orders__row orders__row--head"><span>{t('dashboard.orders.order')}</span><span>{t('dashboard.orders.product')}</span><span>{t('dashboard.orders.progress')}</span><span>{t('dashboard.orders.status')}</span></div>{orderKeys.map((key, index) => <div className="orders__row" key={key}><b className="order-id">{t(`dashboard.orders.rows.${key}.id`)}</b><span><b>{t(`dashboard.orders.rows.${key}.product`)}</b><small>{t(`dashboard.orders.rows.${key}.line`)}</small></span><span><i className="progress"><em style={{ inlineSize: `${progress[index]}%` }} /></i><small>{progress[index]}%</small></span><Status tone={statusTones[index] ?? 'neutral'}>{t(`dashboard.orders.rows.${key}.status`)}</Status></div>)}</div></article><article className="panel"><PanelTitle eyebrow={t('dashboard.inventory.eyebrow')} title={t('dashboard.inventory.title')} action={<button className="icon-button" aria-label={t('common.more')}><Icon name="more" /></button>} /><div className="inventory-list">{(['critical', 'low', 'healthy'] as const).map((key) => <div className="inventory-item" key={key}><span className={`inventory-icon inventory-icon--${key}`}><Icon name={key === 'healthy' ? 'check' : 'alert'} size={15} /></span><span><b>{t(`dashboard.inventory.${key}.name`)}</b><small>{t(`dashboard.inventory.${key}.meta`)}</small></span><strong>{t(`dashboard.inventory.${key}.count`)}</strong></div>)}</div><button className="panel-link" onClick={() => onNavigate('stock')}>{t('dashboard.inventory.manage')}<Icon name="arrow" size={14} /></button></article></section>
     <section className="dashboard-grid dashboard-grid--equal"><article className="panel"><PanelTitle eyebrow={t('dashboard.pipeline.eyebrow')} title={t('dashboard.pipeline.title')} /><div className="pipeline">{(['planned', 'inProgress', 'quality', 'completed'] as const).map((key, index) => <div className="pipeline__stage" key={key}><span className={`pipeline__node pipeline__node--${key}`}><Icon name={(['clock', 'factory', 'layers', 'check'] as ReadonlyArray<IconName>)[index] ?? 'clock'} size={14} /></span><b>{['18', '12', '8', '24'][index]}</b><small>{t(`dashboard.pipeline.${key}`)}</small></div>)}</div></article><article className="panel"><PanelTitle eyebrow={t('dashboard.workCenters.eyebrow')} title={t('dashboard.workCenters.title')} /><div className="work-centers">{(['assembly', 'machining', 'sterilization'] as const).map((key, index) => <div className="work-center" key={key}><span><i className={index === 2 ? 'dot dot--warning' : 'dot'} /><b>{t(`dashboard.workCenters.${key}`)}</b></span><i className="work-center__bar"><em style={{ inlineSize: `${[82, 68, 91][index]}%` }} /></i><small>{[82, 68, 91][index]}%</small></div>)}</div></article></section>
     <section className="dashboard-grid dashboard-grid--equal"><article className="panel"><PanelTitle eyebrow={t('dashboard.approvals.eyebrow')} title={t('dashboard.approvals.title')} action={<span className="count">3</span>} /><div className="approval-list">{(['purchase', 'change', 'quality'] as const).map((key) => <div className="approval" key={key}><span className="approval__avatar">{t(`dashboard.approvals.${key}.initials`)}</span><span><b>{t(`dashboard.approvals.${key}.title`)}</b><small>{t(`dashboard.approvals.${key}.meta`)}</small></span><button className="icon-button" aria-label={t('common.more')}><Icon name="more" /></button></div>)}</div></article><article className="panel"><PanelTitle eyebrow={t('dashboard.activity.eyebrow')} title={t('dashboard.activity.title')} action={<button className="link-button" onClick={() => onNavigate('reports')}>{t('common.viewAll')}<Icon name="arrow" size={14} /></button>} /><div className="activity-list">{(['completed', 'updated', 'alert'] as const).map((key) => <div className="activity" key={key}><span className={`activity__icon activity__icon--${key}`}><Icon name={key === 'completed' ? 'check' : key === 'alert' ? 'alert' : 'layers'} size={14} /></span><span><b>{t(`dashboard.activity.${key}.title`)}</b><small>{t(`dashboard.activity.${key}.meta`)}</small></span></div>)}</div></article></section>
   </>;
@@ -307,6 +313,8 @@ export function App(): JSX.Element {
     </section>
   </div>;
 }
+
+
 
 
 

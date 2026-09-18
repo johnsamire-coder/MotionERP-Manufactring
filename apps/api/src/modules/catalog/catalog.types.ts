@@ -38,3 +38,26 @@ export interface CreateItemInput {
   code: string; name: string; nameAr?: string; nameEn?: string; description?: string;
   itemType: ItemType; categoryId: string; baseUnitId: string;
 }
+
+export type PriceListType = 'buying' | 'selling';
+
+export interface ItemPriceRecord {
+  id: string;
+  itemId: string;
+  priceListType: PriceListType;
+  price: string;
+  currency: string;
+  validFrom: string;
+  validUntil: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SetItemPriceInput {
+  itemId: string;
+  priceListType: PriceListType;
+  price: string;
+  currency?: string;
+  validFrom?: string;
+  validUntil?: string;
+}

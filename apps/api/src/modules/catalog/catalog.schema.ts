@@ -119,3 +119,28 @@ export type UomClass = typeof uomClass.$inferSelect;
 export type Uom = typeof uom.$inferSelect;
 export type ItemCategory = typeof itemCategory.$inferSelect;
 export type Item = typeof item.$inferSelect;
+
+
+/**
+ * Item Price — ERPNext parity: stores buying and selling prices per item.
+ */
+export const itemPrice = catalogSchema.table('item_price', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  priceListType: text('price_list_type').notNull(),
+  price: numeric('price', { precision: 20, scale: 4 }).notNull(),
+  currency: text('currency').notNull().default('EGP'),
+  validFrom: timestamp('valid_from', { withTimezone: true }).notNull().defaultNow(),
+  validUntil: timestamp('valid_until', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  check('item_price_type_valid', sql`${t.priceListType} in ('buying', 'selling')`),
+  check('item_price_non_negative', sql`${t.price} >= 0`),
+  index('item_price_item_idx').on(t.itemId),
+  index('item_price_type_idx').on(t.priceListType),
+]);
+
+export type ItemPrice = typeof itemPrice.$inferSelect;
