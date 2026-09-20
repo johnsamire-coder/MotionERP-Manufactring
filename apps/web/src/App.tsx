@@ -331,7 +331,7 @@ export function App(): JSX.Element {
         <div className="topbar__actions">
           <button className="company-switcher"><span className="company-logo">M</span><span><b>{t('header.company')}</b><small>{t('header.companyMeta')}</small></span><Icon name="chevron" size={14} /></button>
           <span className="topbar-divider" />
-          <label className="language-select"><span>ًںŒگ</span><select aria-label={t('app.language')} value={i18n.language} onChange={(event) => { void i18n.changeLanguage(event.target.value as SupportedLanguage); }}>{SUPPORTED_LANGUAGES.map((language) => <option key={language} value={language}>{t(`app.languageName.${language}`)}</option>)}</select></label>
+          <label className="language-select"><span>🌐</span><select aria-label="Language" value={i18n.language} onChange={(event) => { void i18n.changeLanguage(event.target.value as SupportedLanguage); }}><option value="ar">العربية</option><option value="en">English</option></select></label>
           <button className="notification icon-button" aria-label={t('header.notifications')}><Icon name="bell" size={18} /><i /></button>
           <button className="profile"><span className="avatar">AS</span><span className="profile__copy"><b>{t('header.user')}</b><small>{t('header.role')}</small></span><Icon name="chevron" size={14} /></button>
         </div>
