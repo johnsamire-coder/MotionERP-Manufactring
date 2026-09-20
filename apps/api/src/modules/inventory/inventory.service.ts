@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+﻿import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { InventoryNotFoundError, InventoryValidationError } from './inventory.errors';
 import { InventoryRepository } from './inventory.repository';
@@ -37,7 +37,7 @@ export class InventoryService {
 
     if (isDecrease) {
       // Compare against AVAILABLE (on_hand - reserved) from the very first
-      // version of this unit this time — reservations make goods off-limits
+      // version of this unit this time â€” reservations make goods off-limits
       // for anything except the document that reserved them (D31, and the
       // owner's explicit job-order reservation requirement).
       const balance = await this.repository.findBalance(input.itemId, input.warehouseId);
@@ -49,12 +49,41 @@ export class InventoryService {
       }
     }
 
+    // ---- تقييم المخزون بالمتوسط المرجح المتحرك ----
+    const bal = await this.repository.findBalance(input.itemId, input.warehouseId);
+    const oldQty = bal ? Number(bal.onHand) : 0;
+    const oldAvg = bal ? Number(bal.averageCost) : 0;
+    let movementUnitCost: number;
+    if (isDecrease) {
+      movementUnitCost = oldAvg;
+    } else {
+      if (input.unitCost === undefined || input.unitCost === null || input.unitCost === '') {
+        throw new InventoryValidationError('unitCost is required for receipts and inbound transfers');
+      }
+      movementUnitCost = Number(input.unitCost);
+      if (!Number.isFinite(movementUnitCost) || movementUnitCost < 0) {
+        throw new InventoryValidationError('unitCost must be a non-negative number');
+      }
+    }
+    const movementTotalValue = movementUnitCost * quantityNum;
+    const newQty = isDecrease ? oldQty - quantityNum : oldQty + quantityNum;
+    const newAvg = isDecrease
+      ? oldAvg
+      : (newQty > 0 ? ((oldQty * oldAvg) + movementTotalValue) / newQty : movementUnitCost);
+
     const movement = await this.repository.insertMovement({
       id: randomUUID(), itemId: input.itemId, warehouseId: input.warehouseId,
       movementType: input.movementType, quantity: input.quantity, signedQuantity,
       movementDate: input.movementDate, note: input.note,
+      unitCost: movementUnitCost.toFixed(6), totalValue: movementTotalValue.toFixed(4),
+      sourceModule: input.sourceModule, sourceId: input.sourceId,
     });
     await this.repository.applyDelta(input.itemId, input.warehouseId, signedQuantity);
+    await this.repository.applyValuation(input.itemId, input.warehouseId, {
+      averageCost: newAvg.toFixed(6),
+      totalValue: (newQty * newAvg).toFixed(4),
+      lastPurchaseCost: input.movementType === 'receipt' ? movementUnitCost.toFixed(6) : undefined,
+    });
     return movement;
   }
 

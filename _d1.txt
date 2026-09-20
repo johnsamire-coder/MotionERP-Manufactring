@@ -1,0 +1,32 @@
+﻿===== 1. ترحيل قيود آلي (بحث شامل) =====
+
+===== 2. جداول sales =====
+export const salesSchema = pgSchema('sales');
+export const quotation = salesSchema.table('quotation', {
+export const quotationLine = salesSchema.table('quotation_line', {
+export const jobOrder = salesSchema.table('job_order', {
+
+===== 3. جداول cost =====
+export const costSchema = pgSchema('cost');
+export const costComponentType = costSchema.table('component_type', {
+export const jobCostSheet = costSchema.table('job_cost_sheet', {
+export const costEntry = costSchema.table('entry', {
+export const overheadPool = costSchema.table('overhead_pool', {
+export const overheadPoolEntry = costSchema.table('overhead_pool_entry', {
+export const allocationPolicy = costSchema.table('allocation_policy', {
+export const allocationResult = costSchema.table('allocation_result', {
+
+===== 4. جداول overhead =====
+export const overheadSchema = pgSchema('overhead');
+export const overheadPool = overheadSchema.table('overhead_pool', {
+export const allocationPolicy = overheadSchema.table('allocation_policy', {
+export const allocationResult = overheadSchema.table('allocation_result', {
+
+===== 5. جداول inventory =====
+export const inventorySchema = pgSchema('inventory');
+export const warehouse = inventorySchema.table('warehouse', {
+export const stockBalance = inventorySchema.table('stock_balance', {
+export const stockMovement = inventorySchema.table('stock_movement', {
+export const stockReservation = inventorySchema.table('stock_reservation', {
+
+===== 6. تقييم المخزون =====
