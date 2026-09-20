@@ -1,4 +1,4 @@
-export type WarehouseStatus = 'active' | 'inactive' | 'archived';
+﻿export type WarehouseStatus = 'active' | 'inactive' | 'archived';
 export type MovementType = 'receipt' | 'issue' | 'transfer_in' | 'transfer_out' | 'adjustment';
 export type ReservationStatus = 'active' | 'released';
 
@@ -11,15 +11,20 @@ export interface CreateWarehouseInput { code: string; name: string; orgNodeId: s
 export interface StockBalanceRecord {
   id: string; itemId: string; warehouseId: string;
   onHand: string; reserved: string; available: string; updatedAt: string;
+  averageCost: string; totalValue: string;
+  lastPurchaseCost: string | null; lastPurchaseAt: string | null;
 }
 
 export interface StockMovementRecord {
   id: string; itemId: string; warehouseId: string; movementType: MovementType;
   quantity: string; movementDate: string; note: string | null; createdAt: string;
+  unitCost: string | null; totalValue: string | null;
+  sourceModule: string | null; sourceId: string | null;
 }
 export interface CreateMovementInput {
   itemId: string; warehouseId: string; movementType: MovementType;
   quantity: string; movementDate?: string; note?: string;
+  unitCost?: string; sourceModule?: string; sourceId?: string;
 }
 
 export interface StockReservationRecord {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import { stockBalance, stockMovement, stockReservation, warehouse } from './inventory.schema';
@@ -17,6 +17,8 @@ const movementColumns = {
   id: stockMovement.id, itemId: stockMovement.itemId, warehouseId: stockMovement.warehouseId,
   movementType: stockMovement.movementType, quantity: stockMovement.quantity,
   movementDate: stockMovement.movementDate, note: stockMovement.note, createdAt: stockMovement.createdAt,
+  unitCost: stockMovement.unitCost, totalValue: stockMovement.totalValue,
+  sourceModule: stockMovement.sourceModule, sourceId: stockMovement.sourceId,
 };
 const reservationColumns = {
   id: stockReservation.id, itemId: stockReservation.itemId, warehouseId: stockReservation.warehouseId,
@@ -25,8 +27,8 @@ const reservationColumns = {
 };
 
 interface WarehouseRow { id: string; code: string; name: string; orgNodeId: string; status: string; createdAt: Date; updatedAt: Date; }
-interface MovementRow { id: string; itemId: string; warehouseId: string; movementType: string; quantity: string; movementDate: Date; note: string | null; createdAt: Date; }
-interface BalanceRow { id: string; itemId: string; warehouseId: string; onHand: string; reserved: string; updatedAt: Date; }
+interface MovementRow { id: string; itemId: string; warehouseId: string; movementType: string; quantity: string; movementDate: Date; note: string | null; createdAt: Date; unitCost: string | null; totalValue: string | null; sourceModule: string | null; sourceId: string | null; }
+interface BalanceRow { id: string; itemId: string; warehouseId: string; onHand: string; reserved: string; updatedAt: Date; averageCost: string; totalValue: string; lastPurchaseCost: string | null; lastPurchaseAt: Date | null; }
 interface ReservationRow { id: string; itemId: string; warehouseId: string; quantity: string; source: string; status: string; createdAt: Date; releasedAt: Date | null; }
 
 function toWarehouseRecord(row: WarehouseRow): WarehouseRecord {
@@ -35,12 +37,15 @@ function toWarehouseRecord(row: WarehouseRow): WarehouseRecord {
 }
 function toMovementRecord(row: MovementRow): StockMovementRecord {
   return { id: row.id, itemId: row.itemId, warehouseId: row.warehouseId, movementType: row.movementType as MovementType,
-    quantity: row.quantity, movementDate: row.movementDate.toISOString(), note: row.note, createdAt: row.createdAt.toISOString() };
+    quantity: row.quantity, movementDate: row.movementDate.toISOString(), note: row.note, createdAt: row.createdAt.toISOString(),
+    unitCost: row.unitCost, totalValue: row.totalValue, sourceModule: row.sourceModule, sourceId: row.sourceId };
 }
 function toBalanceRecord(row: BalanceRow): StockBalanceRecord {
   const available = (Number(row.onHand) - Number(row.reserved)).toString();
   return { id: row.id, itemId: row.itemId, warehouseId: row.warehouseId, onHand: row.onHand, reserved: row.reserved,
-    available, updatedAt: row.updatedAt.toISOString() };
+    available, updatedAt: row.updatedAt.toISOString(),
+    averageCost: row.averageCost, totalValue: row.totalValue,
+    lastPurchaseCost: row.lastPurchaseCost, lastPurchaseAt: row.lastPurchaseAt ? row.lastPurchaseAt.toISOString() : null };
 }
 function toReservationRecord(row: ReservationRow): StockReservationRecord {
   return { id: row.id, itemId: row.itemId, warehouseId: row.warehouseId, quantity: row.quantity, source: row.source,
@@ -75,6 +80,8 @@ export class InventoryRepository {
     const rows = await this.database.db.select({
       id: stockBalance.id, itemId: stockBalance.itemId, warehouseId: stockBalance.warehouseId,
       onHand: stockBalance.onHand, reserved: stockBalance.reserved, updatedAt: stockBalance.updatedAt,
+      averageCost: stockBalance.averageCost, totalValue: stockBalance.totalValue,
+      lastPurchaseCost: stockBalance.lastPurchaseCost, lastPurchaseAt: stockBalance.lastPurchaseAt,
     }).from(stockBalance).orderBy(asc(stockBalance.itemId));
     return rows.map(toBalanceRecord);
   }
@@ -82,15 +89,19 @@ export class InventoryRepository {
     const rows = await this.database.db.select({
       id: stockBalance.id, itemId: stockBalance.itemId, warehouseId: stockBalance.warehouseId,
       onHand: stockBalance.onHand, reserved: stockBalance.reserved, updatedAt: stockBalance.updatedAt,
+      averageCost: stockBalance.averageCost, totalValue: stockBalance.totalValue,
+      lastPurchaseCost: stockBalance.lastPurchaseCost, lastPurchaseAt: stockBalance.lastPurchaseAt,
     }).from(stockBalance).where(and(eq(stockBalance.itemId, itemId), eq(stockBalance.warehouseId, warehouseId))).limit(1);
     return rows[0] ?? null;
   }
-  async insertMovement(input: CreateMovementInput & { id: string; signedQuantity: string }): Promise<StockMovementRecord> {
+  async insertMovement(input: CreateMovementInput & { id: string; signedQuantity: string; totalValue?: string }): Promise<StockMovementRecord> {
     const rows = await this.database.db.insert(stockMovement).values({
       id: input.id, itemId: input.itemId, warehouseId: input.warehouseId,
       movementType: input.movementType, quantity: input.signedQuantity,
       movementDate: input.movementDate ? new Date(input.movementDate) : new Date(),
       note: input.note ?? null,
+      unitCost: input.unitCost ?? null, totalValue: input.totalValue ?? null,
+      sourceModule: input.sourceModule ?? null, sourceId: input.sourceId ?? null,
     }).returning(movementColumns);
     return toMovementRecord(rows[0]!);
   }
@@ -104,6 +115,16 @@ export class InventoryRepository {
       await this.database.db.execute(sql`UPDATE ${stockBalance} SET on_hand = on_hand + ${delta}::numeric WHERE id = ${existing.id}`);
     } else {
       await this.database.db.insert(stockBalance).values({ itemId, warehouseId, onHand: delta, reserved: '0' });
+    }
+  }
+  /** Writes the recalculated valuation onto the balance row. Called right after applyDelta, so the row always exists by now. */
+  async applyValuation(itemId: string, warehouseId: string, v: { averageCost: string; totalValue: string; lastPurchaseCost?: string }): Promise<void> {
+    const existing = await this.findBalance(itemId, warehouseId);
+    if (!existing) return;
+    if (v.lastPurchaseCost !== undefined) {
+      await this.database.db.execute(sql`UPDATE ${stockBalance} SET average_cost = ${v.averageCost}::numeric, total_value = ${v.totalValue}::numeric, last_purchase_cost = ${v.lastPurchaseCost}::numeric, last_purchase_at = now() WHERE id = ${existing.id}`);
+    } else {
+      await this.database.db.execute(sql`UPDATE ${stockBalance} SET average_cost = ${v.averageCost}::numeric, total_value = ${v.totalValue}::numeric WHERE id = ${existing.id}`);
     }
   }
   async applyReservedDelta(itemId: string, warehouseId: string, delta: string): Promise<void> {

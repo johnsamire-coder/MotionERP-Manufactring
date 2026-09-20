@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+﻿import { sql } from 'drizzle-orm';
 import { check, index, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { item } from '../catalog/catalog.schema';
 import { orgNode } from '../organization/organization.schema';
@@ -33,6 +33,10 @@ export const stockBalance = inventorySchema.table('stock_balance', {
     .references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   onHand: numeric('on_hand', { precision: 24, scale: 6 }).notNull().default('0'),
   reserved: numeric('reserved', { precision: 24, scale: 6 }).notNull().default('0'),
+  averageCost: numeric('average_cost', { precision: 18, scale: 6 }).notNull().default('0'),
+  totalValue: numeric('total_value', { precision: 18, scale: 4 }).notNull().default('0'),
+  lastPurchaseCost: numeric('last_purchase_cost', { precision: 18, scale: 6 }),
+  lastPurchaseAt: timestamp('last_purchase_at', { withTimezone: true }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   unique('stock_balance_item_warehouse_unique').on(t.itemId, t.warehouseId),
@@ -52,6 +56,10 @@ export const stockMovement = inventorySchema.table('stock_movement', {
     .references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   movementType: text('movement_type').notNull(),
   quantity: numeric('quantity', { precision: 24, scale: 6 }).notNull(),
+  unitCost: numeric('unit_cost', { precision: 18, scale: 6 }),
+  totalValue: numeric('total_value', { precision: 18, scale: 4 }),
+  sourceModule: text('source_module'),
+  sourceId: text('source_id'),
   movementDate: timestamp('movement_date', { withTimezone: true }).notNull(),
   note: text('note'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -63,7 +71,7 @@ export const stockMovement = inventorySchema.table('stock_movement', {
   index('stock_movement_date_idx').on(t.movementDate),
 ]);
 
-/** Reservation ledger — separate from on_hand entirely (D31). A reservation only reduces
+/** Reservation ledger â€” separate from on_hand entirely (D31). A reservation only reduces
  * "available" (on_hand - reserved); it never touches on_hand. Released when goods are
  * actually issued, or when the source document is cancelled. */
 export const stockReservation = inventorySchema.table('stock_reservation', {
