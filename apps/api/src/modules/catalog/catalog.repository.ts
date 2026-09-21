@@ -1,12 +1,31 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { and, asc, eq, ne, sql } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import {
-  item, itemCategory, itemCategoryTranslation, itemTranslation, uom, uomClass, uomTranslation,
+  item,
+  itemCategory,
+  itemCategoryTranslation,
+  itemTranslation,
+  uom,
+  uomClass,
+  uomConversion,
+  uomTranslation,
 } from './catalog.schema';
 import type {
-  CreateItemCategoryInput, CreateItemInput, CreateUomInput, ItemCategoryRecord, ItemCategoryStatus,
-  ItemRecord, ItemStatus, ItemType, Language, UomClassRecord, UomRecord, UomStatus,
+  CreateItemCategoryInput,
+  CreateItemInput,
+  CreateUomConversionInput,
+  CreateUomInput,
+  ItemCategoryRecord,
+  ItemCategoryStatus,
+  ItemRecord,
+  ItemStatus,
+  ItemType,
+  Language,
+  UomClassRecord,
+  UomConversionRecord,
+  UomRecord,
+  UomStatus,
 } from './catalog.types';
 
 const uomColumns = {
@@ -25,10 +44,20 @@ const itemColumns = {
   itemType: item.itemType, categoryId: item.categoryId, baseUnitId: item.baseUnitId,
   status: item.status, createdAt: item.createdAt, updatedAt: item.updatedAt,
 };
+const uomConvColumns = {
+  id: uomConversion.id,
+  itemId: uomConversion.itemId,
+  fromUnitId: uomConversion.fromUnitId,
+  toUnitId: uomConversion.toUnitId,
+  conversionFactor: uomConversion.conversionFactor,
+  createdAt: uomConversion.createdAt,
+  updatedAt: uomConversion.updatedAt,
+};
 
 interface UomRow { id: string; code: string; name: string; symbol: string | null; classCode: string; decimalPrecision: number; status: string; createdAt: Date; updatedAt: Date; }
 interface CategoryRow { id: string; code: string; name: string; description: string | null; parentId: string | null; status: string; position: number; createdAt: Date; updatedAt: Date; }
 interface ItemRow { id: string; code: string; name: string; description: string | null; itemType: string; categoryId: string; baseUnitId: string; status: string; createdAt: Date; updatedAt: Date; }
+interface UomConvRow { id: string; itemId: string; fromUnitId: string; toUnitId: string; conversionFactor: string; createdAt: Date; updatedAt: Date; }
 
 function toUomRecord(row: UomRow, name: string): UomRecord {
   return { id: row.id, code: row.code, name, symbol: row.symbol, classCode: row.classCode,
@@ -45,11 +74,18 @@ function toItemRecord(row: ItemRow, name: string): ItemRecord {
     itemType: row.itemType as ItemType, categoryId: row.categoryId, baseUnitId: row.baseUnitId,
     status: row.status as ItemStatus, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
 }
+function toUomConvRecord(row: UomConvRow): UomConversionRecord {
+  return {
+    id: row.id, itemId: row.itemId, fromUnitId: row.fromUnitId, toUnitId: row.toUnitId,
+    conversionFactor: row.conversionFactor, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(),
+  };
+}
 
 @Injectable()
 export class CatalogRepository {
   constructor(private readonly database: DatabaseService) {}
 
+  // --- UOM Classes & Units ---
   async listUomClasses(): Promise<UomClassRecord[]> {
     return this.database.db.select({ code: uomClass.code, name: uomClass.name, description: uomClass.description })
       .from(uomClass).orderBy(asc(uomClass.code));
@@ -93,6 +129,7 @@ export class CatalogRepository {
     return toUomRecord(inserted, inserted.name);
   }
 
+  // --- Item Categories ---
   private async categoryTranslationMap(language: Language): Promise<Map<string, string>> {
     const rows = await this.database.db.select({ categoryId: itemCategoryTranslation.categoryId, name: itemCategoryTranslation.name })
       .from(itemCategoryTranslation).where(eq(itemCategoryTranslation.language, language));
@@ -148,6 +185,7 @@ export class CatalogRepository {
     return toCategoryRecord(rows[0]!, rows[0]!.name);
   }
 
+  // --- Items ---
   private async itemTranslationMap(language: Language): Promise<Map<string, string>> {
     const rows = await this.database.db.select({ itemId: itemTranslation.itemId, name: itemTranslation.name })
       .from(itemTranslation).where(eq(itemTranslation.language, language));
@@ -191,6 +229,34 @@ export class CatalogRepository {
     const rows = await this.database.db.update(item).set({ status }).where(eq(item.id, id)).returning(itemColumns);
     return toItemRecord(rows[0]!, rows[0]!.name);
   }
+
+  // --- UOM Conversion Management ---
+  async listUomConversions(itemId?: string): Promise<UomConversionRecord[]> {
+    const query = this.database.db.select(uomConvColumns).from(uomConversion);
+    const rows = itemId
+      ? await query.where(eq(uomConversion.itemId, itemId))
+      : await query;
+    return rows.map(toUomConvRecord);
+  }
+
+  async findUomConversion(itemId: string, fromUnitId: string, toUnitId: string): Promise<UomConversionRecord | null> {
+    const rows = await this.database.db.select(uomConvColumns).from(uomConversion)
+      .where(and(
+        eq(uomConversion.itemId, itemId),
+        eq(uomConversion.fromUnitId, fromUnitId),
+        eq(uomConversion.toUnitId, toUnitId),
+      )).limit(1);
+    return rows[0] ? toUomConvRecord(rows[0]) : null;
+  }
+
+  async insertUomConversion(input: CreateUomConversionInput & { id: string }): Promise<UomConversionRecord> {
+    const rows = await this.database.db.insert(uomConversion).values({
+      id: input.id,
+      itemId: input.itemId,
+      fromUnitId: input.fromUnitId,
+      toUnitId: input.toUnitId,
+      conversionFactor: input.conversionFactor,
+    }).returning(uomConvColumns);
+    return toUomConvRecord(rows[0]!);
+  }
 }
-
-

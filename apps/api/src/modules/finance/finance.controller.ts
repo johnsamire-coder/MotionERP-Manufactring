@@ -10,7 +10,10 @@ import {
   UseFilters,
 } from '@nestjs/common';
 import {
+  CreateBankReconciliationDto,
+  CreateBankTransferDto,
   CreateCollectionDto,
+  CreateCreditDebitNoteDto,
   CreatePaymentDto,
   CreatePurchaseInvoiceDto,
   CreateRetentionDto,
@@ -20,7 +23,10 @@ import {
 import { FinanceExceptionFilter } from './finance.exception-filter';
 import { FinanceService } from './finance.service';
 import type {
+  BankReconciliationRecord,
+  BankTransferRecord,
   CollectionRecord,
+  CreditDebitNoteRecord,
   PaymentRecord,
   PurchaseInvoiceRecord,
   RetentionRecord,
@@ -180,5 +186,83 @@ export class FinanceController {
   @HttpCode(200)
   async cancelPayment(@Param('id', ParseUUIDPipe) id: string): Promise<{ payment: PaymentRecord }> {
     return { payment: await this.service.cancelPayment(id) };
+  }
+
+  // --- Credit & Debit Notes ---
+  @Get('credit-debit-notes')
+  async creditDebitNotes(
+    @Query('orgNodeId') orgNodeId?: string,
+    @Query('partyType') partyType?: 'customer' | 'supplier',
+    @Query('partyId') partyId?: string,
+  ): Promise<{ creditDebitNotes: CreditDebitNoteRecord[] }> {
+    return { creditDebitNotes: await this.service.getCreditDebitNotes(orgNodeId, partyType, partyId) };
+  }
+
+  @Get('credit-debit-notes/:id')
+  async creditDebitNote(@Param('id', ParseUUIDPipe) id: string): Promise<{ creditDebitNote: CreditDebitNoteRecord }> {
+    return { creditDebitNote: await this.service.getCreditDebitNote(id) };
+  }
+
+  @Post('credit-debit-notes')
+  @HttpCode(201)
+  async createCreditDebitNote(@Body() dto: CreateCreditDebitNoteDto): Promise<{ creditDebitNote: CreditDebitNoteRecord }> {
+    const created = await this.service.createCreditDebitNote(dto);
+    return { creditDebitNote: created };
+  }
+
+  @Post('credit-debit-notes/:id/post')
+  @HttpCode(200)
+  async postCreditDebitNote(@Param('id', ParseUUIDPipe) id: string): Promise<{ creditDebitNote: CreditDebitNoteRecord }> {
+    return { creditDebitNote: await this.service.postCreditDebitNote(id) };
+  }
+
+  @Post('credit-debit-notes/:id/cancel')
+  @HttpCode(200)
+  async cancelCreditDebitNote(@Param('id', ParseUUIDPipe) id: string): Promise<{ creditDebitNote: CreditDebitNoteRecord }> {
+    return { creditDebitNote: await this.service.cancelCreditDebitNote(id) };
+  }
+
+  // --- Bank Transfers Endpoints ---
+  @Get('bank-transfers')
+  async bankTransfers(@Query('orgNodeId') orgNodeId?: string): Promise<{ bankTransfers: BankTransferRecord[] }> {
+    return { bankTransfers: await this.service.getBankTransfers(orgNodeId) };
+  }
+
+  @Get('bank-transfers/:id')
+  async bankTransfer(@Param('id', ParseUUIDPipe) id: string): Promise<{ bankTransfer: BankTransferRecord }> {
+    return { bankTransfer: await this.service.getBankTransfer(id) };
+  }
+
+  @Post('bank-transfers')
+  @HttpCode(201)
+  async createBankTransfer(@Body() dto: CreateBankTransferDto): Promise<{ bankTransfer: BankTransferRecord }> {
+    return { bankTransfer: await this.service.createBankTransfer(dto) };
+  }
+
+  @Post('bank-transfers/:id/post')
+  @HttpCode(200)
+  async postBankTransfer(@Param('id', ParseUUIDPipe) id: string): Promise<{ bankTransfer: BankTransferRecord }> {
+    return { bankTransfer: await this.service.postBankTransfer(id) };
+  }
+
+  @Post('bank-transfers/:id/cancel')
+  @HttpCode(200)
+  async cancelBankTransfer(@Param('id', ParseUUIDPipe) id: string): Promise<{ bankTransfer: BankTransferRecord }> {
+    return { bankTransfer: await this.service.cancelBankTransfer(id) };
+  }
+
+  // --- Bank Reconciliation Endpoints ---
+  @Get('bank-reconciliations')
+  async bankReconciliations(
+    @Query('orgNodeId') orgNodeId?: string,
+    @Query('bankAccountId') bankAccountId?: string,
+  ): Promise<{ bankReconciliations: BankReconciliationRecord[] }> {
+    return { bankReconciliations: await this.service.getBankReconciliations(orgNodeId, bankAccountId) };
+  }
+
+  @Post('bank-reconciliations')
+  @HttpCode(201)
+  async createBankReconciliation(@Body() dto: CreateBankReconciliationDto): Promise<{ bankReconciliation: BankReconciliationRecord }> {
+    return { bankReconciliation: await this.service.createBankReconciliation(dto) };
   }
 }

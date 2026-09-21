@@ -7,12 +7,18 @@ import type { JobOrderRecord } from '../sales/sales.types';
 import { FinanceNotFoundError, FinanceValidationError } from './finance.errors';
 import { FinanceRepository } from './finance.repository';
 import type {
+  BankReconciliationRecord,
+  BankTransferRecord,
   CollectionRecord,
+  CreateBankReconciliationInput,
+  CreateBankTransferInput,
   CreateCollectionInput,
+  CreateCreditDebitNoteInput,
   CreatePaymentInput,
   CreatePurchaseInvoiceInput,
   CreateRetentionInput,
   CreateSalesInvoiceInput,
+  CreditDebitNoteRecord,
   PaymentRecord,
   PurchaseInvoiceRecord,
   RetentionRecord,
@@ -35,7 +41,7 @@ export class FinanceService {
     return found;
   }
 
-  // --- Collections (Customer Inflow) ---
+  // --- Collections ---
   async getCollections(jobOrderReference?: string): Promise<CollectionRecord[]> {
     return this.repository.listCollections(jobOrderReference);
   }
@@ -56,8 +62,6 @@ export class FinanceService {
       ...input,
     });
 
-    // Automated Double-Entry Posting for Customer Collection:
-    // [Dr: Bank/Cash (receivedInAccountId) / Cr: AR (Customer Subledger)]
     if (this.accountingService && this.accountingRepo && input.receivedInAccountId && jobOrder.orgNodeId) {
       const config = await this.accountingRepo.findCompanyConfig(jobOrder.orgNodeId);
       const determinations = await this.accountingRepo.listAccountDeterminations(jobOrder.orgNodeId);
@@ -413,7 +417,7 @@ export class FinanceService {
     return this.repository.setSalesInvoiceStatus(id, 'cancelled');
   }
 
-  // --- Payments (Supplier Payments & Bank Outflow) ---
+  // --- Payments (Supplier Payments) ---
   async getPayments(orgNodeId?: string, supplierId?: string): Promise<PaymentRecord[]> {
     return this.repository.listPayments(orgNodeId, supplierId);
   }
@@ -449,8 +453,6 @@ export class FinanceService {
       throw new FinanceValidationError(`payment ${id} is "${p.status}" and cannot be posted (must be "draft")`);
     }
 
-    // Automated Double-Entry Posting for Supplier Payment:
-    // [Dr: AP (Supplier Subledger) / Cr: Bank/Cash (paidFromAccountId)]
     if (this.accountingService && this.accountingRepo && p.paidFromAccountId) {
       const config = await this.accountingRepo.findCompanyConfig(p.orgNodeId);
       const determinations = await this.accountingRepo.listAccountDeterminations(p.orgNodeId);
@@ -498,5 +500,322 @@ export class FinanceService {
       throw new FinanceValidationError(`payment ${id} is already posted and cannot be cancelled`);
     }
     return this.repository.setPaymentStatus(id, 'cancelled');
+  }
+
+  // --- Credit & Debit Notes ---
+  async getCreditDebitNotes(orgNodeId?: string, partyType?: 'customer' | 'supplier', partyId?: string): Promise<CreditDebitNoteRecord[]> {
+    return this.repository.listCreditDebitNotes(orgNodeId, partyType, partyId);
+  }
+
+  async getCreditDebitNote(id: string): Promise<CreditDebitNoteRecord> {
+    const found = await this.repository.findCreditDebitNoteById(id);
+    if (!found) throw new FinanceNotFoundError(`credit/debit note ${id} does not exist`);
+    return found;
+  }
+
+  async createCreditDebitNote(input: CreateCreditDebitNoteInput): Promise<CreditDebitNoteRecord> {
+    if (!input.orgNodeId) throw new FinanceValidationError('orgNodeId is required');
+    if (!input.partyId) throw new FinanceValidationError('partyId is required');
+    if (!input.lines || input.lines.length === 0) {
+      throw new FinanceValidationError('Credit/Debit note must have at least one line');
+    }
+
+    let netTotal = 0;
+    let taxTotal = 0;
+
+    const computedLines = input.lines.map((l) => {
+      const qty = Number(l.quantity);
+      const price = Number(l.unitPrice);
+      const rate = Number(l.taxRate ?? '14.00');
+
+      if (!Number.isFinite(qty) || qty <= 0) throw new FinanceValidationError('Line quantity must be positive');
+      if (!Number.isFinite(price) || price < 0) throw new FinanceValidationError('Line unit price must be non-negative');
+
+      const lineNet = qty * price;
+      const lineTax = (lineNet * rate) / 100;
+      const lineGrand = lineNet + lineTax;
+
+      netTotal += lineNet;
+      taxTotal += lineTax;
+
+      return {
+        id: randomUUID(),
+        itemId: l.itemId,
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+        taxRate: rate.toFixed(2),
+        taxAmount: lineTax.toFixed(4),
+        totalAmount: lineGrand.toFixed(4),
+      };
+    });
+
+    const grandTotal = netTotal + taxTotal;
+    const sequence = (await this.repository.countCreditDebitNotes()) + 1;
+    const year = new Date().getFullYear();
+    const prefix = input.noteType === 'credit_note' ? 'CRN' : 'DBN';
+    const noteNumber = `${prefix}-${year}-${String(sequence).padStart(6, '0')}`;
+
+    return this.repository.insertCreditDebitNote({
+      ...input,
+      id: randomUUID(),
+      noteNumber,
+      netAmount: netTotal.toFixed(4),
+      taxAmount: taxTotal.toFixed(4),
+      grandTotal: grandTotal.toFixed(4),
+      computedLines,
+    });
+  }
+
+  async postCreditDebitNote(id: string): Promise<CreditDebitNoteRecord> {
+    const note = await this.getCreditDebitNote(id);
+    if (note.status !== 'draft') {
+      throw new FinanceValidationError(`Note ${id} is "${note.status}" and cannot be posted`);
+    }
+
+    if (this.accountingService && this.accountingRepo) {
+      const config = await this.accountingRepo.findCompanyConfig(note.orgNodeId);
+      const determinations = await this.accountingRepo.listAccountDeterminations(note.orgNodeId);
+
+      if (note.noteType === 'credit_note') {
+        const arDet = determinations.find((d) => d.accountPurpose === 'receivable');
+        const arAccountId = arDet?.accountId ?? config?.defaultReceivableAccountId;
+
+        const revDet = determinations.find((d) => d.accountPurpose === 'revenue');
+        const revAccountId = revDet?.accountId;
+
+        const taxDet = determinations.find((d) => d.accountPurpose === 'output_tax');
+        const taxAccountId = taxDet?.accountId ?? config?.defaultOutputTaxAccountId;
+
+        if (arAccountId && revAccountId) {
+          const lines = [
+            {
+              accountId: revAccountId,
+              debitAmount: note.netAmount,
+              creditAmount: '0',
+              description: `[Auto] Sales Return / Credit Note ${note.noteNumber}`,
+            },
+          ];
+
+          if (Number(note.taxAmount) > 0 && taxAccountId) {
+            lines.push({
+              accountId: taxAccountId,
+              debitAmount: note.taxAmount,
+              creditAmount: '0',
+              description: `[Auto] Output VAT Reversal for Credit Note ${note.noteNumber}`,
+            });
+          }
+
+          lines.push({
+            accountId: arAccountId,
+            debitAmount: '0',
+            creditAmount: note.grandTotal,
+            description: `[Auto] AR Reduction via Credit Note ${note.noteNumber}`,
+            partyType: 'customer',
+            partyId: note.partyId,
+          } as any);
+
+          const draftJournal = await this.accountingService.createEntry({
+            orgNodeId: note.orgNodeId,
+            description: `Customer Credit Note ${note.noteNumber} (${note.reason ?? ''})`,
+            reference: note.noteNumber,
+            entryDate: note.postingDate,
+            isAutoGenerated: true,
+            idempotencyKey: `credit-note-${note.id}`,
+            sourceEventType: 'credit_note',
+            lines,
+          });
+
+          await this.accountingService.postEntry(draftJournal.id);
+        }
+      } else {
+        const apDet = determinations.find((d) => d.accountPurpose === 'payable');
+        const apAccountId = apDet?.accountId ?? config?.defaultPayableAccountId;
+
+        const invDet = determinations.find((d) => d.accountPurpose === 'inventory');
+        const invAccountId = invDet?.accountId;
+
+        const taxDet = determinations.find((d) => d.accountPurpose === 'input_tax');
+        const taxAccountId = taxDet?.accountId ?? config?.defaultInputTaxAccountId;
+
+        if (apAccountId && invAccountId) {
+          const lines = [
+            {
+              accountId: apAccountId,
+              debitAmount: note.grandTotal,
+              creditAmount: '0',
+              description: `[Auto] AP Reduction via Debit Note ${note.noteNumber}`,
+              partyType: 'supplier',
+              partyId: note.partyId,
+            } as any,
+            {
+              accountId: invAccountId,
+              debitAmount: '0',
+              creditAmount: note.netAmount,
+              description: `[Auto] Inventory Return for Debit Note ${note.noteNumber}`,
+            },
+          ];
+
+          if (Number(note.taxAmount) > 0 && taxAccountId) {
+            lines.push({
+              accountId: taxAccountId,
+              debitAmount: '0',
+              creditAmount: note.taxAmount,
+              description: `[Auto] Input VAT Reversal for Debit Note ${note.noteNumber}`,
+            });
+          }
+
+          const draftJournal = await this.accountingService.createEntry({
+            orgNodeId: note.orgNodeId,
+            description: `Supplier Debit Note ${note.noteNumber} (${note.reason ?? ''})`,
+            reference: note.noteNumber,
+            entryDate: note.postingDate,
+            isAutoGenerated: true,
+            idempotencyKey: `debit-note-${note.id}`,
+            sourceEventType: 'debit_note',
+            lines,
+          });
+
+          await this.accountingService.postEntry(draftJournal.id);
+        }
+      }
+    }
+
+    return this.repository.setCreditDebitNoteStatus(id, 'posted');
+  }
+
+  async cancelCreditDebitNote(id: string): Promise<CreditDebitNoteRecord> {
+    const note = await this.getCreditDebitNote(id);
+    if (note.status === 'posted') {
+      throw new FinanceValidationError(`Note ${id} is already posted and cannot be cancelled`);
+    }
+    return this.repository.setCreditDebitNoteStatus(id, 'cancelled');
+  }
+
+  // --- Bank Transfers Engine ---
+  async getBankTransfers(orgNodeId?: string): Promise<BankTransferRecord[]> {
+    return this.repository.listBankTransfers(orgNodeId);
+  }
+
+  async getBankTransfer(id: string): Promise<BankTransferRecord> {
+    const found = await this.repository.findBankTransferById(id);
+    if (!found) throw new FinanceNotFoundError(`Bank transfer ${id} does not exist`);
+    return found;
+  }
+
+  async createBankTransfer(input: CreateBankTransferInput): Promise<BankTransferRecord> {
+    if (!input.orgNodeId) throw new FinanceValidationError('orgNodeId is required');
+    if (!input.fromAccountId || !input.toAccountId) {
+      throw new FinanceValidationError('fromAccountId and toAccountId are required');
+    }
+    if (input.fromAccountId === input.toAccountId) {
+      throw new FinanceValidationError('Source and destination accounts must be different');
+    }
+
+    const amountNum = Number(input.amount);
+    if (!Number.isFinite(amountNum) || amountNum <= 0) {
+      throw new FinanceValidationError('Transfer amount must be positive');
+    }
+
+    const sequence = (await this.repository.countBankTransfers()) + 1;
+    const year = new Date().getFullYear();
+    const transferNumber = `BTR-${year}-${String(sequence).padStart(6, '0')}`;
+
+    return this.repository.insertBankTransfer({
+      ...input,
+      id: randomUUID(),
+      transferNumber,
+      amount: amountNum.toFixed(4),
+    });
+  }
+
+  async postBankTransfer(id: string): Promise<BankTransferRecord> {
+    const transfer = await this.getBankTransfer(id);
+    if (transfer.status !== 'draft') {
+      throw new FinanceValidationError(`Transfer ${id} is "${transfer.status}" and cannot be posted`);
+    }
+
+    // Automated Double-Entry GL Posting for Bank/Cash Transfer:
+    // [Dr: Destination Bank/Cash Account / Cr: Source Bank/Cash Account]
+    if (this.accountingService) {
+      const draftJournal = await this.accountingService.createEntry({
+        orgNodeId: transfer.orgNodeId,
+        description: `[Auto] تحويل مالي داخلي: ${transfer.transferNumber}`,
+        reference: transfer.transferNumber,
+        entryDate: transfer.transferDate,
+        isAutoGenerated: true,
+        idempotencyKey: `bank-transfer-${transfer.id}`,
+        sourceEventType: 'bank_transfer',
+        lines: [
+          {
+            accountId: transfer.toAccountId,
+            debitAmount: transfer.amount,
+            creditAmount: '0',
+            description: `[Auto] إيداع تحويل مالي: ${transfer.transferNumber}`,
+          },
+          {
+            accountId: transfer.fromAccountId,
+            debitAmount: '0',
+            creditAmount: transfer.amount,
+            description: `[Auto] سحب تحويل مالي: ${transfer.transferNumber}`,
+          },
+        ],
+      });
+
+      await this.accountingService.postEntry(draftJournal.id);
+    }
+
+    return this.repository.setBankTransferStatus(id, 'posted');
+  }
+
+  async cancelBankTransfer(id: string): Promise<BankTransferRecord> {
+    const transfer = await this.getBankTransfer(id);
+    if (transfer.status === 'posted') {
+      throw new FinanceValidationError(`Transfer ${id} is already posted and cannot be cancelled`);
+    }
+    return this.repository.setBankTransferStatus(id, 'cancelled');
+  }
+
+  // --- Bank Reconciliation Engine ---
+  async getBankReconciliations(orgNodeId?: string, bankAccountId?: string): Promise<BankReconciliationRecord[]> {
+    return this.repository.listBankReconciliations(orgNodeId, bankAccountId);
+  }
+
+  async createBankReconciliation(input: CreateBankReconciliationInput): Promise<BankReconciliationRecord> {
+    if (!input.orgNodeId) throw new FinanceValidationError('orgNodeId is required');
+    if (!input.bankAccountId) throw new FinanceValidationError('bankAccountId is required');
+
+    const statementBal = Number(input.statementBalance);
+    if (!Number.isFinite(statementBal)) {
+      throw new FinanceValidationError('statementBalance must be a valid number');
+    }
+
+    // Calculate cleared balance from GL posted lines up to statement date
+    let clearedBal = 0;
+    if (this.accountingRepo) {
+      const lines = await this.accountingRepo.listAllPostedLinesWithDetails({
+        orgNodeId: input.orgNodeId,
+        endDate: input.statementDate,
+      });
+
+      for (const l of lines) {
+        if (l.accountId === input.bankAccountId) {
+          clearedBal += Number(l.debit) - Number(l.credit);
+        }
+      }
+    }
+
+    const difference = statementBal - clearedBal;
+    const sequence = (await this.repository.countBankReconciliations()) + 1;
+    const year = new Date().getFullYear();
+    const reconciliationNumber = `BREC-${year}-${String(sequence).padStart(6, '0')}`;
+
+    return this.repository.insertBankReconciliation({
+      ...input,
+      id: randomUUID(),
+      reconciliationNumber,
+      statementBalance: statementBal.toFixed(4),
+      clearedBalance: clearedBal.toFixed(4),
+      differenceAmount: difference.toFixed(4),
+    });
   }
 }

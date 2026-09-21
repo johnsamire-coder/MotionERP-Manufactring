@@ -5,6 +5,8 @@ import {
 
 export const catalogSchema = pgSchema('catalog');
 
+// ==================== 1. فئات ووحدات القياس ====================
+
 export const uomClass = catalogSchema.table('uom_class', {
   code: text('code').primaryKey(),
   name: text('name').notNull(),
@@ -44,6 +46,8 @@ export const uomTranslation = catalogSchema.table('uom_translation', {
   check('uom_translation_name_not_blank', sql`length(btrim(${t.name})) > 0`),
 ]);
 
+// ==================== 2. مجموعات وتصنيفات الأصناف ====================
+
 export const itemCategory = catalogSchema.table('item_category', {
   id: uuid('id').primaryKey().defaultRandom(),
   code: text('code').notNull(),
@@ -73,6 +77,8 @@ export const itemCategoryTranslation = catalogSchema.table('item_category_transl
   check('item_category_translation_language_valid', sql`${t.language} in ('ar', 'en')`),
   check('item_category_translation_name_not_blank', sql`length(btrim(${t.name})) > 0`),
 ]);
+
+// ==================== 3. الأصناف والأسعار ====================
 
 export const item = catalogSchema.table('item', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -115,15 +121,6 @@ export const itemTranslation = catalogSchema.table('item_translation', {
   check('item_translation_name_not_blank', sql`length(btrim(${t.name})) > 0`),
 ]);
 
-export type UomClass = typeof uomClass.$inferSelect;
-export type Uom = typeof uom.$inferSelect;
-export type ItemCategory = typeof itemCategory.$inferSelect;
-export type Item = typeof item.$inferSelect;
-
-
-/**
- * Item Price — ERPNext parity: stores buying and selling prices per item.
- */
 export const itemPrice = catalogSchema.table('item_price', {
   id: uuid('id').primaryKey().defaultRandom(),
   itemId: uuid('item_id')
@@ -143,4 +140,32 @@ export const itemPrice = catalogSchema.table('item_price', {
   index('item_price_type_idx').on(t.priceListType),
 ]);
 
+// ==================== 4. محرك تحويل وحدات القياس (الجديد) ====================
+
+export const uomConversion = catalogSchema.table('uom_conversion', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
+  fromUnitId: uuid('from_unit_id')
+    .notNull()
+    .references(() => uom.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  toUnitId: uuid('to_unit_id')
+    .notNull()
+    .references(() => uom.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  conversionFactor: numeric('conversion_factor', { precision: 18, scale: 6 }).notNull(), // معامل التحويل: 1 fromUnit = factor * toUnit
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('uom_conversion_item_units_unique').on(t.itemId, t.fromUnitId, t.toUnitId),
+  check('conversion_factor_positive', sql`${t.conversionFactor} > 0`),
+  index('idx_uom_conversion_item').on(t.itemId),
+  index('idx_uom_conversion_units').on(t.fromUnitId, t.toUnitId),
+]);
+
+export type UomClass = typeof uomClass.$inferSelect;
+export type Uom = typeof uom.$inferSelect;
+export type ItemCategory = typeof itemCategory.$inferSelect;
+export type Item = typeof item.$inferSelect;
 export type ItemPrice = typeof itemPrice.$inferSelect;
+export type UomConversion = typeof uomConversion.$inferSelect;

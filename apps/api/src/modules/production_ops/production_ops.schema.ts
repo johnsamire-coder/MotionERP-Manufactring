@@ -5,6 +5,8 @@ import { employee } from '../hr/hr.schema';
 import { warehouse } from '../inventory/inventory.schema';
 import { orgNode } from '../organization/organization.schema';
 import { bom } from '../technical/technical.schema';
+import { supplier } from '../crm/crm.schema';
+import { chartOfAccounts } from '../accounting/accounting.schema';
 
 export const productionOpsSchema = pgSchema('production_ops');
 
@@ -27,13 +29,6 @@ export const workCenter = productionOpsSchema.table('work_center', {
   index('work_center_org_node_idx').on(t.orgNodeId),
 ]);
 
-/**
- * Work Order â€” ERPNext parity build (13 Sep 2026): built strictly on top of
- * an approved BOM (bomId mandatory, matching ERPNext's mandatory "BOM No"),
- * matching ERPNext's real Work Order fields for Materials/warehouses/status.
- * jobOrderReference is a Motion-specific addition kept optional from day one
- * (owner's explicit choice) â€” it plays no role in ERPNext's own lifecycle.
- */
 export const workOrder = productionOpsSchema.table('work_order', {
   id: uuid('id').primaryKey().defaultRandom(),
   workOrderNumber: text('work_order_number').notNull(),
@@ -75,15 +70,6 @@ export const workOrder = productionOpsSchema.table('work_order', {
   index('work_order_job_order_idx').on(t.jobOrderReference),
 ]);
 
-/**
- * Job Card â€” extended 14 Sep 2026 for ERPNext parity: workOrderId is an
- * OPTIONAL link (owner's explicit choice, consistent with Work Order's own
- * optional jobOrderReference) â€” jobOrderReference remains mandatory and
- * unchanged so existing labor-cost-by-job-order reporting keeps working.
- * forQuantity/completedQuantity/processLossQuantity/allowOverproduction and
- * operatorEmployeeId are ERPNext's real Job Card fields. Workstation Type
- * and a formal Time Logs child table are added separately below/next.
- */
 export const productionStep = productionOpsSchema.table('production_step', {
   id: uuid('id').primaryKey().defaultRandom(),
   jobOrderReference: text('job_order_reference').notNull(),
@@ -115,7 +101,6 @@ export const productionStep = productionOpsSchema.table('production_step', {
   index('production_step_org_node_idx').on(t.orgNodeId),
 ]);
 
-/** Time Logs â€” ERPNext's real per-shift execution record for a Job Card. Multiple entries per step are expected (pause/resume). */
 export const productionStepTimeLog = productionOpsSchema.table('production_step_time_log', {
   id: uuid('id').primaryKey().defaultRandom(),
   productionStepId: uuid('production_step_id')
@@ -131,7 +116,6 @@ export const productionStepTimeLog = productionOpsSchema.table('production_step_
   index('production_step_time_log_step_idx').on(t.productionStepId),
 ]);
 
-/** Workstation Type â€” ERPNext Setup master: a simple classification for workstations (Machine / Assembly Line / ...). */
 export const workstationType = productionOpsSchema.table('workstation_type', {
   id: uuid('id').primaryKey().defaultRandom(),
   code: text('code').notNull(),
@@ -144,7 +128,6 @@ export const workstationType = productionOpsSchema.table('workstation_type', {
   check('workstation_type_status_valid', sql`${t.status} in ('active', 'inactive')`),
 ]);
 
-/** Operation â€” ERPNext Setup master: a reusable operation template (name, default work center, standard time) referenced from BOM Operations and Job Cards. */
 export const operation = productionOpsSchema.table('operation', {
   id: uuid('id').primaryKey().defaultRandom(),
   code: text('code').notNull(),
@@ -159,19 +142,6 @@ export const operation = productionOpsSchema.table('operation', {
   check('operation_status_valid', sql`${t.status} in ('active', 'inactive')`),
 ]);
 
-export type WorkCenter = typeof workCenter.$inferSelect;
-export type WorkOrder = typeof workOrder.$inferSelect;
-export type ProductionStep = typeof productionStep.$inferSelect;
-export type ProductionStepTimeLog = typeof productionStepTimeLog.$inferSelect;
-export type WorkstationType = typeof workstationType.$inferSelect;
-export type Operation = typeof operation.$inferSelect;
-
-/**
- * Downtime Entry â€” ERPNext parity build: tracks unplanned/planned stoppage
- * time on a Work Center, with optional operator and root-cause reason.
- * `stoppageMinutes` is nullable and computed at close time (stopTime -
- * startTime), matching ERPNext's own auto-computed "Downtime" field.
- */
 export const downtimeEntry = productionOpsSchema.table('downtime_entry', {
   id: uuid('id').primaryKey().defaultRandom(),
   workCenterId: uuid('work_center_id')
@@ -190,14 +160,6 @@ export const downtimeEntry = productionOpsSchema.table('downtime_entry', {
   index('downtime_entry_work_center_idx').on(t.workCenterId),
 ]);
 
-export type DowntimeEntry = typeof downtimeEntry.$inferSelect;
-
-/**
- * Work Order Operations — ERPNext parity: embedded operations breakdown
- * within a Work Order, shown when trackOperations is true. Real FK to
- * work_order and work_center since both live in this same module (no
- * cross-module boundary issue).
- */
 export const workOrderOperation = productionOpsSchema.table('work_order_operation', {
   id: uuid('id').primaryKey().defaultRandom(),
   workOrderId: uuid('work_order_id')
@@ -213,12 +175,6 @@ export const workOrderOperation = productionOpsSchema.table('work_order_operatio
   index('work_order_operation_wo_idx').on(t.workOrderId),
 ]);
 
-export type WorkOrderOperation = typeof workOrderOperation.$inferSelect;
-
-/**
- * Job Card Raw Materials — ERPNext parity: tracks required vs actual consumed raw materials
- * for each individual Job Card (Production Step).
- */
 export const productionStepMaterial = productionOpsSchema.table('production_step_material', {
   id: uuid('id').primaryKey().defaultRandom(),
   productionStepId: uuid('production_step_id')
@@ -236,4 +192,67 @@ export const productionStepMaterial = productionOpsSchema.table('production_step
   index('production_step_material_item_idx').on(t.itemId),
 ]);
 
+// ==================== 7. منظومة تشغيل العمليات الخارجية لدى الغير (الجديد) ====================
+
+export const subcontractingOrder = productionOpsSchema.table('subcontracting_order', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  voucherNumber: text('voucher_number').notNull().unique(), // رقم إذن التشغيل الخارجي التلقائي
+  orgNodeId: uuid('org_node_id')
+    .notNull()
+    .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  supplierId: uuid('supplier_id')
+    .notNull()
+    .references(() => supplier.id, { onUpdate: 'cascade', onDelete: 'restrict' }), // مقاول الباطن
+  workOrderId: uuid('work_order_id')
+    .references(() => workOrder.id, { onUpdate: 'cascade', onDelete: 'restrict' }), // أمر الإنتاج المرتبط
+  postingDate: timestamp('posting_date', { withTimezone: true }).notNull(),
+  
+  totalServiceCost: numeric('total_service_cost', { precision: 14, scale: 4 }).notNull(), // إجمالي قيمة مصنعية المقاول الخارجي
+  serviceAccountId: uuid('service_account_id')
+    .notNull()
+    .references(() => chartOfAccounts.id, { onDelete: 'restrict' }), // حساب استحقاق خدمات مقاولي الباطن
+    
+  status: text('status').notNull().default('draft'), // draft | posted | cancelled
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  check('subcontracting_order_status_valid', sql`${t.status} in ('draft', 'posted', 'cancelled')`),
+  check('subcontracting_service_cost_positive', sql`${t.totalServiceCost} > 0`),
+  index('idx_subcontract_supplier').on(t.supplierId),
+  index('idx_subcontract_wo').on(t.workOrderId),
+  index('idx_subcontract_date').on(t.postingDate),
+]);
+
+export const subcontractingItem = productionOpsSchema.table('subcontracting_item', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  subcontractingOrderId: uuid('subcontracting_order_id')
+    .notNull()
+    .references(() => subcontractingOrder.id, { onDelete: 'cascade' }),
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => item.id, { onDelete: 'restrict' }),
+  warehouseId: uuid('warehouse_id')
+    .notNull()
+    .references(() => warehouse.id, { onDelete: 'restrict' }), // مخزن عهدة المقاول الخارجي
+  quantity: numeric('quantity', { precision: 24, scale: 6 }).notNull(),
+  rawMaterialCost: numeric('raw_material_cost', { precision: 14, scale: 4 }).notNull().default('0.0000'), // تكلفة الخامات المرسلة
+  serviceRate: numeric('service_rate', { precision: 14, scale: 4 }).notNull(), // سعر مصنعية القطعة الواحدة للمقاول
+  newValuationRate: numeric('new_valuation_rate', { precision: 18, scale: 6 }).notNull(), // التكلفة المدمجة النهائية للقطعة
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('idx_subcontract_item_order').on(t.subcontractingOrderId),
+  index('idx_subcontract_item_item').on(t.itemId),
+]);
+
+export type WorkCenter = typeof workCenter.$inferSelect;
+export type WorkOrder = typeof workOrder.$inferSelect;
+export type ProductionStep = typeof productionStep.$inferSelect;
+export type ProductionStepTimeLog = typeof productionStepTimeLog.$inferSelect;
+export type WorkstationType = typeof workstationType.$inferSelect;
+export type Operation = typeof operation.$inferSelect;
+export type DowntimeEntry = typeof downtimeEntry.$inferSelect;
+export type WorkOrderOperation = typeof workOrderOperation.$inferSelect;
 export type ProductionStepMaterial = typeof productionStepMaterial.$inferSelect;
+export type SubcontractingOrder = typeof subcontractingOrder.$inferSelect;
+export type SubcontractingItem = typeof subcontractingItem.$inferSelect;

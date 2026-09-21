@@ -18,6 +18,7 @@ import {
   FinancialReportQueryDto,
   PartnerLedgerQueryDto,
   PostDepreciationDto,
+  PostVatSettlementDto,
   UpsertCompanyAccountingConfigDto,
 } from './accounting.dto';
 import { AccountingExceptionFilter } from './accounting.exception-filter';
@@ -26,15 +27,17 @@ import type {
   AccountBalance,
   AccountDeterminationRecord,
   AccountingPeriodRecord,
+  BalanceSheetReport,
   CostCenterRecord,
   FiscalYearRecord,
   FixedAssetRecord,
   JournalEntryRecord,
-  PostDepreciationResult,
-  TrialBalanceReport,
-  ProfitAndLossReport,
-  BalanceSheetReport,
   PartnerLedgerReport,
+  PostDepreciationResult,
+  ProfitAndLossReport,
+  TrialBalanceReport,
+  VatReportSummary,
+  VatSettlementResult,
 } from './accounting.types';
 
 @Controller({ path: 'accounting', version: '1' })
@@ -191,5 +194,23 @@ export class AccountingController {
   @Get('reports/partner-ledger')
   async partnerLedger(@Query() query: PartnerLedgerQueryDto): Promise<PartnerLedgerReport> {
     return this.service.getPartnerLedger(query.partyType, query.partyId, query.startDate, query.endDate);
+  }
+
+  // --- VAT Return & Tax Settlement Endpoints ---
+  @Get('reports/vat-return')
+  async vatReport(@Query() query: FinancialReportQueryDto): Promise<VatReportSummary> {
+    return this.service.getVatReport(query.orgNodeId, query.startDate, query.endDate);
+  }
+
+  @Post('tax/settle-vat')
+  @HttpCode(200)
+  async settleVat(@Body() dto: PostVatSettlementDto): Promise<VatSettlementResult> {
+    return this.service.postVatSettlement(
+      dto.orgNodeId,
+      dto.settlementDate,
+      dto.taxAuthorityPayableAccountId,
+      dto.startDate,
+      dto.endDate,
+    );
   }
 }

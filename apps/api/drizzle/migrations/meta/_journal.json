@@ -344,6 +344,41 @@
       "when": 1789987504696,
       "tag": "0048_cooing_logan",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1789990141657,
+      "tag": "0049_complete_vampiro",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1789990692670,
+      "tag": "0050_legal_tattoo",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1789993490228,
+      "tag": "0051_chilly_dreadnoughts",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1789993870551,
+      "tag": "0052_deep_ben_grimm",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1789995457232,
+      "tag": "0053_big_micromax",
+      "breakpoints": true
     }
   ]
 }

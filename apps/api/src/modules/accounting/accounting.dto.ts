@@ -102,7 +102,6 @@ export class PartnerLedgerQueryDto {
   endDate?: string;
 }
 
-// --- Fixed Asset DTOs ---
 export class CreateFixedAssetDto {
   @IsUUID()
   orgNodeId!: string;
@@ -147,4 +146,23 @@ export class PostDepreciationDto {
   @IsOptional()
   @IsDateString()
   periodDate?: string;
+}
+
+export class PostVatSettlementDto {
+  @IsUUID()
+  orgNodeId!: string;
+
+  @IsDateString()
+  settlementDate!: string;
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @IsUUID()
+  taxAuthorityPayableAccountId!: string;
 }

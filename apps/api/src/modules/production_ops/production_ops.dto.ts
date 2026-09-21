@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsDateString, IsIn, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsDateString, IsIn, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength, ValidateNested, Min, ArrayMinSize } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ProductionStepMaterialDto {
@@ -90,3 +90,21 @@ export class CreateDowntimeEntryDto {
   @IsOptional() @IsString() remarks?: string;
 }
 
+export class CreateSubcontractingItemDto {
+  @IsUUID() itemId!: string;
+  @IsUUID() warehouseId!: string;
+  @IsNumberString() quantity!: string;
+  @IsNumberString() rawMaterialCost!: string;
+  @IsNumberString() serviceRate!: string;
+}
+
+export class CreateSubcontractingOrderDto {
+  @IsUUID() orgNodeId!: string;
+  @IsUUID() supplierId!: string;
+  @IsOptional() @IsUUID() workOrderId?: string;
+  @IsOptional() @IsDateString() postingDate?: string;
+  @IsNumberString() totalServiceCost!: string;
+  @IsUUID() serviceAccountId!: string;
+  @IsOptional() @IsString() notes?: string;
+  @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true }) @Type(() => CreateSubcontractingItemDto) items!: CreateSubcontractingItemDto[];
+}

@@ -150,6 +150,22 @@ export interface PostDepreciationResult {
   journalEntry: JournalEntryRecord;
 }
 
+// --- VAT Return & Tax Settlement Types ---
+export interface VatReportSummary {
+  orgNodeId: string;
+  startDate?: string;
+  endDate?: string;
+  totalOutputTax: string; // ضريبة المبيعات المحصلة
+  totalInputTax: string;  // ضريبة المشتريات المدفوعة
+  netTaxPayable: string;  // صافي الضريبة المستحقة لمصلحة الضرائب
+  status: 'payable' | 'refundable';
+}
+
+export interface VatSettlementResult {
+  journalEntry: JournalEntryRecord;
+  vatSummary: VatReportSummary;
+}
+
 // --- Financial Reports Types ---
 export interface TrialBalanceRow {
   accountId: string;

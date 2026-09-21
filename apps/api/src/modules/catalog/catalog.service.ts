@@ -3,8 +3,19 @@ import { Injectable } from '@nestjs/common';
 import { CatalogNotFoundError, CatalogValidationError } from './catalog.errors';
 import { CatalogRepository } from './catalog.repository';
 import type {
-  CreateItemCategoryInput, CreateItemInput, CreateUomInput, ItemCategoryRecord,
-  ItemCategoryTreeNode, ItemRecord, ItemType, Language, UomClassRecord, UomRecord,
+  CreateItemCategoryInput,
+  CreateItemInput,
+  CreateUomConversionInput,
+  CreateUomInput,
+  ConvertUomResult,
+  ItemCategoryRecord,
+  ItemCategoryTreeNode,
+  ItemRecord,
+  ItemType,
+  Language,
+  UomClassRecord,
+  UomConversionRecord,
+  UomRecord,
 } from './catalog.types';
 
 export interface UpdateItemCategoryInput { name?: string; description?: string | null; position?: number; parentId?: string | null; }
@@ -33,6 +44,7 @@ function buildCategoryForest(rows: ItemCategoryRecord[]): ItemCategoryTreeNode[]
 export class CatalogService {
   constructor(private readonly repository: CatalogRepository) {}
 
+  // --- UOM Classes & Units ---
   async getUomClasses(): Promise<UomClassRecord[]> { return this.repository.listUomClasses(); }
   async getUoms(language: Language = 'en'): Promise<UomRecord[]> { return this.repository.listUoms(language); }
   async getUomByCode(code: string, language: Language = 'en'): Promise<UomRecord> {
@@ -53,6 +65,7 @@ export class CatalogService {
     });
   }
 
+  // --- Categories ---
   async getCategoryTree(language: Language = 'en'): Promise<ItemCategoryTreeNode[]> {
     const all = await this.repository.listCategories(language);
     return buildCategoryForest(all);
@@ -112,6 +125,7 @@ export class CatalogService {
     if (ancestorIds.includes(category.id)) throw new CatalogValidationError(`moving category ${category.id} under ${newParentId} would create a cycle`);
   }
 
+  // --- Items ---
   async getItems(language: Language = 'en'): Promise<ItemRecord[]> { return this.repository.listItems(language); }
   async getItem(id: string, language: Language = 'en'): Promise<ItemRecord> {
     const found = await this.repository.findItemById(id, language);
@@ -162,6 +176,94 @@ export class CatalogService {
     if (found.status === 'archived') return found;
     return this.repository.setItemStatus(id, 'archived');
   }
+
+  // --- UOM Conversion Engine ---
+  async getUomConversions(itemId?: string): Promise<UomConversionRecord[]> {
+    return this.repository.listUomConversions(itemId);
+  }
+
+  async createUomConversion(input: CreateUomConversionInput): Promise<UomConversionRecord> {
+    if (input.fromUnitId === input.toUnitId) {
+      throw new CatalogValidationError('fromUnit and toUnit must be different');
+    }
+    const factor = Number(input.conversionFactor);
+    if (!Number.isFinite(factor) || factor <= 0) {
+      throw new CatalogValidationError('conversionFactor must be a positive number');
+    }
+
+    const itemRecord = await this.repository.findItemById(input.itemId);
+    if (!itemRecord) throw new CatalogNotFoundError(`item ${input.itemId} does not exist`);
+
+    const fromUom = await this.repository.findUomById(input.fromUnitId);
+    if (!fromUom) throw new CatalogNotFoundError(`fromUnit ${input.fromUnitId} does not exist`);
+
+    const toUom = await this.repository.findUomById(input.toUnitId);
+    if (!toUom) throw new CatalogNotFoundError(`toUnit ${input.toUnitId} does not exist`);
+
+    const existing = await this.repository.findUomConversion(input.itemId, input.fromUnitId, input.toUnitId);
+    if (existing) {
+      throw new CatalogValidationError('UOM conversion rule already exists for this item and unit pair');
+    }
+
+    return this.repository.insertUomConversion({
+      id: randomUUID(),
+      ...input,
+      conversionFactor: factor.toFixed(6),
+    });
+  }
+
+  async convertQuantity(
+    itemId: string,
+    fromUnitId: string,
+    toUnitId: string,
+    quantity: number,
+  ): Promise<ConvertUomResult> {
+    if (!Number.isFinite(quantity) || quantity < 0) {
+      throw new CatalogValidationError('quantity must be a non-negative number');
+    }
+
+    if (fromUnitId === toUnitId) {
+      return {
+        itemId,
+        fromUnitId,
+        toUnitId,
+        sourceQuantity: quantity,
+        convertedQuantity: quantity,
+        conversionFactor: 1,
+      };
+    }
+
+    // 1. Direct Conversion (1 fromUnit = factor * toUnit) -> converted = quantity * factor
+    const direct = await this.repository.findUomConversion(itemId, fromUnitId, toUnitId);
+    if (direct) {
+      const factor = Number(direct.conversionFactor);
+      return {
+        itemId,
+        fromUnitId,
+        toUnitId,
+        sourceQuantity: quantity,
+        convertedQuantity: quantity * factor,
+        conversionFactor: factor,
+      };
+    }
+
+    // 2. Inverse Conversion (1 toUnit = factor * fromUnit) -> converted = quantity / factor
+    const inverse = await this.repository.findUomConversion(itemId, toUnitId, fromUnitId);
+    if (inverse) {
+      const factor = Number(inverse.conversionFactor);
+      const invFactor = 1 / factor;
+      return {
+        itemId,
+        fromUnitId,
+        toUnitId,
+        sourceQuantity: quantity,
+        convertedQuantity: quantity * invFactor,
+        conversionFactor: invFactor,
+      };
+    }
+
+    throw new CatalogValidationError(`No conversion rule found between units for item ${itemId}`);
+  }
 }
 
 function normalizeCode(raw: unknown): string {
@@ -180,5 +282,3 @@ function normalizePosition(raw: number): number {
   if (!Number.isInteger(raw) || raw < 0) throw new CatalogValidationError('position must be a non-negative integer');
   return raw;
 }
-
-

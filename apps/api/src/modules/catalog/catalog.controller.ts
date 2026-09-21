@@ -1,8 +1,25 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, UseFilters } from '@nestjs/common';
-import { CreateItemCategoryDto, CreateItemDto, CreateUomDto, UpdateItemCategoryDto, UpdateItemDto } from './catalog.dto';
+import {
+  ConvertUomQueryDto,
+  CreateItemCategoryDto,
+  CreateItemDto,
+  CreateUomConversionDto,
+  CreateUomDto,
+  UpdateItemCategoryDto,
+  UpdateItemDto,
+} from './catalog.dto';
 import { CatalogExceptionFilter } from './catalog.exception-filter';
 import { CatalogService, type UpdateItemCategoryInput, type UpdateItemInput } from './catalog.service';
-import type { ItemCategoryRecord, ItemCategoryTreeNode, ItemRecord, ItemPriceRecord, PriceListType, Language, UomClassRecord, UomRecord } from './catalog.types';
+import type {
+  ConvertUomResult,
+  ItemCategoryRecord,
+  ItemCategoryTreeNode,
+  ItemRecord,
+  Language,
+  UomClassRecord,
+  UomConversionRecord,
+  UomRecord,
+} from './catalog.types';
 
 function parseLang(lang?: string): Language { return lang === 'ar' ? 'ar' : 'en'; }
 
@@ -75,10 +92,7 @@ export class CatalogController {
 
   @Post('items') @HttpCode(201)
   async createItem(@Body() dto: CreateItemDto): Promise<{ item: ItemRecord }> {
-    const created = await this.service.createItem({
-      code: dto.code, name: dto.name, nameAr: dto.nameAr, nameEn: dto.nameEn,
-      description: dto.description, itemType: dto.itemType, categoryId: dto.categoryId, baseUnitId: dto.baseUnitId,
-    });
+    const created = await this.service.createItem(dto);
     return { item: created };
   }
 
@@ -99,8 +113,26 @@ export class CatalogController {
   async archiveItem(@Param('id', ParseUUIDPipe) id: string): Promise<{ item: ItemRecord }> {
     return { item: await this.service.archiveItem(id) };
   }
+
+  // --- UOM Conversion Endpoints ---
+  @Get('uom-conversions')
+  async uomConversions(@Query('itemId') itemId?: string): Promise<{ uomConversions: UomConversionRecord[] }> {
+    return { uomConversions: await this.service.getUomConversions(itemId) };
+  }
+
+  @Post('uom-conversions')
+  @HttpCode(201)
+  async createUomConversion(@Body() dto: CreateUomConversionDto): Promise<{ uomConversion: UomConversionRecord }> {
+    return { uomConversion: await this.service.createUomConversion(dto) };
+  }
+
+  @Get('convert-uom')
+  async convertUom(@Query() query: ConvertUomQueryDto): Promise<ConvertUomResult> {
+    return this.service.convertQuantity(
+      query.itemId,
+      query.fromUnitId,
+      query.toUnitId,
+      Number(query.quantity),
+    );
+  }
 }
-
-
-
-

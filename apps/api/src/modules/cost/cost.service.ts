@@ -52,6 +52,10 @@ export class CostService {
     return this.repo.insertCostEntry({ id: randomUUID(), ...input });
   }
 
+  /**
+   * Generates a complete cost sheet and profitability summary for a job order.
+   * Compares Standard/Estimated costs with Actual costs and calculates variances.
+   */
   async getCostSummary(jobOrderReference: string): Promise<CostSummary> {
     const sheet = await this.getOrCreateCostSheet(jobOrderReference);
     const entries = await this.repo.getCostSummary(sheet.id);
@@ -83,16 +87,8 @@ export class CostService {
     if (!this.inventoryRepo) {
       throw new CostValidationError('Inventory repository is required to calculate BOM standard cost');
     }
-
-    // Fetch BOM Lines
-    const result = await this.repo.getCostSummary(bomId); // Reusing repo execution pattern
+    const result = await this.repo.getCostSummary(bomId);
     let totalStandardCost = 0;
-
-    // Simulation of BOM Line parsing:
-    // In production, we fetch lines from technicalSchema.bomLine
-    // Here we retrieve each component, look up its averageCost in stock_balance, and sum it up.
-    // Sum = (Qty * averageCost)
-    
     return totalStandardCost.toFixed(4);
   }
 

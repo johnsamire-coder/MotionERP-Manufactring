@@ -1,5 +1,28 @@
-﻿import { Body, Controller, Get, HttpCode, Param, Post, Query, UseFilters } from '@nestjs/common';
-import { CreateMovementDto, CreateReservationDto, CreateWarehouseDto, QueryLedgerDto } from './inventory.dto';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  UseFilters,
+} from '@nestjs/common';
+import {
+  CreateBatchDto,
+  CreateBulkSerialsDto,
+  CreateLandedCostVoucherDto,
+  CreateMovementDto,
+  CreateReservationDto,
+  CreateSerialDto,
+  CreateWarehouseDto,
+  QueryLedgerDto,
+  ReconcileStockDto,
+  UpdateBatchStatusDto,
+  UpdateSerialStatusDto,
+} from './inventory.dto';
 import { InventoryExceptionFilter } from './inventory.exception-filter';
 import { InventoryService } from './inventory.service';
 import type {
@@ -8,6 +31,10 @@ import type {
   StockReservationRecord,
   WarehouseRecord,
   StockLedgerEntryRecord,
+  ItemBatchRecord,
+  SerialNumberRecord,
+  ReconcileStockResult,
+  LandedCostVoucherRecord,
 } from './inventory.types';
 
 @Controller({ path: 'inventory', version: '1' })
@@ -85,5 +112,115 @@ export class InventoryController {
   async ledger(@Query() query: QueryLedgerDto): Promise<{ entries: StockLedgerEntryRecord[] }> {
     const entries = await this.service.getLedgerEntries(query.itemId, query.warehouseId);
     return { entries };
+  }
+
+  // --- Medical Batches Endpoints ---
+  @Get('batches')
+  async batches(
+    @Query('itemId') itemId?: string,
+    @Query('orgNodeId') orgNodeId?: string,
+  ): Promise<{ batches: ItemBatchRecord[] }> {
+    return { batches: await this.service.getBatches(itemId, orgNodeId) };
+  }
+
+  @Get('batches/:id')
+  async batch(@Param('id', ParseUUIDPipe) id: string): Promise<{ batch: ItemBatchRecord }> {
+    return { batch: await this.service.getBatch(id) };
+  }
+
+  @Post('batches')
+  @HttpCode(201)
+  async createBatch(@Body() dto: CreateBatchDto): Promise<{ batch: ItemBatchRecord }> {
+    return { batch: await this.service.createBatch(dto) };
+  }
+
+  @Patch('batches/:id/status')
+  @HttpCode(200)
+  async setBatchStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateBatchStatusDto,
+  ): Promise<{ batch: ItemBatchRecord }> {
+    return { batch: await this.service.setBatchStatus(id, dto.status) };
+  }
+
+  // --- Serial Numbers Endpoints ---
+  @Get('serials')
+  async serials(
+    @Query('itemId') itemId?: string,
+    @Query('warehouseId') warehouseId?: string,
+    @Query('batchId') batchId?: string,
+  ): Promise<{ serials: SerialNumberRecord[] }> {
+    return { serials: await this.service.getSerials(itemId, warehouseId, batchId) };
+  }
+
+  @Get('serials/:id')
+  async serial(@Param('id', ParseUUIDPipe) id: string): Promise<{ serial: SerialNumberRecord }> {
+    return { serial: await this.service.getSerial(id) };
+  }
+
+  @Post('serials')
+  @HttpCode(201)
+  async createSerial(@Body() dto: CreateSerialDto): Promise<{ serial: SerialNumberRecord }> {
+    return { serial: await this.service.createSerialNumber(dto) };
+  }
+
+  @Post('serials/bulk')
+  @HttpCode(201)
+  async createSerialsBulk(@Body() dto: CreateBulkSerialsDto): Promise<{ serials: SerialNumberRecord[] }> {
+    return {
+      serials: await this.service.createSerialNumbersBulk(
+        dto.itemId,
+        dto.orgNodeId,
+        dto.serialNumbers,
+        dto.warehouseId,
+        dto.batchId,
+      ),
+    };
+  }
+
+  @Patch('serials/:id/status')
+  @HttpCode(200)
+  async setSerialStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateSerialStatusDto,
+  ): Promise<{ serial: SerialNumberRecord }> {
+    return { serial: await this.service.setSerialStatus(id, dto.status, dto.warehouseId, dto.deliveryOrderId) };
+  }
+
+  // --- Stock Reconciliation Endpoint ---
+  @Post('reconcile')
+  @HttpCode(200)
+  async reconcileStock(@Body() dto: ReconcileStockDto): Promise<ReconcileStockResult> {
+    return this.service.reconcileStock(dto);
+  }
+
+  // --- Landed Cost Voucher Endpoints ---
+  @Get('landed-cost-vouchers')
+  async landedCostVouchers(@Query('orgNodeId') orgNodeId?: string): Promise<{ landedCostVouchers: LandedCostVoucherRecord[] }> {
+    return { landedCostVouchers: await this.service.getLandedCostVouchers(orgNodeId) };
+  }
+
+  @Get('landed-cost-vouchers/:id')
+  async landedCostVoucher(@Param('id', ParseUUIDPipe) id: string): Promise<{ landedCostVoucher: LandedCostVoucherRecord }> {
+    return { landedCostVoucher: await this.service.getLandedCostVoucher(id) };
+  }
+
+  @Post('landed-cost-vouchers')
+  @HttpCode(201)
+  async createLandedCostVoucher(@Body() dto: CreateLandedCostVoucherDto): Promise<{ landedCostVoucher: LandedCostVoucherRecord }> {
+    const created = await this.service.createLandedCostVoucher(dto);
+    return { landedCostVoucher: created };
+  }
+
+  @Post('landed-cost-vouchers/:id/post')
+  @HttpCode(200)
+  async postLandedCostVoucher(@Param('id', ParseUUIDPipe) id: string): Promise<{ landedCostVoucher: LandedCostVoucherRecord }> {
+    return { landedCostVoucher: await this.service.postLandedCostVoucher(id) };
+  }
+
+  @Post('landed-cost-vouchers/:id/cancel')
+  @HttpCode(200)
+  async cancelLandedCostVoucher(@Param('id', ParseUUIDPipe) id: string): Promise<{ landedCostVoucher: LandedCostVoucherRecord }> {
+    return { landedCostVoucher: await this.service.cancelLandedCostVoucher(id) };
   }
 }

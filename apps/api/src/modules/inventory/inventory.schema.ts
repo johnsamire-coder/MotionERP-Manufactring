@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { check, index, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { item } from '../catalog/catalog.schema';
 import { orgNode } from '../organization/organization.schema';
+import { chartOfAccounts } from '../accounting/accounting.schema';
 
 export const inventorySchema = pgSchema('inventory');
 
@@ -114,7 +115,7 @@ export const stockLedgerEntry = inventorySchema.table('stock_ledger_entry', {
   index('idx_stock_ledger_created').on(t.createdAt),
 ]);
 
-// ==================== 2. منظومة تتبع التشغيلات والسيريال الطبي (الجديد) ====================
+// ==================== 2. منظومة تتبع التشغيلات والسيريال الطبي ====================
 
 export const itemBatch = inventorySchema.table('item_batch', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -127,7 +128,7 @@ export const itemBatch = inventorySchema.table('item_batch', {
     .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   manufacturingDate: timestamp('manufacturing_date', { withTimezone: true }),
   expiryDate: timestamp('expiry_date', { withTimezone: true }),
-  status: text('status').notNull().default('active'), // active | expired | quarantined | recalled
+  status: text('status').notNull().default('active'),
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -152,7 +153,7 @@ export const serialNumber = inventorySchema.table('serial_number', {
   orgNodeId: uuid('org_node_id')
     .notNull()
     .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
-  status: text('status').notNull().default('active'), // active | delivered | under_maintenance | decommissioned
+  status: text('status').notNull().default('active'),
   purchaseReceiptId: uuid('purchase_receipt_id'),
   deliveryOrderId: uuid('delivery_order_id'),
   workOrderId: uuid('work_order_id'),
@@ -168,6 +169,56 @@ export const serialNumber = inventorySchema.table('serial_number', {
   index('idx_serial_number_org').on(t.orgNodeId),
 ]);
 
+// ==================== 3. محرك تكلفة الواردات ورسملة الشحن (Landed Cost Engine) ====================
+
+export const landedCostVoucher = inventorySchema.table('landed_cost_voucher', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  voucherNumber: text('voucher_number').notNull().unique(), // رقم السند
+  orgNodeId: uuid('org_node_id')
+    .notNull()
+    .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  postingDate: timestamp('posting_date', { withTimezone: true }).notNull(),
+  totalExpenseAmount: numeric('total_expense_amount', { precision: 14, scale: 4 }).notNull(), // إجمالي مصاريف الشحن والجمارك
+  distributeMethod: text('distribute_method').notNull().default('by_amount'), // by_amount | by_quantity
+  expenseAccountId: uuid('expense_account_id')
+    .notNull()
+    .references(() => chartOfAccounts.id, { onDelete: 'restrict' }), // حساب وسيط الشحن / جاري شركة النقل
+  status: text('status').notNull().default('draft'), // draft | posted | cancelled
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  check('landed_cost_voucher_status_valid', sql`${t.status} in ('draft', 'posted', 'cancelled')`),
+  check('landed_cost_distribute_valid', sql`${t.distributeMethod} in ('by_amount', 'by_quantity')`),
+  check('landed_cost_expense_positive', sql`${t.totalExpenseAmount} > 0`),
+  index('idx_landed_cost_org').on(t.orgNodeId),
+  index('idx_landed_cost_date').on(t.postingDate),
+]);
+
+export const landedCostItem = inventorySchema.table('landed_cost_item', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  voucherId: uuid('voucher_id')
+    .notNull()
+    .references(() => landedCostVoucher.id, { onDelete: 'cascade' }),
+  receiptMovementId: uuid('receipt_movement_id')
+    .notNull()
+    .references(() => stockMovement.id, { onDelete: 'restrict' }), // إذن استلام الخامات
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => item.id, { onDelete: 'restrict' }),
+  warehouseId: uuid('warehouse_id')
+    .notNull()
+    .references(() => warehouse.id, { onDelete: 'restrict' }),
+  quantity: numeric('quantity', { precision: 24, scale: 6 }).notNull(),
+  originalRate: numeric('original_rate', { precision: 18, scale: 6 }).notNull(),
+  allocatedExpense: numeric('allocated_expense', { precision: 14, scale: 4 }).notNull(), // نصيب البند من مصاريف النقل
+  newValuationRate: numeric('new_valuation_rate', { precision: 18, scale: 6 }).notNull(), // متوسط التكلفة الجديد بعد النقل
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('idx_landed_cost_item_voucher').on(t.voucherId),
+  index('idx_landed_cost_item_movement').on(t.receiptMovementId),
+]);
+
 export type Warehouse = typeof warehouse.$inferSelect;
 export type StockBalance = typeof stockBalance.$inferSelect;
 export type StockMovement = typeof stockMovement.$inferSelect;
@@ -175,6 +226,10 @@ export type StockReservation = typeof stockReservation.$inferSelect;
 export type StockLedgerEntry = typeof stockLedgerEntry.$inferSelect;
 export type ItemBatch = typeof itemBatch.$inferSelect;
 export type SerialNumber = typeof serialNumber.$inferSelect;
+export type LandedCostVoucher = typeof landedCostVoucher.$inferSelect;
+export type LandedCostItem = typeof landedCostItem.$inferSelect;
 
 export type ItemBatchStatus = 'active' | 'expired' | 'quarantined' | 'recalled';
 export type SerialNumberStatus = 'active' | 'delivered' | 'under_maintenance' | 'decommissioned';
+export type LandedCostStatus = 'draft' | 'posted' | 'cancelled';
+export type LandedCostDistributeMethod = 'by_amount' | 'by_quantity';

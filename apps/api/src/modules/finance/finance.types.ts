@@ -4,6 +4,10 @@ export type RetentionStatus = 'active' | 'released' | 'expired' | 'cancelled';
 export type PurchaseInvoiceStatus = 'draft' | 'posted' | 'cancelled';
 export type SalesInvoiceStatus = 'draft' | 'posted' | 'cancelled';
 export type PaymentStatus = 'draft' | 'posted' | 'cancelled';
+export type CreditDebitNoteType = 'credit_note' | 'debit_note';
+export type CreditDebitNoteStatus = 'draft' | 'posted' | 'cancelled';
+export type BankTransferStatus = 'draft' | 'posted' | 'cancelled';
+export type BankReconciliationStatus = 'draft' | 'reconciled' | 'cancelled';
 
 export interface CollectionRecord {
   id: string;
@@ -192,5 +196,109 @@ export interface CreatePaymentInput {
   paymentMethod: PaymentMethod;
   paidFromAccountId: string;
   referenceNumber?: string;
+  notes?: string;
+}
+
+// --- Credit & Debit Notes Types ---
+export interface CreditDebitNoteLineRecord {
+  id: string;
+  noteId: string;
+  itemId: string;
+  quantity: string;
+  unitPrice: string;
+  taxRate: string;
+  taxAmount: string;
+  totalAmount: string;
+  createdAt: string;
+}
+
+export interface CreditDebitNoteRecord {
+  id: string;
+  noteNumber: string;
+  noteType: CreditDebitNoteType;
+  orgNodeId: string;
+  partyType: 'customer' | 'supplier';
+  partyId: string;
+  originalInvoiceNumber: string | null;
+  salesInvoiceId: string | null;
+  purchaseInvoiceId: string | null;
+  postingDate: string;
+  netAmount: string;
+  taxAmount: string;
+  grandTotal: string;
+  reason: string | null;
+  status: CreditDebitNoteStatus;
+  createdAt: string;
+  updatedAt: string;
+  lines: CreditDebitNoteLineRecord[];
+}
+
+export interface CreateCreditDebitNoteLineInput {
+  itemId: string;
+  quantity: string;
+  unitPrice: string;
+  taxRate?: string;
+}
+
+export interface CreateCreditDebitNoteInput {
+  noteType: CreditDebitNoteType;
+  orgNodeId: string;
+  partyType: 'customer' | 'supplier';
+  partyId: string;
+  originalInvoiceNumber?: string;
+  salesInvoiceId?: string;
+  purchaseInvoiceId?: string;
+  postingDate?: string;
+  reason?: string;
+  lines: CreateCreditDebitNoteLineInput[];
+}
+
+// --- Bank Transfer Types ---
+export interface BankTransferRecord {
+  id: string;
+  transferNumber: string;
+  orgNodeId: string;
+  fromAccountId: string;
+  toAccountId: string;
+  transferDate: string;
+  amount: string;
+  referenceNumber: string | null;
+  notes: string | null;
+  status: BankTransferStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateBankTransferInput {
+  orgNodeId: string;
+  fromAccountId: string;
+  toAccountId: string;
+  transferDate?: string;
+  amount: string;
+  referenceNumber?: string;
+  notes?: string;
+}
+
+// --- Bank Reconciliation Types ---
+export interface BankReconciliationRecord {
+  id: string;
+  reconciliationNumber: string;
+  orgNodeId: string;
+  bankAccountId: string;
+  statementDate: string;
+  statementBalance: string;
+  clearedBalance: string;
+  differenceAmount: string;
+  status: BankReconciliationStatus;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateBankReconciliationInput {
+  orgNodeId: string;
+  bankAccountId: string;
+  statementDate: string;
+  statementBalance: string;
   notes?: string;
 }

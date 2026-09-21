@@ -1,11 +1,40 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
-import { stockBalance, stockLedgerEntry, stockMovement, stockReservation, warehouse } from './inventory.schema';
+import {
+  itemBatch,
+  landedCostItem,
+  landedCostVoucher,
+  serialNumber,
+  stockBalance,
+  stockLedgerEntry,
+  stockMovement,
+  stockReservation,
+  warehouse,
+} from './inventory.schema';
 import type {
-  CreateMovementInput, CreateReservationInput, CreateWarehouseInput, MovementType,
-  ReservationStatus, StockBalanceRecord, StockMovementRecord, StockReservationRecord,
-  WarehouseRecord, WarehouseStatus, StockLedgerEntryRecord, CreateStockLedgerEntryInput,
+  CreateMovementInput,
+  CreateReservationInput,
+  CreateWarehouseInput,
+  MovementType,
+  ReservationStatus,
+  StockBalanceRecord,
+  StockMovementRecord,
+  StockReservationRecord,
+  WarehouseRecord,
+  WarehouseStatus,
+  StockLedgerEntryRecord,
+  CreateStockLedgerEntryInput,
+  ItemBatchRecord,
+  CreateItemBatchInput,
+  ItemBatchStatus,
+  SerialNumberRecord,
+  CreateSerialNumberInput,
+  SerialNumberStatus,
+  LandedCostVoucherRecord,
+  LandedCostItemRecord,
+  CreateLandedCostVoucherInput,
+  LandedCostStatus,
 } from './inventory.types';
 
 const warehouseColumns = {
@@ -32,70 +61,63 @@ const ledgerColumns = {
   valuationRate: stockLedgerEntry.valuationRate, stockValueChange: stockLedgerEntry.stockValueChange,
   stockValueAfter: stockLedgerEntry.stockValueAfter, createdAt: stockLedgerEntry.createdAt,
 };
-
-interface WarehouseRow { id: string; code: string; name: string; orgNodeId: string; status: string; createdAt: Date; updatedAt: Date; }
-interface MovementRow { id: string; itemId: string; warehouseId: string; movementType: string; quantity: string; movementDate: Date; note: string | null; createdAt: Date; unitCost: string | null; totalValue: string | null; sourceModule: string | null; sourceId: string | null; }
-interface BalanceRow { id: string; itemId: string; warehouseId: string; onHand: string; reserved: string; updatedAt: Date; averageCost: string; totalValue: string; lastPurchaseCost: string | null; lastPurchaseAt: Date | null; }
-interface ReservationRow { id: string; itemId: string; warehouseId: string; quantity: string; source: string; status: string; createdAt: Date; releasedAt: Date | null; }
-interface LedgerRow {
-  id: string; itemId: string; warehouseId: string; movementId: string | null; quantityChange: string;
-  balanceQtyAfter: string; incomingRate: string; valuationRate: string; stockValueChange: string;
-  stockValueAfter: string; createdAt: Date;
-}
-
-function toWarehouseRecord(row: WarehouseRow): WarehouseRecord {
-  return { id: row.id, code: row.code, name: row.name, orgNodeId: row.orgNodeId, status: row.status as WarehouseStatus,
-    createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
-}
-function toMovementRecord(row: MovementRow): StockMovementRecord {
-  return { id: row.id, itemId: row.itemId, warehouseId: row.warehouseId, movementType: row.movementType as MovementType,
-    quantity: row.quantity, movementDate: row.movementDate.toISOString(), note: row.note, createdAt: row.createdAt.toISOString(),
-    unitCost: row.unitCost, totalValue: row.totalValue, sourceModule: row.sourceModule, sourceId: row.sourceId };
-}
-function toBalanceRecord(row: BalanceRow): StockBalanceRecord {
-  const available = (Number(row.onHand) - Number(row.reserved)).toString();
-  return { id: row.id, itemId: row.itemId, warehouseId: row.warehouseId, onHand: row.onHand, reserved: row.reserved,
-    available, updatedAt: row.updatedAt.toISOString(),
-    averageCost: row.averageCost, totalValue: row.totalValue,
-    lastPurchaseCost: row.lastPurchaseCost, lastPurchaseAt: row.lastPurchaseAt ? row.lastPurchaseAt.toISOString() : null };
-}
-function toReservationRecord(row: ReservationRow): StockReservationRecord {
-  return { id: row.id, itemId: row.itemId, warehouseId: row.warehouseId, quantity: row.quantity, source: row.source,
-    status: row.status as ReservationStatus, createdAt: row.createdAt.toISOString(),
-    releasedAt: row.releasedAt ? row.releasedAt.toISOString() : null };
-}
-function toLedgerRecord(row: LedgerRow): StockLedgerEntryRecord {
-  return {
-    id: row.id, itemId: row.itemId, warehouseId: row.warehouseId, movementId: row.movementId,
-    quantityChange: row.quantityChange, balanceQtyAfter: row.balanceQtyAfter, incomingRate: row.incomingRate,
-    valuationRate: row.valuationRate, stockValueChange: row.stockValueChange, stockValueAfter: row.stockValueAfter,
-    createdAt: row.createdAt.toISOString(),
-  };
-}
+const batchColumns = {
+  id: itemBatch.id, batchNumber: itemBatch.batchNumber, itemId: itemBatch.itemId, orgNodeId: itemBatch.orgNodeId,
+  manufacturingDate: itemBatch.manufacturingDate, expiryDate: itemBatch.expiryDate, status: itemBatch.status,
+  notes: itemBatch.notes, createdAt: itemBatch.createdAt, updatedAt: itemBatch.updatedAt,
+};
+const serialColumns = {
+  id: serialNumber.id, serialNo: serialNumber.serialNo, itemId: serialNumber.itemId, warehouseId: serialNumber.warehouseId,
+  batchId: serialNumber.batchId, orgNodeId: serialNumber.orgNodeId, status: serialNumber.status,
+  purchaseReceiptId: serialNumber.purchaseReceiptId, deliveryOrderId: serialNumber.deliveryOrderId,
+  workOrderId: serialNumber.workOrderId, notes: serialNumber.notes, createdAt: serialNumber.createdAt, updatedAt: serialNumber.updatedAt,
+};
+const lcvColumns = {
+  id: landedCostVoucher.id, voucherNumber: landedCostVoucher.voucherNumber, orgNodeId: landedCostVoucher.orgNodeId,
+  postingDate: landedCostVoucher.postingDate, totalExpenseAmount: landedCostVoucher.totalExpenseAmount,
+  distributeMethod: landedCostVoucher.distributeMethod, expenseAccountId: landedCostVoucher.expenseAccountId,
+  status: landedCostVoucher.status, notes: landedCostVoucher.notes, createdAt: landedCostVoucher.createdAt, updatedAt: landedCostVoucher.updatedAt,
+};
+const lciColumns = {
+  id: landedCostItem.id, voucherId: landedCostItem.voucherId, receiptMovementId: landedCostItem.receiptMovementId,
+  itemId: landedCostItem.itemId, warehouseId: landedCostItem.warehouseId, quantity: landedCostItem.quantity,
+  originalRate: landedCostItem.originalRate, allocatedExpense: landedCostItem.allocatedExpense,
+  newValuationRate: landedCostItem.newValuationRate, createdAt: landedCostItem.createdAt,
+};
 
 @Injectable()
 export class InventoryRepository {
   constructor(private readonly database: DatabaseService) {}
 
+  // --- Warehouses ---
   async listWarehouses(): Promise<WarehouseRecord[]> {
     const rows = await this.database.db.select(warehouseColumns).from(warehouse).orderBy(asc(warehouse.code));
-    return rows.map(toWarehouseRecord);
+    return rows.map((r) => ({
+      id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, status: r.status as WarehouseStatus,
+      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    }));
   }
   async findWarehouseById(id: string): Promise<WarehouseRecord | null> {
     const rows = await this.database.db.select(warehouseColumns).from(warehouse).where(eq(warehouse.id, id)).limit(1);
-    return rows[0] ? toWarehouseRecord(rows[0]) : null;
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, status: r.status as WarehouseStatus, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString() };
   }
   async findWarehouseByCode(code: string): Promise<WarehouseRecord | null> {
     const rows = await this.database.db.select(warehouseColumns).from(warehouse).where(eq(warehouse.code, code)).limit(1);
-    return rows[0] ? toWarehouseRecord(rows[0]) : null;
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, status: r.status as WarehouseStatus, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString() };
   }
   async insertWarehouse(input: CreateWarehouseInput & { id: string }): Promise<WarehouseRecord> {
     const rows = await this.database.db.insert(warehouse).values({
       id: input.id, code: input.code, name: input.name, orgNodeId: input.orgNodeId,
     }).returning(warehouseColumns);
-    return toWarehouseRecord(rows[0]!);
+    const r = rows[0]!;
+    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, status: r.status as WarehouseStatus, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString() };
   }
 
+  // --- Stock Balances & Movements ---
   async listBalances(): Promise<StockBalanceRecord[]> {
     const rows = await this.database.db.select({
       id: stockBalance.id, itemId: stockBalance.itemId, warehouseId: stockBalance.warehouseId,
@@ -103,9 +125,15 @@ export class InventoryRepository {
       averageCost: stockBalance.averageCost, totalValue: stockBalance.totalValue,
       lastPurchaseCost: stockBalance.lastPurchaseCost, lastPurchaseAt: stockBalance.lastPurchaseAt,
     }).from(stockBalance).orderBy(asc(stockBalance.itemId));
-    return rows.map(toBalanceRecord);
+    return rows.map((row) => ({
+      id: row.id, itemId: row.itemId, warehouseId: row.warehouseId, onHand: row.onHand, reserved: row.reserved,
+      available: (Number(row.onHand) - Number(row.reserved)).toString(), updatedAt: row.updatedAt.toISOString(),
+      averageCost: row.averageCost, totalValue: row.totalValue,
+      lastPurchaseCost: row.lastPurchaseCost, lastPurchaseAt: row.lastPurchaseAt ? row.lastPurchaseAt.toISOString() : null,
+    }));
   }
-  async findBalance(itemId: string, warehouseId: string): Promise<BalanceRow | null> {
+
+  async findBalance(itemId: string, warehouseId: string) {
     const rows = await this.database.db.select({
       id: stockBalance.id, itemId: stockBalance.itemId, warehouseId: stockBalance.warehouseId,
       onHand: stockBalance.onHand, reserved: stockBalance.reserved, updatedAt: stockBalance.updatedAt,
@@ -114,6 +142,7 @@ export class InventoryRepository {
     }).from(stockBalance).where(and(eq(stockBalance.itemId, itemId), eq(stockBalance.warehouseId, warehouseId))).limit(1);
     return rows[0] ?? null;
   }
+
   async insertMovement(input: CreateMovementInput & { id: string; signedQuantity: string; totalValue?: string }): Promise<StockMovementRecord> {
     const rows = await this.database.db.insert(stockMovement).values({
       id: input.id, itemId: input.itemId, warehouseId: input.warehouseId,
@@ -123,12 +152,23 @@ export class InventoryRepository {
       unitCost: input.unitCost ?? null, totalValue: input.totalValue ?? null,
       sourceModule: input.sourceModule ?? null, sourceId: input.sourceId ?? null,
     }).returning(movementColumns);
-    return toMovementRecord(rows[0]!);
+    const r = rows[0]!;
+    return {
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementType: r.movementType as MovementType,
+      quantity: r.quantity, movementDate: r.movementDate.toISOString(), note: r.note, createdAt: r.createdAt.toISOString(),
+      unitCost: r.unitCost, totalValue: r.totalValue, sourceModule: r.sourceModule, sourceId: r.sourceId,
+    };
   }
+
   async listMovements(): Promise<StockMovementRecord[]> {
     const rows = await this.database.db.select(movementColumns).from(stockMovement).orderBy(asc(stockMovement.createdAt));
-    return rows.map(toMovementRecord);
+    return rows.map((r) => ({
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementType: r.movementType as MovementType,
+      quantity: r.quantity, movementDate: r.movementDate.toISOString(), note: r.note, createdAt: r.createdAt.toISOString(),
+      unitCost: r.unitCost, totalValue: r.totalValue, sourceModule: r.sourceModule, sourceId: r.sourceId,
+    }));
   }
+
   async applyDelta(itemId: string, warehouseId: string, delta: string): Promise<void> {
     const existing = await this.findBalance(itemId, warehouseId);
     if (existing) {
@@ -137,7 +177,7 @@ export class InventoryRepository {
       await this.database.db.insert(stockBalance).values({ itemId, warehouseId, onHand: delta, reserved: '0' });
     }
   }
-  /** Writes the recalculated valuation onto the balance row. Called right after applyDelta, so the row always exists by now. */
+
   async applyValuation(itemId: string, warehouseId: string, v: { averageCost: string; totalValue: string; lastPurchaseCost?: string }): Promise<void> {
     const existing = await this.findBalance(itemId, warehouseId);
     if (!existing) return;
@@ -147,6 +187,7 @@ export class InventoryRepository {
       await this.database.db.execute(sql`UPDATE ${stockBalance} SET average_cost = ${v.averageCost}::numeric, total_value = ${v.totalValue}::numeric WHERE id = ${existing.id}`);
     }
   }
+
   async applyReservedDelta(itemId: string, warehouseId: string, delta: string): Promise<void> {
     const existing = await this.findBalance(itemId, warehouseId);
     if (existing) {
@@ -156,30 +197,46 @@ export class InventoryRepository {
     }
   }
 
+  // --- Reservations ---
   async listReservations(): Promise<StockReservationRecord[]> {
     const rows = await this.database.db.select(reservationColumns).from(stockReservation).orderBy(asc(stockReservation.createdAt));
-    return rows.map(toReservationRecord);
+    return rows.map((r) => ({
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, quantity: r.quantity, source: r.source,
+      status: r.status as ReservationStatus, createdAt: r.createdAt.toISOString(), releasedAt: r.releasedAt ? r.releasedAt.toISOString() : null,
+    }));
   }
   async findReservationById(id: string): Promise<StockReservationRecord | null> {
     const rows = await this.database.db.select(reservationColumns).from(stockReservation).where(eq(stockReservation.id, id)).limit(1);
-    return rows[0] ? toReservationRecord(rows[0]) : null;
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, quantity: r.quantity, source: r.source,
+      status: r.status as ReservationStatus, createdAt: r.createdAt.toISOString(), releasedAt: r.releasedAt ? r.releasedAt.toISOString() : null,
+    };
   }
   async insertReservation(input: CreateReservationInput & { id: string }): Promise<StockReservationRecord> {
     const rows = await this.database.db.insert(stockReservation).values({
       id: input.id, itemId: input.itemId, warehouseId: input.warehouseId,
       quantity: input.quantity, source: input.source,
     }).returning(reservationColumns);
-    return toReservationRecord(rows[0]!);
+    const r = rows[0]!;
+    return {
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, quantity: r.quantity, source: r.source,
+      status: r.status as ReservationStatus, createdAt: r.createdAt.toISOString(), releasedAt: r.releasedAt ? r.releasedAt.toISOString() : null,
+    };
   }
   async setReservationReleased(id: string): Promise<StockReservationRecord> {
     const rows = await this.database.db.update(stockReservation)
       .set({ status: 'released', releasedAt: new Date() })
       .where(eq(stockReservation.id, id)).returning(reservationColumns);
-    return toReservationRecord(rows[0]!);
+    const r = rows[0]!;
+    return {
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, quantity: r.quantity, source: r.source,
+      status: r.status as ReservationStatus, createdAt: r.createdAt.toISOString(), releasedAt: r.releasedAt ? r.releasedAt.toISOString() : null,
+    };
   }
 
-  // ---- Stock Ledger Entry Methods ----
-
+  // --- Stock Ledger Entry ---
   async insertLedgerEntry(input: CreateStockLedgerEntryInput & { id: string }): Promise<StockLedgerEntryRecord> {
     const rows = await this.database.db.insert(stockLedgerEntry).values({
       id: input.id,
@@ -193,7 +250,13 @@ export class InventoryRepository {
       stockValueChange: input.stockValueChange ?? '0',
       stockValueAfter: input.stockValueAfter ?? '0',
     }).returning(ledgerColumns);
-    return toLedgerRecord(rows[0]!);
+    const r = rows[0]!;
+    return {
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementId: r.movementId,
+      quantityChange: r.quantityChange, balanceQtyAfter: r.balanceQtyAfter, incomingRate: r.incomingRate,
+      valuationRate: r.valuationRate, stockValueChange: r.stockValueChange, stockValueAfter: r.stockValueAfter,
+      createdAt: r.createdAt.toISOString(),
+    };
   }
 
   async findLatestLedgerEntry(itemId: string, warehouseId: string): Promise<StockLedgerEntryRecord | null> {
@@ -202,7 +265,14 @@ export class InventoryRepository {
       .where(and(eq(stockLedgerEntry.itemId, itemId), eq(stockLedgerEntry.warehouseId, warehouseId)))
       .orderBy(desc(stockLedgerEntry.createdAt))
       .limit(1);
-    return rows[0] ? toLedgerRecord(rows[0]) : null;
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementId: r.movementId,
+      quantityChange: r.quantityChange, balanceQtyAfter: r.balanceQtyAfter, incomingRate: r.incomingRate,
+      valuationRate: r.valuationRate, stockValueChange: r.stockValueChange, stockValueAfter: r.stockValueAfter,
+      createdAt: r.createdAt.toISOString(),
+    };
   }
 
   async listLedgerEntries(itemId?: string, warehouseId?: string): Promise<StockLedgerEntryRecord[]> {
@@ -211,11 +281,340 @@ export class InventoryRepository {
     if (warehouseId) conditions.push(eq(stockLedgerEntry.warehouseId, warehouseId));
 
     const query = this.database.db.select(ledgerColumns).from(stockLedgerEntry);
-    
     const rows = conditions.length > 0 
       ? await query.where(and(...conditions)).orderBy(asc(stockLedgerEntry.createdAt))
       : await query.orderBy(asc(stockLedgerEntry.createdAt));
       
-    return rows.map(toLedgerRecord);
+    return rows.map((r) => ({
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementId: r.movementId,
+      quantityChange: r.quantityChange, balanceQtyAfter: r.balanceQtyAfter, incomingRate: r.incomingRate,
+      valuationRate: r.valuationRate, stockValueChange: r.stockValueChange, stockValueAfter: r.stockValueAfter,
+      createdAt: r.createdAt.toISOString(),
+    }));
+  }
+
+  // --- Medical Batch & Lot Management ---
+  async findBatchByNumber(itemId: string, batchNumber: string): Promise<ItemBatchRecord | null> {
+    const rows = await this.database.db.select(batchColumns)
+      .from(itemBatch)
+      .where(and(eq(itemBatch.itemId, itemId), eq(itemBatch.batchNumber, batchNumber)))
+      .limit(1);
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+      id: r.id, batchNumber: r.batchNumber, itemId: r.itemId, orgNodeId: r.orgNodeId,
+      manufacturingDate: r.manufacturingDate ? r.manufacturingDate.toISOString() : null,
+      expiryDate: r.expiryDate ? r.expiryDate.toISOString() : null,
+      status: r.status as ItemBatchStatus, notes: r.notes,
+      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  async findBatchById(id: string): Promise<ItemBatchRecord | null> {
+    const rows = await this.database.db.select(batchColumns).from(itemBatch).where(eq(itemBatch.id, id)).limit(1);
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+      id: r.id, batchNumber: r.batchNumber, itemId: r.itemId, orgNodeId: r.orgNodeId,
+      manufacturingDate: r.manufacturingDate ? r.manufacturingDate.toISOString() : null,
+      expiryDate: r.expiryDate ? r.expiryDate.toISOString() : null,
+      status: r.status as ItemBatchStatus, notes: r.notes,
+      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  async listBatches(itemId?: string, orgNodeId?: string): Promise<ItemBatchRecord[]> {
+    const conditions = [];
+    if (itemId) conditions.push(eq(itemBatch.itemId, itemId));
+    if (orgNodeId) conditions.push(eq(itemBatch.orgNodeId, orgNodeId));
+
+    const query = this.database.db.select(batchColumns).from(itemBatch);
+    const rows = conditions.length > 0
+      ? await query.where(and(...conditions)).orderBy(desc(itemBatch.createdAt))
+      : await query.orderBy(desc(itemBatch.createdAt));
+
+    return rows.map((r) => ({
+      id: r.id, batchNumber: r.batchNumber, itemId: r.itemId, orgNodeId: r.orgNodeId,
+      manufacturingDate: r.manufacturingDate ? r.manufacturingDate.toISOString() : null,
+      expiryDate: r.expiryDate ? r.expiryDate.toISOString() : null,
+      status: r.status as ItemBatchStatus, notes: r.notes,
+      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    }));
+  }
+
+  async insertBatch(input: CreateItemBatchInput & { id: string }): Promise<ItemBatchRecord> {
+    const rows = await this.database.db.insert(itemBatch).values({
+      id: input.id,
+      batchNumber: input.batchNumber,
+      itemId: input.itemId,
+      orgNodeId: input.orgNodeId,
+      manufacturingDate: input.manufacturingDate ? new Date(input.manufacturingDate) : null,
+      expiryDate: input.expiryDate ? new Date(input.expiryDate) : null,
+      notes: input.notes ?? null,
+      status: 'active',
+    }).returning(batchColumns);
+    const r = rows[0]!;
+    return {
+      id: r.id, batchNumber: r.batchNumber, itemId: r.itemId, orgNodeId: r.orgNodeId,
+      manufacturingDate: r.manufacturingDate ? r.manufacturingDate.toISOString() : null,
+      expiryDate: r.expiryDate ? r.expiryDate.toISOString() : null,
+      status: r.status as ItemBatchStatus, notes: r.notes,
+      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  async setBatchStatus(id: string, status: ItemBatchStatus): Promise<ItemBatchRecord> {
+    const rows = await this.database.db.update(itemBatch)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(itemBatch.id, id))
+      .returning(batchColumns);
+    const r = rows[0]!;
+    return {
+      id: r.id, batchNumber: r.batchNumber, itemId: r.itemId, orgNodeId: r.orgNodeId,
+      manufacturingDate: r.manufacturingDate ? r.manufacturingDate.toISOString() : null,
+      expiryDate: r.expiryDate ? r.expiryDate.toISOString() : null,
+      status: r.status as ItemBatchStatus, notes: r.notes,
+      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  // --- Serial Number Tracking ---
+  async findSerialByNo(itemId: string, serialNo: string): Promise<SerialNumberRecord | null> {
+    const rows = await this.database.db.select(serialColumns)
+      .from(serialNumber)
+      .where(and(eq(serialNumber.itemId, itemId), eq(serialNumber.serialNo, serialNo)))
+      .limit(1);
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+      id: r.id, serialNo: r.serialNo, itemId: r.itemId, warehouseId: r.warehouseId,
+      batchId: r.batchId, orgNodeId: r.orgNodeId, status: r.status as SerialNumberStatus,
+      purchaseReceiptId: r.purchaseReceiptId, deliveryOrderId: r.deliveryOrderId,
+      workOrderId: r.workOrderId, notes: r.notes, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  async findSerialById(id: string): Promise<SerialNumberRecord | null> {
+    const rows = await this.database.db.select(serialColumns).from(serialNumber).where(eq(serialNumber.id, id)).limit(1);
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+      id: r.id, serialNo: r.serialNo, itemId: r.itemId, warehouseId: r.warehouseId,
+      batchId: r.batchId, orgNodeId: r.orgNodeId, status: r.status as SerialNumberStatus,
+      purchaseReceiptId: r.purchaseReceiptId, deliveryOrderId: r.deliveryOrderId,
+      workOrderId: r.workOrderId, notes: r.notes, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  async listSerials(itemId?: string, warehouseId?: string, batchId?: string): Promise<SerialNumberRecord[]> {
+    const conditions = [];
+    if (itemId) conditions.push(eq(serialNumber.itemId, itemId));
+    if (warehouseId) conditions.push(eq(serialNumber.warehouseId, warehouseId));
+    if (batchId) conditions.push(eq(serialNumber.batchId, batchId));
+
+    const query = this.database.db.select(serialColumns).from(serialNumber);
+    const rows = conditions.length > 0
+      ? await query.where(and(...conditions)).orderBy(desc(serialNumber.createdAt))
+      : await query.orderBy(desc(serialNumber.createdAt));
+
+    return rows.map((r) => ({
+      id: r.id, serialNo: r.serialNo, itemId: r.itemId, warehouseId: r.warehouseId,
+      batchId: r.batchId, orgNodeId: r.orgNodeId, status: r.status as SerialNumberStatus,
+      purchaseReceiptId: r.purchaseReceiptId, deliveryOrderId: r.deliveryOrderId,
+      workOrderId: r.workOrderId, notes: r.notes, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    }));
+  }
+
+  async insertSerial(input: CreateSerialNumberInput & { id: string }): Promise<SerialNumberRecord> {
+    const rows = await this.database.db.insert(serialNumber).values({
+      id: input.id,
+      serialNo: input.serialNo,
+      itemId: input.itemId,
+      orgNodeId: input.orgNodeId,
+      warehouseId: input.warehouseId ?? null,
+      batchId: input.batchId ?? null,
+      purchaseReceiptId: input.purchaseReceiptId ?? null,
+      workOrderId: input.workOrderId ?? null,
+      notes: input.notes ?? null,
+      status: 'active',
+    }).returning(serialColumns);
+    const r = rows[0]!;
+    return {
+      id: r.id, serialNo: r.serialNo, itemId: r.itemId, warehouseId: r.warehouseId,
+      batchId: r.batchId, orgNodeId: r.orgNodeId, status: r.status as SerialNumberStatus,
+      purchaseReceiptId: r.purchaseReceiptId, deliveryOrderId: r.deliveryOrderId,
+      workOrderId: r.workOrderId, notes: r.notes, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  async setSerialStatus(id: string, status: SerialNumberStatus, warehouseId?: string, deliveryOrderId?: string): Promise<SerialNumberRecord> {
+    const updates: any = { status, updatedAt: new Date() };
+    if (warehouseId !== undefined) updates.warehouseId = warehouseId;
+    if (deliveryOrderId !== undefined) updates.deliveryOrderId = deliveryOrderId;
+
+    const rows = await this.database.db.update(serialNumber).set(updates).where(eq(serialNumber.id, id)).returning(serialColumns);
+    const r = rows[0]!;
+    return {
+      id: r.id, serialNo: r.serialNo, itemId: r.itemId, warehouseId: r.warehouseId,
+      batchId: r.batchId, orgNodeId: r.orgNodeId, status: r.status as SerialNumberStatus,
+      purchaseReceiptId: r.purchaseReceiptId, deliveryOrderId: r.deliveryOrderId,
+      workOrderId: r.workOrderId, notes: r.notes, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  // --- Landed Cost Voucher Management ---
+  async countLandedCostVouchers(): Promise<number> {
+    const rows = await this.database.db.select({ id: landedCostVoucher.id }).from(landedCostVoucher);
+    return rows.length;
+  }
+
+  async listLandedCostVouchers(orgNodeId?: string): Promise<LandedCostVoucherRecord[]> {
+    const query = this.database.db.select(lcvColumns).from(landedCostVoucher);
+    const rows = orgNodeId
+      ? await query.where(eq(landedCostVoucher.orgNodeId, orgNodeId)).orderBy(desc(landedCostVoucher.postingDate))
+      : await query.orderBy(desc(landedCostVoucher.postingDate));
+
+    const results: LandedCostVoucherRecord[] = [];
+    for (const r of rows) {
+      const items = await this.database.db.select(lciColumns).from(landedCostItem).where(eq(landedCostItem.voucherId, r.id));
+      results.push({
+        id: r.id,
+        voucherNumber: r.voucherNumber,
+        orgNodeId: r.orgNodeId,
+        postingDate: r.postingDate.toISOString(),
+        totalExpenseAmount: r.totalExpenseAmount,
+        distributeMethod: r.distributeMethod as any,
+        expenseAccountId: r.expenseAccountId,
+        status: r.status as any,
+        notes: r.notes,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+        items: items.map((i) => ({
+          id: i.id,
+          voucherId: i.voucherId,
+          receiptMovementId: i.receiptMovementId,
+          itemId: i.itemId,
+          warehouseId: i.warehouseId,
+          quantity: i.quantity,
+          originalRate: i.originalRate,
+          allocatedExpense: i.allocatedExpense,
+          newValuationRate: i.newValuationRate,
+          createdAt: i.createdAt.toISOString(),
+        })),
+      });
+    }
+    return results;
+  }
+
+  async findLandedCostVoucherById(id: string): Promise<LandedCostVoucherRecord | null> {
+    const rows = await this.database.db.select(lcvColumns).from(landedCostVoucher).where(eq(landedCostVoucher.id, id)).limit(1);
+    if (!rows[0]) return null;
+    const r = rows[0];
+    const items = await this.database.db.select(lciColumns).from(landedCostItem).where(eq(landedCostItem.voucherId, r.id));
+    return {
+      id: r.id,
+      voucherNumber: r.voucherNumber,
+      orgNodeId: r.orgNodeId,
+      postingDate: r.postingDate.toISOString(),
+      totalExpenseAmount: r.totalExpenseAmount,
+      distributeMethod: r.distributeMethod as any,
+      expenseAccountId: r.expenseAccountId,
+      status: r.status as any,
+      notes: r.notes,
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+      items: items.map((i) => ({
+        id: i.id,
+        voucherId: i.voucherId,
+        receiptMovementId: i.receiptMovementId,
+        itemId: i.itemId,
+        warehouseId: i.warehouseId,
+        quantity: i.quantity,
+        originalRate: i.originalRate,
+        allocatedExpense: i.allocatedExpense,
+        newValuationRate: i.newValuationRate,
+        createdAt: i.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  async insertLandedCostVoucher(
+    input: CreateLandedCostVoucherInput & {
+      id: string;
+      voucherNumber: string;
+      computedItems: Array<{
+        id: string;
+        receiptMovementId: string;
+        itemId: string;
+        warehouseId: string;
+        quantity: string;
+        originalRate: string;
+        allocatedExpense: string;
+        newValuationRate: string;
+      }>;
+    },
+  ): Promise<LandedCostVoucherRecord> {
+    const rows = await this.database.db.insert(landedCostVoucher).values({
+      id: input.id,
+      voucherNumber: input.voucherNumber,
+      orgNodeId: input.orgNodeId,
+      postingDate: input.postingDate ? new Date(input.postingDate) : new Date(),
+      totalExpenseAmount: input.totalExpenseAmount,
+      distributeMethod: input.distributeMethod ?? 'by_amount',
+      expenseAccountId: input.expenseAccountId,
+      status: 'draft',
+      notes: input.notes ?? null,
+    }).returning(lcvColumns);
+
+    const insertedVoucher = rows[0]!;
+    const insertedItems: LandedCostItemRecord[] = [];
+
+    for (const item of input.computedItems) {
+      const itemRows = await this.database.db.insert(landedCostItem).values({
+        id: item.id,
+        voucherId: insertedVoucher.id,
+        receiptMovementId: item.receiptMovementId,
+        itemId: item.itemId,
+        warehouseId: item.warehouseId,
+        quantity: item.quantity,
+        originalRate: item.originalRate,
+        allocatedExpense: item.allocatedExpense,
+        newValuationRate: item.newValuationRate,
+      }).returning(lciColumns);
+
+      const lci = itemRows[0]!;
+      insertedItems.push({
+        id: lci.id,
+        voucherId: lci.voucherId,
+        receiptMovementId: lci.receiptMovementId,
+        itemId: lci.itemId,
+        warehouseId: lci.warehouseId,
+        quantity: lci.quantity,
+        originalRate: lci.originalRate,
+        allocatedExpense: lci.allocatedExpense,
+        newValuationRate: lci.newValuationRate,
+        createdAt: lci.createdAt.toISOString(),
+      });
+    }
+
+    return {
+      id: insertedVoucher.id,
+      voucherNumber: insertedVoucher.voucherNumber,
+      orgNodeId: insertedVoucher.orgNodeId,
+      postingDate: insertedVoucher.postingDate.toISOString(),
+      totalExpenseAmount: insertedVoucher.totalExpenseAmount,
+      distributeMethod: insertedVoucher.distributeMethod as any,
+      expenseAccountId: insertedVoucher.expenseAccountId,
+      status: insertedVoucher.status as any,
+      notes: insertedVoucher.notes,
+      createdAt: insertedVoucher.createdAt.toISOString(),
+      updatedAt: insertedVoucher.updatedAt.toISOString(),
+      items: insertedItems,
+    };
+  }
+
+  async setLandedCostVoucherStatus(id: string, status: LandedCostStatus): Promise<LandedCostVoucherRecord> {
+    await this.database.db.update(landedCostVoucher).set({ status, updatedAt: new Date() }).where(eq(landedCostVoucher.id, id));
+    return (await this.findLandedCostVoucherById(id))!;
   }
 }

@@ -61,3 +61,30 @@ export interface SetItemPriceInput {
   validFrom?: string;
   validUntil?: string;
 }
+
+// --- UOM Conversion Types ---
+export interface UomConversionRecord {
+  id: string;
+  itemId: string;
+  fromUnitId: string;
+  toUnitId: string;
+  conversionFactor: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateUomConversionInput {
+  itemId: string;
+  fromUnitId: string;
+  toUnitId: string;
+  conversionFactor: string;
+}
+
+export interface ConvertUomResult {
+  itemId: string;
+  fromUnitId: string;
+  toUnitId: string;
+  sourceQuantity: number;
+  convertedQuantity: number;
+  conversionFactor: number;
+}

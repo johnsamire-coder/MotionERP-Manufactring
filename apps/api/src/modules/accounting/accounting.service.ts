@@ -3,15 +3,37 @@ import { Injectable } from '@nestjs/common';
 import { AccountingNotFoundError, AccountingValidationError } from './accounting.errors';
 import { AccountingRepository } from './accounting.repository';
 import type {
-  AccountBalance, AccountDeterminationRecord, AccountingPeriodRecord,
-  AccountingPeriodStatus, AccountTypeRecord, ChartOfAccountsRecord,
-  CompanyAccountingConfigRecord, CostCenterRecord, CreateAccountDeterminationInput,
-  CreateAccountingPeriodInput, CreateAccountTypeInput, CreateChartOfAccountsInput,
-  CreateCostCenterInput, CreateFiscalYearInput, CreateJournalEntryInput,
-  FiscalYearRecord, JournalEntryRecord, UpsertCompanyAccountingConfigInput,
-  TrialBalanceReport, ProfitAndLossReport, BalanceSheetReport, PartnerLedgerReport,
-  PartnerLedgerRow, FixedAssetRecord, CreateFixedAssetInput, DepreciationEntryRecord,
-  PostDepreciationResult, FixedAssetStatus,
+  AccountBalance,
+  AccountDeterminationRecord,
+  AccountingPeriodRecord,
+  AccountingPeriodStatus,
+  AccountTypeRecord,
+  BalanceSheetReport,
+  ChartOfAccountsRecord,
+  CompanyAccountingConfigRecord,
+  CostCenterRecord,
+  CreateAccountDeterminationInput,
+  CreateAccountingPeriodInput,
+  CreateAccountTypeInput,
+  CreateChartOfAccountsInput,
+  CreateCostCenterInput,
+  CreateFiscalYearInput,
+  CreateFixedAssetInput,
+  CreateJournalEntryInput,
+  CreateJournalLineInput,
+  DepreciationEntryRecord,
+  FiscalYearRecord,
+  FixedAssetRecord,
+  FixedAssetStatus,
+  JournalEntryRecord,
+  PartnerLedgerReport,
+  PartnerLedgerRow,
+  PostDepreciationResult,
+  ProfitAndLossReport,
+  TrialBalanceReport,
+  UpsertCompanyAccountingConfigInput,
+  VatReportSummary,
+  VatSettlementResult,
 } from './accounting.types';
 
 @Injectable()
@@ -19,7 +41,10 @@ export class AccountingService {
   constructor(private readonly repository: AccountingRepository) {}
 
   // --- Account Types ---
-  async getAccountTypes(): Promise<AccountTypeRecord[]> { return this.repository.listAccountTypes(); }
+  async getAccountTypes(): Promise<AccountTypeRecord[]> {
+    return this.repository.listAccountTypes();
+  }
+
   async createAccountType(input: CreateAccountTypeInput): Promise<AccountTypeRecord> {
     const code = input.code.trim().toLowerCase();
     if (!code) throw new AccountingValidationError('code is required');
@@ -29,7 +54,10 @@ export class AccountingService {
   }
 
   // --- Chart of Accounts ---
-  async getAccounts(): Promise<ChartOfAccountsRecord[]> { return this.repository.listAccounts(); }
+  async getAccounts(): Promise<ChartOfAccountsRecord[]> {
+    return this.repository.listAccounts();
+  }
+
   async createAccount(input: CreateChartOfAccountsInput): Promise<ChartOfAccountsRecord> {
     const code = input.code.trim();
     if (!code) throw new AccountingValidationError('code is required');
@@ -51,8 +79,12 @@ export class AccountingService {
     }
 
     return this.repository.insertAccount({
-      id: randomUUID(), code, name: input.name.trim(), orgNodeId: input.orgNodeId,
-      accountTypeId: input.accountTypeId, parentId: input.parentId,
+      id: randomUUID(),
+      code,
+      name: input.name.trim(),
+      orgNodeId: input.orgNodeId,
+      accountTypeId: input.accountTypeId,
+      parentId: input.parentId,
     });
   }
 
@@ -60,6 +92,7 @@ export class AccountingService {
   async getFiscalYears(orgNodeId?: string): Promise<FiscalYearRecord[]> {
     return this.repository.listFiscalYears(orgNodeId);
   }
+
   async createFiscalYear(input: CreateFiscalYearInput): Promise<FiscalYearRecord> {
     if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
     if (!input.name || input.name.trim().length === 0) throw new AccountingValidationError('fiscal year name is required');
@@ -75,13 +108,18 @@ export class AccountingService {
       const pEnd = new Date(start.getFullYear(), start.getMonth() + month, 0, 23, 59, 59, 999);
       const pName = `M${String(month).padStart(2, '0')}-${pStart.toLocaleString('default', { month: 'short', year: 'numeric' })}`;
       await this.repository.insertPeriod({
-        id: randomUUID(), fiscalYearId: fy.id, periodNumber: month, name: pName,
-        startDate: pStart.toISOString(), endDate: pEnd.toISOString(),
+        id: randomUUID(),
+        fiscalYearId: fy.id,
+        periodNumber: month,
+        name: pName,
+        startDate: pStart.toISOString(),
+        endDate: pEnd.toISOString(),
       });
     }
 
     return fy;
   }
+
   async closeFiscalYear(id: string): Promise<void> {
     const fy = await this.repository.findFiscalYearById(id);
     if (!fy) throw new AccountingNotFoundError(`fiscal year ${id} does not exist`);
@@ -92,6 +130,7 @@ export class AccountingService {
   async getPeriods(fiscalYearId: string): Promise<AccountingPeriodRecord[]> {
     return this.repository.listPeriods(fiscalYearId);
   }
+
   async setPeriodStatus(id: string, status: AccountingPeriodStatus): Promise<AccountingPeriodRecord> {
     const period = await this.repository.findPeriodById(id);
     if (!period) throw new AccountingNotFoundError(`accounting period ${id} does not exist`);
@@ -102,6 +141,7 @@ export class AccountingService {
   async getCostCenters(orgNodeId?: string): Promise<CostCenterRecord[]> {
     return this.repository.listCostCenters(orgNodeId);
   }
+
   async createCostCenter(input: CreateCostCenterInput): Promise<CostCenterRecord> {
     if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
     const code = input.code.trim();
@@ -116,6 +156,7 @@ export class AccountingService {
   async getCompanyConfig(orgNodeId: string): Promise<CompanyAccountingConfigRecord | null> {
     return this.repository.findCompanyConfig(orgNodeId);
   }
+
   async upsertCompanyConfig(input: UpsertCompanyAccountingConfigInput): Promise<CompanyAccountingConfigRecord> {
     if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
     return this.repository.upsertCompanyConfig({ id: randomUUID(), ...input });
@@ -125,13 +166,17 @@ export class AccountingService {
   async getAccountDeterminations(orgNodeId: string): Promise<AccountDeterminationRecord[]> {
     return this.repository.listAccountDeterminations(orgNodeId);
   }
+
   async createAccountDetermination(input: CreateAccountDeterminationInput): Promise<AccountDeterminationRecord> {
     if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
     return this.repository.insertAccountDetermination({ id: randomUUID(), ...input });
   }
 
   // --- Journal Entries ---
-  async getEntries(): Promise<JournalEntryRecord[]> { return this.repository.listEntries(); }
+  async getEntries(): Promise<JournalEntryRecord[]> {
+    return this.repository.listEntries();
+  }
+
   async getEntry(id: string): Promise<JournalEntryRecord> {
     const found = await this.repository.findEntryById(id);
     if (!found) throw new AccountingNotFoundError(`journal entry ${id} does not exist`);
@@ -187,8 +232,11 @@ export class AccountingService {
     const entryNumber = `JE-${year}-${String(sequence).padStart(6, '0')}`;
 
     return this.repository.insertEntry({
-      id: randomUUID(), entryNumber, ...input,
-      fiscalYearId: fyId, periodId: pId,
+      id: randomUUID(),
+      entryNumber,
+      ...input,
+      fiscalYearId: fyId,
+      periodId: pId,
     });
   }
 
@@ -227,8 +275,12 @@ export class AccountingService {
       byAccount.set(row.accountId, existing);
     }
     return Array.from(byAccount.entries()).map(([accountId, v]) => ({
-      accountId, accountCode: v.code, accountName: v.name,
-      totalDebit: v.debit.toFixed(4), totalCredit: v.credit.toFixed(4), balance: (v.debit - v.credit).toFixed(4),
+      accountId,
+      accountCode: v.code,
+      accountName: v.name,
+      totalDebit: v.debit.toFixed(4),
+      totalCredit: v.credit.toFixed(4),
+      balance: (v.debit - v.credit).toFixed(4),
     }));
   }
 
@@ -289,8 +341,6 @@ export class AccountingService {
 
     const entryDate = periodDateStr ? new Date(periodDateStr) : new Date();
 
-    // 1. Create Automated Double-Entry Journal Entry:
-    // [Dr: Depreciation Expense Account (with Cost Center) / Cr: Accumulated Depreciation Account]
     const draftJournal = await this.createEntry({
       orgNodeId: asset.orgNodeId,
       description: `[Auto] قسط إهلاك شهري لأصل: ${asset.assetName} (${asset.assetCode})`,
@@ -318,7 +368,6 @@ export class AccountingService {
 
     const postedJournal = await this.postEntry(draftJournal.id);
 
-    // 2. Insert Depreciation Record
     const deEntry = await this.repository.insertDepreciationEntry({
       id: randomUUID(),
       assetId: asset.id,
@@ -329,7 +378,6 @@ export class AccountingService {
       journalEntryId: postedJournal.id,
     });
 
-    // 3. Update Asset Status if completed
     const newStatus: FixedAssetStatus = Number(newTotalDepreciated) >= depreciableCost ? 'fully_depreciated' : 'active';
     await this.repository.updateFixedAssetDepreciation(asset.id, newTotalDepreciated, newStatus);
 
@@ -521,6 +569,129 @@ export class AccountingService {
       totalCredit: totalCredit.toFixed(4),
       closingBalance: runningBalance.toFixed(4),
       rows: filteredRows,
+    };
+  }
+
+  // ==================== VAT RETURN & TAX SETTLEMENT ENGINE ====================
+
+  async getVatReport(orgNodeId: string, startDate?: string, endDate?: string): Promise<VatReportSummary> {
+    const config = await this.repository.findCompanyConfig(orgNodeId);
+    const determinations = await this.repository.listAccountDeterminations(orgNodeId);
+
+    const inputTaxDet = determinations.find((d) => d.accountPurpose === 'input_tax');
+    const inputTaxAccountId = inputTaxDet?.accountId ?? config?.defaultInputTaxAccountId;
+
+    const outputTaxDet = determinations.find((d) => d.accountPurpose === 'output_tax');
+    const outputTaxAccountId = outputTaxDet?.accountId ?? config?.defaultOutputTaxAccountId;
+
+    const lines = await this.repository.listAllPostedLinesWithDetails({ orgNodeId, startDate, endDate });
+
+    let totalInputTax = 0;
+    let totalOutputTax = 0;
+
+    for (const l of lines) {
+      if (inputTaxAccountId && l.accountId === inputTaxAccountId) {
+        totalInputTax += Number(l.debit) - Number(l.credit);
+      }
+      if (outputTaxAccountId && l.accountId === outputTaxAccountId) {
+        totalOutputTax += Number(l.credit) - Number(l.debit);
+      }
+    }
+
+    const netTaxPayable = totalOutputTax - totalInputTax;
+
+    return {
+      orgNodeId,
+      startDate,
+      endDate,
+      totalOutputTax: totalOutputTax.toFixed(4),
+      totalInputTax: totalInputTax.toFixed(4),
+      netTaxPayable: Math.abs(netTaxPayable).toFixed(4),
+      status: netTaxPayable >= 0 ? 'payable' : 'refundable',
+    };
+  }
+
+  async postVatSettlement(
+    orgNodeId: string,
+    settlementDateStr: string,
+    taxAuthorityPayableAccountId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<VatSettlementResult> {
+    const vatSummary = await this.getVatReport(orgNodeId, startDate, endDate);
+    const config = await this.repository.findCompanyConfig(orgNodeId);
+    const determinations = await this.repository.listAccountDeterminations(orgNodeId);
+
+    const inputTaxDet = determinations.find((d) => d.accountPurpose === 'input_tax');
+    const inputTaxAccountId = inputTaxDet?.accountId ?? config?.defaultInputTaxAccountId;
+
+    const outputTaxDet = determinations.find((d) => d.accountPurpose === 'output_tax');
+    const outputTaxAccountId = outputTaxDet?.accountId ?? config?.defaultOutputTaxAccountId;
+
+    if (!inputTaxAccountId || !outputTaxAccountId) {
+      throw new AccountingValidationError('حسابات ضريبة المدخلات وضريبة المخرجات يجب تعيينها أولاً للشركة');
+    }
+
+    const outTax = Number(vatSummary.totalOutputTax);
+    const inTax = Number(vatSummary.totalInputTax);
+    const netPayable = Number(vatSummary.netTaxPayable);
+
+    const lines: CreateJournalLineInput[] = [];
+
+    // 1. Clear Output VAT (Debit Output Tax)
+    if (outTax > 0) {
+      lines.push({
+        accountId: outputTaxAccountId,
+        debitAmount: vatSummary.totalOutputTax,
+        creditAmount: '0',
+        description: `[Auto] إقفال ضريبة المخرجات لإقرار ${settlementDateStr}`,
+      });
+    }
+
+    // 2. Clear Input VAT (Credit Input Tax)
+    if (inTax > 0) {
+      lines.push({
+        accountId: inputTaxAccountId,
+        debitAmount: '0',
+        creditAmount: vatSummary.totalInputTax,
+        description: `[Auto] تسوية وخصم ضريبة المدخلات لإقرار ${settlementDateStr}`,
+      });
+    }
+
+    // 3. Tax Authority Payable / Refundable
+    if (vatSummary.status === 'payable' && netPayable > 0) {
+      lines.push({
+        accountId: taxAuthorityPayableAccountId,
+        debitAmount: '0',
+        creditAmount: vatSummary.netTaxPayable,
+        description: `[Auto] إثبات صافي ضريبة القيمة المضافة المستحقة للسداد لمصلحة الضرائب`,
+      });
+    } else if (vatSummary.status === 'refundable' && netPayable > 0) {
+      lines.push({
+        accountId: taxAuthorityPayableAccountId,
+        debitAmount: vatSummary.netTaxPayable,
+        creditAmount: '0',
+        description: `[Auto] إثبات رصيد دائن مسترد من ضريبة القيمة المضافة طرف مصلحة الضرائب`,
+      });
+    }
+
+    const settlementDate = new Date(settlementDateStr);
+    const draftJournal = await this.createEntry({
+      orgNodeId,
+      description: `[Auto] تسوية وإقرار ضريبة القيمة المضافة 14% لشهر ${settlementDate.getFullYear()}-${settlementDate.getMonth() + 1}`,
+      reference: `VAT-${settlementDate.getFullYear()}-${settlementDate.getMonth() + 1}`,
+      entryDate: settlementDate.toISOString(),
+      isAutoGenerated: true,
+      idempotencyKey: `vat-settle-${orgNodeId}-${settlementDate.getFullYear()}-${settlementDate.getMonth() + 1}`,
+      sourceEventType: 'vat_settlement',
+      lines,
+    });
+
+    const postedJournal = await this.postEntry(draftJournal.id);
+
+    return {
+      journalEntry: postedJournal,
+      vatSummary,
     };
   }
 }

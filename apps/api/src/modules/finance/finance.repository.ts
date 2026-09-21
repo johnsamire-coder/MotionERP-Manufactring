@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { and, asc, desc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import {
+  bankReconciliation,
+  bankTransfer,
   collection,
+  creditDebitNote,
+  creditDebitNoteLine,
   payment,
   purchaseInvoice,
   purchaseInvoiceLine,
@@ -11,13 +15,23 @@ import {
   salesInvoiceLine,
 } from './finance.schema';
 import type {
+  BankReconciliationRecord,
+  BankReconciliationStatus,
+  BankTransferRecord,
+  BankTransferStatus,
   CollectionRecord,
   CollectionStatus,
+  CreateBankReconciliationInput,
+  CreateBankTransferInput,
   CreateCollectionInput,
+  CreateCreditDebitNoteInput,
   CreatePaymentInput,
   CreatePurchaseInvoiceInput,
   CreateRetentionInput,
   CreateSalesInvoiceInput,
+  CreditDebitNoteLineRecord,
+  CreditDebitNoteRecord,
+  CreditDebitNoteStatus,
   PaymentMethod,
   PaymentRecord,
   PaymentStatus,
@@ -84,6 +98,36 @@ const payColumns = {
   amount: payment.amount, currencyCode: payment.currencyCode, paymentMethod: payment.paymentMethod,
   paidFromAccountId: payment.paidFromAccountId, referenceNumber: payment.referenceNumber, notes: payment.notes,
   status: payment.status, createdAt: payment.createdAt, updatedAt: payment.updatedAt,
+};
+
+const noteColumns = {
+  id: creditDebitNote.id, noteNumber: creditDebitNote.noteNumber, noteType: creditDebitNote.noteType,
+  orgNodeId: creditDebitNote.orgNodeId, partyType: creditDebitNote.partyType, partyId: creditDebitNote.partyId,
+  originalInvoiceNumber: creditDebitNote.originalInvoiceNumber, salesInvoiceId: creditDebitNote.salesInvoiceId,
+  purchaseInvoiceId: creditDebitNote.purchaseInvoiceId, postingDate: creditDebitNote.postingDate,
+  netAmount: creditDebitNote.netAmount, taxAmount: creditDebitNote.taxAmount, grandTotal: creditDebitNote.grandTotal,
+  reason: creditDebitNote.reason, status: creditDebitNote.status, createdAt: creditDebitNote.createdAt, updatedAt: creditDebitNote.updatedAt,
+};
+
+const noteLineColumns = {
+  id: creditDebitNoteLine.id, noteId: creditDebitNoteLine.noteId, itemId: creditDebitNoteLine.itemId,
+  quantity: creditDebitNoteLine.quantity, unitPrice: creditDebitNoteLine.unitPrice, taxRate: creditDebitNoteLine.taxRate,
+  taxAmount: creditDebitNoteLine.taxAmount, totalAmount: creditDebitNoteLine.totalAmount, createdAt: creditDebitNoteLine.createdAt,
+};
+
+const transferColumns = {
+  id: bankTransfer.id, transferNumber: bankTransfer.transferNumber, orgNodeId: bankTransfer.orgNodeId,
+  fromAccountId: bankTransfer.fromAccountId, toAccountId: bankTransfer.toAccountId, transferDate: bankTransfer.transferDate,
+  amount: bankTransfer.amount, referenceNumber: bankTransfer.referenceNumber, notes: bankTransfer.notes,
+  status: bankTransfer.status, createdAt: bankTransfer.createdAt, updatedAt: bankTransfer.updatedAt,
+};
+
+const reconColumns = {
+  id: bankReconciliation.id, reconciliationNumber: bankReconciliation.reconciliationNumber, orgNodeId: bankReconciliation.orgNodeId,
+  bankAccountId: bankReconciliation.bankAccountId, statementDate: bankReconciliation.statementDate,
+  statementBalance: bankReconciliation.statementBalance, clearedBalance: bankReconciliation.clearedBalance,
+  differenceAmount: bankReconciliation.differenceAmount, status: bankReconciliation.status, notes: bankReconciliation.notes,
+  createdAt: bankReconciliation.createdAt, updatedAt: bankReconciliation.updatedAt,
 };
 
 @Injectable()
@@ -544,5 +588,360 @@ export class FinanceRepository {
   async setPaymentStatus(id: string, status: PaymentStatus): Promise<PaymentRecord> {
     await this.database.db.update(payment).set({ status, updatedAt: new Date() }).where(eq(payment.id, id));
     return (await this.findPaymentById(id))!;
+  }
+
+  // --- Credit & Debit Notes ---
+  async countCreditDebitNotes(): Promise<number> {
+    const rows = await this.database.db.select({ id: creditDebitNote.id }).from(creditDebitNote);
+    return rows.length;
+  }
+
+  async listCreditDebitNotes(orgNodeId?: string, partyType?: 'customer' | 'supplier', partyId?: string): Promise<CreditDebitNoteRecord[]> {
+    const conditions = [];
+    if (orgNodeId) conditions.push(eq(creditDebitNote.orgNodeId, orgNodeId));
+    if (partyType) conditions.push(eq(creditDebitNote.partyType, partyType));
+    if (partyId) conditions.push(eq(creditDebitNote.partyId, partyId));
+
+    const query = this.database.db.select(noteColumns).from(creditDebitNote);
+    const rows = conditions.length > 0
+      ? await query.where(and(...conditions)).orderBy(desc(creditDebitNote.postingDate))
+      : await query.orderBy(desc(creditDebitNote.postingDate));
+
+    const results: CreditDebitNoteRecord[] = [];
+    for (const r of rows) {
+      const lines = await this.database.db.select(noteLineColumns).from(creditDebitNoteLine).where(eq(creditDebitNoteLine.noteId, r.id));
+      results.push({
+        id: r.id,
+        noteNumber: r.noteNumber,
+        noteType: r.noteType as any,
+        orgNodeId: r.orgNodeId,
+        partyType: r.partyType as any,
+        partyId: r.partyId,
+        originalInvoiceNumber: r.originalInvoiceNumber,
+        salesInvoiceId: r.salesInvoiceId,
+        purchaseInvoiceId: r.purchaseInvoiceId,
+        postingDate: r.postingDate.toISOString(),
+        netAmount: r.netAmount,
+        taxAmount: r.taxAmount,
+        grandTotal: r.grandTotal,
+        reason: r.reason,
+        status: r.status as any,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+        lines: lines.map((l) => ({
+          id: l.id,
+          noteId: l.noteId,
+          itemId: l.itemId,
+          quantity: l.quantity,
+          unitPrice: l.unitPrice,
+          taxRate: l.taxRate,
+          taxAmount: l.taxAmount,
+          totalAmount: l.totalAmount,
+          createdAt: l.createdAt.toISOString(),
+        })),
+      });
+    }
+    return results;
+  }
+
+  async findCreditDebitNoteById(id: string): Promise<CreditDebitNoteRecord | null> {
+    const rows = await this.database.db.select(noteColumns).from(creditDebitNote).where(eq(creditDebitNote.id, id)).limit(1);
+    if (!rows[0]) return null;
+    const r = rows[0];
+    const lines = await this.database.db.select(noteLineColumns).from(creditDebitNoteLine).where(eq(creditDebitNoteLine.noteId, r.id));
+    return {
+      id: r.id,
+      noteNumber: r.noteNumber,
+      noteType: r.noteType as any,
+      orgNodeId: r.orgNodeId,
+      partyType: r.partyType as any,
+      partyId: r.partyId,
+      originalInvoiceNumber: r.originalInvoiceNumber,
+      salesInvoiceId: r.salesInvoiceId,
+      purchaseInvoiceId: r.purchaseInvoiceId,
+      postingDate: r.postingDate.toISOString(),
+      netAmount: r.netAmount,
+      taxAmount: r.taxAmount,
+      grandTotal: r.grandTotal,
+      reason: r.reason,
+      status: r.status as any,
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+      lines: lines.map((l) => ({
+        id: l.id,
+        noteId: l.noteId,
+        itemId: l.itemId,
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+        taxRate: l.taxRate,
+        taxAmount: l.taxAmount,
+        totalAmount: l.totalAmount,
+        createdAt: l.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  async insertCreditDebitNote(
+    input: CreateCreditDebitNoteInput & {
+      id: string;
+      noteNumber: string;
+      netAmount: string;
+      taxAmount: string;
+      grandTotal: string;
+      computedLines: Array<{
+        id: string;
+        itemId: string;
+        quantity: string;
+        unitPrice: string;
+        taxRate: string;
+        taxAmount: string;
+        totalAmount: string;
+      }>;
+    },
+  ): Promise<CreditDebitNoteRecord> {
+    const rows = await this.database.db.insert(creditDebitNote).values({
+      id: input.id,
+      noteNumber: input.noteNumber,
+      noteType: input.noteType,
+      orgNodeId: input.orgNodeId,
+      partyType: input.partyType,
+      partyId: input.partyId,
+      originalInvoiceNumber: input.originalInvoiceNumber ?? null,
+      salesInvoiceId: input.salesInvoiceId ?? null,
+      purchaseInvoiceId: input.purchaseInvoiceId ?? null,
+      postingDate: input.postingDate ? new Date(input.postingDate) : new Date(),
+      netAmount: input.netAmount,
+      taxAmount: input.taxAmount,
+      grandTotal: input.grandTotal,
+      reason: input.reason ?? null,
+      status: 'draft',
+    }).returning(noteColumns);
+
+    const insertedNote = rows[0]!;
+    const insertedLines: CreditDebitNoteLineRecord[] = [];
+
+    for (const line of input.computedLines) {
+      const lineRows = await this.database.db.insert(creditDebitNoteLine).values({
+        id: line.id,
+        noteId: insertedNote.id,
+        itemId: line.itemId,
+        quantity: line.quantity,
+        unitPrice: line.unitPrice,
+        taxRate: line.taxRate,
+        taxAmount: line.taxAmount,
+        totalAmount: line.totalAmount,
+      }).returning(noteLineColumns);
+
+      const l = lineRows[0]!;
+      insertedLines.push({
+        id: l.id,
+        noteId: l.noteId,
+        itemId: l.itemId,
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+        taxRate: l.taxRate,
+        taxAmount: l.taxAmount,
+        totalAmount: l.totalAmount,
+        createdAt: l.createdAt.toISOString(),
+      });
+    }
+
+    return {
+      id: insertedNote.id,
+      noteNumber: insertedNote.noteNumber,
+      noteType: insertedNote.noteType as any,
+      orgNodeId: insertedNote.orgNodeId,
+      partyType: insertedNote.partyType as any,
+      partyId: insertedNote.partyId,
+      originalInvoiceNumber: insertedNote.originalInvoiceNumber,
+      salesInvoiceId: insertedNote.salesInvoiceId,
+      purchaseInvoiceId: insertedNote.purchaseInvoiceId,
+      postingDate: insertedNote.postingDate.toISOString(),
+      netAmount: insertedNote.netAmount,
+      taxAmount: insertedNote.taxAmount,
+      grandTotal: insertedNote.grandTotal,
+      reason: insertedNote.reason,
+      status: insertedNote.status as any,
+      createdAt: insertedNote.createdAt.toISOString(),
+      updatedAt: insertedNote.updatedAt.toISOString(),
+      lines: insertedLines,
+    };
+  }
+
+  async setCreditDebitNoteStatus(id: string, status: CreditDebitNoteStatus): Promise<CreditDebitNoteRecord> {
+    await this.database.db.update(creditDebitNote).set({ status, updatedAt: new Date() }).where(eq(creditDebitNote.id, id));
+    return (await this.findCreditDebitNoteById(id))!;
+  }
+
+  // --- Bank Transfers ---
+  async countBankTransfers(): Promise<number> {
+    const rows = await this.database.db.select({ id: bankTransfer.id }).from(bankTransfer);
+    return rows.length;
+  }
+
+  async listBankTransfers(orgNodeId?: string): Promise<BankTransferRecord[]> {
+    const query = this.database.db.select(transferColumns).from(bankTransfer);
+    const rows = orgNodeId
+      ? await query.where(eq(bankTransfer.orgNodeId, orgNodeId)).orderBy(desc(bankTransfer.transferDate))
+      : await query.orderBy(desc(bankTransfer.transferDate));
+
+    return rows.map((r) => ({
+      id: r.id,
+      transferNumber: r.transferNumber,
+      orgNodeId: r.orgNodeId,
+      fromAccountId: r.fromAccountId,
+      toAccountId: r.toAccountId,
+      transferDate: r.transferDate.toISOString(),
+      amount: r.amount,
+      referenceNumber: r.referenceNumber,
+      notes: r.notes,
+      status: r.status as any,
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+    }));
+  }
+
+  async findBankTransferById(id: string): Promise<BankTransferRecord | null> {
+    const rows = await this.database.db.select(transferColumns).from(bankTransfer).where(eq(bankTransfer.id, id)).limit(1);
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+      id: r.id,
+      transferNumber: r.transferNumber,
+      orgNodeId: r.orgNodeId,
+      fromAccountId: r.fromAccountId,
+      toAccountId: r.toAccountId,
+      transferDate: r.transferDate.toISOString(),
+      amount: r.amount,
+      referenceNumber: r.referenceNumber,
+      notes: r.notes,
+      status: r.status as any,
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  async insertBankTransfer(input: CreateBankTransferInput & { id: string; transferNumber: string }): Promise<BankTransferRecord> {
+    const rows = await this.database.db.insert(bankTransfer).values({
+      id: input.id,
+      transferNumber: input.transferNumber,
+      orgNodeId: input.orgNodeId,
+      fromAccountId: input.fromAccountId,
+      toAccountId: input.toAccountId,
+      transferDate: input.transferDate ? new Date(input.transferDate) : new Date(),
+      amount: input.amount,
+      referenceNumber: input.referenceNumber ?? null,
+      notes: input.notes ?? null,
+      status: 'draft',
+    }).returning(transferColumns);
+    const r = rows[0]!;
+    return {
+      id: r.id,
+      transferNumber: r.transferNumber,
+      orgNodeId: r.orgNodeId,
+      fromAccountId: r.fromAccountId,
+      toAccountId: r.toAccountId,
+      transferDate: r.transferDate.toISOString(),
+      amount: r.amount,
+      referenceNumber: r.referenceNumber,
+      notes: r.notes,
+      status: r.status as any,
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  async setBankTransferStatus(id: string, status: BankTransferStatus): Promise<BankTransferRecord> {
+    await this.database.db.update(bankTransfer).set({ status, updatedAt: new Date() }).where(eq(bankTransfer.id, id));
+    return (await this.findBankTransferById(id))!;
+  }
+
+  // --- Bank Reconciliation ---
+  async countBankReconciliations(): Promise<number> {
+    const rows = await this.database.db.select({ id: bankReconciliation.id }).from(bankReconciliation);
+    return rows.length;
+  }
+
+  async listBankReconciliations(orgNodeId?: string, bankAccountId?: string): Promise<BankReconciliationRecord[]> {
+    const conditions = [];
+    if (orgNodeId) conditions.push(eq(bankReconciliation.orgNodeId, orgNodeId));
+    if (bankAccountId) conditions.push(eq(bankReconciliation.bankAccountId, bankAccountId));
+
+    const query = this.database.db.select(reconColumns).from(bankReconciliation);
+    const rows = conditions.length > 0
+      ? await query.where(and(...conditions)).orderBy(desc(bankReconciliation.statementDate))
+      : await query.orderBy(desc(bankReconciliation.statementDate));
+
+    return rows.map((r) => ({
+      id: r.id,
+      reconciliationNumber: r.reconciliationNumber,
+      orgNodeId: r.orgNodeId,
+      bankAccountId: r.bankAccountId,
+      statementDate: r.statementDate.toISOString(),
+      statementBalance: r.statementBalance,
+      clearedBalance: r.clearedBalance,
+      differenceAmount: r.differenceAmount,
+      status: r.status as any,
+      notes: r.notes,
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+    }));
+  }
+
+  async findBankReconciliationById(id: string): Promise<BankReconciliationRecord | null> {
+    const rows = await this.database.db.select(reconColumns).from(bankReconciliation).where(eq(bankReconciliation.id, id)).limit(1);
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+      id: r.id,
+      reconciliationNumber: r.reconciliationNumber,
+      orgNodeId: r.orgNodeId,
+      bankAccountId: r.bankAccountId,
+      statementDate: r.statementDate.toISOString(),
+      statementBalance: r.statementBalance,
+      clearedBalance: r.clearedBalance,
+      differenceAmount: r.differenceAmount,
+      status: r.status as any,
+      notes: r.notes,
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  async insertBankReconciliation(
+    input: CreateBankReconciliationInput & {
+      id: string;
+      reconciliationNumber: string;
+      clearedBalance: string;
+      differenceAmount: string;
+    },
+  ): Promise<BankReconciliationRecord> {
+    const rows = await this.database.db.insert(bankReconciliation).values({
+      id: input.id,
+      reconciliationNumber: input.reconciliationNumber,
+      orgNodeId: input.orgNodeId,
+      bankAccountId: input.bankAccountId,
+      statementDate: new Date(input.statementDate),
+      statementBalance: input.statementBalance,
+      clearedBalance: input.clearedBalance,
+      differenceAmount: input.differenceAmount,
+      status: 'reconciled',
+      notes: input.notes ?? null,
+    }).returning(reconColumns);
+    const r = rows[0]!;
+    return {
+      id: r.id,
+      reconciliationNumber: r.reconciliationNumber,
+      orgNodeId: r.orgNodeId,
+      bankAccountId: r.bankAccountId,
+      statementDate: r.statementDate.toISOString(),
+      statementBalance: r.statementBalance,
+      clearedBalance: r.clearedBalance,
+      differenceAmount: r.differenceAmount,
+      status: r.status as any,
+      notes: r.notes,
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+    };
   }
 }
