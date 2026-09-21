@@ -1,44 +1,37 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { ProductionService } from '../production/production.service';
 import { ProductionOpsService } from '../production_ops/production_ops.service';
 import { QualityNotFoundError, QualityValidationError } from './quality.errors';
 import { QualityRepository } from './quality.repository';
 import type {
   CreateQualityCheckPointInput, CreateSlaRuleInput, QualityCheckPointRecord, QualityCheckPointType,
-  QualityWorkflowRecord, SlaRuleRecord,
+  QualityWorkflowRecord, SlaRuleRecord, QualityWorkflowStatus,
+  QualityInspectionRecord, CreateQualityInspectionInput, QualityInspectionStatus,
 } from './quality.types';
 
 @Injectable()
 export class QualityService {
   constructor(
     private readonly repository: QualityRepository,
-    private readonly productionService: ProductionService,
-    private readonly productionOpsService: ProductionOpsService,
+    @Optional() private readonly productionService?: ProductionService,
+    @Optional() private readonly productionOpsService?: ProductionOpsService,
   ) {}
 
-  /**
-   * Mandatory validation of the related entity a check point points to
-   * (D2/D20: through each module's public service surface only, no direct
-   * FK from quality to production/production_ops). Any failure from the
-   * other module (its own NotFoundError) is normalized into
-   * QualityNotFoundError so quality's own exception filter handles it
-   * uniformly (404), instead of leaking a foreign error type. The entity's
-   * orgNodeId is returned so the check point inherits the same
-   * company/activity automatically — this was previously never verified at
-   * all (a check point could reference a non-existent entity silently).
-   */
   private async resolveRelatedEntityOrgNodeId(
     relatedEntityType: QualityCheckPointType,
     relatedEntityId: string,
   ): Promise<string | null> {
     try {
-      if (relatedEntityType === 'production_step') {
+      if (relatedEntityType === 'production_step' && this.productionOpsService) {
         const step = await this.productionOpsService.getStep(relatedEntityId);
         return step.orgNodeId;
       }
-      const request = await this.productionService.getRequest(relatedEntityId);
-      return request.orgNodeId;
+      if (relatedEntityType === 'material_request' && this.productionService) {
+        const request = await this.productionService.getRequest(relatedEntityId);
+        return request.orgNodeId;
+      }
+      return null;
     } catch {
       throw new QualityNotFoundError(`${relatedEntityType} "${relatedEntityId}" does not exist`);
     }
@@ -109,11 +102,58 @@ export class QualityService {
 
     return escalatedCount;
   }
+
   async getCheckPoints(): Promise<QualityCheckPointRecord[]> {
     return this.repository.findAllCheckPoints();
   }
 
   async getWorkflows(): Promise<QualityWorkflowRecord[]> {
     return this.repository.findAllWorkflows();
+  }
+
+  // --- Quality Inspection Management (New) ---
+
+  async createQualityInspection(input: CreateQualityInspectionInput): Promise<QualityInspectionRecord> {
+    if (!input.orgNodeId) throw new QualityValidationError('orgNodeId is required');
+    if (!input.itemId) throw new QualityValidationError('itemId is required');
+    if (!input.parameters || input.parameters.length === 0) {
+      throw new QualityValidationError('inspection parameters are required');
+    }
+
+    const sequence = (await this.repository.countInspections()) + 1;
+    const year = new Date().getFullYear();
+    const inspectionNumber = `QINSP-${year}-${String(sequence).padStart(6, '0')}`;
+
+    return this.repository.insertInspection({
+      ...input,
+      id: randomUUID(),
+      inspectionNumber,
+    });
+  }
+
+  async getInspection(id: string): Promise<QualityInspectionRecord> {
+    const found = await this.repository.findInspectionById(id);
+    if (!found) throw new QualityNotFoundError(`quality inspection ${id} does not exist`);
+    return found;
+  }
+
+  async evaluateInspection(
+    id: string,
+    inspectedBy: string,
+    notes?: string,
+    paramResults?: Array<{ parameterId: string; actualValue: string; status: 'pass' | 'fail' }>,
+  ): Promise<QualityInspectionRecord> {
+    const inspection = await this.getInspection(id);
+    if (inspection.status !== 'pending') {
+      throw new QualityValidationError(`inspection ${id} is already completed`);
+    }
+
+    let finalStatus: QualityInspectionStatus = 'passed';
+    if (paramResults) {
+      const hasFailure = paramResults.some((p) => p.status === 'fail');
+      if (hasFailure) finalStatus = 'failed';
+    }
+
+    return this.repository.updateInspectionStatus(id, finalStatus, inspectedBy, notes, paramResults);
   }
 }

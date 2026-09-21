@@ -1,181 +1,252 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api, ApiError } from '../api/client';
+import { api, financeApi, ApiError } from '../api/client';
 
 interface CustomerRecord { id: string; name: string; }
 interface ItemRecord { id: string; code: string; name: string; }
-interface InvoiceLineInput { itemId: string; quantity: string; rate: string; }
-interface InvoiceLineRecord { id: string; itemId: string; quantity: string; rate: string; amount: string; }
-interface SalesInvoiceRecord {
-  id: string; invoiceNumber: string; customerId: string;
-  postingDate: string; dueDate: string | null;
-  totalAmount: string; paidAmount: string; outstandingAmount: string;
-  status: string; currency: string; note: string | null;
-  lines: InvoiceLineRecord[];
-}
+interface InvoiceLineInput { itemId: string; quantity: string; unitPrice: string; taxRate: string; }
 
 export function SalesInvoicePage(): JSX.Element {
   const { t, i18n } = useTranslation();
-  const [invoices, setInvoices] = useState<SalesInvoiceRecord[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
   const [customers, setCustomers] = useState<CustomerRecord[]>([]);
   const [items, setItems] = useState<ItemRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
   const [showForm, setShowForm] = useState(false);
-  const [customerId, setCustomerId] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [currency, setCurrency] = useState('EGP');
-  const [note, setNote] = useState('');
-  const [lines, setLines] = useState<InvoiceLineInput[]>([{ itemId: '', quantity: '1', rate: '0' }]);
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [formSuccess, setFormSuccess] = useState<string | null>(null);
+
+  // Form Fields
+  const [orgNodeId, setOrgNodeId] = useState('00000000-0000-0000-0000-000000000001');
+  const [customerId, setCustomerId] = useState('');
+  const [jobOrderReference, setJobOrderReference] = useState('');
+  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dueDate, setDueDate] = useState('');
+  const [notes, setNotes] = useState('');
+  const [lines, setLines] = useState<InvoiceLineInput[]>([
+    { itemId: '', quantity: '1', unitPrice: '0', taxRate: '14.00' },
+  ]);
 
   async function loadAll(): Promise<void> {
     setLoading(true);
+    setError(null);
     try {
       const lang = i18n.language.startsWith('ar') ? 'ar' : 'en';
-      const [custRes, itemRes] = await Promise.all([
+      const [invRes, custRes, itemRes] = await Promise.all([
+        financeApi.getSalesInvoices().catch(() => ({ salesInvoices: [] })),
         api.get<{ customers: CustomerRecord[] }>('/crm/customers').catch(() => ({ customers: [] })),
-        api.get<{ items: ItemRecord[] }>('/catalog/items?lang=' + lang),
+        api.get<{ items: ItemRecord[] }>('/catalog/items?lang=' + lang).catch(() => ({ items: [] })),
       ]);
-      setCustomers(custRes.customers || []);
-      setItems(itemRes.items);
-      if (custRes.customers && custRes.customers[0]) setCustomerId(custRes.customers[0].id);
-      if (itemRes.items[0] && !lines[0]?.itemId) {
-        const firstItem = itemRes.items[0];
-        try {
-          const pRes = await api.get<{ itemPrice: { price: string } | null }>('/catalog/items/' + firstItem.id + '/prices/latest?type=selling');
-          setLines([{ itemId: firstItem.id, quantity: '1', rate: pRes.itemPrice?.price || '0' }]);
-        } catch { setLines([{ itemId: firstItem.id, quantity: '1', rate: '0' }]); }
+
+      setInvoices(invRes.salesInvoices ?? []);
+      setCustomers(custRes.customers ?? []);
+      const itms = itemRes.items ?? [];
+      setItems(itms);
+
+      if (custRes.customers && custRes.customers[0] && !customerId) {
+        setCustomerId(custRes.customers[0].id);
       }
-    } catch (err) { setError(err instanceof ApiError ? err.message : 'Failed'); }
-    finally { setLoading(false); }
+      if (itms[0] && !lines[0]?.itemId) {
+        setLines([{ itemId: itms[0].id, quantity: '1', unitPrice: '0', taxRate: '14.00' }]);
+      }
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ظپط´ظ„ طھط­ظ…ظٹظ„ ط¨ظٹط§ظ†ط§طھ ظپظˆط§طھظٹط± ط§ظ„ظ…ط¨ظٹط¹ط§طھ');
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { void loadAll(); }, [i18n.language]);
 
-  async function handleItemChange(idx: number, itemId: string): Promise<void> {
-    const updated = [...lines];
-    updated[idx]!.itemId = itemId;
-    try {
-      const pRes = await api.get<{ itemPrice: { price: string } | null }>('/catalog/items/' + itemId + '/prices/latest?type=selling');
-      if (pRes.itemPrice) updated[idx]!.rate = pRes.itemPrice.price;
-    } catch {}
-    setLines(updated);
-  }
-
-  function updateLine(idx: number, field: keyof InvoiceLineInput, value: string): void {
+  const updateLine = (idx: number, field: keyof InvoiceLineInput, value: string) => {
     const updated = [...lines];
     updated[idx] = { ...updated[idx]!, [field]: value };
     setLines(updated);
-  }
+  };
 
-  const grandTotal = lines.reduce((s, l) => s + parseFloat(l.quantity || '0') * parseFloat(l.rate || '0'), 0);
+  const addLine = () => {
+    setLines([...lines, { itemId: items[0]?.id || '', quantity: '1', unitPrice: '0', taxRate: '14.00' }]);
+  };
+
+  const removeLine = (idx: number) => {
+    if (lines.length > 1) {
+      setLines(lines.filter((_, i) => i !== idx));
+    }
+  };
+
+  // Calculations
+  const netTotal = lines.reduce((sum, l) => sum + (Number(l.quantity || 0) * Number(l.unitPrice || 0)), 0);
+  const taxTotal = lines.reduce((sum, l) => sum + ((Number(l.quantity || 0) * Number(l.unitPrice || 0) * Number(l.taxRate || 14)) / 100), 0);
+  const grandTotal = netTotal + taxTotal;
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    setSubmitting(true); setFormError(null);
+    setSubmitting(true);
+    setError(null);
+    setSuccess(null);
     try {
-      // Create as Journal Entry (debit Accounts Receivable, credit Sales Revenue)
-      const total = grandTotal.toFixed(2);
-      await api.post('/accounting/journal-entries', {
-        entryDate: new Date().toISOString(),
-        note: 'Sales Invoice for ' + (customers.find(c => c.id === customerId)?.name || customerId) + ': ' + (note || ''),
-        lines: [
-          { accountCode: '1100', debit: total, credit: '0', note: 'Accounts Receivable' },
-          { accountCode: '4100', debit: '0', credit: total, note: 'Sales Revenue' },
-        ],
+      const nextMonth = new Date();
+      nextMonth.setDate(nextMonth.getDate() + 30);
+
+      await financeApi.createSalesInvoice({
+        orgNodeId,
+        customerId,
+        jobOrderReference: jobOrderReference.trim() || undefined,
+        invoiceDate: invoiceDate ? new Date(invoiceDate).toISOString() : new Date().toISOString(),
+        dueDate: dueDate ? new Date(dueDate).toISOString() : nextMonth.toISOString(),
+        notes: notes.trim() || undefined,
+        lines: lines.map((l) => ({
+          itemId: l.itemId,
+          quantity: l.quantity,
+          unitPrice: l.unitPrice,
+          taxRate: l.taxRate,
+        })),
       });
-      setFormSuccess('Sales Invoice created and posted to ledger!');
+
+      setSuccess('طھظ… ط¥ظ†ط´ط§ط، ظپط§طھظˆط±ط© ط§ظ„ظ…ط¨ظٹط¹ط§طھ ط¨ظ†ط¬ط§ط­ (ظ…ط³ظˆط¯ط© ط¬ط§ظ‡ط²ط© ظ„ظ„ظ…ط±ط§ط¬ط¹ط© ظˆط§ظ„طھط±ط­ظٹظ„)');
       setShowForm(false);
       await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); }
-    finally { setSubmitting(false); }
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ظپط´ظ„ ط¥ظ†ط´ط§ط، ط§ظ„ظپط§طھظˆط±ط©');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  const inputStyle = { padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1' };
-  const labelStyle = { fontSize: 12, color: '#64748b', fontWeight: 'bold' as const };
-  const itemLabel = (id: string): string => items.find(it => it.id === id)?.name ?? id;
-  const custLabel = (id: string): string => customers.find(c => c.id === id)?.name ?? id;
+  async function handlePost(id: string): Promise<void> {
+    try {
+      await financeApi.postSalesInvoice(id);
+      setSuccess('طھظ… طھط±ط­ظٹظ„ ط§ظ„ظپط§طھظˆط±ط© ظˆطھظˆظ„ظٹط¯ ظ‚ظٹظˆط¯ ط§ظ„ط¥ظٹط±ط§ط¯ ظˆط¶ط±ظٹط¨ط© ط§ظ„ظ…ط®ط±ط¬ط§طھ ظˆظ…ط¯ظٹظˆظ†ظٹط© ط§ظ„ط¹ظ…ظٹظ„ ط¨ظ†ط¬ط§ط­!');
+      await loadAll();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ظپط´ظ„ طھط±ط­ظٹظ„ ط§ظ„ظپط§طھظˆط±ط©');
+    }
+  }
 
-  if (loading) return <p style={{ padding: 40, textAlign: 'center' }}>Loading...</p>;
+  const custName = (id: string) => customers.find((c) => c.id === id)?.name ?? id;
 
   return (
     <section className="module-page">
       <div className="page-intro">
         <div>
-          <span className="eyebrow">Selling Module</span>
-          <h1>Sales Invoice (فاتورة المبيعات)</h1>
-          <p>Issue invoices to customers and post revenue to the general ledger automatically.</p>
+          <span className="eyebrow">ط§ظ„ظ…ط¨ظٹط¹ط§طھ ظˆط§ظ„ط¹ظ…ظ„ط§ط،</span>
+          <h1>ظپظˆط§طھظٹط± ط§ظ„ظ…ط¨ظٹط¹ط§طھ (Sales Invoices)</h1>
+          <p>ط¥طµط¯ط§ط± ط§ظ„ظپظˆط§طھظٹط± ط§ظ„ط¶ط±ظٹط¨ظٹط© ظ„ظ„ط¹ظ…ظ„ط§ط، ظˆطھط±ط­ظٹظ„ ط§ظ„ط¥ظٹط±ط§ط¯ط§طھ ظˆط¶ط±ظٹط¨ط© ط§ظ„ظ‚ظٹظ…ط© ط§ظ„ظ…ط¶ط§ظپط© 14% طھظ„ظ‚ط§ط¦ظٹط§ظ‹</p>
         </div>
-        <button className="primary-button" onClick={() => setShowForm(v => !v)}>
-          {showForm ? 'Cancel' : '+ New Sales Invoice'}
+        <button className="btn btn--primary" onClick={() => setShowForm(!showForm)}>
+          {showForm ? 'ط¥ظ„ط؛ط§ط،' : '+ ظپط§طھظˆط±ط© ظ…ط¨ظٹط¹ط§طھ ط¬ط¯ظٹط¯ط©'}
         </button>
       </div>
 
-      {error && <p style={{ color: '#b91c1c' }}>{error}</p>}
-      {formError && <p style={{ color: '#b91c1c' }}>{formError}</p>}
-      {formSuccess && <p style={{ color: '#166534', fontWeight: 'bold' }}>{formSuccess}</p>}
+      {error && <div className="alert alert--error" style={{ marginBottom: 16 }}>{error}</div>}
+      {success && <div className="alert alert--success" style={{ marginBottom: 16 }}>{success}</div>}
 
       {showForm && (
-        <article className="panel module-panel" style={{ background: '#fff', padding: 24, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 18, margin: '0 0 16px' }}>New Sales Invoice</h2>
-          <form onSubmit={(e) => { void handleSubmit(e); }} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={labelStyle}>Customer</label>
-                <select value={customerId} onChange={e => setCustomerId(e.target.value)} style={{ ...inputStyle, width: '100%' }} required>
-                  {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={labelStyle}>Due Date</label>
-                <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={labelStyle}>Currency</label>
-                <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ ...inputStyle, width: '100%' }}>
-                  <option value="EGP">EGP</option><option value="USD">USD</option><option value="EUR">EUR</option>
-                </select>
-              </div>
-            </div>
+        <form className="form-card" onSubmit={handleSubmit} style={{ marginBottom: 24 }}>
+          <h3>طھط³ط¬ظٹظ„ ظپط§طھظˆط±ط© ظ…ط¨ظٹط¹ط§طھ ط¶ط±ظٹط¨ظٹط© ط¬ط¯ظٹط¯ط©</h3>
+          <div className="form-grid">
+            <label>ط§ظ„ط¹ظ…ظٹظ„
+              <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} required>
+                {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </label>
+            <label>ط£ظ…ط± ط§ظ„ط´ط؛ظ„ ط§ظ„ظ…ط±طھط¨ط· (Job Order)
+              <input value={jobOrderReference} onChange={(e) => setJobOrderReference(e.target.value)} placeholder="ظ…ط«ط§ظ„: JO-2026-000001" />
+            </label>
+            <label>طھط§ط±ظٹط® ط§ظ„ظپط§طھظˆط±ط©
+              <input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} required />
+            </label>
+            <label>طھط§ط±ظٹط® ط§ظ„ط§ط³طھط­ظ‚ط§ظ‚
+              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            </label>
+          </div>
 
-            <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', gap: 12, marginBottom: 8, fontSize: 12, color: '#64748b', fontWeight: 'bold' }}>
-                <span style={{ flex: 3 }}>Item</span><span style={{ flex: 1 }}>Qty</span>
-                <span style={{ flex: 1.5 }}>Rate</span><span style={{ flex: 1.5 }}>Amount</span><span style={{ width: 36 }}></span>
+          <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, marginTop: 16, border: '1px solid #e2e8f0' }}>
+            <h4>ط¨ظ†ظˆط¯ ظˆط£طµظ†ط§ظپ ط§ظ„ظپط§طھظˆط±ط©</h4>
+            {lines.map((line, idx) => (
+              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '3fr 1fr 1.5fr 1fr 1.5fr auto', gap: 12, alignItems: 'center', marginBottom: 10 }}>
+                <select value={line.itemId} onChange={(e) => updateLine(idx, 'itemId', e.target.value)} required>
+                  {items.map((it) => <option key={it.id} value={it.id}>{it.name} ({it.code})</option>)}
+                </select>
+                <input type="number" step="any" min="0.001" value={line.quantity} onChange={(e) => updateLine(idx, 'quantity', e.target.value)} placeholder="ط§ظ„ظƒظ…ظٹط©" required />
+                <input type="number" step="any" min="0" value={line.unitPrice} onChange={(e) => updateLine(idx, 'unitPrice', e.target.value)} placeholder="ط³ط¹ط± ط§ظ„ط¨ظٹط¹" required />
+                <input type="number" step="any" value={line.taxRate} onChange={(e) => updateLine(idx, 'taxRate', e.target.value)} placeholder="ط§ظ„ط¶ط±ظٹط¨ط© %" />
+                <b style={{ color: '#166534' }}>
+                  {(Number(line.quantity || 0) * Number(line.unitPrice || 0) * (1 + (Number(line.taxRate || 14) / 100))).toFixed(2)} ط¬.ظ…
+                </b>
+                <button type="button" className="btn btn--sm btn--danger" onClick={() => removeLine(idx)}>x</button>
               </div>
-              {lines.map((line, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: 12, marginBottom: 8, alignItems: 'center' }}>
-                  <div style={{ flex: 3 }}>
-                    <select value={line.itemId} onChange={e => void handleItemChange(idx, e.target.value)} style={{ ...inputStyle, width: '100%' }} required>
-                      {items.map(it => <option key={it.id} value={it.id}>{it.name} ({it.code})</option>)}
-                    </select>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <input type="number" min="0.001" step="any" value={line.quantity} onChange={e => updateLine(idx, 'quantity', e.target.value)} style={{ ...inputStyle, width: '100%' }} required />
-                  </div>
-                  <div style={{ flex: 1.5 }}>
-                    <input type="number" min="0" step="any" value={line.rate} onChange={e => updateLine(idx, 'rate', e.target.value)} style={{ ...inputStyle, width: '100%' }} required />
-                  </div>
-                  <div style={{ flex: 1.5, fontWeight: 'bold', color: '#0369a1' }}>
-                    {(parseFloat(line.quantity || '0') * parseFloat(line.rate || '0')).toFixed(2)}
-                  </div>
-                  <button type="button" onClick={() => lines.length > 1 && setLines(lines.filter((_, i) => i !== idx))} style={{ width: 36, height: 36, background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>x</button>
-                </div>
-              ))}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTop: '1px solid #e2e8f0' }}>
-                <button type="button" onClick={() => setLines([...lines, { itemId: items[0]?.id || '', quantity: '1', rate: '0' }])} className="filter-button">+ Add Line</button>
-                <div style={{ fontSize: 18, fontWeight: 'bold', color: '#166534' }}>Total: {grandTotal.toFixed(2)} {currency}</div>
-              </div>
-            </div>
+            ))}
+            <button type="button" className="btn btn--sm" onClick={addLine}>+ ط¥ط¶ط§ظپط© طµظ†ظپ</button>
+          </div>
 
-            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Invoice notes..." style={{ ...inputStyle, minHeight: 50 }} />
-            <button type="submit" disabled={submitting} className="primary-button" style={{ alignSelf: 'flex-start' }}>Save & Post Invoice</button>
-          </form>
-        </article>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, padding: '12px 16px', background: '#ecfdf5', borderRadius: 8 }}>
+            <div>
+              <span>ط§ظ„طµط§ظپظٹ: <b>{netTotal.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ط¬.ظ…</b></span> | 
+              <span style={{ margin: '0 12px' }}>ط§ظ„ط¶ط±ظٹط¨ط© (14%): <b>{taxTotal.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ط¬.ظ…</b></span>
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#166534' }}>
+              ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ ط´ط§ظ…ظ„ ط§ظ„ط¶ط±ظٹط¨ط©: {grandTotal.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ط¬.ظ…
+            </div>
+          </div>
+
+          <div className="form-actions" style={{ marginTop: 16 }}>
+            <button type="submit" disabled={submitting} className="btn btn--primary">
+              {submitting ? 'ط¬ط§ط±ظٹ ط§ظ„ط­ظپط¸...' : 'ط­ظپط¸ ط§ظ„ظپط§طھظˆط±ط© ظƒظ…ط³ظˆط¯ط©'}
+            </button>
+            <button type="button" className="btn" onClick={() => setShowForm(false)}>ط¥ظ„ط؛ط§ط،</button>
+          </div>
+        </form>
       )}
+
+      <div className="data-table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>ط±ظ‚ظ… ط§ظ„ظپط§طھظˆط±ط©</th>
+              <th>ط§ظ„ط¹ظ…ظٹظ„</th>
+              <th>ط§ظ„طھط§ط±ظٹط®</th>
+              <th>ط§ظ„طµط§ظپظٹ</th>
+              <th>ط§ظ„ط¶ط±ظٹط¨ط© 14%</th>
+              <th>ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ</th>
+              <th>ط§ظ„ط­ط§ظ„ط©</th>
+              <th>ط§ظ„ط¥ط¬ط±ط§ط،ط§طھ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={8}>ط¬ط§ط±ظٹ ط§ظ„طھط­ظ…ظٹظ„...</td></tr>
+            ) : invoices.length === 0 ? (
+              <tr><td colSpan={8}>ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط± ظ…ط¨ظٹط¹ط§طھ ظ…ط³ط¬ظ„ط©</td></tr>
+            ) : (
+              invoices.map((inv) => (
+                <tr key={inv.id}>
+                  <td><b>{inv.invoiceNumber}</b></td>
+                  <td>{custName(inv.customerId)}</td>
+                  <td>{new Date(inv.invoiceDate).toLocaleDateString('ar-EG')}</td>
+                  <td>{Number(inv.netAmount).toLocaleString('ar-EG')} ط¬.ظ…</td>
+                  <td>{Number(inv.taxAmount).toLocaleString('ar-EG')} ط¬.ظ…</td>
+                  <td><b>{Number(inv.grandTotal).toLocaleString('ar-EG')} ط¬.ظ…</b></td>
+                  <td>
+                    <span className={`status-badge status-badge--${inv.status === 'posted' ? 'active' : 'draft'}`}>
+                      {inv.status === 'posted' ? 'ظ…ط±ط­ظ„ ظˆظ…ظ‚ظٹط¯' : 'ظ…ط³ظˆط¯ط©'}
+                    </span>
+                  </td>
+                  <td>
+                    {inv.status === 'draft' && (
+                      <button className="btn btn--sm btn--success" onClick={() => handlePost(inv.id)}>
+                        طھط±ط­ظٹظ„ ط¨ط§ظ„ط¯ظپط§طھط±
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }

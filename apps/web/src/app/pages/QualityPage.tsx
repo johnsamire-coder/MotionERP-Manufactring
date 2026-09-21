@@ -2,76 +2,78 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 
-interface JobOrderRecord { id: string; jobOrderNumber: string; }
-interface InspectionPointRecord { id: string; code?: string; name: string; targetDurationMinutes?: number; targetMinutes?: number; }
-interface QualityWorkflowRecord {
+type QualityTab = 'inspections' | 'checkpoints';
+
+interface ItemRecord { id: string; code: string; name: string; }
+interface QualityInspectionParameter {
   id: string;
-  jobOrderReference?: string;
-  checkPointId?: string;
-  inspectionPointId?: string;
-  assignedRoleOrUser?: string;
-  escalationLevel?: number;
-  status: 'pending' | 'passed' | 'failed' | 'approved' | 'rejected';
-  targetAt?: string;
-  createdAt: string;
+  parameterName: string;
+  targetValue: string;
+  actualValue: string | null;
+  status: 'pending' | 'pass' | 'fail';
 }
 
-function nextCode(prefix: string, existingCodes: string[]): string {
-  const matching = existingCodes.filter((c) => c.toUpperCase().startsWith(prefix.toUpperCase()));
-  return `${prefix}-${String(matching.length + 1).padStart(4, '0')}`;
+interface QualityInspectionRecord {
+  id: string;
+  inspectionNumber: string;
+  itemId: string;
+  referenceType: string;
+  referenceId: string;
+  status: 'pending' | 'passed' | 'failed';
+  inspectedBy: string | null;
+  inspectedAt: string | null;
+  notes: string | null;
+  parameters: QualityInspectionParameter[];
 }
 
 export function QualityPage(): JSX.Element {
   const { t, i18n } = useTranslation();
-  const [jobOrders, setJobOrders] = useState<JobOrderRecord[]>([]);
-  const [points, setPoints] = useState<InspectionPointRecord[]>([]);
-  const [workflows, setWorkflows] = useState<QualityWorkflowRecord[]>([]);
+  const [activeTab, setActiveTab] = useState<QualityTab>('inspections');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  const [selectedJO, setSelectedJO] = useState('');
-  const [showPointForm, setShowPointForm] = useState(false);
-  const [showTriggerForm, setShowTriggerForm] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [formSuccess, setFormSuccess] = useState<string | null>(null);
+  const [items, setItems] = useState<ItemRecord[]>([]);
+  const [inspections, setInspections] = useState<QualityInspectionRecord[]>([]);
+  const [checkPoints, setCheckPoints] = useState<any[]>([]);
+  const [workflows, setWorkflows] = useState<any[]>([]);
 
-  // Point Form
-  const [pointCode, setPointCode] = useState('');
-  const [pointName, setPointName] = useState('');
-  const [targetMinsInput, setTargetMinsInput] = useState('240');
+  // Create Inspection Form State
+  const [showInspForm, setShowInspForm] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState('');
+  const [refType, setRefType] = useState<'purchase_receipt' | 'production_step' | 'delivery_order'>('production_step');
+  const [refId, setRefId] = useState('00000000-0000-0000-0000-000000000001');
+  const [notes, setNotes] = useState('');
+  const [parameters, setParameters] = useState<Array<{ parameterName: string; targetValue: string }>>([
+    { parameterName: 'سماكة الصاج المجلفن', targetValue: '1.2 mm' },
+    { parameterName: 'أبعاد الهيكل الخارجي', targetValue: '60 cm x 50 cm' },
+    { parameterName: 'درجة نقاء وتغطية الدهان', targetValue: '85%' },
+  ]);
 
-  // Trigger Workflow Form
-  const [selectedPointId, setSelectedPointId] = useState('');
+  // Evaluate Modal State
+  const [evaluatingInsp, setEvaluatingInsp] = useState<QualityInspectionRecord | null>(null);
+  const [inspectorName, setInspectorName] = useState('م. أحمد سامي (مهندس الجودة)');
+  const [evalParams, setEvalParams] = useState<Array<{ parameterId: string; actualValue: string; status: 'pass' | 'fail' }>>([]);
 
   async function loadAll(): Promise<void> {
     setLoading(true);
     setError(null);
     try {
-      const joRes = await api.get<{ jobOrders: JobOrderRecord[] }>('/sales/job-orders');
-      setJobOrders(joRes.jobOrders ?? []);
-      if (!selectedJO && joRes.jobOrders && joRes.jobOrders[0]) {
-        setSelectedJO(joRes.jobOrders[0].jobOrderNumber);
-      }
+      const lang = i18n.language.startsWith('ar') ? 'ar' : 'en';
+      const [itemRes, cpRes, wfRes] = await Promise.all([
+        api.get<{ items: ItemRecord[] }>('/catalog/items?lang=' + lang).catch(() => ({ items: [] })),
+        api.get<any>('/quality/check-points').catch(() => ({ checkPoints: [] })),
+        api.get<any>('/quality/workflows').catch(() => ({ workflows: [] })),
+      ]);
 
-      try {
-        const pointsRes = await api.get<any>('/quality/check-points');
-        const list = Array.isArray(pointsRes) ? pointsRes : (pointsRes?.checkPoints ?? pointsRes?.inspectionPoints ?? []);
-        setPoints(list);
-        if (!selectedPointId && list[0]) setSelectedPointId(list[0].id);
-      } catch {
-        setPoints([]);
-      }
+      const itms = itemRes.items ?? [];
+      setItems(itms);
+      if (itms[0] && !selectedItemId) setSelectedItemId(itms[0].id);
 
-      try {
-        const wfRes = await api.get<any>('/quality/workflows');
-        const listWf = Array.isArray(wfRes) ? wfRes : (wfRes?.workflows ?? []);
-        setWorkflows(listWf);
-      } catch {
-        setWorkflows([]);
-      }
+      setCheckPoints(Array.isArray(cpRes) ? cpRes : (cpRes?.checkPoints ?? []));
+      setWorkflows(Array.isArray(wfRes) ? wfRes : (wfRes?.workflows ?? []));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to load job orders for quality');
+      setError(err instanceof ApiError ? err.message : 'فشل تحميل بيانات الجودة');
     } finally {
       setLoading(false);
     }
@@ -79,209 +81,298 @@ export function QualityPage(): JSX.Element {
 
   useEffect(() => { void loadAll(); }, [i18n.language]);
 
-  function openPointForm(): void {
-    setPointCode(nextCode('QC-PT', points.map((p) => p.code ?? '')));
-    setShowPointForm((v) => !v);
-  }
+  const addParam = () => {
+    setParameters([...parameters, { parameterName: '', targetValue: '' }]);
+  };
 
-  async function handleCreatePoint(e: React.FormEvent): Promise<void> {
+  const removeParam = (idx: number) => {
+    if (parameters.length > 1) {
+      setParameters(parameters.filter((_, i) => i !== idx));
+    }
+  };
+
+  const updateParam = (idx: number, field: 'parameterName' | 'targetValue', val: string) => {
+    const updated = [...parameters];
+    updated[idx] = { ...updated[idx]!, [field]: val };
+    setParameters(updated);
+  };
+
+  const handleCreateInspection = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
     try {
-      let stepId = '00000000-0000-0000-0000-000000000000';
-      try {
-        const stepsRes = await api.get<any>(`/production-ops/steps?jobOrderReference=${selectedJO}`);
-        const list = Array.isArray(stepsRes) ? stepsRes : (stepsRes?.steps ?? []);
-        if (list[0]?.id) stepId = list[0].id;
-      } catch {
-        // fallback
-      }
-
-      await api.post('/quality/check-points', {
-        relatedEntityType: 'production_step',
-        relatedEntityId: stepId,
-        name: pointName,
-        targetDurationMinutes: Math.max(1, Math.floor(Number(targetMinsInput))),
+      const res = await api.post<{ qualityInspection: QualityInspectionRecord }>('/quality/inspections', {
+        orgNodeId: '00000000-0000-0000-0000-000000000001',
+        itemId: selectedItemId,
+        referenceType: refType,
+        referenceId: refId,
+        notes: notes.trim() || undefined,
+        parameters,
       });
-      setPointName(''); setShowPointForm(false);
-      setFormSuccess(t('pages.quality.form.success'));
-      await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
-  }
+      const created = res.qualityInspection ?? res;
+      setInspections([created as any, ...inspections]);
+      setShowInspForm(false);
+      setSuccess('تم إنشاء مستند الفحص الفني بنجاح');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'فشل إنشاء مستند الفحص');
+    }
+  };
 
-  async function handleTriggerWorkflow(e: React.FormEvent): Promise<void> {
+  const openEvaluation = (insp: QualityInspectionRecord) => {
+    setEvaluatingInsp(insp);
+    setEvalParams(
+      insp.parameters.map((p) => ({
+        parameterId: p.id,
+        actualValue: p.targetValue,
+        status: 'pass',
+      })),
+    );
+  };
+
+  const handleSaveEvaluation = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
+    if (!evaluatingInsp) return;
     try {
-      await api.post('/quality/workflows/initialize', {
-        checkPointId: selectedPointId,
+      await api.post(`/quality/inspections/${evaluatingInsp.id}/evaluate`, {
+        inspectedBy: inspectorName,
+        paramResults: evalParams,
       });
-      setShowTriggerForm(false);
-      setFormSuccess(t('pages.quality.form.success'));
-      await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
-  }
 
-  async function handleCompleteInspection(wfId: string, actionType: 'approve' | 'reject'): Promise<void> {
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
-    try {
-      await api.post(`/quality/workflows/${wfId}/${actionType}`, {
-        workflowId: wfId,
+      // Update local state
+      const hasFailure = evalParams.some((p) => p.status === 'fail');
+      const updatedList = inspections.map((insp) => {
+        if (insp.id === evaluatingInsp.id) {
+          return {
+            ...insp,
+            status: (hasFailure ? 'failed' : 'passed') as any,
+            inspectedBy: inspectorName,
+            inspectedAt: new Date().toISOString(),
+          };
+        }
+        return insp;
       });
-      setFormSuccess(t('pages.quality.form.success'));
-      await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
-  }
+      setInspections(updatedList);
+      setEvaluatingInsp(null);
+      setSuccess(hasFailure ? 'تم رفض العينة طبياً لعدم مطابقة المعايير!' : 'تم اعتماد وقبول العينة الطبية بنجاح!');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'فشل اعتماد نتيجة الفحص');
+    }
+  };
 
-  async function handleProcessOverdue(): Promise<void> {
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
-    try {
-      const res = await api.post<{ processed: number }>('/quality/process-overdue', {});
-      setFormSuccess(`تم فحص المهل الزمنية وبدء تصعيد ${res.processed ?? 0} فحوصات متأخرة بنجاح`);
-      await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
-  }
-
-  const pointLabel = (id?: string): string => points.find((p) => p.id === id)?.name ?? id ?? '—';
-  const inputStyle = { padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1' };
-  const labelStyle = { fontSize: 12, color: '#64748b' };
+  const itemName = (id: string) => items.find((it) => it.id === id)?.name ?? id;
 
   return (
     <section className="module-page">
       <div className="page-intro">
         <div>
-          <span className="eyebrow">{t('pages.quality.eyebrow')}</span>
-          <h1>{t('pages.quality.title')}</h1>
-          <p>{t('pages.quality.description')}</p>
+          <span className="eyebrow">إدارة الجودة والتفتيش الطبي</span>
+          <h1>لوحة تحكم الجودة الطبية (Quality Assurance)</h1>
+          <p>فحص العينات الطبية الواردة والمنتجة والتأكد من مطابقة المعايير الفنية بدقة بالغة</p>
         </div>
       </div>
 
-      {formError && <p style={{ color: '#b91c1c', padding: '8px 0' }}>{formError}</p>}
-      {formSuccess && <p style={{ color: '#166534', padding: '8px 0' }}>{formSuccess}</p>}
+      {error && <div className="alert alert--error" style={{ marginBottom: 16 }}>{error}</div>}
+      {success && <div className="alert alert--success" style={{ marginBottom: 16 }}>{success}</div>}
 
-      {/* JO Selector & Process Overdue Engine Button */}
-      <div style={{ background: '#fff', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <label style={{ ...labelStyle, fontSize: 14, fontWeight: 'bold' }}>أمر التشغيل (Job Order):</label>
-          <select value={selectedJO} onChange={(e) => setSelectedJO(e.target.value)} style={{ ...inputStyle, minWidth: 220, fontSize: 14, fontWeight: 'bold' }}>
-            {jobOrders.map((jo) => <option key={jo.id} value={jo.jobOrderNumber}>{jo.jobOrderNumber}</option>)}
-          </select>
-        </div>
-
-        <button className="filter-button" style={{ color: '#b91c1c', borderColor: '#fca5a5', fontWeight: 'bold' }} onClick={() => { void handleProcessOverdue(); }}>
-          ⏰ {t('pages.quality.workflows.processOverdue')}
+      {/* Tabs */}
+      <div className="tab-nav" style={{ display: 'flex', gap: 8, borderBottom: '2px solid #e2e8f0', marginBottom: 20 }}>
+        <button className={`btn ${activeTab === 'inspections' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('inspections')}>
+          🔬 مستندات الفحص الفني الطبي ({inspections.length})
+        </button>
+        <button className={`btn ${activeTab === 'checkpoints' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('checkpoints')}>
+          ⏱️ نقاط المراقبة ومواقيت الـ SLA
         </button>
       </div>
 
-      {/* 1. Inspection Points Section */}
-      <article className="panel module-panel" style={{ marginBottom: 20 }}>
-        <div className="panel__head">
-          <div>
-            <span className="panel__eyebrow">QA Setup</span>
-            <h2>{t('pages.quality.inspectionPoints.title')}</h2>
-          </div>
-          <button className="filter-button" onClick={openPointForm}><b>+</b> {t('pages.quality.inspectionPoints.addPoint')}</button>
-        </div>
-
-        {showPointForm && (
-          <form onSubmit={(e) => { void handleCreatePoint(e); }} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end', padding: '0 0 20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={labelStyle}>{t('pages.quality.inspectionPoints.name')}</label>
-              <input value={pointName} onChange={(e) => setPointName(e.target.value)} required placeholder="e.g. Final Assembly Check" style={{ ...inputStyle, minWidth: 240 }} />
+      {/* Tab 1: Inspections */}
+      {activeTab === 'inspections' && (
+        <article className="panel module-panel">
+          <div className="panel__head">
+            <div>
+              <span className="panel__eyebrow">فحص العينات والمنتجات</span>
+              <h2>سجل الفحص الطبي (Medical Quality Inspections)</h2>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={labelStyle}>{t('pages.quality.inspectionPoints.targetMins')}</label>
-              <input type="number" min="1" value={targetMinsInput} onChange={(e) => setTargetMinsInput(e.target.value)} required style={{ ...inputStyle, width: 120 }} />
-            </div>
-            <button type="submit" disabled={submitting} className="primary-button" style={{ height: 38 }}>{t('pages.quality.form.save')}</button>
-          </form>
-        )}
-
-        <div className="placeholder-table">
-          <div className="placeholder-table__head">
-            <span>{t('pages.quality.inspectionPoints.name')}</span>
-            <span>{t('pages.quality.inspectionPoints.targetMins')}</span>
+            <button className="btn btn--primary" onClick={() => setShowInspForm(!showInspForm)}>
+              + مستند فحص عينة جديد
+            </button>
           </div>
-          {points.length === 0 && <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.quality.form.empty')}</p>}
-          {points.map((p) => {
-            const mins = p.targetDurationMinutes ?? p.targetMinutes ?? 0;
-            return (
-              <div className="placeholder-table__row" key={p.id}>
-                <span><b>{p.name}</b></span>
-                <span><b>{mins} min ({(mins / 60).toFixed(1)} hrs)</b></span>
+
+          {showInspForm && (
+            <form className="form-card" onSubmit={handleCreateInspection} style={{ marginBottom: 24 }}>
+              <h3>تسجيل مستند فحص فني جديد</h3>
+              <div className="form-grid">
+                <label>الصنف المراد فحصه
+                  <select value={selectedItemId} onChange={(e) => setSelectedItemId(e.target.value)} required>
+                    {items.map((it) => <option key={it.id} value={it.id}>{it.name} ({it.code})</option>)}
+                  </select>
+                </label>
+                <label>نوع الحركة المرتبطة
+                  <select value={refType} onChange={(e) => setRefType(e.target.value as any)}>
+                    <option value="production_step">مرحلة إنتاج / أمر شغل</option>
+                    <option value="purchase_receipt">استلام مشتريات خامات</option>
+                    <option value="delivery_order">إذن تسليم منتج تام</option>
+                  </select>
+                </label>
+                <label>ملاحظات الفحص
+                  <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="مثال: فحص عينة وحدة درج وضلفة 60" />
+                </label>
               </div>
-            );
-          })}
-        </div>
-      </article>
 
-      {/* 2. Quality Workflows Section */}
-      <article className="panel module-panel">
-        <div className="panel__head">
-          <div>
-            <span className="panel__eyebrow">Active Inspections & SLAs</span>
-            <h2>{t('pages.quality.workflows.title')}</h2>
-          </div>
-          <button className="primary-button" onClick={() => setShowTriggerForm((v) => !v)}><b>+</b> {t('pages.quality.workflows.startWorkflow')}</button>
-        </div>
+              <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, marginTop: 16, border: '1px solid #e2e8f0' }}>
+                <h4>معايير الفحص الفنية المطلوبة</h4>
+                {parameters.map((p, idx) => (
+                  <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr auto', gap: 12, alignItems: 'center', marginBottom: 10 }}>
+                    <input value={p.parameterName} onChange={(e) => updateParam(idx, 'parameterName', e.target.value)} placeholder="اسم المعيار (مثال: سماكة الصاج)" required />
+                    <input value={p.targetValue} onChange={(e) => updateParam(idx, 'targetValue', e.target.value)} placeholder="القيمة المعيارية (مثال: 1.2 mm)" required />
+                    <button type="button" className="btn btn--sm btn--danger" onClick={() => removeParam(idx)}>x</button>
+                  </div>
+                ))}
+                <button type="button" className="btn btn--sm" onClick={addParam}>+ إضافة معيار فني</button>
+              </div>
 
-        {showTriggerForm && (
-          <form onSubmit={(e) => { void handleTriggerWorkflow(e); }} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end', padding: '0 0 20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={labelStyle}>{t('pages.quality.workflows.point')}</label>
-              <select value={selectedPointId} onChange={(e) => setSelectedPointId(e.target.value)} style={{ ...inputStyle, minWidth: 220 }}>
-                {points.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </div>
-            <button type="submit" disabled={submitting} className="primary-button" style={{ height: 38 }}>{t('pages.quality.form.save')}</button>
-          </form>
-        )}
-
-        <div className="placeholder-table">
-          <div className="placeholder-table__head">
-            <span>{t('pages.quality.workflows.point')}</span>
-            <span>{t('pages.quality.workflows.assignedTo')}</span>
-            <span>{t('pages.quality.workflows.escalationLevel')}</span>
-            <span>{t('pages.quality.workflows.status')}</span>
-            <span>{t('pages.quality.workflows.action')}</span>
-          </div>
-
-          {workflows.length === 0 && (
-            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.quality.form.empty')}</p>
+              <div className="form-actions" style={{ marginTop: 16 }}>
+                <button type="submit" className="btn btn--primary">حفظ مستند الفحص</button>
+                <button type="button" className="btn" onClick={() => setShowInspForm(false)}>إلغاء</button>
+              </div>
+            </form>
           )}
 
-          {workflows.map((wf) => (
-            <div className="placeholder-table__row" key={wf.id}>
-              <span><b>{pointLabel(wf.checkPointId ?? wf.inspectionPointId)}</b></span>
-              <span><code>{wf.assignedRoleOrUser ?? 'Quality Inspector'}</code></span>
-              <span>
-                <span className={`status status--${(wf.escalationLevel ?? 1) > 1 ? 'warning' : 'neutral'}`}>
-                  Level #{wf.escalationLevel ?? 1}
-                </span>
-              </span>
-              <span>
-                <span className={`status status--${wf.status === 'passed' || wf.status === 'approved' ? 'success' : wf.status === 'failed' || wf.status === 'rejected' ? 'danger' : 'warning'}`}>
-                  <i />{wf.status}
-                </span>
-              </span>
-              <span>
-                {wf.status === 'pending' && (
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button className="primary-button" style={{ fontSize: 12, padding: '4px 8px', background: '#166534' }} onClick={() => { void handleCompleteInspection(wf.id, 'approve'); }}>
-                      ✓ {t('pages.quality.workflows.pass')}
-                    </button>
-                    <button className="filter-button" style={{ fontSize: 12, padding: '4px 8px', color: '#b91c1c', borderColor: '#fca5a5' }} onClick={() => { void handleCompleteInspection(wf.id, 'reject'); }}>
-                      ✕ {t('pages.quality.workflows.fail')}
-                    </button>
-                  </div>
+          <div className="data-table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>رقم الفحص</th>
+                  <th>الصنف</th>
+                  <th>نوع الحركة</th>
+                  <th>المفتش المسؤول</th>
+                  <th>الحالة والقرار</th>
+                  <th>الإجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inspections.length === 0 ? (
+                  <tr><td colSpan={6}>لا توجد مستندات فحص مسجلة</td></tr>
+                ) : (
+                  inspections.map((insp) => (
+                    <tr key={insp.id}>
+                      <td><b>{insp.inspectionNumber}</b></td>
+                      <td>{itemName(insp.itemId)}</td>
+                      <td>{insp.referenceType === 'production_step' ? 'خط إنتاج' : insp.referenceType === 'purchase_receipt' ? 'استلام خامات' : 'إذن تسليم'}</td>
+                      <td>{insp.inspectedBy ?? 'بانتظار الفحص'}</td>
+                      <td>
+                        <span className={`status-badge status-badge--${insp.status === 'passed' ? 'active' : insp.status === 'failed' ? 'cancelled' : 'draft'}`}>
+                          {insp.status === 'passed' ? 'مقبول ومطابق ✅' : insp.status === 'failed' ? 'مرفوض طبياً ❌' : 'قيد الفحص'}
+                        </span>
+                      </td>
+                      <td>
+                        {insp.status === 'pending' && (
+                          <button className="btn btn--sm btn--primary" onClick={() => openEvaluation(insp)}>
+                            فحص وتقييم العينة 🔬
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
                 )}
-                {(wf.status === 'passed' || wf.status === 'approved') && <span style={{ fontSize: 12, color: '#166534', fontWeight: 'bold' }}>اجتاز الجودة ✓</span>}
-                {(wf.status === 'failed' || wf.status === 'rejected') && <span style={{ fontSize: 12, color: '#b91c1c', fontWeight: 'bold' }}>مرفوض ✕</span>}
-              </span>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      )}
+
+      {/* Tab 2: Checkpoints & SLAs */}
+      {activeTab === 'checkpoints' && (
+        <article className="panel module-panel">
+          <div className="panel__head">
+            <div>
+              <span className="panel__eyebrow">مراقبة خطوط الإنتاج</span>
+              <h2>نقاط المراقبة وسير العمل (SLA Workflows)</h2>
             </div>
-          ))}
+          </div>
+          <div className="data-table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>اسم نقطة المراقبة</th>
+                  <th>الوقت المستهدف</th>
+                  <th>فترة السماح</th>
+                  <th>الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {checkPoints.length === 0 ? (
+                  <tr><td colSpan={4}>لا توجد نقاط مراقبة مسجلة</td></tr>
+                ) : (
+                  checkPoints.map((cp) => (
+                    <tr key={cp.id}>
+                      <td><b>{cp.name}</b></td>
+                      <td>{cp.targetDurationMinutes} دقيقة</td>
+                      <td>{cp.gracePeriodMinutes} دقيقة</td>
+                      <td><span className="status-badge status-badge--active">نشط</span></td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      )}
+
+      {/* Evaluation Modal */}
+      {evaluatingInsp && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ background: '#fff', padding: 24, borderRadius: 8, width: 550, maxHeight: '90vh', overflowY: 'auto' }}>
+            <h3>فحص وتقييم مستند الجودة: {evaluatingInsp.inspectionNumber}</h3>
+            <p style={{ color: '#64748b', fontSize: 13 }}>الصنف: <b>{itemName(evaluatingInsp.itemId)}</b></p>
+            <form onSubmit={handleSaveEvaluation} style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
+              <label>اسم مهندس الجودة
+                <input value={inspectorName} onChange={(e) => setInspectorName(e.target.value)} required />
+              </label>
+
+              <h4>نتائج القياس الفعلية للمعاير:</h4>
+              {evalParams.map((param, idx) => {
+                const origParam = evaluatingInsp.parameters.find((p) => p.id === param.parameterId);
+                return (
+                  <div key={idx} style={{ padding: 12, background: '#f8fafc', borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <b>{origParam?.parameterName}</b>
+                      <span style={{ fontSize: 12, color: '#64748b' }}>المعيار المطلوب: {origParam?.targetValue}</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
+                      <input
+                        value={param.actualValue}
+                        onChange={(e) => {
+                          const updated = [...evalParams];
+                          updated[idx]!.actualValue = e.target.value;
+                          setEvalParams(updated);
+                        }}
+                        placeholder="القياس الفعلي"
+                        required
+                      />
+                      <select
+                        value={param.status}
+                        onChange={(e) => {
+                          const updated = [...evalParams];
+                          updated[idx]!.status = e.target.value as any;
+                          setEvalParams(updated);
+                        }}
+                        style={{ fontWeight: 'bold', color: param.status === 'pass' ? '#166534' : '#b91c1c' }}
+                      >
+                        <option value="pass">مطابق (Pass) ✅</option>
+                        <option value="fail">معيب (Fail) ❌</option>
+                      </select>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 16 }}>
+                <button type="button" className="btn" onClick={() => setEvaluatingInsp(null)}>إلغاء</button>
+                <button type="submit" className="btn btn--primary">اعتماد وحفظ القرار النهائي</button>
+              </div>
+            </form>
+          </div>
         </div>
-      </article>
+      )}
     </section>
   );
 }

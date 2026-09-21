@@ -1,322 +1,453 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api, ApiError } from '../api/client';
+import { api, ApiError, accountingApi } from '../api/client';
 
-interface AccountRecord { id: string; code: string; name: string; accountType: string; isLeaf: boolean; balance?: string; }
-interface CustomerRecord { id: string; id_key?: string; name: string; }
-interface JobOrderRecord { id: string; jobOrderNumber: string; customerId?: string; }
-
-interface CollectionRecord {
-  id: string;
-  collectionNumber: string;
-  jobOrderReference: string;
-  amount: string;
-  paymentMethod: string;
-  createdAt: string;
-}
-
-interface RetentionRecord {
-  id: string;
-  retentionNumber: string;
-  jobOrderReference: string;
-  originalAmount: string;
-  releasedAmount: string;
-  status: 'active' | 'released';
-  createdAt: string;
-}
+type ActiveTab = 'coa' | 'fiscal' | 'cost_centers' | 'journals' | 'config' | 'treasury';
 
 export function AccountingPage(): JSX.Element {
-  const { t, i18n } = useTranslation();
-  const [accounts, setAccounts] = useState<AccountRecord[]>([]);
-  const [jobOrders, setJobOrders] = useState<JobOrderRecord[]>([]);
-  const [collections, setCollections] = useState<CollectionRecord[]>([]);
-  const [retentions, setRetentions] = useState<RetentionRecord[]>([]);
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<ActiveTab>('coa');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  const [selectedJO, setSelectedJO] = useState('');
-  const [showCollForm, setShowCollForm] = useState(false);
-  const [showRetForm, setShowRetForm] = useState(false);
-  const [showReleaseModal, setShowReleaseModal] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [formSuccess, setFormSuccess] = useState<string | null>(null);
+  // Data States
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [fiscalYears, setFiscalYears] = useState<any[]>([]);
+  const [selectedFyId, setSelectedFyId] = useState<string>('');
+  const [periods, setPeriods] = useState<any[]>([]);
+  const [costCenters, setCostCenters] = useState<any[]>([]);
+  const [journalEntries, setJournalEntries] = useState<any[]>([]);
+  const [collections, setCollections] = useState<any[]>([]);
+  const [retentions, setRetentions] = useState<any[]>([]);
 
-  // Collection Form state
-  const [collAmount, setCollAmount] = useState('5000');
-  const [payMethod, setPayMethod] = useState<'cash' | 'bank_transfer' | 'check' | 'credit_card'>('bank_transfer');
+  // Forms State
+  const [showFyModal, setShowFyModal] = useState(false);
+  const [newFyName, setNewFyName] = useState('العام المالي 2026');
+  const [newFyStart, setNewFyStart] = useState('2026-01-01');
+  const [newFyEnd, setNewFyEnd] = useState('2026-12-31');
+  const [defaultOrgNodeId, setDefaultOrgNodeId] = useState('00000000-0000-0000-0000-000000000001');
 
-  // Retention Form state
-  const [retAmount, setRetAmount] = useState('2500');
+  const [showCcModal, setShowCcModal] = useState(false);
+  const [newCcCode, setNewCcCode] = useState('');
+  const [newCcName, setNewCcName] = useState('');
 
-  // Release Modal state
-  const [releaseAmountInput, setReleaseAmountInput] = useState('1000');
-
-  async function loadAll(): Promise<void> {
-    setLoading(true);
-    setError(null);
+  // Load All Data
+  const loadData = async () => {
     try {
-      const [accRes, joRes, collRes, retRes] = await Promise.all([
-        api.get<{ accounts: AccountRecord[] }>('/accounting/accounts'),
-        api.get<{ jobOrders: JobOrderRecord[] }>('/sales/job-orders'),
-        api.get<any>('/finance/collections'),
-        api.get<any>('/finance/retentions'),
+      setLoading(true);
+      setError(null);
+      const [accRes, fyRes, ccRes, jeRes, collRes, retRes] = await Promise.all([
+        api.get<{ accounts: any[] }>('/accounting/accounts').catch(() => ({ accounts: [] })),
+        api.get<{ fiscalYears: any[] }>('/accounting/fiscal-years').catch(() => ({ fiscalYears: [] })),
+        api.get<{ costCenters: any[] }>('/accounting/cost-centers').catch(() => ({ costCenters: [] })),
+        accountingApi.getJournalEntries().catch(() => ({ entries: [] })),
+        api.get<any>('/finance/collections').catch(() => ({ collections: [] })),
+        api.get<any>('/finance/retentions').catch(() => ({ retentions: [] })),
       ]);
+
       setAccounts(accRes.accounts ?? []);
-      setJobOrders(joRes.jobOrders ?? []);
-
-      const activeJO = selectedJO || (joRes.jobOrders?.[0]?.jobOrderNumber ?? '');
-      if (activeJO) setSelectedJO(activeJO);
-
-      const listColl = Array.isArray(collRes) ? collRes : (collRes?.collections ?? []);
-      const listRet = Array.isArray(retRes) ? retRes : (retRes?.retentions ?? []);
-      setCollections(listColl);
-      setRetentions(listRet);
+      const fys = fyRes.fiscalYears ?? [];
+      setFiscalYears(fys);
+      if (fys.length > 0 && !selectedFyId) {
+        setSelectedFyId(fys[0].id);
+        void loadPeriods(fys[0].id);
+      }
+      setCostCenters(ccRes.costCenters ?? []);
+      setJournalEntries(jeRes.entries ?? []);
+      setCollections(Array.isArray(collRes) ? collRes : (collRes?.collections ?? []));
+      setRetentions(Array.isArray(retRes) ? retRes : (retRes?.retentions ?? []));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to load accounting data');
+      setError(err instanceof ApiError ? err.message : 'فشل تحميل البيانات المحاسبية');
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  useEffect(() => { void loadAll(); }, [i18n.language]);
+  const loadPeriods = async (fyId: string) => {
+    try {
+      const res = await api.get<{ periods: any[] }>(`/accounting/fiscal-years/${fyId}/periods`);
+      setPeriods(res.periods ?? []);
+    } catch {
+      setPeriods([]);
+    }
+  };
 
-  async function handleCreateCollection(e: React.FormEvent): Promise<void> {
+  useEffect(() => { void loadData(); }, []);
+
+  // Actions
+  const handleCreateFiscalYear = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
     try {
-      await api.post('/finance/collections', {
-        jobOrderReference: selectedJO,
-        amount: collAmount,
-        paymentMethod: payMethod,
+      await api.post('/accounting/fiscal-years', {
+        orgNodeId: defaultOrgNodeId,
+        name: newFyName,
+        startDate: newFyStart,
+        endDate: newFyEnd,
       });
-      setShowCollForm(false);
-      setFormSuccess(t('pages.accounting.form.success'));
-      await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
-  }
+      setShowFyModal(false);
+      setSuccess('تم تأسيس السنة المالية وتوليد الـ 12 شهراً بنجاح!');
+      void loadData();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'فشل إنشاء السنة المالية');
+    }
+  };
 
-  async function handleCreateRetention(e: React.FormEvent): Promise<void> {
+  const handleTogglePeriodStatus = async (periodId: string, currentStatus: string) => {
+    try {
+      const nextStatus = currentStatus === 'open' ? 'closed' : 'open';
+      await api.post(`/accounting/periods/${periodId}/status`, { status: nextStatus });
+      setSuccess(`تم تغيير حالة الفترة بنجاح إلى: ${nextStatus === 'open' ? 'مفتوحة' : 'مغلقة'}`);
+      if (selectedFyId) void loadPeriods(selectedFyId);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'فشل تحديث حالة الفترة');
+    }
+  };
+
+  const handleCreateCostCenter = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
     try {
-      const nextYear = new Date();
-      nextYear.setFullYear(nextYear.getFullYear() + 1);
-
-      await api.post('/finance/retentions', {
-        jobOrderReference: selectedJO,
-        originalAmount: retAmount,
-        dueDate: nextYear.toISOString(),
+      await api.post('/accounting/cost-centers', {
+        orgNodeId: defaultOrgNodeId,
+        code: newCcCode,
+        name: newCcName,
       });
-      setShowRetForm(false);
-      setFormSuccess(t('pages.accounting.form.success'));
-      await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
-  }
+      setShowCcModal(false);
+      setSuccess('تم إضافة مركز التكلفة بنجاح');
+      setNewCcCode('');
+      setNewCcName('');
+      void loadData();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'فشل إنشاء مركز التكلفة');
+    }
+  };
 
-  async function handleReleaseRetention(retentionId: string): Promise<void> {
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
+  const handlePostJournal = async (id: string) => {
     try {
-      await api.post(`/finance/retentions/${retentionId}/release`, {
-        amount: releaseAmountInput,
-      });
-      setShowReleaseModal(null);
-      setFormSuccess(t('pages.accounting.form.success'));
-      await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
-  }
-
-  const inputStyle = { padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1' };
-  const labelStyle = { fontSize: 12, color: '#64748b' };
+      await accountingApi.postJournalEntry(id);
+      setSuccess('تم ترحيل قيد اليومية بنجاح إلى الأستاذ العام');
+      void loadData();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'فشل ترحيل قيد اليومية');
+    }
+  };
 
   return (
     <section className="module-page">
       <div className="page-intro">
         <div>
-          <span className="eyebrow">{t('pages.accounting.eyebrow')}</span>
-          <h1>{t('pages.accounting.title')}</h1>
-          <p>{t('pages.accounting.description')}</p>
+          <span className="eyebrow">النظام المالي والمحاسبي</span>
+          <h1>لوحة تحكم الإدارة المالية العامة</h1>
+          <p>إدارة دليل الحسابات، السنوات والفترات المالية، مراكز التكلفة، وقيود اليومية العامة</p>
         </div>
       </div>
 
-      {formError && <p style={{ color: '#b91c1c', padding: '8px 0' }}>{formError}</p>}
-      {formSuccess && <p style={{ color: '#166534', padding: '8px 0' }}>{formSuccess}</p>}
+      {error && <div className="alert alert--error" style={{ marginBottom: 16 }}>{error}</div>}
+      {success && <div className="alert alert--success" style={{ marginBottom: 16 }}>{success}</div>}
 
-      {/* JO Selector */}
-      <div style={{ background: '#fff', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-        <label style={{ ...labelStyle, fontSize: 14, fontWeight: 'bold' }}>أمر التشغيل (Job Order):</label>
-        <select value={selectedJO} onChange={(e) => setSelectedJO(e.target.value)} style={{ ...inputStyle, minWidth: 220, fontSize: 14, fontWeight: 'bold' }}>
-          {jobOrders.map((jo) => <option key={jo.id} value={jo.jobOrderNumber}>{jo.jobOrderNumber}</option>)}
-        </select>
+      {/* Tabs Header */}
+      <div className="tab-nav" style={{ display: 'flex', gap: 8, borderBottom: '2px solid #e2e8f0', marginBottom: 20 }}>
+        <button className={`btn ${activeTab === 'coa' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('coa')}>
+          📊 دليل الحسابات ({accounts.length})
+        </button>
+        <button className={`btn ${activeTab === 'fiscal' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('fiscal')}>
+          📅 السنوات والفترات المالية
+        </button>
+        <button className={`btn ${activeTab === 'cost_centers' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('cost_centers')}>
+          🏭 مراكز التكلفة ({costCenters.length})
+        </button>
+        <button className={`btn ${activeTab === 'journals' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('journals')}>
+          📝 قيود اليومية ({journalEntries.length})
+        </button>
+        <button className={`btn ${activeTab === 'treasury' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('treasury')}>
+          💰 الخزينة والتحصيلات
+        </button>
       </div>
 
-      {/* 1. Chart of Accounts Section */}
-      <article className="panel module-panel" style={{ marginBottom: 20 }}>
-        <div className="panel__head">
-          <div>
-            <span className="panel__eyebrow">General Ledger Structure</span>
-            <h2>{t('pages.accounting.coa.title')}</h2>
-          </div>
-        </div>
-
-        <div className="placeholder-table">
-          <div className="placeholder-table__head">
-            <span>{t('pages.accounting.coa.code')}</span>
-            <span>{t('pages.accounting.coa.name')}</span>
-            <span>{t('pages.accounting.coa.type')}</span>
-            <span>{t('pages.accounting.coa.isLeaf')}</span>
-          </div>
-
-          {accounts.length === 0 && <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.accounting.form.empty')}</p>}
-
-          {accounts.map((acc) => (
-            <div className="placeholder-table__row" key={acc.id}>
-              <span><b>{acc.code}</b></span>
-              <span>{acc.name}</span>
-              <span><code>{acc.accountType}</code></span>
-              <span>
-                <span className={`status status--${acc.isLeaf ? 'success' : 'neutral'}`}>
-                  {acc.isLeaf ? 'حساب فرعي (قابل للترحيل)' : 'حساب أصول/أب'}
-                </span>
-              </span>
+      {/* 1. Chart of Accounts Tab */}
+      {activeTab === 'coa' && (
+        <article className="panel module-panel">
+          <div className="panel__head">
+            <div>
+              <span className="panel__eyebrow">دليل الحسابات المعتمد</span>
+              <h2>شجرة الحسابات (Chart of Accounts)</h2>
             </div>
-          ))}
-        </div>
-      </article>
-
-      {/* 2. Customer Collections Section */}
-      <article className="panel module-panel" style={{ marginBottom: 20 }}>
-        <div className="panel__head">
-          <div>
-            <span className="panel__eyebrow">Treasury Inflows</span>
-            <h2>{t('pages.accounting.treasury.title')}</h2>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="filter-button" onClick={() => setShowRetForm((v) => !v)}><b>+</b> {t('pages.accounting.treasury.addRetention')}</button>
-            <button className="primary-button" onClick={() => setShowCollForm((v) => !v)}><b>+</b> {t('pages.accounting.treasury.addCollection')}</button>
+          <div className="data-table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>كود الحساب</th>
+                  <th>اسم الحساب</th>
+                  <th>طبيعة الحساب</th>
+                  <th>نوع الحساب</th>
+                  <th>الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan={5}>جاري التحميل...</td></tr>
+                ) : accounts.length === 0 ? (
+                  <tr><td colSpan={5}>لا توجد حسابات مسجلة</td></tr>
+                ) : (
+                  accounts.map((acc) => (
+                    <tr key={acc.id}>
+                      <td><b>{acc.code}</b></td>
+                      <td>{acc.name}</td>
+                      <td><code>{acc.accountType}</code></td>
+                      <td>
+                        <span className={`status-badge status-badge--${acc.isLeaf ? 'active' : 'draft'}`}>
+                          {acc.isLeaf ? 'حساب فرعي (يقبل الترحيل)' : 'حساب رئيسي / تجميعي'}
+                        </span>
+                      </td>
+                      <td><span className="status-badge status-badge--active">نشط</span></td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        </div>
+        </article>
+      )}
 
-        {showCollForm && (
-          <form onSubmit={(e) => { void handleCreateCollection(e); }} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end', padding: '0 0 20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={labelStyle}>{t('pages.accounting.treasury.amount')}</label>
-              <input type="number" min="1" step="any" value={collAmount} onChange={(e) => setCollAmount(e.target.value)} required style={{ ...inputStyle, width: 140 }} />
+      {/* 2. Fiscal Years & Periods Tab */}
+      {activeTab === 'fiscal' && (
+        <article className="panel module-panel">
+          <div className="panel__head">
+            <div>
+              <span className="panel__eyebrow">التقويم المحاسبي والرقابة</span>
+              <h2>السنوات المالية والفترات الشهرية (12 شهراً)</h2>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={labelStyle}>طريقة التحصيل</label>
-              <select value={payMethod} onChange={(e) => setPayMethod(e.target.value as any)} style={{ ...inputStyle, minWidth: 160 }}>
-                <option value="bank_transfer">تحويل بنكي</option>
-                <option value="cash">نقداً / خزينة</option>
-                <option value="check">شيك مقبول الدفع</option>
-                <option value="credit_card">بطاقة ائتمان</option>
+            <button className="btn btn--primary" onClick={() => setShowFyModal(true)}>
+              + تأسيس سنة مالية جديدة
+            </button>
+          </div>
+
+          {showFyModal && (
+            <form className="form-card" onSubmit={handleCreateFiscalYear} style={{ marginBottom: 20 }}>
+              <h3>تأسيس سنة مالية جديدة وتوليد 12 شهراً تلقائياً</h3>
+              <div className="form-grid">
+                <label>اسم السنة المالية
+                  <input value={newFyName} onChange={(e) => setNewFyName(e.target.value)} required />
+                </label>
+                <label>تاريخ البداية
+                  <input type="date" value={newFyStart} onChange={(e) => setNewFyStart(e.target.value)} required />
+                </label>
+                <label>تاريخ النهاية
+                  <input type="date" value={newFyEnd} onChange={(e) => setNewFyEnd(e.target.value)} required />
+                </label>
+              </div>
+              <div className="form-actions">
+                <button type="submit" className="btn btn--primary">تأسيس وتوليد الشهور</button>
+                <button type="button" className="btn" onClick={() => setShowFyModal(false)}>إلغاء</button>
+              </div>
+            </form>
+          )}
+
+          {fiscalYears.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontWeight: 'bold', marginLeft: 8 }}>اختر السنة المالية:</label>
+              <select value={selectedFyId} onChange={(e) => { setSelectedFyId(e.target.value); void loadPeriods(e.target.value); }} style={{ padding: '8px 12px', borderRadius: 6 }}>
+                {fiscalYears.map((fy) => <option key={fy.id} value={fy.id}>{fy.name} ({new Date(fy.startDate).getFullYear()})</option>)}
               </select>
             </div>
-            <button type="submit" disabled={submitting} className="primary-button" style={{ height: 38 }}>{t('pages.accounting.form.save')}</button>
-          </form>
-        )}
-
-        {showRetForm && (
-          <form onSubmit={(e) => { void handleCreateRetention(e); }} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end', padding: '0 0 20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={labelStyle}>مبلغ التأمين المحتجز الأصل</label>
-              <input type="number" min="1" step="any" value={retAmount} onChange={(e) => setRetAmount(e.target.value)} required style={{ ...inputStyle, width: 160 }} />
-            </div>
-            <button type="submit" disabled={submitting} className="primary-button" style={{ height: 38 }}>{t('pages.accounting.form.save')}</button>
-          </form>
-        )}
-
-        {/* Collections Table */}
-        <div className="placeholder-table">
-          <div className="placeholder-table__head">
-            <span>{t('pages.accounting.treasury.collNo')}</span>
-            <span>أمر التشغيل المرتبط</span>
-            <span>المبلغ المحصَّل</span>
-            <span>طريقة الدفع</span>
-          </div>
-          {collections.filter((c) => c.jobOrderReference === selectedJO).length === 0 && (
-            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>لا توجد تحصيلات مسجلة لأمر التشغيل هذا بعد</p>
-          )}
-          {collections.filter((c) => c.jobOrderReference === selectedJO).map((col) => (
-            <div className="placeholder-table__row" key={col.id}>
-              <span><b>{col.collectionNumber}</b></span>
-              <span><code>{col.jobOrderReference}</code></span>
-              <span><b>{Number(col.amount).toLocaleString()} EGP</b></span>
-              <span><code>{col.paymentMethod}</code></span>
-            </div>
-          ))}
-        </div>
-      </article>
-
-      {/* 3. Retention Management Section */}
-      <article className="panel module-panel">
-        <div className="panel__head">
-          <div>
-            <span className="panel__eyebrow">Holdback Guarantees</span>
-            <h2>دورة التأمينات والمبالغ المحتجزة (Retention)</h2>
-          </div>
-        </div>
-
-        <div className="placeholder-table">
-          <div className="placeholder-table__head">
-            <span>{t('pages.accounting.treasury.retNo')}</span>
-            <span>أمر التشغيل المرتبط</span>
-            <span>التأمين الأصلي</span>
-            <span>المُفرَج عنه</span>
-            <span>الحالة</span>
-            <span>الإجراء</span>
-          </div>
-
-          {retentions.filter((r) => r.jobOrderReference === selectedJO).length === 0 && (
-            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>لا توجد تأمينات محتجزة لهذا الأمر بعد</p>
           )}
 
-          {retentions.filter((r) => r.jobOrderReference === selectedJO).map((ret) => (
-            <div className="placeholder-table__row" key={ret.id}>
-              <span><b>{ret.retentionNumber}</b></span>
-              <span><code>{ret.jobOrderReference}</code></span>
-              <span>{Number(ret.originalAmount).toLocaleString()} EGP</span>
-              <span><b>{Number(ret.releasedAmount ?? 0).toLocaleString()} EGP</b></span>
-              <span>
-                <span className={`status status--${ret.status === 'released' ? 'success' : 'warning'}`}>
-                  <i />{ret.status === 'released' ? 'تم الإفراج بالكامل ✓' : 'محتجز (نشط)'}
-                </span>
-              </span>
-              <span>
-                {ret.status === 'active' && (
-                  <button className="primary-button" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => setShowReleaseModal(ret.id)}>
-                    {t('pages.accounting.treasury.release')}
-                  </button>
+          <div className="data-table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>رقم الشهر</th>
+                  <th>اسم الفترة</th>
+                  <th>تاريخ البداية</th>
+                  <th>تاريخ النهاية</th>
+                  <th>الحالة الرقابية</th>
+                  <th>الإجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                {periods.length === 0 ? (
+                  <tr><td colSpan={6}>يرجى اختيار سنة مالية لعرض شهورها</td></tr>
+                ) : (
+                  periods.map((p) => (
+                    <tr key={p.id}>
+                      <td><b>M{p.periodNumber}</b></td>
+                      <td>{p.name}</td>
+                      <td>{new Date(p.startDate).toLocaleDateString('ar-EG')}</td>
+                      <td>{new Date(p.endDate).toLocaleDateString('ar-EG')}</td>
+                      <td>
+                        <span className={`status-badge status-badge--${p.status === 'open' ? 'active' : 'cancelled'}`}>
+                          {p.status === 'open' ? 'مفتوحة للترحيل ✅' : 'مغلقة 🔒'}
+                        </span>
+                      </td>
+                      <td>
+                        <button className="btn btn--sm" onClick={() => handleTogglePeriodStatus(p.id, p.status)}>
+                          {p.status === 'open' ? 'إغلاق الفترة 🔒' : 'فتح الفترة 🔓'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
                 )}
-              </span>
-            </div>
-          ))}
-        </div>
-      </article>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      )}
 
-      {/* Release Retention Modal */}
-      {showReleaseModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: '#fff', padding: 24, borderRadius: 8, width: 380, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <h3>الإفراج عن مبلغ التأمين</h3>
-            <label style={labelStyle}>المبلغ المراد الإفراج عنه (EGP)</label>
-            <input
-              type="number"
-              min="1"
-              step="any"
-              value={releaseAmountInput}
-              onChange={(e) => setReleaseAmountInput(e.target.value)}
-              required
-              style={{ ...inputStyle, width: '100%' }}
-            />
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 10 }}>
-              <button className="filter-button" onClick={() => setShowReleaseModal(null)}>{t('pages.accounting.form.cancel')}</button>
-              <button className="primary-button" disabled={submitting} onClick={() => { void handleReleaseRetention(showReleaseModal); }}>
-                تأكيد الإفراج
-              </button>
+      {/* 3. Cost Centers Tab */}
+      {activeTab === 'cost_centers' && (
+        <article className="panel module-panel">
+          <div className="panel__head">
+            <div>
+              <span className="panel__eyebrow">إدارات وأقسام المصنع</span>
+              <h2>شجرة مراكز التكلفة (Cost Centers)</h2>
+            </div>
+            <button className="btn btn--primary" onClick={() => setShowCcModal(true)}>
+              + إضافة مركز تكلفة
+            </button>
+          </div>
+
+          {showCcModal && (
+            <form className="form-card" onSubmit={handleCreateCostCenter} style={{ marginBottom: 20 }}>
+              <h3>إضافة مركز تكلفة / قسم إنتاجي جديد</h3>
+              <div className="form-grid">
+                <label>كود المركز (مثال: CC-LASER)
+                  <input value={newCcCode} onChange={(e) => setNewCcCode(e.target.value)} required />
+                </label>
+                <label>اسم المركز (مثال: قسم قص الليزر)
+                  <input value={newCcName} onChange={(e) => setNewCcName(e.target.value)} required />
+                </label>
+              </div>
+              <div className="form-actions">
+                <button type="submit" className="btn btn--primary">حفظ المركز</button>
+                <button type="button" className="btn" onClick={() => setShowCcModal(false)}>إلغاء</button>
+              </div>
+            </form>
+          )}
+
+          <div className="data-table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>كود المركز</th>
+                  <th>اسم القسم / المركز</th>
+                  <th>طبيعة الحساب</th>
+                  <th>الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {costCenters.length === 0 ? (
+                  <tr><td colSpan={4}>لا توجد مراكز تكلفة مسجلة</td></tr>
+                ) : (
+                  costCenters.map((cc) => (
+                    <tr key={cc.id}>
+                      <td><b>{cc.code}</b></td>
+                      <td>{cc.name}</td>
+                      <td>{cc.isGroup ? 'مركز رئيسي / تجميعي' : 'مركز فرعي (مباشر)'}</td>
+                      <td><span className="status-badge status-badge--active">نشط</span></td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      )}
+
+      {/* 4. Journal Entries Tab */}
+      {activeTab === 'journals' && (
+        <article className="panel module-panel">
+          <div className="panel__head">
+            <div>
+              <span className="panel__eyebrow">سجل القيود العامة</span>
+              <h2>دفتر الأستاذ وقيود اليومية العامة (General Ledger Entries)</h2>
             </div>
           </div>
-        </div>
+          <div className="data-table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>رقم القيد</th>
+                  <th>التاريخ</th>
+                  <th>البيان / الوصف</th>
+                  <th>النوع</th>
+                  <th>الحالة</th>
+                  <th>الإجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                {journalEntries.length === 0 ? (
+                  <tr><td colSpan={6}>لا توجد قيود يومية مسجلة</td></tr>
+                ) : (
+                  journalEntries.map((je) => (
+                    <tr key={je.id}>
+                      <td><b>{je.entryNumber}</b></td>
+                      <td>{new Date(je.entryDate).toLocaleDateString('ar-EG')}</td>
+                      <td>{je.description}</td>
+                      <td>{je.isAutoGenerated ? '⚡ آلي من التشغيل' : 'يدوي'}</td>
+                      <td>
+                        <span className={`status-badge status-badge--${je.status === 'posted' ? 'active' : 'draft'}`}>
+                          {je.status === 'posted' ? 'مرحل ومقيد' : 'مسودة'}
+                        </span>
+                      </td>
+                      <td>
+                        {je.status === 'draft' && (
+                          <button className="btn btn--sm btn--success" onClick={() => handlePostJournal(je.id)}>
+                            ترحيل
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      )}
+
+      {/* 5. Treasury & Retentions Tab */}
+      {activeTab === 'treasury' && (
+        <article className="panel module-panel">
+          <div className="panel__head">
+            <div>
+              <span className="panel__eyebrow">المقبوضات والتحصيلات</span>
+              <h2>حركات الخزينة والتحصيلات والتأمينات المحتجزة</h2>
+            </div>
+          </div>
+          <div className="dashboard-grid dashboard-grid--equal">
+            <div className="panel">
+              <h3>تحصيلات العملاء</h3>
+              <table className="data-table">
+                <thead><tr><th>رقم السند</th><th>المبلغ</th><th>طريقة الدفع</th></tr></thead>
+                <tbody>
+                  {collections.map((c: any) => (
+                    <tr key={c.id}>
+                      <td><b>{c.collectionNumber}</b></td>
+                      <td>{Number(c.amount).toLocaleString('ar-EG')} ج.م</td>
+                      <td>{c.paymentMethod}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="panel">
+              <h3>التأمينات المحتجزة (Retentions)</h3>
+              <table className="data-table">
+                <thead><tr><th>رقم التأمين</th><th>المبلغ المحتجز</th><th>الحالة</th></tr></thead>
+                <tbody>
+                  {retentions.map((r: any) => (
+                    <tr key={r.id}>
+                      <td><b>{r.retentionNumber}</b></td>
+                      <td>{Number(r.originalAmount).toLocaleString('ar-EG')} ج.م</td>
+                      <td><span className="status-badge status-badge--active">{r.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </article>
       )}
     </section>
   );

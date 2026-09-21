@@ -1,9 +1,11 @@
-﻿import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { check, index, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { item } from '../catalog/catalog.schema';
 import { orgNode } from '../organization/organization.schema';
 
 export const inventorySchema = pgSchema('inventory');
+
+// ==================== 1. المخازن والأرصدة والحركات ====================
 
 export const warehouse = inventorySchema.table('warehouse', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -71,9 +73,6 @@ export const stockMovement = inventorySchema.table('stock_movement', {
   index('stock_movement_date_idx').on(t.movementDate),
 ]);
 
-/** Reservation ledger â€” separate from on_hand entirely (D31). A reservation only reduces
- * "available" (on_hand - reserved); it never touches on_hand. Released when goods are
- * actually issued, or when the source document is cancelled. */
 export const stockReservation = inventorySchema.table('stock_reservation', {
   id: uuid('id').primaryKey().defaultRandom(),
   itemId: uuid('item_id')
@@ -93,7 +92,89 @@ export const stockReservation = inventorySchema.table('stock_reservation', {
   index('stock_reservation_item_warehouse_idx').on(t.itemId, t.warehouseId),
 ]);
 
+export const stockLedgerEntry = inventorySchema.table('stock_ledger_entry', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  warehouseId: uuid('warehouse_id')
+    .notNull()
+    .references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  movementId: uuid('movement_id')
+    .references(() => stockMovement.id, { onUpdate: 'cascade', onDelete: 'set null' }),
+  quantityChange: numeric('quantity_change', { precision: 24, scale: 6 }).notNull(),
+  balanceQtyAfter: numeric('balance_qty_after', { precision: 24, scale: 6 }).notNull(),
+  incomingRate: numeric('incoming_rate', { precision: 24, scale: 6 }).notNull().default('0'),
+  valuationRate: numeric('valuation_rate', { precision: 24, scale: 6 }).notNull().default('0'),
+  stockValueChange: numeric('stock_value_change', { precision: 24, scale: 6 }).notNull().default('0'),
+  stockValueAfter: numeric('stock_value_after', { precision: 24, scale: 6 }).notNull().default('0'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('idx_stock_ledger_item_wh').on(t.itemId, t.warehouseId),
+  index('idx_stock_ledger_created').on(t.createdAt),
+]);
+
+// ==================== 2. منظومة تتبع التشغيلات والسيريال الطبي (الجديد) ====================
+
+export const itemBatch = inventorySchema.table('item_batch', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  batchNumber: text('batch_number').notNull(),
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  orgNodeId: uuid('org_node_id')
+    .notNull()
+    .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  manufacturingDate: timestamp('manufacturing_date', { withTimezone: true }),
+  expiryDate: timestamp('expiry_date', { withTimezone: true }),
+  status: text('status').notNull().default('active'), // active | expired | quarantined | recalled
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('item_batch_item_batch_unique').on(t.itemId, t.batchNumber),
+  check('item_batch_status_valid', sql`${t.status} in ('active', 'expired', 'quarantined', 'recalled')`),
+  index('idx_item_batch_item').on(t.itemId),
+  index('idx_item_batch_expiry').on(t.expiryDate),
+  index('idx_item_batch_org').on(t.orgNodeId),
+]);
+
+export const serialNumber = inventorySchema.table('serial_number', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  serialNo: text('serial_no').notNull(),
+  itemId: uuid('item_id')
+    .notNull()
+    .references(() => item.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  warehouseId: uuid('warehouse_id')
+    .references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'set null' }),
+  batchId: uuid('batch_id')
+    .references(() => itemBatch.id, { onUpdate: 'cascade', onDelete: 'set null' }),
+  orgNodeId: uuid('org_node_id')
+    .notNull()
+    .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  status: text('status').notNull().default('active'), // active | delivered | under_maintenance | decommissioned
+  purchaseReceiptId: uuid('purchase_receipt_id'),
+  deliveryOrderId: uuid('delivery_order_id'),
+  workOrderId: uuid('work_order_id'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('serial_number_item_unique').on(t.itemId, t.serialNo),
+  check('serial_number_status_valid', sql`${t.status} in ('active', 'delivered', 'under_maintenance', 'decommissioned')`),
+  index('idx_serial_number_item').on(t.itemId),
+  index('idx_serial_number_wh').on(t.warehouseId),
+  index('idx_serial_number_batch').on(t.batchId),
+  index('idx_serial_number_org').on(t.orgNodeId),
+]);
+
 export type Warehouse = typeof warehouse.$inferSelect;
 export type StockBalance = typeof stockBalance.$inferSelect;
 export type StockMovement = typeof stockMovement.$inferSelect;
 export type StockReservation = typeof stockReservation.$inferSelect;
+export type StockLedgerEntry = typeof stockLedgerEntry.$inferSelect;
+export type ItemBatch = typeof itemBatch.$inferSelect;
+export type SerialNumber = typeof serialNumber.$inferSelect;
+
+export type ItemBatchStatus = 'active' | 'expired' | 'quarantined' | 'recalled';
+export type SerialNumberStatus = 'active' | 'delivered' | 'under_maintenance' | 'decommissioned';

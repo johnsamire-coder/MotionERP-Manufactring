@@ -1,18 +1,45 @@
-﻿import { Injectable } from '@nestjs/common';
-import { and, asc, eq, gte, lte } from 'drizzle-orm';
+import { Injectable } from '@nestjs/common';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import {
-  accountDetermination, accountingPeriod, accountType, chartOfAccounts,
-  companyAccountingConfig, costCenter, fiscalYear, journalEntry, journalLine,
+  accountDetermination,
+  accountingPeriod,
+  accountType,
+  chartOfAccounts,
+  companyAccountingConfig,
+  costCenter,
+  depreciationEntry,
+  fiscalYear,
+  fixedAsset,
+  journalEntry,
+  journalLine,
 } from './accounting.schema';
 import type {
-  AccountDeterminationRecord, AccountingPeriodRecord, AccountingPeriodStatus,
-  AccountTypeRecord, ChartAccountStatus, ChartOfAccountsRecord,
-  CompanyAccountingConfigRecord, CostCenterRecord, CreateAccountDeterminationInput,
-  CreateAccountingPeriodInput, CreateAccountTypeInput, CreateChartOfAccountsInput,
-  CreateCostCenterInput, CreateFiscalYearInput, CreateJournalEntryInput,
-  FiscalYearRecord, JournalEntryRecord, JournalEntryStatus, JournalLineRecord,
-  NormalBalance, UpsertCompanyAccountingConfigInput,
+  AccountDeterminationRecord,
+  AccountingPeriodRecord,
+  AccountingPeriodStatus,
+  AccountTypeRecord,
+  ChartAccountStatus,
+  ChartOfAccountsRecord,
+  CompanyAccountingConfigRecord,
+  CostCenterRecord,
+  CreateAccountDeterminationInput,
+  CreateAccountingPeriodInput,
+  CreateAccountTypeInput,
+  CreateChartOfAccountsInput,
+  CreateCostCenterInput,
+  CreateFiscalYearInput,
+  CreateFixedAssetInput,
+  CreateJournalEntryInput,
+  DepreciationEntryRecord,
+  FiscalYearRecord,
+  FixedAssetRecord,
+  FixedAssetStatus,
+  JournalEntryRecord,
+  JournalEntryStatus,
+  JournalLineRecord,
+  NormalBalance,
+  UpsertCompanyAccountingConfigInput,
 } from './accounting.types';
 
 const atColumns = { id: accountType.id, code: accountType.code, name: accountType.name, normalBalance: accountType.normalBalance };
@@ -34,8 +61,8 @@ const ccColumns = {
   parentId: costCenter.parentId, isGroup: costCenter.isGroup, isActive: costCenter.isActive,
 };
 const configColumns = {
-  id: companyAccountingConfig.id, orgNodeId: companyAccountingConfig.orgNodeId,
-  baseCurrency: companyAccountingConfig.baseCurrency, inventoryValuationMethod: companyAccountingConfig.inventoryValuationMethod,
+  id: companyAccountingConfig.id, orgNodeId: companyAccountingConfig.orgNodeId, baseCurrency: companyAccountingConfig.baseCurrency,
+  inventoryValuationMethod: companyAccountingConfig.inventoryValuationMethod,
   defaultGrniAccountId: companyAccountingConfig.defaultGrniAccountId, defaultWipAccountId: companyAccountingConfig.defaultWipAccountId,
   defaultCogsAccountId: companyAccountingConfig.defaultCogsAccountId, defaultMfgVarianceAccountId: companyAccountingConfig.defaultMfgVarianceAccountId,
   defaultPayableAccountId: companyAccountingConfig.defaultPayableAccountId, defaultReceivableAccountId: companyAccountingConfig.defaultReceivableAccountId,
@@ -57,6 +84,19 @@ const jlColumns = {
   id: journalLine.id, journalEntryId: journalLine.journalEntryId, accountId: journalLine.accountId,
   debitAmount: journalLine.debitAmount, creditAmount: journalLine.creditAmount, description: journalLine.description,
   partyType: journalLine.partyType, partyId: journalLine.partyId, costCenterId: journalLine.costCenterId, jobOrderId: journalLine.jobOrderId,
+};
+const faColumns = {
+  id: fixedAsset.id, assetCode: fixedAsset.assetCode, assetName: fixedAsset.assetName, orgNodeId: fixedAsset.orgNodeId,
+  purchaseDate: fixedAsset.purchaseDate, purchaseCost: fixedAsset.purchaseCost, usefulLifeMonths: fixedAsset.usefulLifeMonths,
+  salvageValue: fixedAsset.salvageValue, depreciationMethod: fixedAsset.depreciationMethod, assetAccountId: fixedAsset.assetAccountId,
+  accumulatedDepreciationAccountId: fixedAsset.accumulatedDepreciationAccountId, depreciationExpenseAccountId: fixedAsset.depreciationExpenseAccountId,
+  costCenterId: fixedAsset.costCenterId, totalDepreciated: fixedAsset.totalDepreciated, status: fixedAsset.status,
+  createdAt: fixedAsset.createdAt, updatedAt: fixedAsset.updatedAt,
+};
+const deColumns = {
+  id: depreciationEntry.id, assetId: depreciationEntry.assetId, periodId: depreciationEntry.periodId, entryDate: depreciationEntry.entryDate,
+  depreciationAmount: depreciationEntry.depreciationAmount, accumulatedAmountAfter: depreciationEntry.accumulatedAmountAfter,
+  journalEntryId: depreciationEntry.journalEntryId, status: depreciationEntry.status, createdAt: depreciationEntry.createdAt,
 };
 
 @Injectable()
@@ -91,50 +131,47 @@ export class AccountingRepository {
   }
   async findAccountById(id: string): Promise<ChartOfAccountsRecord | null> {
     const rows = await this.database.db.select(coaColumns).from(chartOfAccounts).where(eq(chartOfAccounts.id, id)).limit(1);
-    return rows[0] ? {
-      id: rows[0].id, code: rows[0].code, name: rows[0].name, orgNodeId: rows[0].orgNodeId,
-      accountTypeId: rows[0].accountTypeId, parentId: rows[0].parentId,
-      isLeaf: rows[0].isLeaf === 'yes', status: rows[0].status as ChartAccountStatus,
-    } : null;
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, accountTypeId: r.accountTypeId, parentId: r.parentId, isLeaf: r.isLeaf === 'yes', status: r.status as ChartAccountStatus };
   }
   async findAccountByCode(orgNodeId: string, code: string): Promise<ChartOfAccountsRecord | null> {
-    const rows = await this.database.db.select(coaColumns).from(chartOfAccounts)
-      .where(and(eq(chartOfAccounts.orgNodeId, orgNodeId), eq(chartOfAccounts.code, code))).limit(1);
-    return rows[0] ? {
-      id: rows[0].id, code: rows[0].code, name: rows[0].name, orgNodeId: rows[0].orgNodeId,
-      accountTypeId: rows[0].accountTypeId, parentId: rows[0].parentId,
-      isLeaf: rows[0].isLeaf === 'yes', status: rows[0].status as ChartAccountStatus,
-    } : null;
+    const rows = await this.database.db.select(coaColumns).from(chartOfAccounts).where(and(eq(chartOfAccounts.orgNodeId, orgNodeId), eq(chartOfAccounts.code, code))).limit(1);
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, accountTypeId: r.accountTypeId, parentId: r.parentId, isLeaf: r.isLeaf === 'yes', status: r.status as ChartAccountStatus };
   }
   async insertAccount(input: CreateChartOfAccountsInput & { id: string }): Promise<ChartOfAccountsRecord> {
     const rows = await this.database.db.insert(chartOfAccounts).values({
       id: input.id, code: input.code, name: input.name, orgNodeId: input.orgNodeId,
-      accountTypeId: input.accountTypeId, parentId: input.parentId ?? null,
+      accountTypeId: input.accountTypeId, parentId: input.parentId ?? null, isLeaf: 'yes',
     }).returning(coaColumns);
     const r = rows[0]!;
-    return {
-      id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, accountTypeId: r.accountTypeId,
-      parentId: r.parentId, isLeaf: r.isLeaf === 'yes', status: r.status as ChartAccountStatus,
-    };
+    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, accountTypeId: r.accountTypeId, parentId: r.parentId, isLeaf: true, status: 'active' };
   }
   async markAsParent(id: string): Promise<void> {
-    await this.database.db.update(chartOfAccounts).set({ isLeaf: 'no' }).where(eq(chartOfAccounts.id, id));
+    await this.database.db.update(chartOfAccounts).set({ isLeaf: 'no', updatedAt: new Date() }).where(eq(chartOfAccounts.id, id));
   }
 
   // --- Fiscal Year ---
   async listFiscalYears(orgNodeId?: string): Promise<FiscalYearRecord[]> {
-    const query = this.database.db.select(fyColumns).from(fiscalYear);
-    const rows = orgNodeId ? await query.where(eq(fiscalYear.orgNodeId, orgNodeId)).orderBy(asc(fiscalYear.startDate)) : await query.orderBy(asc(fiscalYear.startDate));
+    const rows = orgNodeId
+      ? await this.database.db.select(fyColumns).from(fiscalYear).where(eq(fiscalYear.orgNodeId, orgNodeId)).orderBy(desc(fiscalYear.startDate))
+      : await this.database.db.select(fyColumns).from(fiscalYear).orderBy(desc(fiscalYear.startDate));
     return rows.map((r) => ({ id: r.id, orgNodeId: r.orgNodeId, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), isClosed: r.isClosed }));
   }
   async findFiscalYearById(id: string): Promise<FiscalYearRecord | null> {
     const rows = await this.database.db.select(fyColumns).from(fiscalYear).where(eq(fiscalYear.id, id)).limit(1);
-    return rows[0] ? { id: rows[0].id, orgNodeId: rows[0].orgNodeId, name: rows[0].name, startDate: rows[0].startDate.toISOString(), endDate: rows[0].endDate.toISOString(), isClosed: rows[0].isClosed } : null;
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return { id: r.id, orgNodeId: r.orgNodeId, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), isClosed: r.isClosed };
   }
   async findFiscalYearByDate(orgNodeId: string, date: Date): Promise<FiscalYearRecord | null> {
     const rows = await this.database.db.select(fyColumns).from(fiscalYear)
-      .where(and(eq(fiscalYear.orgNodeId, orgNodeId), lte(fiscalYear.startDate, date), gte(fiscalYear.endDate, date))).limit(1);
-    return rows[0] ? { id: rows[0].id, orgNodeId: rows[0].orgNodeId, name: rows[0].name, startDate: rows[0].startDate.toISOString(), endDate: rows[0].endDate.toISOString(), isClosed: rows[0].isClosed } : null;
+      .where(and(eq(fiscalYear.orgNodeId, orgNodeId), sql`${fiscalYear.startDate} <= ${date}`, sql`${fiscalYear.endDate} >= ${date}`)).limit(1);
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return { id: r.id, orgNodeId: r.orgNodeId, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), isClosed: r.isClosed };
   }
   async insertFiscalYear(input: CreateFiscalYearInput & { id: string }): Promise<FiscalYearRecord> {
     const rows = await this.database.db.insert(fiscalYear).values({
@@ -145,31 +182,26 @@ export class AccountingRepository {
     return { id: r.id, orgNodeId: r.orgNodeId, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), isClosed: r.isClosed };
   }
   async closeFiscalYear(id: string): Promise<void> {
-    await this.database.db.update(fiscalYear).set({ isClosed: true }).where(eq(fiscalYear.id, id));
+    await this.database.db.update(fiscalYear).set({ isClosed: true, updatedAt: new Date() }).where(eq(fiscalYear.id, id));
   }
 
   // --- Accounting Period ---
   async listPeriods(fiscalYearId: string): Promise<AccountingPeriodRecord[]> {
     const rows = await this.database.db.select(periodColumns).from(accountingPeriod).where(eq(accountingPeriod.fiscalYearId, fiscalYearId)).orderBy(asc(accountingPeriod.periodNumber));
-    return rows.map((r) => ({
-      id: r.id, fiscalYearId: r.fiscalYearId, periodNumber: r.periodNumber, name: r.name,
-      startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), status: r.status as AccountingPeriodStatus,
-    }));
+    return rows.map((r) => ({ id: r.id, fiscalYearId: r.fiscalYearId, periodNumber: r.periodNumber, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), status: r.status as AccountingPeriodStatus }));
   }
   async findPeriodById(id: string): Promise<AccountingPeriodRecord | null> {
     const rows = await this.database.db.select(periodColumns).from(accountingPeriod).where(eq(accountingPeriod.id, id)).limit(1);
-    return rows[0] ? {
-      id: rows[0].id, fiscalYearId: rows[0].fiscalYearId, periodNumber: rows[0].periodNumber, name: rows[0].name,
-      startDate: rows[0].startDate.toISOString(), endDate: rows[0].endDate.toISOString(), status: rows[0].status as AccountingPeriodStatus,
-    } : null;
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return { id: r.id, fiscalYearId: r.fiscalYearId, periodNumber: r.periodNumber, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), status: r.status as AccountingPeriodStatus };
   }
   async findPeriodByDate(fiscalYearId: string, date: Date): Promise<AccountingPeriodRecord | null> {
     const rows = await this.database.db.select(periodColumns).from(accountingPeriod)
-      .where(and(eq(accountingPeriod.fiscalYearId, fiscalYearId), lte(accountingPeriod.startDate, date), gte(accountingPeriod.endDate, date))).limit(1);
-    return rows[0] ? {
-      id: rows[0].id, fiscalYearId: rows[0].fiscalYearId, periodNumber: rows[0].periodNumber, name: rows[0].name,
-      startDate: rows[0].startDate.toISOString(), endDate: rows[0].endDate.toISOString(), status: rows[0].status as AccountingPeriodStatus,
-    } : null;
+      .where(and(eq(accountingPeriod.fiscalYearId, fiscalYearId), sql`${accountingPeriod.startDate} <= ${date}`, sql`${accountingPeriod.endDate} >= ${date}`)).limit(1);
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return { id: r.id, fiscalYearId: r.fiscalYearId, periodNumber: r.periodNumber, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), status: r.status as AccountingPeriodStatus };
   }
   async insertPeriod(input: CreateAccountingPeriodInput & { id: string }): Promise<AccountingPeriodRecord> {
     const rows = await this.database.db.insert(accountingPeriod).values({
@@ -177,41 +209,31 @@ export class AccountingRepository {
       startDate: new Date(input.startDate), endDate: new Date(input.endDate),
     }).returning(periodColumns);
     const r = rows[0]!;
-    return {
-      id: r.id, fiscalYearId: r.fiscalYearId, periodNumber: r.periodNumber, name: r.name,
-      startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), status: r.status as AccountingPeriodStatus,
-    };
+    return { id: r.id, fiscalYearId: r.fiscalYearId, periodNumber: r.periodNumber, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), status: r.status as AccountingPeriodStatus };
   }
   async setPeriodStatus(id: string, status: AccountingPeriodStatus): Promise<AccountingPeriodRecord> {
-    const rows = await this.database.db.update(accountingPeriod).set({ status }).where(eq(accountingPeriod.id, id)).returning(periodColumns);
+    const rows = await this.database.db.update(accountingPeriod).set({ status, updatedAt: new Date() }).where(eq(accountingPeriod.id, id)).returning(periodColumns);
     const r = rows[0]!;
-    return {
-      id: r.id, fiscalYearId: r.fiscalYearId, periodNumber: r.periodNumber, name: r.name,
-      startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), status: r.status as AccountingPeriodStatus,
-    };
+    return { id: r.id, fiscalYearId: r.fiscalYearId, periodNumber: r.periodNumber, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), status: r.status as AccountingPeriodStatus };
   }
 
   // --- Cost Center ---
   async listCostCenters(orgNodeId?: string): Promise<CostCenterRecord[]> {
-    const query = this.database.db.select(ccColumns).from(costCenter);
-    const rows = orgNodeId ? await query.where(eq(costCenter.orgNodeId, orgNodeId)).orderBy(asc(costCenter.code)) : await query.orderBy(asc(costCenter.code));
+    const rows = orgNodeId
+      ? await this.database.db.select(ccColumns).from(costCenter).where(eq(costCenter.orgNodeId, orgNodeId)).orderBy(asc(costCenter.code))
+      : await this.database.db.select(ccColumns).from(costCenter).orderBy(asc(costCenter.code));
     return rows.map((r) => ({ id: r.id, orgNodeId: r.orgNodeId, code: r.code, name: r.name, parentId: r.parentId, isGroup: r.isGroup, isActive: r.isActive }));
-  }
-  async findCostCenterById(id: string): Promise<CostCenterRecord | null> {
-    const rows = await this.database.db.select(ccColumns).from(costCenter).where(eq(costCenter.id, id)).limit(1);
-    return rows[0] ? { id: rows[0].id, orgNodeId: rows[0].orgNodeId, code: rows[0].code, name: rows[0].name, parentId: rows[0].parentId, isGroup: rows[0].isGroup, isActive: rows[0].isActive } : null;
   }
   async findCostCenterByCode(orgNodeId: string, code: string): Promise<CostCenterRecord | null> {
     const rows = await this.database.db.select(ccColumns).from(costCenter).where(and(eq(costCenter.orgNodeId, orgNodeId), eq(costCenter.code, code))).limit(1);
-    return rows[0] ? { id: rows[0].id, orgNodeId: rows[0].orgNodeId, code: rows[0].code, name: rows[0].name, parentId: rows[0].parentId, isGroup: rows[0].isGroup, isActive: rows[0].isActive } : null;
+    return rows[0] ?? null;
   }
   async insertCostCenter(input: CreateCostCenterInput & { id: string }): Promise<CostCenterRecord> {
     const rows = await this.database.db.insert(costCenter).values({
       id: input.id, orgNodeId: input.orgNodeId, code: input.code, name: input.name,
       parentId: input.parentId ?? null, isGroup: input.isGroup ?? false,
     }).returning(ccColumns);
-    const r = rows[0]!;
-    return { id: r.id, orgNodeId: r.orgNodeId, code: r.code, name: r.name, parentId: r.parentId, isGroup: r.isGroup, isActive: r.isActive };
+    return rows[0]!;
   }
 
   // --- Company Accounting Config ---
@@ -235,25 +257,32 @@ export class AccountingRepository {
     return rows;
   }
   async insertAccountDetermination(input: CreateAccountDeterminationInput & { id: string }): Promise<AccountDeterminationRecord> {
-    const rows = await this.database.db.insert(accountDetermination).values(input).returning(detColumns);
+    const rows = await this.database.db.insert(accountDetermination).values({
+      id: input.id, orgNodeId: input.orgNodeId, determinationType: input.determinationType,
+      referenceId: input.referenceId ?? null, accountPurpose: input.accountPurpose, accountId: input.accountId,
+    }).returning(detColumns);
     return rows[0]!;
   }
 
   // --- Journal Entries ---
   async listEntries(): Promise<JournalEntryRecord[]> {
-    const entries = await this.database.db.select(jeColumns).from(journalEntry).orderBy(asc(journalEntry.entryNumber));
-    const allLines = await this.database.db.select(jlColumns).from(journalLine);
-    return entries.map((e) => ({
-      id: e.id, entryNumber: e.entryNumber, orgNodeId: e.orgNodeId, reference: e.reference, description: e.description,
-      entryDate: e.entryDate.toISOString(), postedAt: e.postedAt ? e.postedAt.toISOString() : null, status: e.status as JournalEntryStatus,
-      fiscalYearId: e.fiscalYearId, periodId: e.periodId, isAutoGenerated: e.isAutoGenerated,
-      idempotencyKey: e.idempotencyKey, sourceEventType: e.sourceEventType,
-      lines: allLines.filter((l) => l.journalEntryId === e.id).map((l) => ({
-        id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId, debitAmount: l.debitAmount,
-        creditAmount: l.creditAmount, description: l.description, partyType: l.partyType, partyId: l.partyId,
-        costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
-      })),
-    }));
+    const entries = await this.database.db.select(jeColumns).from(journalEntry).orderBy(desc(journalEntry.entryDate));
+    const results: JournalEntryRecord[] = [];
+    for (const e of entries) {
+      const lines = await this.database.db.select(jlColumns).from(journalLine).where(eq(journalLine.journalEntryId, e.id));
+      results.push({
+        id: e.id, entryNumber: e.entryNumber, orgNodeId: e.orgNodeId, reference: e.reference, description: e.description,
+        entryDate: e.entryDate.toISOString(), postedAt: e.postedAt ? e.postedAt.toISOString() : null, status: e.status as JournalEntryStatus,
+        fiscalYearId: e.fiscalYearId, periodId: e.periodId, isAutoGenerated: e.isAutoGenerated,
+        idempotencyKey: e.idempotencyKey, sourceEventType: e.sourceEventType,
+        lines: lines.map((l) => ({
+          id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId,
+          debitAmount: l.debitAmount, creditAmount: l.creditAmount, description: l.description,
+          partyType: l.partyType as any, partyId: l.partyId, costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
+        })),
+      });
+    }
+    return results;
   }
   async findEntryById(id: string): Promise<JournalEntryRecord | null> {
     const rows = await this.database.db.select(jeColumns).from(journalEntry).where(eq(journalEntry.id, id)).limit(1);
@@ -266,9 +295,9 @@ export class AccountingRepository {
       fiscalYearId: e.fiscalYearId, periodId: e.periodId, isAutoGenerated: e.isAutoGenerated,
       idempotencyKey: e.idempotencyKey, sourceEventType: e.sourceEventType,
       lines: lines.map((l) => ({
-        id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId, debitAmount: l.debitAmount,
-        creditAmount: l.creditAmount, description: l.description, partyType: l.partyType, partyId: l.partyId,
-        costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
+        id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId,
+        debitAmount: l.debitAmount, creditAmount: l.creditAmount, description: l.description,
+        partyType: l.partyType as any, partyId: l.partyId, costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
       })),
     };
   }
@@ -288,23 +317,25 @@ export class AccountingRepository {
     const lines: JournalLineRecord[] = [];
     for (const line of input.lines) {
       const lineRows = await this.database.db.insert(journalLine).values({
+        id: (await import('node:crypto')).randomUUID(),
         journalEntryId: inserted.id, accountId: line.accountId,
-        debitAmount: line.debitAmount ?? '0', creditAmount: line.creditAmount ?? '0', description: line.description,
-        partyType: line.partyType ?? null, partyId: line.partyId ?? null,
+        debitAmount: line.debitAmount ?? '0', creditAmount: line.creditAmount ?? '0',
+        description: line.description ?? null, partyType: line.partyType ?? null, partyId: line.partyId ?? null,
         costCenterId: line.costCenterId ?? null, jobOrderId: line.jobOrderId ?? null,
       }).returning(jlColumns);
       const l = lineRows[0]!;
       lines.push({
-        id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId, debitAmount: l.debitAmount,
-        creditAmount: l.creditAmount, description: l.description, partyType: l.partyType, partyId: l.partyId,
-        costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
+        id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId,
+        debitAmount: l.debitAmount, creditAmount: l.creditAmount, description: l.description,
+        partyType: l.partyType as any, partyId: l.partyId, costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
       });
     }
     return {
       id: inserted.id, entryNumber: inserted.entryNumber, orgNodeId: inserted.orgNodeId, reference: inserted.reference,
-      description: inserted.description, entryDate: inserted.entryDate.toISOString(), postedAt: null,
-      status: inserted.status as JournalEntryStatus, fiscalYearId: inserted.fiscalYearId, periodId: inserted.periodId,
-      isAutoGenerated: inserted.isAutoGenerated, idempotencyKey: inserted.idempotencyKey, sourceEventType: inserted.sourceEventType,
+      description: inserted.description, entryDate: inserted.entryDate.toISOString(),
+      postedAt: inserted.postedAt ? inserted.postedAt.toISOString() : null, status: inserted.status as JournalEntryStatus,
+      fiscalYearId: inserted.fiscalYearId, periodId: inserted.periodId, isAutoGenerated: inserted.isAutoGenerated,
+      idempotencyKey: inserted.idempotencyKey, sourceEventType: inserted.sourceEventType,
       lines,
     };
   }
@@ -320,9 +351,9 @@ export class AccountingRepository {
       fiscalYearId: e.fiscalYearId, periodId: e.periodId, isAutoGenerated: e.isAutoGenerated,
       idempotencyKey: e.idempotencyKey, sourceEventType: e.sourceEventType,
       lines: lines.map((l) => ({
-        id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId, debitAmount: l.debitAmount,
-        creditAmount: l.creditAmount, description: l.description, partyType: l.partyType, partyId: l.partyId,
-        costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
+        id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId,
+        debitAmount: l.debitAmount, creditAmount: l.creditAmount, description: l.description,
+        partyType: l.partyType as any, partyId: l.partyId, costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
       })),
     };
   }
@@ -335,5 +366,190 @@ export class AccountingRepository {
       .innerJoin(chartOfAccounts, eq(journalLine.accountId, chartOfAccounts.id))
       .innerJoin(journalEntry, eq(journalLine.journalEntryId, journalEntry.id));
     return rows.filter((r) => r.entryStatus === 'posted').map(({ accountId, code, name, debit, credit }) => ({ accountId, code, name, debit, credit }));
+  }
+
+  async findEntryByIdempotencyKey(idempotencyKey: string): Promise<JournalEntryRecord | null> {
+    const rows = await this.database.db.select(jeColumns).from(journalEntry).where(eq(journalEntry.idempotencyKey, idempotencyKey)).limit(1);
+    if (!rows[0]) return null;
+    const lines = await this.database.db.select(jlColumns).from(journalLine).where(eq(journalLine.journalEntryId, rows[0].id));
+    const e = rows[0];
+    return {
+      id: e.id, entryNumber: e.entryNumber, orgNodeId: e.orgNodeId, reference: e.reference, description: e.description,
+      entryDate: e.entryDate.toISOString(), postedAt: e.postedAt ? e.postedAt.toISOString() : null, status: e.status as JournalEntryStatus,
+      fiscalYearId: e.fiscalYearId, periodId: e.periodId, isAutoGenerated: e.isAutoGenerated,
+      idempotencyKey: e.idempotencyKey, sourceEventType: e.sourceEventType,
+      lines: lines.map((l) => ({
+        id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId,
+        debitAmount: l.debitAmount, creditAmount: l.creditAmount, description: l.description,
+        partyType: l.partyType as any, partyId: l.partyId, costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
+      })),
+    };
+  }
+
+  // --- Fixed Assets Management ---
+  async listFixedAssets(orgNodeId?: string): Promise<FixedAssetRecord[]> {
+    const rows = orgNodeId
+      ? await this.database.db.select(faColumns).from(fixedAsset).where(eq(fixedAsset.orgNodeId, orgNodeId)).orderBy(asc(fixedAsset.assetCode))
+      : await this.database.db.select(faColumns).from(fixedAsset).orderBy(asc(fixedAsset.assetCode));
+    return rows.map((r) => ({
+      id: r.id, assetCode: r.assetCode, assetName: r.assetName, orgNodeId: r.orgNodeId,
+      purchaseDate: r.purchaseDate.toISOString(), purchaseCost: r.purchaseCost, usefulLifeMonths: r.usefulLifeMonths,
+      salvageValue: r.salvageValue, depreciationMethod: r.depreciationMethod, assetAccountId: r.assetAccountId,
+      accumulatedDepreciationAccountId: r.accumulatedDepreciationAccountId, depreciationExpenseAccountId: r.depreciationExpenseAccountId,
+      costCenterId: r.costCenterId, totalDepreciated: r.totalDepreciated, status: r.status as FixedAssetStatus,
+      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    }));
+  }
+
+  async findFixedAssetById(id: string): Promise<FixedAssetRecord | null> {
+    const rows = await this.database.db.select(faColumns).from(fixedAsset).where(eq(fixedAsset.id, id)).limit(1);
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+      id: r.id, assetCode: r.assetCode, assetName: r.assetName, orgNodeId: r.orgNodeId,
+      purchaseDate: r.purchaseDate.toISOString(), purchaseCost: r.purchaseCost, usefulLifeMonths: r.usefulLifeMonths,
+      salvageValue: r.salvageValue, depreciationMethod: r.depreciationMethod, assetAccountId: r.assetAccountId,
+      accumulatedDepreciationAccountId: r.accumulatedDepreciationAccountId, depreciationExpenseAccountId: r.depreciationExpenseAccountId,
+      costCenterId: r.costCenterId, totalDepreciated: r.totalDepreciated, status: r.status as FixedAssetStatus,
+      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  async findFixedAssetByCode(orgNodeId: string, code: string): Promise<FixedAssetRecord | null> {
+    const rows = await this.database.db.select(faColumns).from(fixedAsset).where(and(eq(fixedAsset.orgNodeId, orgNodeId), eq(fixedAsset.assetCode, code))).limit(1);
+    if (!rows[0]) return null;
+    const r = rows[0];
+    return {
+      id: r.id, assetCode: r.assetCode, assetName: r.assetName, orgNodeId: r.orgNodeId,
+      purchaseDate: r.purchaseDate.toISOString(), purchaseCost: r.purchaseCost, usefulLifeMonths: r.usefulLifeMonths,
+      salvageValue: r.salvageValue, depreciationMethod: r.depreciationMethod, assetAccountId: r.assetAccountId,
+      accumulatedDepreciationAccountId: r.accumulatedDepreciationAccountId, depreciationExpenseAccountId: r.depreciationExpenseAccountId,
+      costCenterId: r.costCenterId, totalDepreciated: r.totalDepreciated, status: r.status as FixedAssetStatus,
+      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  async insertFixedAsset(input: CreateFixedAssetInput & { id: string }): Promise<FixedAssetRecord> {
+    const rows = await this.database.db.insert(fixedAsset).values({
+      id: input.id,
+      assetCode: input.assetCode,
+      assetName: input.assetName,
+      orgNodeId: input.orgNodeId,
+      purchaseDate: new Date(input.purchaseDate),
+      purchaseCost: input.purchaseCost,
+      usefulLifeMonths: input.usefulLifeMonths,
+      salvageValue: input.salvageValue ?? '0',
+      depreciationMethod: 'straight_line',
+      assetAccountId: input.assetAccountId,
+      accumulatedDepreciationAccountId: input.accumulatedDepreciationAccountId,
+      depreciationExpenseAccountId: input.depreciationExpenseAccountId,
+      costCenterId: input.costCenterId ?? null,
+      totalDepreciated: '0',
+      status: 'active',
+    }).returning(faColumns);
+    const r = rows[0]!;
+    return {
+      id: r.id, assetCode: r.assetCode, assetName: r.assetName, orgNodeId: r.orgNodeId,
+      purchaseDate: r.purchaseDate.toISOString(), purchaseCost: r.purchaseCost, usefulLifeMonths: r.usefulLifeMonths,
+      salvageValue: r.salvageValue, depreciationMethod: r.depreciationMethod, assetAccountId: r.assetAccountId,
+      accumulatedDepreciationAccountId: r.accumulatedDepreciationAccountId, depreciationExpenseAccountId: r.depreciationExpenseAccountId,
+      costCenterId: r.costCenterId, totalDepreciated: r.totalDepreciated, status: r.status as FixedAssetStatus,
+      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    };
+  }
+
+  async updateFixedAssetDepreciation(id: string, totalDepreciated: string, status: FixedAssetStatus): Promise<void> {
+    await this.database.db.update(fixedAsset).set({ totalDepreciated, status, updatedAt: new Date() }).where(eq(fixedAsset.id, id));
+  }
+
+  async insertDepreciationEntry(input: {
+    id: string;
+    assetId: string;
+    periodId: string | null;
+    entryDate: Date;
+    depreciationAmount: string;
+    accumulatedAmountAfter: string;
+    journalEntryId: string | null;
+  }): Promise<DepreciationEntryRecord> {
+    const rows = await this.database.db.insert(depreciationEntry).values({
+      id: input.id,
+      assetId: input.assetId,
+      periodId: input.periodId,
+      entryDate: input.entryDate,
+      depreciationAmount: input.depreciationAmount,
+      accumulatedAmountAfter: input.accumulatedAmountAfter,
+      journalEntryId: input.journalEntryId,
+      status: 'posted',
+    }).returning(deColumns);
+    const r = rows[0]!;
+    return {
+      id: r.id, assetId: r.assetId, periodId: r.periodId, entryDate: r.entryDate.toISOString(),
+      depreciationAmount: r.depreciationAmount, accumulatedAmountAfter: r.accumulatedAmountAfter,
+      journalEntryId: r.journalEntryId, status: r.status, createdAt: r.createdAt.toISOString(),
+    };
+  }
+
+  async listDepreciationEntries(assetId: string): Promise<DepreciationEntryRecord[]> {
+    const rows = await this.database.db.select(deColumns).from(depreciationEntry).where(eq(depreciationEntry.assetId, assetId)).orderBy(desc(depreciationEntry.entryDate));
+    return rows.map((r) => ({
+      id: r.id, assetId: r.assetId, periodId: r.periodId, entryDate: r.entryDate.toISOString(),
+      depreciationAmount: r.depreciationAmount, accumulatedAmountAfter: r.accumulatedAmountAfter,
+      journalEntryId: r.journalEntryId, status: r.status, createdAt: r.createdAt.toISOString(),
+    }));
+  }
+
+  // --- Reporting Helper Methods ---
+  async listAllPostedLinesWithDetails(filters: { orgNodeId: string; startDate?: string; endDate?: string }): Promise<Array<{
+    accountId: string; code: string; name: string; typeCode: string; normalBalance: string; debit: string; credit: string; entryDate: Date;
+    partyType: string | null; partyId: string | null; journalEntryId: string; entryNumber: string; description: string | null;
+  }>> {
+    const rows = await this.database.db.select({
+      accountId: chartOfAccounts.id,
+      code: chartOfAccounts.code,
+      name: chartOfAccounts.name,
+      typeCode: accountType.code,
+      normalBalance: accountType.normalBalance,
+      debit: journalLine.debitAmount,
+      credit: journalLine.creditAmount,
+      entryDate: journalEntry.entryDate,
+      partyType: journalLine.partyType,
+      partyId: journalLine.partyId,
+      journalEntryId: journalEntry.id,
+      entryNumber: journalEntry.entryNumber,
+      description: journalLine.description,
+    }).from(journalLine)
+      .innerJoin(chartOfAccounts, eq(journalLine.accountId, chartOfAccounts.id))
+      .innerJoin(accountType, eq(chartOfAccounts.accountTypeId, accountType.id))
+      .innerJoin(journalEntry, eq(journalLine.journalEntryId, journalEntry.id))
+      .where(and(eq(journalEntry.status, 'posted'), eq(journalEntry.orgNodeId, filters.orgNodeId)));
+
+    return rows.filter((r) => {
+      if (filters.startDate && r.entryDate < new Date(filters.startDate)) return false;
+      if (filters.endDate && r.entryDate > new Date(filters.endDate)) return false;
+      return true;
+    });
+  }
+
+  async getPartnerLedgerLines(partyType: 'customer' | 'supplier', partyId: string): Promise<Array<{
+    id: string; debitAmount: string; creditAmount: string; description: string | null; entryDate: Date; journalEntryId: string; entryNumber: string;
+  }>> {
+    const rows = await this.database.db.select({
+      id: journalLine.id,
+      debitAmount: journalLine.debitAmount,
+      creditAmount: journalLine.creditAmount,
+      description: journalLine.description,
+      entryDate: journalEntry.entryDate,
+      journalEntryId: journalEntry.id,
+      entryNumber: journalEntry.entryNumber,
+    }).from(journalLine)
+      .innerJoin(journalEntry, eq(journalLine.journalEntryId, journalEntry.id))
+      .where(and(
+        eq(journalEntry.status, 'posted'),
+        eq(journalLine.partyType, partyType),
+        eq(journalLine.partyId, partyId),
+      ))
+      .orderBy(asc(journalEntry.entryDate));
+
+    return rows;
   }
 }

@@ -1,7 +1,8 @@
-﻿export type NormalBalance = 'debit' | 'credit';
+export type NormalBalance = 'debit' | 'credit';
 export type ChartAccountStatus = 'active' | 'inactive';
 export type JournalEntryStatus = 'draft' | 'posted' | 'cancelled';
 export type AccountingPeriodStatus = 'open' | 'closed' | 'locked';
+export type FixedAssetStatus = 'active' | 'fully_depreciated' | 'disposed';
 
 export interface AccountTypeRecord { id: string; code: string; name: string; normalBalance: NormalBalance; }
 export interface CreateAccountTypeInput { code: string; name: string; normalBalance: NormalBalance; }
@@ -94,4 +95,124 @@ export interface CreateJournalEntryInput {
 
 export interface AccountBalance {
   accountId: string; accountCode: string; accountName: string; totalDebit: string; totalCredit: string; balance: string;
+}
+
+// --- Fixed Assets & Depreciation Types ---
+export interface FixedAssetRecord {
+  id: string;
+  assetCode: string;
+  assetName: string;
+  orgNodeId: string;
+  purchaseDate: string;
+  purchaseCost: string;
+  usefulLifeMonths: number;
+  salvageValue: string;
+  depreciationMethod: string;
+  assetAccountId: string;
+  accumulatedDepreciationAccountId: string;
+  depreciationExpenseAccountId: string;
+  costCenterId: string | null;
+  totalDepreciated: string;
+  status: FixedAssetStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateFixedAssetInput {
+  orgNodeId: string;
+  assetCode: string;
+  assetName: string;
+  purchaseDate: string;
+  purchaseCost: string;
+  usefulLifeMonths: number;
+  salvageValue?: string;
+  assetAccountId: string;
+  accumulatedDepreciationAccountId: string;
+  depreciationExpenseAccountId: string;
+  costCenterId?: string;
+}
+
+export interface DepreciationEntryRecord {
+  id: string;
+  assetId: string;
+  periodId: string | null;
+  entryDate: string;
+  depreciationAmount: string;
+  accumulatedAmountAfter: string;
+  journalEntryId: string | null;
+  status: string;
+  createdAt: string;
+}
+
+export interface PostDepreciationResult {
+  asset: FixedAssetRecord;
+  depreciationEntry: DepreciationEntryRecord;
+  journalEntry: JournalEntryRecord;
+}
+
+// --- Financial Reports Types ---
+export interface TrialBalanceRow {
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  debit: string;
+  credit: string;
+  balance: string;
+}
+export interface TrialBalanceReport {
+  orgNodeId: string;
+  startDate?: string;
+  endDate?: string;
+  totalDebit: string;
+  totalCredit: string;
+  isBalanced: boolean;
+  rows: TrialBalanceRow[];
+}
+
+export interface ProfitAndLossReport {
+  orgNodeId: string;
+  startDate?: string;
+  endDate?: string;
+  totalRevenue: string;
+  totalCogs: string;
+  grossProfit: string;
+  totalExpenses: string;
+  netProfit: string;
+  revenueDetails: Array<{ accountName: string; balance: string }>;
+  expenseDetails: Array<{ accountName: string; balance: string }>;
+}
+
+export interface BalanceSheetReport {
+  orgNodeId: string;
+  date: string;
+  totalAssets: string;
+  totalLiabilities: string;
+  totalEquity: string;
+  totalLiabilitiesAndEquity: string;
+  isBalanced: boolean;
+  assets: Array<{ accountName: string; balance: string }>;
+  liabilities: Array<{ accountName: string; balance: string }>;
+  equity: Array<{ accountName: string; balance: string }>;
+}
+
+export interface PartnerLedgerRow {
+  journalEntryId: string;
+  entryNumber: string;
+  entryDate: string;
+  description: string;
+  debit: string;
+  credit: string;
+  runningBalance: string;
+}
+
+export interface PartnerLedgerReport {
+  partyType: 'customer' | 'supplier';
+  partyId: string;
+  startDate?: string;
+  endDate?: string;
+  openingBalance: string;
+  totalDebit: string;
+  totalCredit: string;
+  closingBalance: string;
+  rows: PartnerLedgerRow[];
 }

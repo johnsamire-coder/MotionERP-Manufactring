@@ -1,28 +1,42 @@
 ﻿import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
+import { PostingEngineService } from '../accounting/posting-engine.service';
 import { InventoryNotFoundError, InventoryValidationError } from './inventory.errors';
 import { InventoryRepository } from './inventory.repository';
 import type {
   CreateMovementInput, CreateReservationInput, CreateWarehouseInput,
   StockBalanceRecord, StockMovementRecord, StockReservationRecord, WarehouseRecord,
+  StockLedgerEntryRecord,
 } from './inventory.types';
 
 @Injectable()
 export class InventoryService {
-  constructor(private readonly repository: InventoryRepository) {}
+  constructor(
+    private readonly repository: InventoryRepository,
+    @Optional() private readonly postingEngine?: PostingEngineService,
+  ) {}
 
-  async getWarehouses(): Promise<WarehouseRecord[]> { return this.repository.listWarehouses(); }
+  async getWarehouses(): Promise<WarehouseRecord[]> {
+    return this.repository.listWarehouses();
+  }
 
   async createWarehouse(input: CreateWarehouseInput): Promise<WarehouseRecord> {
     const code = normalizeCode(input.code);
     const name = normalizeName(input.name);
     const existing = await this.repository.findWarehouseByCode(code);
-    if (existing) throw new InventoryValidationError(`a warehouse with code "${code}" already exists`);
+    if (existing) {
+      throw new InventoryValidationError(`a warehouse with code "${code}" already exists`);
+    }
     return this.repository.insertWarehouse({ id: randomUUID(), code, name, orgNodeId: input.orgNodeId });
   }
 
-  async getBalances(): Promise<StockBalanceRecord[]> { return this.repository.listBalances(); }
-  async getMovements(): Promise<StockMovementRecord[]> { return this.repository.listMovements(); }
+  async getBalances(): Promise<StockBalanceRecord[]> {
+    return this.repository.listBalances();
+  }
+
+  async getMovements(): Promise<StockMovementRecord[]> {
+    return this.repository.listMovements();
+  }
 
   async createMovement(input: CreateMovementInput): Promise<StockMovementRecord> {
     const quantityNum = Number(input.quantity);
@@ -30,16 +44,14 @@ export class InventoryService {
       throw new InventoryValidationError('quantity must be a positive number');
     }
     const warehouseRecord = await this.repository.findWarehouseById(input.warehouseId);
-    if (!warehouseRecord) throw new InventoryNotFoundError(`warehouse ${input.warehouseId} does not exist`);
+    if (!warehouseRecord) {
+      throw new InventoryNotFoundError(`warehouse ${input.warehouseId} does not exist`);
+    }
 
     const isDecrease = input.movementType === 'issue' || input.movementType === 'transfer_out';
     const signedQuantity = isDecrease ? `-${input.quantity}` : input.quantity;
 
     if (isDecrease) {
-      // Compare against AVAILABLE (on_hand - reserved) from the very first
-      // version of this unit this time â€” reservations make goods off-limits
-      // for anything except the document that reserved them (D31, and the
-      // owner's explicit job-order reservation requirement).
       const balance = await this.repository.findBalance(input.itemId, input.warehouseId);
       const currentOnHand = balance ? Number(balance.onHand) : 0;
       const currentReserved = balance ? Number(balance.reserved) : 0;
@@ -49,11 +61,12 @@ export class InventoryService {
       }
     }
 
-    // ---- تقييم المخزون بالمتوسط المرجح المتحرك ----
+    // ---- تقييم المخزون بالمتوسط المرجح المتحرك (Moving Weighted Average) ----
     const bal = await this.repository.findBalance(input.itemId, input.warehouseId);
     const oldQty = bal ? Number(bal.onHand) : 0;
     const oldAvg = bal ? Number(bal.averageCost) : 0;
     let movementUnitCost: number;
+
     if (isDecrease) {
       movementUnitCost = oldAvg;
     } else {
@@ -65,6 +78,7 @@ export class InventoryService {
         throw new InventoryValidationError('unitCost must be a non-negative number');
       }
     }
+
     const movementTotalValue = movementUnitCost * quantityNum;
     const newQty = isDecrease ? oldQty - quantityNum : oldQty + quantityNum;
     const newAvg = isDecrease
@@ -72,22 +86,66 @@ export class InventoryService {
       : (newQty > 0 ? ((oldQty * oldAvg) + movementTotalValue) / newQty : movementUnitCost);
 
     const movement = await this.repository.insertMovement({
-      id: randomUUID(), itemId: input.itemId, warehouseId: input.warehouseId,
-      movementType: input.movementType, quantity: input.quantity, signedQuantity,
-      movementDate: input.movementDate, note: input.note,
-      unitCost: movementUnitCost.toFixed(6), totalValue: movementTotalValue.toFixed(4),
-      sourceModule: input.sourceModule, sourceId: input.sourceId,
+      id: randomUUID(),
+      itemId: input.itemId,
+      warehouseId: input.warehouseId,
+      movementType: input.movementType,
+      quantity: input.quantity,
+      signedQuantity,
+      movementDate: input.movementDate,
+      note: input.note,
+      unitCost: movementUnitCost.toFixed(6),
+      totalValue: movementTotalValue.toFixed(4),
+      sourceModule: input.sourceModule,
+      sourceId: input.sourceId,
     });
+
     await this.repository.applyDelta(input.itemId, input.warehouseId, signedQuantity);
+    
     await this.repository.applyValuation(input.itemId, input.warehouseId, {
       averageCost: newAvg.toFixed(6),
       totalValue: (newQty * newAvg).toFixed(4),
       lastPurchaseCost: input.movementType === 'receipt' ? movementUnitCost.toFixed(6) : undefined,
     });
+
+    // ---- تسجيل السجل المالي التراكمي للمخزون (Stock Ledger Entry) ----
+    await this.repository.insertLedgerEntry({
+      id: randomUUID(),
+      itemId: input.itemId,
+      warehouseId: input.warehouseId,
+      movementId: movement.id,
+      quantityChange: signedQuantity,
+      balanceQtyAfter: newQty.toFixed(6),
+      incomingRate: isDecrease ? '0' : movementUnitCost.toFixed(6),
+      valuationRate: newAvg.toFixed(6),
+      stockValueChange: isDecrease ? `-${movementTotalValue.toFixed(4)}` : movementTotalValue.toFixed(4),
+      stockValueAfter: (newQty * newAvg).toFixed(4),
+    });
+
+    // ---- ترحيل القيد المحاسبي آلياً إلى دفتر الأستاذ العام (Posting Engine) ----
+    if (this.postingEngine && movementTotalValue > 0) {
+      await this.postingEngine.postStockMovement({
+        movementId: movement.id,
+        itemId: input.itemId,
+        warehouseId: input.warehouseId,
+        orgNodeId: warehouseRecord.orgNodeId,
+        movementType: input.movementType,
+        quantity: input.quantity,
+        unitCost: movementUnitCost.toFixed(6),
+        totalValue: movementTotalValue.toFixed(4),
+        movementDate: input.movementDate,
+        note: input.note,
+        sourceModule: input.sourceModule,
+        sourceId: input.sourceId,
+      });
+    }
+
     return movement;
   }
 
-  async getReservations(): Promise<StockReservationRecord[]> { return this.repository.listReservations(); }
+  async getReservations(): Promise<StockReservationRecord[]> {
+    return this.repository.listReservations();
+  }
 
   async reserveStock(input: CreateReservationInput): Promise<StockReservationRecord> {
     const quantityNum = Number(input.quantity);
@@ -98,7 +156,9 @@ export class InventoryService {
       throw new InventoryValidationError('reservation source is required');
     }
     const warehouseRecord = await this.repository.findWarehouseById(input.warehouseId);
-    if (!warehouseRecord) throw new InventoryNotFoundError(`warehouse ${input.warehouseId} does not exist`);
+    if (!warehouseRecord) {
+      throw new InventoryNotFoundError(`warehouse ${input.warehouseId} does not exist`);
+    }
 
     const balance = await this.repository.findBalance(input.itemId, input.warehouseId);
     const currentOnHand = balance ? Number(balance.onHand) : 0;
@@ -109,8 +169,11 @@ export class InventoryService {
     }
 
     const reservation = await this.repository.insertReservation({
-      id: randomUUID(), itemId: input.itemId, warehouseId: input.warehouseId,
-      quantity: input.quantity, source: input.source.trim(),
+      id: randomUUID(),
+      itemId: input.itemId,
+      warehouseId: input.warehouseId,
+      quantity: input.quantity,
+      source: input.source,
     });
     await this.repository.applyReservedDelta(input.itemId, input.warehouseId, input.quantity);
     return reservation;
@@ -118,19 +181,28 @@ export class InventoryService {
 
   async releaseReservation(id: string): Promise<StockReservationRecord> {
     const reservation = await this.repository.findReservationById(id);
-    if (!reservation) throw new InventoryNotFoundError(`reservation ${id} does not exist`);
+    if (!reservation) {
+      throw new InventoryNotFoundError(`reservation ${id} does not exist`);
+    }
     if (reservation.status === 'released') return reservation;
     await this.repository.applyReservedDelta(reservation.itemId, reservation.warehouseId, `-${reservation.quantity}`);
     return this.repository.setReservationReleased(id);
+  }
+
+  async getLedgerEntries(itemId?: string, warehouseId?: string): Promise<StockLedgerEntryRecord[]> {
+    return this.repository.listLedgerEntries(itemId, warehouseId);
   }
 }
 
 function normalizeCode(raw: unknown): string {
   if (typeof raw !== 'string') throw new InventoryValidationError('code is required');
   const trimmed = raw.trim();
-  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(trimmed)) throw new InventoryValidationError('code must match ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(trimmed)) {
+    throw new InventoryValidationError('code must match ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
+  }
   return trimmed;
 }
+
 function normalizeName(raw: unknown): string {
   if (typeof raw !== 'string') throw new InventoryValidationError('name is required');
   const trimmed = raw.trim();

@@ -295,6 +295,55 @@
       "when": 1789936733897,
       "tag": "0041_secret_lester",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1789974539626,
+      "tag": "0042_careful_richard_fisk",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1789979575505,
+      "tag": "0043_majestic_lilith",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1789979935720,
+      "tag": "0044_silly_warpath",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1789980195921,
+      "tag": "0045_loud_marvex",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1789981190810,
+      "tag": "0046_bitter_sway",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1789981366388,
+      "tag": "0047_unusual_frank_castle",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1789987504696,
+      "tag": "0048_cooing_logan",
+      "breakpoints": true
     }
   ]
 }

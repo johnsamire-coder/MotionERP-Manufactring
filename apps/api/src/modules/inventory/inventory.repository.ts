@@ -1,11 +1,11 @@
 ﻿import { Injectable } from '@nestjs/common';
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
-import { stockBalance, stockMovement, stockReservation, warehouse } from './inventory.schema';
+import { stockBalance, stockLedgerEntry, stockMovement, stockReservation, warehouse } from './inventory.schema';
 import type {
   CreateMovementInput, CreateReservationInput, CreateWarehouseInput, MovementType,
   ReservationStatus, StockBalanceRecord, StockMovementRecord, StockReservationRecord,
-  WarehouseRecord, WarehouseStatus,
+  WarehouseRecord, WarehouseStatus, StockLedgerEntryRecord, CreateStockLedgerEntryInput,
 } from './inventory.types';
 
 const warehouseColumns = {
@@ -25,11 +25,23 @@ const reservationColumns = {
   quantity: stockReservation.quantity, source: stockReservation.source, status: stockReservation.status,
   createdAt: stockReservation.createdAt, releasedAt: stockReservation.releasedAt,
 };
+const ledgerColumns = {
+  id: stockLedgerEntry.id, itemId: stockLedgerEntry.itemId, warehouseId: stockLedgerEntry.warehouseId,
+  movementId: stockLedgerEntry.movementId, quantityChange: stockLedgerEntry.quantityChange,
+  balanceQtyAfter: stockLedgerEntry.balanceQtyAfter, incomingRate: stockLedgerEntry.incomingRate,
+  valuationRate: stockLedgerEntry.valuationRate, stockValueChange: stockLedgerEntry.stockValueChange,
+  stockValueAfter: stockLedgerEntry.stockValueAfter, createdAt: stockLedgerEntry.createdAt,
+};
 
 interface WarehouseRow { id: string; code: string; name: string; orgNodeId: string; status: string; createdAt: Date; updatedAt: Date; }
 interface MovementRow { id: string; itemId: string; warehouseId: string; movementType: string; quantity: string; movementDate: Date; note: string | null; createdAt: Date; unitCost: string | null; totalValue: string | null; sourceModule: string | null; sourceId: string | null; }
 interface BalanceRow { id: string; itemId: string; warehouseId: string; onHand: string; reserved: string; updatedAt: Date; averageCost: string; totalValue: string; lastPurchaseCost: string | null; lastPurchaseAt: Date | null; }
 interface ReservationRow { id: string; itemId: string; warehouseId: string; quantity: string; source: string; status: string; createdAt: Date; releasedAt: Date | null; }
+interface LedgerRow {
+  id: string; itemId: string; warehouseId: string; movementId: string | null; quantityChange: string;
+  balanceQtyAfter: string; incomingRate: string; valuationRate: string; stockValueChange: string;
+  stockValueAfter: string; createdAt: Date;
+}
 
 function toWarehouseRecord(row: WarehouseRow): WarehouseRecord {
   return { id: row.id, code: row.code, name: row.name, orgNodeId: row.orgNodeId, status: row.status as WarehouseStatus,
@@ -51,6 +63,14 @@ function toReservationRecord(row: ReservationRow): StockReservationRecord {
   return { id: row.id, itemId: row.itemId, warehouseId: row.warehouseId, quantity: row.quantity, source: row.source,
     status: row.status as ReservationStatus, createdAt: row.createdAt.toISOString(),
     releasedAt: row.releasedAt ? row.releasedAt.toISOString() : null };
+}
+function toLedgerRecord(row: LedgerRow): StockLedgerEntryRecord {
+  return {
+    id: row.id, itemId: row.itemId, warehouseId: row.warehouseId, movementId: row.movementId,
+    quantityChange: row.quantityChange, balanceQtyAfter: row.balanceQtyAfter, incomingRate: row.incomingRate,
+    valuationRate: row.valuationRate, stockValueChange: row.stockValueChange, stockValueAfter: row.stockValueAfter,
+    createdAt: row.createdAt.toISOString(),
+  };
 }
 
 @Injectable()
@@ -156,5 +176,46 @@ export class InventoryRepository {
       .set({ status: 'released', releasedAt: new Date() })
       .where(eq(stockReservation.id, id)).returning(reservationColumns);
     return toReservationRecord(rows[0]!);
+  }
+
+  // ---- Stock Ledger Entry Methods ----
+
+  async insertLedgerEntry(input: CreateStockLedgerEntryInput & { id: string }): Promise<StockLedgerEntryRecord> {
+    const rows = await this.database.db.insert(stockLedgerEntry).values({
+      id: input.id,
+      itemId: input.itemId,
+      warehouseId: input.warehouseId,
+      movementId: input.movementId ?? null,
+      quantityChange: input.quantityChange,
+      balanceQtyAfter: input.balanceQtyAfter,
+      incomingRate: input.incomingRate ?? '0',
+      valuationRate: input.valuationRate ?? '0',
+      stockValueChange: input.stockValueChange ?? '0',
+      stockValueAfter: input.stockValueAfter ?? '0',
+    }).returning(ledgerColumns);
+    return toLedgerRecord(rows[0]!);
+  }
+
+  async findLatestLedgerEntry(itemId: string, warehouseId: string): Promise<StockLedgerEntryRecord | null> {
+    const rows = await this.database.db.select(ledgerColumns)
+      .from(stockLedgerEntry)
+      .where(and(eq(stockLedgerEntry.itemId, itemId), eq(stockLedgerEntry.warehouseId, warehouseId)))
+      .orderBy(desc(stockLedgerEntry.createdAt))
+      .limit(1);
+    return rows[0] ? toLedgerRecord(rows[0]) : null;
+  }
+
+  async listLedgerEntries(itemId?: string, warehouseId?: string): Promise<StockLedgerEntryRecord[]> {
+    const conditions = [];
+    if (itemId) conditions.push(eq(stockLedgerEntry.itemId, itemId));
+    if (warehouseId) conditions.push(eq(stockLedgerEntry.warehouseId, warehouseId));
+
+    const query = this.database.db.select(ledgerColumns).from(stockLedgerEntry);
+    
+    const rows = conditions.length > 0 
+      ? await query.where(and(...conditions)).orderBy(asc(stockLedgerEntry.createdAt))
+      : await query.orderBy(asc(stockLedgerEntry.createdAt));
+      
+    return rows.map(toLedgerRecord);
   }
 }

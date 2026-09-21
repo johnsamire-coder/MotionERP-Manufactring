@@ -1,4 +1,4 @@
-﻿import { randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { AccountingNotFoundError, AccountingValidationError } from './accounting.errors';
 import { AccountingRepository } from './accounting.repository';
@@ -9,6 +9,9 @@ import type {
   CreateAccountingPeriodInput, CreateAccountTypeInput, CreateChartOfAccountsInput,
   CreateCostCenterInput, CreateFiscalYearInput, CreateJournalEntryInput,
   FiscalYearRecord, JournalEntryRecord, UpsertCompanyAccountingConfigInput,
+  TrialBalanceReport, ProfitAndLossReport, BalanceSheetReport, PartnerLedgerReport,
+  PartnerLedgerRow, FixedAssetRecord, CreateFixedAssetInput, DepreciationEntryRecord,
+  PostDepreciationResult, FixedAssetStatus,
 } from './accounting.types';
 
 @Injectable()
@@ -67,7 +70,6 @@ export class AccountingService {
 
     const fy = await this.repository.insertFiscalYear({ id: randomUUID(), ...input });
 
-    // Automatically generate 12 monthly periods
     for (let month = 1; month <= 12; month++) {
       const pStart = new Date(start.getFullYear(), start.getMonth() + month - 1, 1);
       const pEnd = new Date(start.getFullYear(), start.getMonth() + month, 0, 23, 59, 59, 999);
@@ -147,7 +149,6 @@ export class AccountingService {
 
     const entryDate = input.entryDate ? new Date(input.entryDate) : new Date();
 
-    // Auto-resolve Fiscal Year and Period if not provided
     let fyId = input.fiscalYearId;
     let pId = input.periodId;
     if (!fyId || !pId) {
@@ -229,5 +230,297 @@ export class AccountingService {
       accountId, accountCode: v.code, accountName: v.name,
       totalDebit: v.debit.toFixed(4), totalCredit: v.credit.toFixed(4), balance: (v.debit - v.credit).toFixed(4),
     }));
+  }
+
+  // ==================== FIXED ASSETS & DEPRECIATION LOGIC ====================
+
+  async getFixedAssets(orgNodeId?: string): Promise<FixedAssetRecord[]> {
+    return this.repository.listFixedAssets(orgNodeId);
+  }
+
+  async getFixedAsset(id: string): Promise<FixedAssetRecord> {
+    const asset = await this.repository.findFixedAssetById(id);
+    if (!asset) throw new AccountingNotFoundError(`fixed asset ${id} does not exist`);
+    return asset;
+  }
+
+  async createFixedAsset(input: CreateFixedAssetInput): Promise<FixedAssetRecord> {
+    if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
+    if (!input.assetCode || input.assetCode.trim().length === 0) throw new AccountingValidationError('assetCode is required');
+    if (!input.assetName || input.assetName.trim().length === 0) throw new AccountingValidationError('assetName is required');
+
+    const cost = Number(input.purchaseCost);
+    if (!Number.isFinite(cost) || cost <= 0) throw new AccountingValidationError('purchaseCost must be a positive number');
+
+    const life = input.usefulLifeMonths;
+    if (!Number.isInteger(life) || life <= 0) throw new AccountingValidationError('usefulLifeMonths must be a positive integer');
+
+    const existing = await this.repository.findFixedAssetByCode(input.orgNodeId, input.assetCode.trim());
+    if (existing) throw new AccountingValidationError(`fixed asset with code "${input.assetCode}" already exists for this company`);
+
+    return this.repository.insertFixedAsset({
+      ...input,
+      id: randomUUID(),
+      assetCode: input.assetCode.trim(),
+      assetName: input.assetName.trim(),
+    });
+  }
+
+  async postAssetDepreciation(assetId: string, periodDateStr?: string): Promise<PostDepreciationResult> {
+    const asset = await this.getFixedAsset(assetId);
+    if (asset.status !== 'active') {
+      throw new AccountingValidationError(`fixed asset "${asset.assetName}" is ${asset.status} and cannot be depreciated`);
+    }
+
+    const totalCost = Number(asset.purchaseCost);
+    const salvage = Number(asset.salvageValue ?? '0');
+    const depreciableCost = totalCost - salvage;
+    const currentDepreciated = Number(asset.totalDepreciated ?? '0');
+    const remainingToDepreciate = depreciableCost - currentDepreciated;
+
+    if (remainingToDepreciate <= 0) {
+      await this.repository.updateFixedAssetDepreciation(asset.id, asset.totalDepreciated, 'fully_depreciated');
+      throw new AccountingValidationError(`fixed asset "${asset.assetName}" is already fully depreciated`);
+    }
+
+    const monthlyAmount = depreciableCost / asset.usefulLifeMonths;
+    const actualDepreciationAmount = Math.min(monthlyAmount, remainingToDepreciate);
+    const newTotalDepreciated = (currentDepreciated + actualDepreciationAmount).toFixed(4);
+
+    const entryDate = periodDateStr ? new Date(periodDateStr) : new Date();
+
+    // 1. Create Automated Double-Entry Journal Entry:
+    // [Dr: Depreciation Expense Account (with Cost Center) / Cr: Accumulated Depreciation Account]
+    const draftJournal = await this.createEntry({
+      orgNodeId: asset.orgNodeId,
+      description: `[Auto] قسط إهلاك شهري لأصل: ${asset.assetName} (${asset.assetCode})`,
+      reference: `DEP-${asset.assetCode}`,
+      entryDate: entryDate.toISOString(),
+      isAutoGenerated: true,
+      idempotencyKey: `asset-depr-${asset.id}-${entryDate.getFullYear()}-${entryDate.getMonth() + 1}`,
+      sourceEventType: 'asset_depreciation',
+      lines: [
+        {
+          accountId: asset.depreciationExpenseAccountId,
+          debitAmount: actualDepreciationAmount.toFixed(4),
+          creditAmount: '0',
+          description: `[Auto] مصروف إهلاك: ${asset.assetName}`,
+          costCenterId: asset.costCenterId ?? undefined,
+        },
+        {
+          accountId: asset.accumulatedDepreciationAccountId,
+          debitAmount: '0',
+          creditAmount: actualDepreciationAmount.toFixed(4),
+          description: `[Auto] مجمع إهلاك: ${asset.assetName}`,
+        },
+      ],
+    });
+
+    const postedJournal = await this.postEntry(draftJournal.id);
+
+    // 2. Insert Depreciation Record
+    const deEntry = await this.repository.insertDepreciationEntry({
+      id: randomUUID(),
+      assetId: asset.id,
+      periodId: postedJournal.periodId ?? null,
+      entryDate,
+      depreciationAmount: actualDepreciationAmount.toFixed(4),
+      accumulatedAmountAfter: newTotalDepreciated,
+      journalEntryId: postedJournal.id,
+    });
+
+    // 3. Update Asset Status if completed
+    const newStatus: FixedAssetStatus = Number(newTotalDepreciated) >= depreciableCost ? 'fully_depreciated' : 'active';
+    await this.repository.updateFixedAssetDepreciation(asset.id, newTotalDepreciated, newStatus);
+
+    const updatedAsset = await this.getFixedAsset(asset.id);
+
+    return {
+      asset: updatedAsset,
+      depreciationEntry: deEntry,
+      journalEntry: postedJournal,
+    };
+  }
+
+  // ==================== FINANCIAL REPORTS LOGIC ====================
+
+  async getTrialBalance(orgNodeId: string, start?: string, end?: string): Promise<TrialBalanceReport> {
+    const lines = await this.repository.listAllPostedLinesWithDetails({ orgNodeId, startDate: start, endDate: end });
+    const byAccount = new Map<string, { code: string; name: string; debit: number; credit: number }>();
+
+    for (const l of lines) {
+      const current = byAccount.get(l.accountId) ?? { code: l.code, name: l.name, debit: 0, credit: 0 };
+      current.debit += Number(l.debit);
+      current.credit += Number(l.credit);
+      byAccount.set(l.accountId, current);
+    }
+
+    let grandDebit = 0;
+    let grandCredit = 0;
+
+    const rows = Array.from(byAccount.entries()).map(([id, val]) => {
+      grandDebit += val.debit;
+      grandCredit += val.credit;
+      const netBalance = val.debit - val.credit;
+      return {
+        accountId: id,
+        accountCode: val.code,
+        accountName: val.name,
+        debit: val.debit.toFixed(4),
+        credit: val.credit.toFixed(4),
+        balance: netBalance.toFixed(4),
+      };
+    });
+
+    return {
+      orgNodeId,
+      startDate: start,
+      endDate: end,
+      totalDebit: grandDebit.toFixed(4),
+      totalCredit: grandCredit.toFixed(4),
+      isBalanced: Math.abs(grandDebit - grandCredit) < 0.0001,
+      rows,
+    };
+  }
+
+  async getProfitAndLoss(orgNodeId: string, start?: string, end?: string): Promise<ProfitAndLossReport> {
+    const lines = await this.repository.listAllPostedLinesWithDetails({ orgNodeId, startDate: start, endDate: end });
+    
+    let revenueSum = 0;
+    let cogsSum = 0;
+    let expenseSum = 0;
+
+    const revMap = new Map<string, number>();
+    const expMap = new Map<string, number>();
+
+    for (const l of lines) {
+      const netAmount = Number(l.credit) - Number(l.debit);
+      const expenseAmount = Number(l.debit) - Number(l.credit);
+
+      if (l.typeCode === 'revenue') {
+        revenueSum += netAmount;
+        revMap.set(l.name, (revMap.get(l.name) ?? 0) + netAmount);
+      } else if (l.typeCode === 'cogs') {
+        cogsSum += expenseAmount;
+        expMap.set(l.name, (expMap.get(l.name) ?? 0) + expenseAmount);
+      } else if (l.typeCode === 'expense') {
+        expenseSum += expenseAmount;
+        expMap.set(l.name, (expMap.get(l.name) ?? 0) + expenseAmount);
+      }
+    }
+
+    const grossProfit = revenueSum - cogsSum;
+    const netProfit = grossProfit - expenseSum;
+
+    return {
+      orgNodeId,
+      startDate: start,
+      endDate: end,
+      totalRevenue: revenueSum.toFixed(4),
+      totalCogs: cogsSum.toFixed(4),
+      grossProfit: grossProfit.toFixed(4),
+      totalExpenses: expenseSum.toFixed(4),
+      netProfit: netProfit.toFixed(4),
+      revenueDetails: Array.from(revMap.entries()).map(([name, val]) => ({ accountName: name, balance: val.toFixed(4) })),
+      expenseDetails: Array.from(expMap.entries()).map(([name, val]) => ({ accountName: name, balance: val.toFixed(4) })),
+    };
+  }
+
+  async getBalanceSheet(orgNodeId: string, dateStr: string): Promise<BalanceSheetReport> {
+    const lines = await this.repository.listAllPostedLinesWithDetails({ orgNodeId, endDate: dateStr });
+    const pnl = await this.getProfitAndLoss(orgNodeId, undefined, dateStr);
+
+    let assetsSum = 0;
+    let liabilitiesSum = 0;
+    let equitySum = 0;
+
+    const assetMap = new Map<string, number>();
+    const liabMap = new Map<string, number>();
+    const eqMap = new Map<string, number>();
+
+    for (const l of lines) {
+      const assetBal = Number(l.debit) - Number(l.credit);
+      const liabEqBal = Number(l.credit) - Number(l.debit);
+
+      if (l.typeCode === 'asset' || l.typeCode === 'wip') {
+        assetsSum += assetBal;
+        assetMap.set(l.name, (assetMap.get(l.name) ?? 0) + assetBal);
+      } else if (l.typeCode === 'liability') {
+        liabilitiesSum += liabEqBal;
+        liabMap.set(l.name, (liabMap.get(l.name) ?? 0) + liabEqBal);
+      } else if (l.typeCode === 'equity') {
+        equitySum += liabEqBal;
+        eqMap.set(l.name, (eqMap.get(l.name) ?? 0) + liabEqBal);
+      }
+    }
+
+    const currentNetProfit = Number(pnl.netProfit);
+    equitySum += currentNetProfit;
+    eqMap.set('صافي أرباح الفترة الحالية', (eqMap.get('صافي أرباح الفترة الحالية') ?? 0) + currentNetProfit);
+
+    const totalLiabilitiesAndEquity = liabilitiesSum + equitySum;
+
+    return {
+      orgNodeId,
+      date: dateStr,
+      totalAssets: assetsSum.toFixed(4),
+      totalLiabilities: liabilitiesSum.toFixed(4),
+      totalEquity: equitySum.toFixed(4),
+      totalLiabilitiesAndEquity: totalLiabilitiesAndEquity.toFixed(4),
+      isBalanced: Math.abs(assetsSum - totalLiabilitiesAndEquity) < 0.001,
+      assets: Array.from(assetMap.entries()).map(([name, val]) => ({ accountName: name, balance: val.toFixed(4) })),
+      liabilities: Array.from(liabMap.entries()).map(([name, val]) => ({ accountName: name, balance: val.toFixed(4) })),
+      equity: Array.from(eqMap.entries()).map(([name, val]) => ({ accountName: name, balance: val.toFixed(4) })),
+    };
+  }
+
+  async getPartnerLedger(partyType: 'customer' | 'supplier', partyId: string, start?: string, end?: string): Promise<PartnerLedgerReport> {
+    const rawLines = await this.repository.getPartnerLedgerLines(partyType, partyId);
+
+    let openingBal = 0;
+    let totalDebit = 0;
+    let totalCredit = 0;
+
+    const filteredRows: PartnerLedgerRow[] = [];
+    let runningBalance = 0;
+
+    for (const row of rawLines) {
+      const entryDate = row.entryDate;
+      const dr = Number(row.debitAmount);
+      const cr = Number(row.creditAmount);
+      const effect = partyType === 'customer' ? (dr - cr) : (cr - dr);
+
+      if (start && entryDate < new Date(start)) {
+        openingBal += effect;
+        runningBalance += effect;
+      } else if (end && entryDate > new Date(end)) {
+        // Skip
+      } else {
+        totalDebit += dr;
+        totalCredit += cr;
+        runningBalance += effect;
+        filteredRows.push({
+          journalEntryId: row.journalEntryId,
+          entryNumber: row.entryNumber,
+          entryDate: entryDate.toISOString(),
+          description: row.description || '',
+          debit: dr.toFixed(4),
+          credit: cr.toFixed(4),
+          runningBalance: runningBalance.toFixed(4),
+        });
+      }
+    }
+
+    return {
+      partyType,
+      partyId,
+      startDate: start,
+      endDate: end,
+      openingBalance: openingBal.toFixed(4),
+      totalDebit: totalDebit.toFixed(4),
+      totalCredit: totalCredit.toFixed(4),
+      closingBalance: runningBalance.toFixed(4),
+      rows: filteredRows,
+    };
   }
 }
