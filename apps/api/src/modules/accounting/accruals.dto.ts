@@ -1,21 +1,18 @@
 // ============================================================
-// Motion ERP — Accruals, Prepaids & Provisions DTOs
-// Step 64
+// Motion ERP — Accrual, Prepaid & Provision DTOs (Updated)
+// Step 77
 // ============================================================
-import { IsUUID, IsString, IsDateString, IsNumber, IsOptional, IsEnum, IsInt, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsUUID, IsString, IsDateString, IsNumber, IsOptional, IsInt, Min, Max } from 'class-validator';
 
-// ── Accrual DTOs ─────────────────────────────
+// ── Accrued Expense DTOs ─────────────────────
 export class CreateAccrualDto {
-  @IsUUID()   companyId!: string;
-  @IsUUID()   fiscalYearId!: string;
-  @IsUUID()   periodId!: string;
-  @IsDateString() accrualDate!: string;
-  @IsString() description!: string;
+  @IsUUID()   orgNodeId!: string;
   @IsUUID()   expenseAccountId!: string;
-  @IsUUID()   liabilityAccountId!: string;
-  @IsOptional() @IsUUID() costCenterId?: string;
+  @IsUUID()   accruedLiabilityAccountId!: string;
+  @IsDateString() accrualDate!: string;
   @IsNumber() @Min(0.01) amount!: number;
+  @IsString() description!: string;
+  @IsOptional() @IsString() notes?: string;
 }
 
 export class PostAccrualDto {
@@ -24,77 +21,43 @@ export class PostAccrualDto {
 
 export class ReverseAccrualDto {
   @IsUUID() id!: string;
-  @IsString() reason!: string;
+  @IsDateString() reversalDate!: string;
 }
 
-// ── Prepaid DTOs ─────────────────────────────
+// ── Prepaid Expense DTOs ─────────────────────
 export class CreatePrepaidDto {
-  @IsUUID()   companyId!: string;
-  @IsUUID()   fiscalYearId!: string;
-  @IsUUID()   periodId!: string;
-  @IsDateString() startDate!: string;
-  @IsDateString() endDate!: string;
-  @IsString() description!: string;
-  @IsUUID()   prepaidAccountId!: string;
+  @IsUUID()   orgNodeId!: string;
+  @IsUUID()   prepaidAssetAccountId!: string;
   @IsUUID()   expenseAccountId!: string;
-  @IsOptional() @IsUUID() costCenterId?: string;
+  @IsDateString() paymentDate!: string;
+  @IsDateString() coverageStartDate!: string;
+  @IsDateString() coverageEndDate!: string;
   @IsNumber() @Min(0.01) totalAmount!: number;
-  @IsInt()    @Min(1) monthsCount!: number;
+  @IsNumber() @Min(0.01) monthlyAmortization!: number;
+  @IsString() description!: string;
+  @IsOptional() @IsString() notes?: string;
 }
 
 export class AmortizePrepaidDto {
   @IsUUID() id!: string;
-  @IsUUID() periodId!: string;
+  @IsNumber() @Min(0.01) amount!: number;
 }
 
-// ── Provision DTOs ───────────────────────────
-export enum ProvisionType {
-  WARRANTY  = 'warranty',
-  BAD_DEBT  = 'bad_debt',
-  LEGAL     = 'legal',
-  OTHER     = 'other',
-}
-
-export class CreateProvisionDto {
-  @IsUUID()   companyId!: string;
-  @IsUUID()   fiscalYearId!: string;
-  @IsUUID()   periodId!: string;
+// ── Warranty Provision DTOs ──────────────────
+export class CreateWarrantyProvisionDto {
+  @IsUUID()   orgNodeId!: string;
+  @IsUUID()   warrantyExpenseAccountId!: string;
+  @IsUUID()   provisionLiabilityAccountId!: string;
   @IsDateString() provisionDate!: string;
-  @IsEnum(ProvisionType) provisionType!: ProvisionType;
+  @IsOptional() @IsUUID() salesInvoiceId?: string;
+  @IsNumber() @Min(0.01) baseAmount!: number;
+  @IsNumber() @Min(0.01) @Max(100) provisionRate!: number;
+  @IsOptional() @IsDateString() warrantyExpiryDate?: string;
   @IsString() description!: string;
-  @IsUUID()   expenseAccountId!: string;
-  @IsUUID()   provisionAccountId!: string;
-  @IsOptional() @IsUUID() costCenterId?: string;
-  @IsNumber() @Min(0) baseAmount!: number;
-  @IsNumber() @Min(0.01) ratePercentage!: number;
-  @IsOptional() @IsUUID() relatedInvoiceId?: string;
-  @IsOptional() @IsInt() @Min(1) warrantyMonths?: number;
-}
-
-export class PostProvisionDto {
-  @IsUUID() id!: string;
+  @IsOptional() @IsString() notes?: string;
 }
 
 export class UtilizeProvisionDto {
   @IsUUID() id!: string;
-  @IsNumber() @Min(0.01) utilizedAmount!: number;
-  @IsString() description!: string;
-}
-
-// ── Query DTOs ───────────────────────────────
-export class QueryAccrualsDto {
-  @IsOptional() @IsUUID() companyId?: string;
-  @IsOptional() @IsUUID() periodId?: string;
-  @IsOptional() @IsString() status?: string;
-}
-
-export class QueryPrepaidsDto {
-  @IsOptional() @IsUUID() companyId?: string;
-  @IsOptional() @IsString() status?: string;
-}
-
-export class QueryProvisionsDto {
-  @IsOptional() @IsUUID() companyId?: string;
-  @IsOptional() @IsString() provisionType?: string;
-  @IsOptional() @IsString() status?: string;
+  @IsNumber() @Min(0.01) amount!: number;
 }
