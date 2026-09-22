@@ -3,35 +3,36 @@
 // Step 74 | VAT Settlement, WHT Form 41 & Customs Declarations
 // ============================================================
 import {
-  pgTable,
+  pgSchema,
   uuid,
   text,
   numeric,
   date,
   integer,
   timestamp,
-  pgEnum,
 } from 'drizzle-orm/pg-core';
 
+export const taxSchema = pgSchema('tax');
+
 // ── Enums ────────────────────────────────────
-export const taxSettlementStatusEnum = pgEnum('tax_settlement_status', [
+export const taxSettlementStatusEnum = taxSchema.enum('tax_settlement_status', [
   'draft',        // مسودة تسوية
   'filed',        // تم تقديم الإقرار الضريبي
   'paid',         // تم السداد لمصلحة الضرائب
 ]);
 
-export const whtDirectionEnum = pgEnum('wht_direction', [
+export const whtDirectionEnum = taxSchema.enum('wht_direction', [
   'deducted_by_us',   // خصم خصمناه من الموردين ونورده لمصلحة الضرائب (1% أو 3%)
   'deducted_from_us', // خصم خصمته المستشفيات والعملاء من مستحقاتنا
 ]);
 
-export const whtStatusEnum = pgEnum('wht_status', [
+export const whtStatusEnum = taxSchema.enum('wht_status', [
   'recorded',   // مثبت بالدفاتر
   'declared',   // مدرج في نموذج 41 ربع سنوي
   'settled',    // تم سداده / تسويته
 ]);
 
-export const customsStatusEnum = pgEnum('customs_status', [
+export const customsStatusEnum = taxSchema.enum('customs_status', [
   'draft',        // تحت الإجراء الجمركي
   'cleared',      // تم الإفراج الجمركي وسداد الرسوم
   'capitalized',  // تمت رسملة الرسوم على تكلفة الصاج والمخزون
@@ -41,7 +42,7 @@ export const customsStatusEnum = pgEnum('customs_status', [
 // القيد: Dr Output VAT (ضريبة مبيعات)
 //       Cr Input VAT (ضريبة مدخلات)
 //       Cr Tax Authority Payable (المستحق لمصلحة الضرائب)
-export const taxSettlement = pgTable('tax_settlement', {
+export const taxSettlement = taxSchema.table('tax_settlement', {
   id:                 uuid('id').defaultRandom().primaryKey(),
   settlementNumber:   text('settlement_number').notNull().unique(),
   companyId:          uuid('company_id').notNull(),
@@ -64,13 +65,13 @@ export const taxSettlement = pgTable('tax_settlement', {
 
   // Audit
   createdBy:          uuid('created_by').notNull(),
-  createdAt:          timestamp('created_at').defaultNow().notNull(),
-  updatedAt:          timestamp('updated_at').defaultNow().notNull(),
+  createdAt:          timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt:          timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 // ── 2. ضريبة الخصم والإضافة (نموذج 41 ضرائب) ──
 // توريدات خامات صاج: 1% | خدمات وتشغيل خارجي ودهانات: 3%
-export const withholdingTaxEntry = pgTable('withholding_tax_entry', {
+export const withholdingTaxEntry = taxSchema.table('withholding_tax_entry', {
   id:                 uuid('id').defaultRandom().primaryKey(),
   entryNumber:        text('entry_number').notNull().unique(),
   companyId:          uuid('company_id').notNull(),
@@ -80,7 +81,7 @@ export const withholdingTaxEntry = pgTable('withholding_tax_entry', {
 
   // جهة التعامل
   direction:          whtDirectionEnum('direction').notNull(),
-  partnerId:          uuid('partnerId').notNull(),
+  partnerId:          uuid('partner_id').notNull(),
   partnerName:        text('partner_name').notNull(),
   taxRegistrationNum: text('tax_registration_num').notNull(), // رقم التسجيل الضريبي للشركة/المورد
 
@@ -98,13 +99,13 @@ export const withholdingTaxEntry = pgTable('withholding_tax_entry', {
 
   // Audit
   createdBy:          uuid('created_by').notNull(),
-  createdAt:          timestamp('created_at').defaultNow().notNull(),
-  updatedAt:          timestamp('updated_at').defaultNow().notNull(),
+  createdAt:          timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt:          timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 // ── 3. الإفراج الجمركي ومشمول الشهادات (Customs) ─
 // تسجيل الرسوم الجمركية ورسم التنمية وضريبة القيمة المضافة لرسملتها على الواردات
-export const customsDeclaration = pgTable('customs_declaration', {
+export const customsDeclaration = taxSchema.table('customs_declaration', {
   id:                 uuid('id').defaultRandom().primaryKey(),
   declarationNumber:  text('declaration_number').notNull().unique(), // رقم الشهادة 46 ك.م
   companyId:          uuid('company_id').notNull(),
@@ -135,8 +136,8 @@ export const customsDeclaration = pgTable('customs_declaration', {
 
   // Audit
   createdBy:          uuid('created_by').notNull(),
-  createdAt:          timestamp('created_at').defaultNow().notNull(),
-  updatedAt:          timestamp('updated_at').defaultNow().notNull(),
+  createdAt:          timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt:          timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 // ── Type Exports ─────────────────────────────

@@ -41,3 +41,5 @@ export * from '../../../modules/hr/hr.schema';
 export * from '../../../modules/auth/auth.schema';
 
 export * from '../../../modules/accounting/accrual.schema';
+
+export * from '../../../modules/accounting/tax-customs.schema';
