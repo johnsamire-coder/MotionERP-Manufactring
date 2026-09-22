@@ -9,10 +9,8 @@ import {
   Cpu,
   ShieldCheck,
   Calculator,
-  ArrowLeftRight,
   Percent,
   TrendingUp,
-  Activity,
   AlertOctagon,
   Landmark,
   Lock,
@@ -24,6 +22,17 @@ import {
   Menu,
   FileSpreadsheet,
   PackageCheck,
+  Activity,
+  ArrowLeftRight,
+  GitBranch,
+  Wrench,
+  CalendarRange,
+  Timer,
+  FileBarChart,
+  ListChecks,
+  PackageSearch,
+  ClipboardCheck,
+  BarChart3,
 } from 'lucide-react';
 
 // ── 1. الموديولات الرئيسية للسيستم ──
@@ -39,26 +48,50 @@ import BalanceSheetPage from './pages/BalanceSheetPage';
 import QualityPage from './pages/QualityPage';
 import StockEntryPage from './pages/StockEntryPage';
 import ProductionOpsPage from './pages/ProductionOpsPage';
-
-// ── 2. موديولات التكاليف والضرائب والرقابة المستحدثة ──
+import BomCreatorPage from './pages/BomCreatorPage';
+import MedicalTraceabilityPage from './pages/MedicalTraceabilityPage';
+import MedicalRecallPage from './pages/MedicalRecallPage';
 import JobCostSheetPage from './pages/JobCostSheetPage';
 import StandardVsActualPage from './pages/StandardVsActualPage';
 import MaterialVariancePage from './pages/MaterialVariancePage';
 import OrderProfitabilityPage from './pages/OrderProfitabilityPage';
 import OverheadDashboardPage from './pages/OverheadDashboardPage';
-import MedicalTraceabilityPage from './pages/MedicalTraceabilityPage';
-import MedicalRecallPage from './pages/MedicalRecallPage';
 import TaxAndCustomsPage from './pages/TaxAndCustomsPage';
 import PeriodAndYearClosingPage from './pages/PeriodAndYearClosingPage';
 import AuditTrailPage from './pages/AuditTrailPage';
 import RbacPermissionsPage from './pages/RbacPermissionsPage';
 
+// ── 2. شاشات التخطيط والتصنيع (الشغل الأصلي - ERPNext parity) ──
+import { ManufacturingPage } from './app/pages/ManufacturingPage';
+import { BomPage } from './app/pages/BomPage';
+import { BomUpdateToolPage } from './app/pages/BomUpdateToolPage';
+import { WorkOrderPage } from './app/pages/WorkOrderPage';
+import { SalesForecastPage } from './app/pages/SalesForecastPage';
+import { ProductionPlanPage } from './app/pages/ProductionPlanPage';
+import { MpsPage } from './app/pages/MpsPage';
+import { ItemLeadTimePage } from './app/pages/ItemLeadTimePage';
+import { DowntimeEntryPage } from './app/pages/DowntimeEntryPage';
+import { MaterialRequestPage } from './app/pages/MaterialRequestPage';
+
+// ── 3. شاشات التقارير (9 تقارير - ERPNext parity) ──
+import { ReportBomSearchPage } from './app/pages/ReportBomSearchPage';
+import { ReportWorkOrderSummaryPage } from './app/pages/ReportWorkOrderSummaryPage';
+import { ReportDowntimeAnalysisPage } from './app/pages/ReportDowntimeAnalysisPage';
+import { ReportJobCardSummaryPage } from './app/pages/ReportJobCardSummaryPage';
+import { ReportProductionAnalyticsPage } from './app/pages/ReportProductionAnalyticsPage';
+import { ReportBomOperationsTimePage } from './app/pages/ReportBomOperationsTimePage';
+import { ReportConsumedMaterialsPage } from './app/pages/ReportConsumedMaterialsPage';
+import { ReportProductionPlanningPage } from './app/pages/ReportProductionPlanningPage';
+import { ReportForecastingPage } from './app/pages/ReportForecastingPage';
+
+interface MenuItem { id: string; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string; alert?: boolean; }
+interface MenuSection { title: string; items: MenuItem[]; }
+
 export const App: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<string>('sales-invoices');
+  const [currentTab, setCurrentTab] = useState<string>('mfg-dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // ── القائمة الجانبية الشاملة لجميع الموديولات الـ 19 ──
-  const menuSections = [
+  const menuSections: MenuSection[] = [
     {
       title: '1. المبيعات والعملاء (Sales & CRM)',
       items: [
@@ -83,16 +116,41 @@ export const App: React.FC = () => {
       ],
     },
     {
-      title: '4. الإنتاج والجودة (Manufacturing & QC)',
+      title: '4. التخطيط والتصنيع (Planning & Manufacturing)',
       items: [
-        { id: 'production-ops', label: 'أوامر الشغل وعمليات الورشة', icon: Factory },
+        { id: 'mfg-dashboard', label: 'نظرة عامة على التصنيع', icon: LayoutDashboard, badge: 'رئيسي' },
+        { id: 'bom-main', label: 'قوائم المكونات BOM', icon: ListChecks },
+        { id: 'bom-creator', label: 'منشئ الـ BOM والتكلفة', icon: ClipboardList },
+        { id: 'bom-update-tool', label: 'أداة تحديث BOM', icon: Wrench },
+        { id: 'work-order', label: 'أوامر التشغيل', icon: Factory },
+        { id: 'production-ops', label: 'عمليات الورشة وبطاقات العمل', icon: GitBranch },
+        { id: 'sales-forecast', label: 'توقعات المبيعات', icon: TrendingUp },
+        { id: 'production-plan', label: 'خطة الإنتاج', icon: CalendarRange },
+        { id: 'mps', label: 'الجدول الرئيسي للإنتاج (MPS)', icon: CalendarRange },
+        { id: 'item-lead-time', label: 'مهلة توريد الأصناف', icon: Timer },
+        { id: 'material-request', label: 'طلبات المواد', icon: PackageSearch },
+        { id: 'downtime-entry', label: 'تسجيل توقفات الإنتاج', icon: Timer },
         { id: 'quality-qc', label: 'فحص الجودة الطبية', icon: ShieldCheck },
       ],
     },
     {
-      title: '5. التكاليف والربحية (Costing & Variances)',
+      title: '5. التقارير (Reports)',
       items: [
-        { id: 'job-cost', label: 'كارت التكلفة الفعلي', icon: Calculator, badge: 'رئيسي' },
+        { id: 'report-bom-search', label: 'بحث BOM', icon: FileBarChart },
+        { id: 'report-work-order-summary', label: 'ملخص أوامر التشغيل', icon: FileBarChart },
+        { id: 'report-downtime-analysis', label: 'تحليل التوقفات', icon: FileBarChart },
+        { id: 'report-job-card-summary', label: 'ملخص بطاقات العمل', icon: FileBarChart },
+        { id: 'report-production-analytics', label: 'تحليلات الإنتاج', icon: BarChart3 },
+        { id: 'report-bom-operations-time', label: 'زمن عمليات BOM', icon: FileBarChart },
+        { id: 'report-consumed-materials', label: 'المواد المستهلكة', icon: FileBarChart },
+        { id: 'report-production-planning', label: 'تقرير خطة الإنتاج', icon: ClipboardCheck },
+        { id: 'report-forecasting', label: 'تقرير توقعات المبيعات', icon: BarChart3 },
+      ],
+    },
+    {
+      title: '6. التكاليف والربحية (Costing & Variances)',
+      items: [
+        { id: 'job-cost', label: 'كارت التكلفة الفعلي', icon: Calculator },
         { id: 'std-vs-actual', label: 'المعياري vs الفعلي', icon: ArrowLeftRight },
         { id: 'material-variance', label: 'انحرافات المواد 4-Level', icon: Percent },
         { id: 'order-profitability', label: 'ربحية أوامر الشغل', icon: TrendingUp },
@@ -101,7 +159,7 @@ export const App: React.FC = () => {
       ],
     },
     {
-      title: '6. المحاسبة والمالية (Accounting & Finance)',
+      title: '7. المحاسبة والمالية (Accounting & Finance)',
       items: [
         { id: 'accounting-main', label: 'شجرة الحسابات والقيود', icon: BookOpen },
         { id: 'payments', label: 'سندات الصرف والقبض', icon: CreditCard },
@@ -110,7 +168,7 @@ export const App: React.FC = () => {
       ],
     },
     {
-      title: '7. الإقفال والرقابة (Governance & Security)',
+      title: '8. الإقفال والرقابة (Governance & Security)',
       items: [
         { id: 'closing-periods', label: 'إقفال الفترات والسنوات', icon: Lock },
         { id: 'audit-trail', label: 'سجل التدقيق الرقابي (Audit)', icon: ShieldAlert },
@@ -214,11 +272,33 @@ export const App: React.FC = () => {
         {currentTab === 'medical-trace' && <MedicalTraceabilityPage />}
         {currentTab === 'medical-recall' && <MedicalRecallPage />}
 
-        {/* 3. التصنيع والجودة */}
+        {/* 3. التخطيط والتصنيع */}
+        {currentTab === 'mfg-dashboard' && <ManufacturingPage />}
+        {currentTab === 'bom-main' && <BomPage />}
+        {currentTab === 'bom-creator' && <BomCreatorPage />}
+        {currentTab === 'bom-update-tool' && <BomUpdateToolPage />}
+        {currentTab === 'work-order' && <WorkOrderPage />}
         {currentTab === 'production-ops' && <ProductionOpsPage />}
+        {currentTab === 'sales-forecast' && <SalesForecastPage />}
+        {currentTab === 'production-plan' && <ProductionPlanPage />}
+        {currentTab === 'mps' && <MpsPage />}
+        {currentTab === 'item-lead-time' && <ItemLeadTimePage />}
+        {currentTab === 'material-request' && <MaterialRequestPage />}
+        {currentTab === 'downtime-entry' && <DowntimeEntryPage />}
         {currentTab === 'quality-qc' && <QualityPage />}
 
-        {/* 4. التكاليف والربحية */}
+        {/* 4. التقارير */}
+        {currentTab === 'report-bom-search' && <ReportBomSearchPage />}
+        {currentTab === 'report-work-order-summary' && <ReportWorkOrderSummaryPage />}
+        {currentTab === 'report-downtime-analysis' && <ReportDowntimeAnalysisPage />}
+        {currentTab === 'report-job-card-summary' && <ReportJobCardSummaryPage />}
+        {currentTab === 'report-production-analytics' && <ReportProductionAnalyticsPage />}
+        {currentTab === 'report-bom-operations-time' && <ReportBomOperationsTimePage />}
+        {currentTab === 'report-consumed-materials' && <ReportConsumedMaterialsPage />}
+        {currentTab === 'report-production-planning' && <ReportProductionPlanningPage />}
+        {currentTab === 'report-forecasting' && <ReportForecastingPage />}
+
+        {/* 5. التكاليف والربحية */}
         {currentTab === 'job-cost' && <JobCostSheetPage />}
         {currentTab === 'std-vs-actual' && <StandardVsActualPage />}
         {currentTab === 'material-variance' && <MaterialVariancePage />}
@@ -226,13 +306,13 @@ export const App: React.FC = () => {
         {currentTab === 'overhead-dashboard' && <OverheadDashboardPage />}
         {currentTab === 'costing-general' && <CostingPage />}
 
-        {/* 5. المحاسبة والضرائب */}
+        {/* 6. المحاسبة والضرائب */}
         {currentTab === 'accounting-main' && <AccountingPage />}
         {currentTab === 'payments' && <PaymentEntryPage />}
         {currentTab === 'balance-sheet' && <BalanceSheetPage />}
         {currentTab === 'tax-customs' && <TaxAndCustomsPage />}
 
-        {/* 6. الإقفال والرقابة */}
+        {/* 7. الإقفال والرقابة */}
         {currentTab === 'closing-periods' && <PeriodAndYearClosingPage />}
         {currentTab === 'audit-trail' && <AuditTrailPage />}
         {currentTab === 'rbac-matrix' && <RbacPermissionsPage />}
