@@ -3,17 +3,16 @@
 // Step 69 | Medical Device Traceability & Warranty
 // ============================================================
 import {
-  pgTable,
   uuid,
   text,
   integer,
   date,
   timestamp,
-  pgEnum,
 } from 'drizzle-orm/pg-core';
+import { salesSchema } from './sales.schema';
 
 // ── Enum: حالة السيريال نمبر للجهاز الطبي ─────
-export const serialDeviceStatusEnum = pgEnum('serial_device_status', [
+export const serialDeviceStatusEnum = salesSchema.enum('serial_device_status', [
   'allocated',          // مخصص لأمر بيع / فاتورة
   'delivered',          // تم التسليم للعميل
   'installed',          // تم التركيب في المستشفى
@@ -23,7 +22,7 @@ export const serialDeviceStatusEnum = pgEnum('serial_device_status', [
 ]);
 
 // ── جدول ربط الفاتورة وأذن التسليم بالسيريال ─
-export const salesLineSerial = pgTable('sales_line_serial', {
+export const salesLineSerial = salesSchema.table('sales_line_serial', {
   id:                  uuid('id').defaultRandom().primaryKey(),
 
   // المراجع
@@ -53,8 +52,8 @@ export const salesLineSerial = pgTable('sales_line_serial', {
 
   // Audit
   createdBy:           uuid('created_by').notNull(),
-  createdAt:           timestamp('created_at').defaultNow().notNull(),
-  updatedAt:           timestamp('updated_at').defaultNow().notNull(),
+  createdAt:           timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt:           timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 // ── Type Exports ─────────────────────────────

@@ -3,17 +3,16 @@
 // Step 68 | Medical Traceability Module
 // ============================================================
 import {
-  pgTable,
   uuid,
   text,
   numeric,
   date,
   timestamp,
-  pgEnum,
 } from 'drizzle-orm/pg-core';
+import { inventorySchema } from './inventory.schema';
 
 // ── Enum: حالة الحجر الصحي للوط الوارد ──────
-export const batchQuarantineStatusEnum = pgEnum('batch_quarantine_status', [
+export const batchQuarantineStatusEnum = inventorySchema.enum('batch_quarantine_status', [
   'pending_inspection',   // في انتظار الفحص
   'quarantined',          // حجر صحي (فشل مبدئي)
   'accepted',             // مقبول (نجح الفحص)
@@ -23,7 +22,7 @@ export const batchQuarantineStatusEnum = pgEnum('batch_quarantine_status', [
 // ── جدول ربط سطر فاتورة المشتريات باللوط ────
 // كل سطر فاتورة ممكن يكون مرتبط بأكتر من لوط
 // مثال: فاتورة فيها 100 وحدة صاج → 60 وحدة لوط A + 40 وحدة لوط B
-export const purchaseLineBatch = pgTable('purchase_line_batch', {
+export const purchaseLineBatch = inventorySchema.table('purchase_line_batch', {
   id:                    uuid('id').defaultRandom().primaryKey(),
 
   // ربط بسطر فاتورة المشتريات
@@ -53,8 +52,8 @@ export const purchaseLineBatch = pgTable('purchase_line_batch', {
 
   // Audit
   createdBy:             uuid('created_by').notNull(),
-  createdAt:             timestamp('created_at').defaultNow().notNull(),
-  updatedAt:             timestamp('updated_at').defaultNow().notNull(),
+  createdAt:             timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt:             timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 // ── Type Exports ─────────────────────────────

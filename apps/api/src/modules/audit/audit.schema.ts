@@ -3,13 +3,15 @@
 // Step 94
 // ============================================================
 import {
-  pgTable,
   uuid,
   text,
   timestamp,
 } from 'drizzle-orm/pg-core';
+import { pgSchema } from 'drizzle-orm/pg-core';
 
-export const auditLog = pgTable('audit_log', {
+export const auditSchema = pgSchema('audit');
+
+export const auditLog = auditSchema.table('audit_log', {
   id:              uuid('id').defaultRandom().primaryKey(),
   entityName:      text('entity_name').notNull(), // e.g. "journal_entry", "sales_invoice", "accounting_period"
   entityId:        text('entity_id').notNull(),
@@ -22,7 +24,7 @@ export const auditLog = pgTable('audit_log', {
   oldValues:       text('old_values'),            // JSON String
   newValues:       text('new_values'),            // JSON String
   details:         text('details'),
-  createdAt:       timestamp('created_at').defaultNow().notNull(),
+  createdAt:       timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type AuditLogRecord = typeof auditLog.$inferSelect;
