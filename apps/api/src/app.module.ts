@@ -1,4 +1,5 @@
-﻿import { Module } from '@nestjs/common';
+import { AuditModule } from './modules/audit/audit.module';
+import { Module } from '@nestjs/common';
 import { AccountingModule } from './modules/accounting/accounting.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
@@ -21,6 +22,7 @@ import { ManufacturingToolsModule } from './modules/manufacturing_tools/manufact
 
 @Module({
   imports: [
+    AuditModule,
     CoreModule, OrganizationModule, SettingsModule, CatalogModule, InventoryModule, CrmModule,
     SalesModule, PlanningModule, TechnicalModule, ManufacturingToolsModule, ProductionModule, ProductionOpsModule,
     QualityModule, CostModule, DeliveryModule, AccountingModule, FinanceModule, HrModule, AuthModule,

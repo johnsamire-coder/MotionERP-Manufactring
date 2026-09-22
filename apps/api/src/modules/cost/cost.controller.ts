@@ -80,4 +80,19 @@ export class CostController {
   async getResults(@Param('policyId', ParseUUIDPipe) policyId: string): Promise<{ results: AllocationResultRecord[] }> {
     return { results: await this.svc.getAllocationResults(policyId) };
   }
+
+  @Get('job-cost-sheet/:workOrderId')
+  async getJobCostSheet(@Param('workOrderId') workOrderId: string) {
+    return this.svc.getJobCostSheetAnalytics(workOrderId);
+  }
+
+  @Get('standard-vs-actual/:workOrderId')
+  async getStandardVsActual(@Param('workOrderId') workOrderId: string) {
+    return this.svc.getStandardVsActualAnalytics(workOrderId);
+  }
+
+  @Get('material-variance/:workOrderId')
+  async getMaterialVariance(@Param('workOrderId') workOrderId: string) {
+    return this.svc.get4LevelMaterialVarianceAnalytics(workOrderId);
+  }
 }

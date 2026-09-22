@@ -1,3 +1,13 @@
+import RbacPermissionsPage from './pages/RbacPermissionsPage';
+import AuditTrailPage from './pages/AuditTrailPage';
+import PeriodAndYearClosingPage from './pages/PeriodAndYearClosingPage';
+import OverheadDashboardPage from './pages/OverheadDashboardPage';
+import OrderProfitabilityPage from './pages/OrderProfitabilityPage';
+import MaterialVariancePage from './pages/MaterialVariancePage';
+import StandardVsActualPage from './pages/StandardVsActualPage';
+import TaxAndCustomsPage from './pages/TaxAndCustomsPage';
+import MedicalTraceabilityPage from './pages/MedicalTraceabilityPage';
+import MedicalRecallPage from './pages/MedicalRecallPage';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES, directionOf, type SupportedLanguage } from './app/i18n/config';
