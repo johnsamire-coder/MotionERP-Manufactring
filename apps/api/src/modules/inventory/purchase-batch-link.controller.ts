@@ -11,7 +11,7 @@ import {
   TraceabilitySearchDto,
 } from './purchase-batch-link.dto';
 
-@Controller('v1/inventory/purchase-batches')
+@Controller({ path: 'inventory/purchase-batches', version: '1' })
 export class PurchaseBatchLinkController {
   constructor(private readonly batchLinkService: PurchaseBatchLinkService) {}
 

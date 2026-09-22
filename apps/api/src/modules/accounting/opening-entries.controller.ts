@@ -6,7 +6,7 @@ import { Controller, Post, Body, Req } from '@nestjs/common';
 import { OpeningEntriesService } from './opening-entries.service';
 import { RollForwardOpeningEntryDto, ManualOpeningEntryDto } from './opening-entries.dto';
 
-@Controller('v1/accounting/opening-entries')
+@Controller({ path: 'accounting/opening-entries', version: '1' })
 export class OpeningEntriesController {
   constructor(private readonly openingEntriesService: OpeningEntriesService) {}
 

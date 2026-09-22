@@ -6,7 +6,7 @@ import { Controller, Get, Post, Body, Query, Req, Param } from '@nestjs/common';
 import { PeriodClosingService } from './period-closing.service';
 import { ClosePeriodDto, ReopenPeriodDto, QueryPeriodStatusDto } from './period-closing.dto';
 
-@Controller('v1/accounting/closing')
+@Controller({ path: 'accounting/closing', version: '1' })
 export class PeriodClosingController {
   constructor(private readonly closingService: PeriodClosingService) {}
 

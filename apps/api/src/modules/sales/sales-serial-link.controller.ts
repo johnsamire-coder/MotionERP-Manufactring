@@ -10,7 +10,7 @@ import {
   QuerySalesSerialsDto,
 } from './sales-serial-link.dto';
 
-@Controller('v1/sales/serials')
+@Controller({ path: 'sales/serials', version: '1' })
 export class SalesSerialLinkController {
   constructor(private readonly serialService: SalesSerialLinkService) {}
 

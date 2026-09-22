@@ -14,7 +14,7 @@ import {
   UtilizeProvisionDto,
 } from './accruals.dto';
 
-@Controller('v1/accounting/accruals')
+@Controller({ path: 'accounting/accruals', version: '1' })
 export class AccrualsController {
   constructor(private readonly accrualsService: AccrualsService) {}
 

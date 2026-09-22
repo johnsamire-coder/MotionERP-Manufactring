@@ -14,7 +14,7 @@ import {
   QueryCustomsDto,
 } from './tax-customs.dto';
 
-@Controller('v1/accounting/tax-customs')
+@Controller({ path: 'accounting/tax-customs', version: '1' })
 export class TaxAndCustomsController {
   constructor(private readonly taxService: TaxAndCustomsService) {}
 

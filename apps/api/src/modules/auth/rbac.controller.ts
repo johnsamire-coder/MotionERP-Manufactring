@@ -6,7 +6,7 @@ import { Controller, Get, Post, Body, Req } from '@nestjs/common';
 import { RbacService } from './rbac.service';
 import { UpdateRolePermissionsDto, AssignUserRoleDto } from './rbac.dto';
 
-@Controller('v1/auth/rbac')
+@Controller({ path: 'auth/rbac', version: '1' })
 export class RbacController {
   constructor(private readonly rbacService: RbacService) {}
 

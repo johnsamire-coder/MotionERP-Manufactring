@@ -6,7 +6,7 @@ import { Controller, Get, Post, Body, Query, Req, Param } from '@nestjs/common';
 import { FiscalYearClosingService } from './fiscal-year-closing.service';
 import { CloseFiscalYearDto } from './fiscal-year-closing.dto';
 
-@Controller('v1/accounting/fiscal-year-closing')
+@Controller({ path: 'accounting/fiscal-year-closing', version: '1' })
 export class FiscalYearClosingController {
   constructor(private readonly fiscalYearClosingService: FiscalYearClosingService) {}
 

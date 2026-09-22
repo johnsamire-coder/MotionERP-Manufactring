@@ -1,3 +1,7 @@
+import { CreateAccountTypeDto } from './accounting.dto';
+import { CreateChartOfAccountsDto } from './accounting.dto';
+import { AccountTypeRecord } from './accounting.types';
+import { ChartOfAccountsRecord } from './accounting.types';
 import {
   Body,
   Controller,
@@ -45,6 +49,21 @@ import type {
 export class AccountingController {
   constructor(private readonly service: AccountingService) {}
 
+  @Get('account-types')
+  async accountTypes(): Promise<{ accountTypes: AccountTypeRecord[] }> { return { accountTypes: await this.service.getAccountTypes() }; }
+
+  @Post('account-types') @HttpCode(201)
+  async createAccountType(@Body() dto: CreateAccountTypeDto): Promise<{ accountType: AccountTypeRecord }> {
+    return { accountType: await this.service.createAccountType(dto) };
+  }
+
+  @Get('accounts')
+  async accounts(): Promise<{ accounts: ChartOfAccountsRecord[] }> { return { accounts: await this.service.getAccounts() }; }
+
+  @Post('accounts') @HttpCode(201)
+  async createAccount(@Body() dto: CreateChartOfAccountsDto): Promise<{ account: ChartOfAccountsRecord }> {
+    return { account: await this.service.createAccount({ code: dto.code, name: dto.name, orgNodeId: dto.orgNodeId, accountTypeId: dto.accountTypeId, parentId: dto.parentId }) };
+  }
   @Get('fiscal-years')
   async fiscalYears(@Query('orgNodeId') orgNodeId?: string): Promise<{ fiscalYears: FiscalYearRecord[] }> {
     return { fiscalYears: await this.service.getFiscalYears(orgNodeId) };

@@ -6,7 +6,7 @@ import { Controller, Get, Post, Body, Query, Param } from '@nestjs/common';
 import { AuditService } from './audit.service';
 import { RecordAuditLogDto, QueryAuditLogsDto } from './audit.dto';
 
-@Controller('v1/audit')
+@Controller({ path: 'audit', version: '1' })
 export class AuditController {
   constructor(private readonly auditService: AuditService) {}
 

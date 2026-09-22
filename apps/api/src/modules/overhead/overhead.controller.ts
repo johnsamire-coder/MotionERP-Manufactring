@@ -5,7 +5,7 @@
 import { Controller, Get, Post, Body, Query, Req } from '@nestjs/common';
 import { OverheadService, RunAllocationDto } from './overhead.service';
 
-@Controller('v1/overhead')
+@Controller({ path: 'overhead', version: '1' })
 export class OverheadController {
   constructor(private readonly overheadService: OverheadService) {}
 
