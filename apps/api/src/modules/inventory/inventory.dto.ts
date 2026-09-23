@@ -152,6 +152,10 @@ export class CreateReservationDto {
   @IsString()
   @MaxLength(255)
   source!: string;
+
+  @IsOptional()
+  @IsIn(['sales_order', 'production', 'subcontract', 'production_plan', 'purchase_order', 'material_request', 'work_order'])
+  reservationType?: 'sales_order' | 'production' | 'subcontract' | 'production_plan' | 'purchase_order' | 'material_request' | 'work_order';
 }
 
 export class QueryLedgerDto {

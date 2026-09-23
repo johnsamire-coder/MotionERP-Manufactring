@@ -23,7 +23,8 @@
 | 10 | منع إنهاء خدمة مدير ليه موظفين نشطين | ✅ تم | `feat(hr): manager hierarchy and leaving guard for managers` | |
 | 11 | تعطيل حساب الموظف تلقائيًا عند إنهاء خدمته | ✅ تم | `feat(hr): disable the employee's login when their service ends` | |
 | 12 | 3 نسب سماح منفصلة في المشتريات (الطلب/الاستلام/الفاتورة) | ✅ تم | `feat(purchasing): three over-allowances for order, receipt and billing` | "الطلب" = عرض المورد المعتمد (مفيش أوامر شراء) |
-| 13–29 | — | ⏳ لسه | — | |
+| 13 | 7 أنواع حجز وطلب منفصلة في رصيد المخزون (Bin) | ✅ تم | `feat(inventory): seven reservation types, bin view, and restore reservation id` | + إصلاح bug قديم: الحجز كان معطّل |
+| 14–29 | — | ⏳ لسه | — | |
 | 30 | حضور بصمة GPS | ⏸️ مؤجّل | — | الجدول والـ DTOs المذكورين في البرومبت مش موجودين في المستودع (غالبًا على جهاز المالك ومترفعوش). اتأجّل بقرار المالك |
 | 31–50 | — | ⏳ لسه | — | |
 
@@ -848,6 +849,61 @@ POST /api/v1/inventory/movements
 **مؤجّل:**
 - مفيش دور معيّن مسموحله يتخطى النسب (زي "Role allowed to over bill" في ERPNext).
 - مفيش شاشة واجهة للإعدادات.
+
+### بند 13 — 7 أنواع حجز وطلب منفصلة في رصيد المخزون
+
+**الفكرة (زي جدول Bin في ERPNext):** كل حجز بقى ليه نوع (`reservation_type`)، والأنواع 7:
+
+| النوع | في ERPNext | أثره |
+|---|---|---|
+| `sales_order` | reserved_qty | **بيحجز** رصيد موجود |
+| `production` | reserved_qty_for_production | **بيحجز** |
+| `subcontract` | reserved_qty_for_sub_contract | **بيحجز** |
+| `production_plan` | reserved_qty_for_production_plan | **بيحجز** |
+| `purchase_order` | ordered_qty | كمية **جاية** (مش بتحجز) |
+| `material_request` | indented_qty | كمية **جاية** |
+| `work_order` | planned_qty | كمية **جاية** |
+
+- **الأنواع اللي بتحجز:** لازم يكون فيه رصيد متاح يكفيها، وبتتضاف على `stock_balance.reserved`.
+- **الأنواع الجاية:** مش محتاجة رصيد، ومش بتلمس `reserved`، ولما تتفك مش بتلمسه برضه.
+- **الافتراضي `sales_order`:** عشان الشغل القديم يفضل زي ما هو.
+- **عرض Bin جديد (`GET /inventory/bins`):** لكل صنف في كل مخزن:
+  - الرصيد الفعلي، والأنواع السبعة كل واحد لوحده.
+  - **المتاح** = الفعلي − كل الأنواع اللي بتحجز.
+  - **المتوقع** = الفعلي + الكميات الجاية − كل الأنواع اللي بتحجز.
+
+**⚠️ bug قديم اتكشف واتصلّح:**
+- الـ migration رقم `0042_careful_richard_fisk` كان **مسح عمود `id` من جدول `inventory.stock_reservation`**، بسبب `DROP COLUMN` اتولّد غلط. الكود كان لسه بيستخدم العمود، **فأي حجز على قاعدة بيانات حقيقية كان بيفشل** بخطأ 500 "column id does not exist". اختبارات الوحدة معدّتهوش لأنها مش بتستخدم قاعدة بيانات.
+- **الحل:** migration مخصص `0069_restore_stock_reservation_id.sql` بيرجّع العمود ويخليه مفتاح أساسي. الـ migration ده **آمن لو اتشغل تاني** (idempotent): لو العمود موجود مش بيعمل حاجة، فقواعد البيانات اللي عندها العمود مش هتتأثر.
+- **راجعت** الأعمدة التانية اللي اتمسحت في migrations قديمة (`technical.bom.job_order_reference` و`accounting.journal_line.updated_at`)، ولقيت إن الكود مش بيستخدمها. يعني مفيش مشكلة تانية.
+
+**الملفات المتأثرة:**
+- **المخزون:** `inventory.schema.ts`، `inventory.types.ts`، `inventory.repository.ts`، `inventory.service.ts` (`reserveStock` و`releaseReservation` و`getBins`)، `inventory.dto.ts`، `inventory.controller.ts`.
+- **ملف جديد:** `inventory.bins.spec.ts` (اختبارين).
+- **migrations:** `0068_crazy_captain_midlands.sql` (عمود النوع)، و`0069_restore_stock_reservation_id.sql` (الإصلاح).
+
+**الـ API:**
+
+| الطريقة | المسار | الوصف |
+|---|---|---|
+| POST | `/api/v1/inventory/reservations` | بقت بتقبل `reservationType` |
+| GET | `/api/v1/inventory/bins?itemId=&warehouseId=` | عرض Bin الكامل |
+
+**الاختبار:**
+- الفحص البرمجي: نضيف.
+- الاختبارات: 254 من 254 نجحوا.
+- الـ lint: كل الملفات نضيفة.
+- اختبار حي، الرصيد 121 ✅:
+
+| الحالة | النتيجة |
+|---|---|
+| 5 حجوزات بأنواع مختلفة | كلها 201، **وقبل الإصلاح كانت كلها 500** |
+| حجز 999 | 400، والمتاح 91 |
+| عرض Bin | الفعلي 121، ومحجوز للبيع 10، ومحجوز للإنتاج 20، وجاي من شراء 40، ومن طلب مواد 7، ومن أمر شغل 3. **المتاح 91، والمتوقع 141** |
+| `stock_balance.reserved` | 30 (الأنواع اللي بتحجز بس) |
+| فك حجز من نوع شراء | `reserved` فضل 30 |
+
+**مؤجّل:** الكميات الجاية لسه مش بتتسجّل تلقائي من المستندات (أوامر الشراء المعتمدة، وطلبات المواد، وأوامر الشغل). التسجيل التلقائي من التصنيع محتاج تعديل في ملفاته، وده ممنوع.
 
 ## 3. قراراتي المسجّلة
 

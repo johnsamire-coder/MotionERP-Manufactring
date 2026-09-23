@@ -38,6 +38,7 @@ import type {
   ReconcileStockResult,
   LandedCostVoucherRecord,
   TransferStockResult,
+  StockBinRecord,
 } from './inventory.types';
 
 @Controller({ path: 'inventory', version: '1' })
@@ -107,8 +108,15 @@ export class InventoryController {
       warehouseId: dto.warehouseId,
       quantity: dto.quantity,
       source: dto.source,
+      reservationType: dto.reservationType,
     });
     return { reservation: created };
+  }
+
+  /** Per item/warehouse Bin: actual, the seven reservation / request types, available and projected (plan item 13). */
+  @Get('bins')
+  async bins(@Query('itemId') itemId?: string, @Query('warehouseId') warehouseId?: string): Promise<{ bins: StockBinRecord[] }> {
+    return { bins: await this.service.getBins(itemId, warehouseId) };
   }
 
   @Post('reservations/:id/release')

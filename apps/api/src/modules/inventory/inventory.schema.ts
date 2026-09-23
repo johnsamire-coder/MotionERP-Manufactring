@@ -91,12 +91,19 @@ export const stockReservation = inventorySchema.table('stock_reservation', {
     .references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   quantity: numeric('quantity', { precision: 24, scale: 6 }).notNull(),
   source: text('source').notNull(),
+  /**
+   * Plan item 13 — what the quantity is for (ERPNext Bin columns):
+   * reserving (lower availability): sales_order, production, subcontract, production_plan;
+   * expected (raise projected qty): purchase_order (ordered), material_request (indented), work_order (planned).
+   */
+  reservationType: text('reservation_type').notNull().default('sales_order'),
   status: text('status').notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   releasedAt: timestamp('released_at', { withTimezone: true }),
 }, (t) => [
   check('stock_reservation_quantity_positive', sql`${t.quantity} > 0`),
   check('stock_reservation_status_valid', sql`${t.status} in ('active', 'released')`),
+  check('stock_reservation_type_valid', sql`${t.reservationType} in ('sales_order', 'production', 'subcontract', 'production_plan', 'purchase_order', 'material_request', 'work_order')`),
   index('stock_reservation_item_warehouse_idx').on(t.itemId, t.warehouseId),
 ]);
 

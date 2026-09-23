@@ -21,6 +21,7 @@ import type {
   MovementType,
   MovementPurpose,
   ReservationStatus,
+  ReservationType,
   StockBalanceRecord,
   StockMovementRecord,
   StockReservationRecord,
@@ -55,7 +56,7 @@ const movementColumns = {
 };
 const reservationColumns = {
   id: stockReservation.id, itemId: stockReservation.itemId, warehouseId: stockReservation.warehouseId,
-  quantity: stockReservation.quantity, source: stockReservation.source, status: stockReservation.status,
+  quantity: stockReservation.quantity, source: stockReservation.source, reservationType: stockReservation.reservationType, status: stockReservation.status,
   createdAt: stockReservation.createdAt, releasedAt: stockReservation.releasedAt,
 };
 const ledgerColumns = {
@@ -279,7 +280,7 @@ export class InventoryRepository {
   async listReservations(): Promise<StockReservationRecord[]> {
     const rows = await this.database.db.select(reservationColumns).from(stockReservation).orderBy(asc(stockReservation.createdAt));
     return rows.map((r) => ({
-      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, quantity: r.quantity, source: r.source,
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, quantity: r.quantity, source: r.source, reservationType: r.reservationType as ReservationType,
       status: r.status as ReservationStatus, createdAt: r.createdAt.toISOString(), releasedAt: r.releasedAt ? r.releasedAt.toISOString() : null,
     }));
   }
@@ -288,18 +289,18 @@ export class InventoryRepository {
     if (!rows[0]) return null;
     const r = rows[0];
     return {
-      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, quantity: r.quantity, source: r.source,
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, quantity: r.quantity, source: r.source, reservationType: r.reservationType as ReservationType,
       status: r.status as ReservationStatus, createdAt: r.createdAt.toISOString(), releasedAt: r.releasedAt ? r.releasedAt.toISOString() : null,
     };
   }
   async insertReservation(input: CreateReservationInput & { id: string }): Promise<StockReservationRecord> {
     const rows = await this.database.db.insert(stockReservation).values({
       id: input.id, itemId: input.itemId, warehouseId: input.warehouseId,
-      quantity: input.quantity, source: input.source,
+      quantity: input.quantity, source: input.source, reservationType: input.reservationType ?? 'sales_order',
     }).returning(reservationColumns);
     const r = rows[0]!;
     return {
-      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, quantity: r.quantity, source: r.source,
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, quantity: r.quantity, source: r.source, reservationType: r.reservationType as ReservationType,
       status: r.status as ReservationStatus, createdAt: r.createdAt.toISOString(), releasedAt: r.releasedAt ? r.releasedAt.toISOString() : null,
     };
   }
@@ -309,7 +310,7 @@ export class InventoryRepository {
       .where(eq(stockReservation.id, id)).returning(reservationColumns);
     const r = rows[0]!;
     return {
-      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, quantity: r.quantity, source: r.source,
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, quantity: r.quantity, source: r.source, reservationType: r.reservationType as ReservationType,
       status: r.status as ReservationStatus, createdAt: r.createdAt.toISOString(), releasedAt: r.releasedAt ? r.releasedAt.toISOString() : null,
     };
   }

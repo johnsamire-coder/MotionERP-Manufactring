@@ -7,6 +7,30 @@ export type MovementType = 'receipt' | 'issue' | 'transfer_in' | 'transfer_out' 
  */
 export type MovementPurpose = 'general' | 'material_transfer_for_manufacture' | 'manufacture_consumption';
 export type ReservationStatus = 'active' | 'released';
+/** Plan item 13: seven separate reservation / request types (see stock_reservation.reservation_type). */
+export type ReservationType =
+  | 'sales_order' | 'production' | 'subcontract' | 'production_plan'
+  | 'purchase_order' | 'material_request' | 'work_order';
+/** Types that hold existing stock (reduce availability); the rest are expected incoming quantities. */
+export const RESERVING_TYPES: readonly ReservationType[] = ['sales_order', 'production', 'subcontract', 'production_plan'];
+
+/** Per item/warehouse quantities, like ERPNext's Bin (plan item 13). */
+export interface StockBinRecord {
+  itemId: string;
+  warehouseId: string;
+  actualQty: string;
+  reservedQty: string;
+  reservedForProduction: string;
+  reservedForSubcontract: string;
+  reservedForProductionPlan: string;
+  orderedQty: string;
+  indentedQty: string;
+  plannedQty: string;
+  /** actual − all reserving quantities */
+  availableQty: string;
+  /** actual + ordered + indented + planned − all reserving quantities */
+  projectedQty: string;
+}
 export type ItemBatchStatus = 'active' | 'expired' | 'quarantined' | 'recalled';
 export type SerialNumberStatus = 'active' | 'delivered' | 'under_maintenance' | 'decommissioned';
 export type LandedCostStatus = 'draft' | 'posted' | 'cancelled';
@@ -111,6 +135,7 @@ export interface StockReservationRecord {
   warehouseId: string;
   quantity: string;
   source: string;
+  reservationType: ReservationType;
   status: ReservationStatus;
   createdAt: string;
   releasedAt: string | null;
@@ -121,6 +146,8 @@ export interface CreateReservationInput {
   warehouseId: string;
   quantity: string;
   source: string;
+  /** Defaults to 'sales_order'. */
+  reservationType?: ReservationType;
 }
 
 // --- Stock Ledger Entry Types ---

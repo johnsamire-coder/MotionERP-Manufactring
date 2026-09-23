@@ -34,6 +34,11 @@ import type {
   TransferStockInput,
   TransferStockResult,
 } from './inventory.types';
+import { RESERVING_TYPES, type ReservationType, type StockBinRecord } from './inventory.types';
+
+const RESERVATION_TYPES: readonly ReservationType[] = [
+  'sales_order', 'production', 'subcontract', 'production_plan', 'purchase_order', 'material_request', 'work_order',
+];
 
 // Which accounting directions each business purpose may use (plan item 3).
 const PURPOSE_MOVEMENT_TYPES: Record<MovementPurpose, readonly MovementType[]> = {
@@ -523,12 +528,21 @@ export class InventoryService {
       throw new InventoryNotFoundError(`warehouse ${input.warehouseId} does not exist`);
     }
 
-    const balance = await this.repository.findBalance(input.itemId, input.warehouseId);
-    const currentOnHand = balance ? Number(balance.onHand) : 0;
-    const currentReserved = balance ? Number(balance.reserved) : 0;
-    const currentAvailable = currentOnHand - currentReserved;
-    if (currentAvailable < quantityNum) {
-      throw new InventoryValidationError(`insufficient available stock to reserve: available ${currentAvailable}, requested ${quantityNum}`);
+    const reservationType = input.reservationType ?? 'sales_order';
+    if (!RESERVATION_TYPES.includes(reservationType)) {
+      throw new InventoryValidationError(`reservationType must be one of: ${RESERVATION_TYPES.join(', ')}`);
+    }
+    // Plan item 13: only "reserving" types hold existing stock; ordered / indented / planned
+    // quantities are expectations and neither need nor lock available stock.
+    const reserving = RESERVING_TYPES.includes(reservationType);
+    if (reserving) {
+      const balance = await this.repository.findBalance(input.itemId, input.warehouseId);
+      const currentOnHand = balance ? Number(balance.onHand) : 0;
+      const currentReserved = balance ? Number(balance.reserved) : 0;
+      const currentAvailable = currentOnHand - currentReserved;
+      if (currentAvailable < quantityNum) {
+        throw new InventoryValidationError(`insufficient available stock to reserve: available ${currentAvailable}, requested ${quantityNum}`);
+      }
     }
 
     const reservation = await this.repository.insertReservation({
@@ -537,8 +551,9 @@ export class InventoryService {
       warehouseId: input.warehouseId,
       quantity: input.quantity,
       source: input.source,
+      reservationType,
     });
-    await this.repository.applyReservedDelta(input.itemId, input.warehouseId, input.quantity);
+    if (reserving) await this.repository.applyReservedDelta(input.itemId, input.warehouseId, input.quantity);
     return reservation;
   }
 
@@ -549,8 +564,45 @@ export class InventoryService {
     }
     await this.assertWarehouseAllowed(reservation.warehouseId);
     if (reservation.status === 'released') return reservation;
-    await this.repository.applyReservedDelta(reservation.itemId, reservation.warehouseId, `-${reservation.quantity}`);
+    if (RESERVING_TYPES.includes(reservation.reservationType)) {
+      await this.repository.applyReservedDelta(reservation.itemId, reservation.warehouseId, `-${reservation.quantity}`);
+    }
     return this.repository.setReservationReleased(id);
+  }
+
+  /**
+   * Bin view (plan item 13): per item / warehouse, actual stock plus each active reservation /
+   * request type kept separate, with available and projected quantities derived from them.
+   */
+  async getBins(itemId?: string, warehouseId?: string): Promise<StockBinRecord[]> {
+    const balances = (await this.getBalances())
+      .filter((b) => (!itemId || b.itemId === itemId) && (!warehouseId || b.warehouseId === warehouseId));
+    const reservations = (await this.getReservations())
+      .filter((r) => r.status === 'active' && (!itemId || r.itemId === itemId) && (!warehouseId || r.warehouseId === warehouseId));
+    const bins = new Map<string, { itemId: string; warehouseId: string; actual: number; by: Record<ReservationType, number> }>();
+    const bin = (i: string, w: string): { itemId: string; warehouseId: string; actual: number; by: Record<ReservationType, number> } => {
+      const key = `${i}|${w}`;
+      let b = bins.get(key);
+      if (!b) {
+        b = { itemId: i, warehouseId: w, actual: 0, by: Object.fromEntries(RESERVATION_TYPES.map((t) => [t, 0])) as Record<ReservationType, number> };
+        bins.set(key, b);
+      }
+      return b;
+    };
+    for (const b of balances) bin(b.itemId, b.warehouseId).actual = Number(b.onHand);
+    for (const r of reservations) bin(r.itemId, r.warehouseId).by[r.reservationType] += Number(r.quantity);
+    const f = (n: number): string => n.toFixed(6);
+    return [...bins.values()].map((b) => {
+      const reserved = RESERVING_TYPES.reduce((a, t) => a + b.by[t], 0);
+      const expected = b.by.purchase_order + b.by.material_request + b.by.work_order;
+      return {
+        itemId: b.itemId, warehouseId: b.warehouseId, actualQty: f(b.actual),
+        reservedQty: f(b.by.sales_order), reservedForProduction: f(b.by.production),
+        reservedForSubcontract: f(b.by.subcontract), reservedForProductionPlan: f(b.by.production_plan),
+        orderedQty: f(b.by.purchase_order), indentedQty: f(b.by.material_request), plannedQty: f(b.by.work_order),
+        availableQty: f(b.actual - reserved), projectedQty: f(b.actual + expected - reserved),
+      };
+    });
   }
 
   async getLedgerEntries(itemId?: string, warehouseId?: string): Promise<StockLedgerEntryRecord[]> {
