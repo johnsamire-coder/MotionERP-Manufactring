@@ -59,6 +59,27 @@ export const user = authSchema.table('user', {
   index('user_role_idx').on(t.roleId),
 ]);
 
+/**
+ * User Permission (plan item 5.1): restricts ONE user to specific values of a dimension.
+ * No rows for a dimension = the user is unrestricted on it; rows = only those values
+ * (an org node also covers everything under it in the tree). allow_value points into
+ * another module (org node / inventory warehouse), so it is a plain UUID checked in the
+ * service, not a foreign key (D2/D20).
+ */
+export const userPermission = authSchema.table('user_permission', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => user.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
+  allowType: text('allow_type').notNull(),
+  allowValue: uuid('allow_value').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('user_permission_unique').on(t.userId, t.allowType, t.allowValue),
+  check('user_permission_allow_type_valid', sql`${t.allowType} in ('org_node', 'warehouse')`),
+  index('user_permission_user_idx').on(t.userId),
+]);
+
 export type Role = typeof role.$inferSelect;
 export type Permission = typeof permission.$inferSelect;
 export type User = typeof user.$inferSelect;

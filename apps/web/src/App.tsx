@@ -62,6 +62,7 @@ import TaxAndCustomsPage from './pages/TaxAndCustomsPage';
 import PeriodAndYearClosingPage from './pages/PeriodAndYearClosingPage';
 import AuditTrailPage from './pages/AuditTrailPage';
 import RbacPermissionsPage from './pages/RbacPermissionsPage';
+import UserRestrictionsPage from './app/pages/UserRestrictionsPage';
 
 // ── 2. شاشات التخطيط والتصنيع (الشغل الأصلي - ERPNext parity) ──
 import { ManufacturingPage } from './app/pages/ManufacturingPage';
@@ -198,6 +199,7 @@ export const App: React.FC = () => {
         { id: 'closing-periods', label: 'إقفال الفترات والسنوات', icon: Lock },
         { id: 'audit-trail', label: 'سجل التدقيق الرقابي (Audit)', icon: ShieldAlert },
         { id: 'rbac-matrix', label: 'مصفوفة الصلاحيات (RBAC)', icon: Key },
+        { id: 'user-restrictions', label: 'تقييد المستخدمين (فرع / مخزن)', icon: Lock },
       ],
     },
   ];
@@ -356,6 +358,7 @@ export const App: React.FC = () => {
         {currentTab === 'closing-periods' && <PeriodAndYearClosingPage />}
         {currentTab === 'audit-trail' && <AuditTrailPage />}
         {currentTab === 'rbac-matrix' && <RbacPermissionsPage />}
+        {currentTab === 'user-restrictions' && <UserRestrictionsPage />}
       </main>
 
       {loginOpen && (

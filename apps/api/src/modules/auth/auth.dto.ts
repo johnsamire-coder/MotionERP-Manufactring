@@ -34,3 +34,9 @@ export class CheckPermissionDto {
   @IsOptional() @IsUUID() scopeOrgNodeId?: string;
   @IsOptional() @IsNumberString() value?: string;
 }
+
+export class CreateUserPermissionDto {
+  @IsUUID() userId!: string;
+  @IsIn(['org_node', 'warehouse']) allowType!: 'org_node' | 'warehouse';
+  @IsUUID() allowValue!: string;
+}

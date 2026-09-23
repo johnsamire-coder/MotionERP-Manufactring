@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { and, asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
-import { permission, role, user } from './auth.schema';
+import { orgNode } from '../organization/organization.schema';
+import { warehouse } from '../inventory/inventory.schema';
+import { permission, role, user, userPermission } from './auth.schema';
 import type {
-  CreatePermissionInput, CreateRoleInput, PermissionAction, PermissionRecord,
-  RoleRecord, RoleStatus, UserRecord, UserStatus,
+  CreatePermissionInput, CreateRoleInput, CreateUserPermissionInput, PermissionAction, PermissionRecord,
+  RoleRecord, RoleStatus, UserPermissionAllowType, UserPermissionRecord, UserRecord, UserStatus,
 } from './auth.types';
 
 const roleColumns = { id: role.id, code: role.code, name: role.name, status: role.status };
@@ -25,6 +27,13 @@ function toPermRecord(row: PermRow): PermissionRecord {
   return { id: row.id, roleId: row.roleId, action: row.action as PermissionAction, resource: row.resource, scopeOrgNodeId: row.scopeOrgNodeId, valueLimit: row.valueLimit };
 }
 function toUserRecord(row: UserRow): UserRecord { return { id: row.id, username: row.username, roleId: row.roleId, employeeReference: row.employeeReference, status: row.status as UserStatus }; }
+
+function toUserPermissionRecord(row: typeof userPermission.$inferSelect): UserPermissionRecord {
+  return {
+    id: row.id, userId: row.userId, allowType: row.allowType as UserPermissionAllowType,
+    allowValue: row.allowValue, createdAt: row.createdAt.toISOString(),
+  };
+}
 
 @Injectable()
 export class AuthRepository {
@@ -94,5 +103,40 @@ export class AuthRepository {
       roleId: input.roleId, employeeReference: input.employeeReference ?? null,
     }).returning(userColumns);
     return toUserRecord(rows[0]!);
+  }
+
+  // --- User Permissions (plan item 5.1) ---
+  async listUserPermissions(userId?: string): Promise<UserPermissionRecord[]> {
+    const query = this.database.db.select().from(userPermission);
+    const rows = userId
+      ? await query.where(eq(userPermission.userId, userId)).orderBy(asc(userPermission.allowType), asc(userPermission.createdAt))
+      : await query.orderBy(asc(userPermission.userId), asc(userPermission.allowType), asc(userPermission.createdAt));
+    return rows.map(toUserPermissionRecord);
+  }
+  async findUserPermission(userId: string, allowType: UserPermissionAllowType, allowValue: string): Promise<UserPermissionRecord | null> {
+    const rows = await this.database.db.select().from(userPermission).where(and(
+      eq(userPermission.userId, userId), eq(userPermission.allowType, allowType), eq(userPermission.allowValue, allowValue),
+    )).limit(1);
+    return rows[0] ? toUserPermissionRecord(rows[0]) : null;
+  }
+  async findUserPermissionById(id: string): Promise<UserPermissionRecord | null> {
+    const rows = await this.database.db.select().from(userPermission).where(eq(userPermission.id, id)).limit(1);
+    return rows[0] ? toUserPermissionRecord(rows[0]) : null;
+  }
+  async insertUserPermission(input: CreateUserPermissionInput & { id: string }): Promise<UserPermissionRecord> {
+    const rows = await this.database.db.insert(userPermission).values(input).returning();
+    return toUserPermissionRecord(rows[0]!);
+  }
+  async deleteUserPermission(id: string): Promise<void> {
+    await this.database.db.delete(userPermission).where(eq(userPermission.id, id));
+  }
+  /** Existence checks for values owned by other modules (read-only, no foreign key). */
+  async orgNodeExists(id: string): Promise<boolean> {
+    const rows = await this.database.db.select({ id: orgNode.id }).from(orgNode).where(eq(orgNode.id, id)).limit(1);
+    return rows.length > 0;
+  }
+  async warehouseExists(id: string): Promise<boolean> {
+    const rows = await this.database.db.select({ id: warehouse.id }).from(warehouse).where(eq(warehouse.id, id)).limit(1);
+    return rows.length > 0;
   }
 }

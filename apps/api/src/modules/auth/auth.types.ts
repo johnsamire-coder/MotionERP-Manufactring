@@ -18,3 +18,11 @@ export interface UserRecord {
 export interface CreateUserInput {
   username: string; password: string; roleId: string; employeeReference?: string;
 }
+
+export type UserPermissionAllowType = 'org_node' | 'warehouse';
+export interface UserPermissionRecord {
+  id: string; userId: string; allowType: UserPermissionAllowType; allowValue: string; createdAt: string;
+}
+export interface CreateUserPermissionInput {
+  userId: string; allowType: UserPermissionAllowType; allowValue: string;
+}
