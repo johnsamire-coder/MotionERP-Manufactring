@@ -220,6 +220,28 @@ export const stockMovementSerial = inventorySchema.table('stock_movement_serial'
   index('idx_stock_movement_serial_serial').on(t.serialId),
 ]);
 
+// إعادة الطلب لكل صنف/مخزن (بند 22)
+/**
+ * When the projected quantity (actual + expected − reserved, see the Bin view) falls to or below
+ * reorder_level, the system suggests max(reorder_qty, reorder_level − projected).
+ */
+export const itemReorder = inventorySchema.table('item_reorder', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  itemId: uuid('item_id').notNull(),
+  warehouseId: uuid('warehouse_id')
+    .notNull()
+    .references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
+  reorderLevel: numeric('reorder_level', { precision: 24, scale: 6 }).notNull(),
+  reorderQty: numeric('reorder_qty', { precision: 24, scale: 6 }).notNull(),
+  requestType: text('request_type').notNull().default('purchase'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('item_reorder_item_warehouse_unique').on(t.itemId, t.warehouseId),
+  check('item_reorder_values_valid', sql`${t.reorderLevel} >= 0 and ${t.reorderQty} > 0`),
+  check('item_reorder_request_type_valid', sql`${t.requestType} in ('purchase', 'transfer', 'manufacture')`),
+]);
+
 // ==================== 3. محرك تكلفة الواردات ورسملة الشحن (Landed Cost Engine) ====================
 
 export const landedCostVoucher = inventorySchema.table('landed_cost_voucher', {

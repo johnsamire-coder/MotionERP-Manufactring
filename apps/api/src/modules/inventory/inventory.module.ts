@@ -10,14 +10,16 @@ import { SettingsModule } from '../settings/settings.module';
 import { InventoryAccessService } from './inventory-access.service';
 import { GrniReportRepository } from './grni-report.repository';
 import { GrniReportService } from './grni-report.service';
+import { ReorderController } from './reorder.controller';
+import { ReorderService } from './reorder.service';
 import { InventoryController } from './inventory.controller';
 import { InventoryRepository } from './inventory.repository';
 import { InventoryService } from './inventory.service';
 
 @Module({
   imports: [AccountingModule, CatalogModule, AuthModule, OrganizationModule, SalesModule, SettingsModule],
-  controllers: [PurchaseBatchLinkController, InventoryController],
-  providers: [PurchaseBatchLinkService, InventoryService, InventoryRepository, InventoryAccessService, GrniReportService, GrniReportRepository],
+  controllers: [PurchaseBatchLinkController, InventoryController, ReorderController],
+  providers: [PurchaseBatchLinkService, InventoryService, InventoryRepository, InventoryAccessService, GrniReportService, GrniReportRepository, ReorderService],
   exports: [InventoryService],
 })
 export class InventoryModule {}
