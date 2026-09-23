@@ -6,6 +6,7 @@ import { CatalogService } from '../catalog/catalog.service';
 import type { ItemRecord } from '../catalog/catalog.types';
 import { InventoryNotFoundError, InventoryValidationError } from './inventory.errors';
 import { InventoryRepository } from './inventory.repository';
+import { InventoryAccessService } from './inventory-access.service';
 import type {
   CreateMovementInput,
   CreateReservationInput,
@@ -45,15 +46,31 @@ export class InventoryService {
     private readonly repository: InventoryRepository,
     @Optional() private readonly postingEngine?: PostingEngineService,
     @Optional() private readonly catalogService?: CatalogService,
+    @Optional() private readonly access?: InventoryAccessService,
   ) {}
 
+  // --- User restrictions (plan item 5.2): no-ops without a logged-in, restricted user ---
+  private async assertWarehouseAllowed(warehouseId: string): Promise<void> {
+    if (this.access) await this.access.assertWarehouseAllowed(warehouseId);
+  }
+
+  private async filterByWarehouse<T extends { warehouseId: string | null }>(rows: T[], requestedWarehouseId?: string): Promise<T[]> {
+    if (!this.access) return rows;
+    if (requestedWarehouseId) await this.access.assertWarehouseAllowed(requestedWarehouseId);
+    const allowed = await this.access.allowedWarehouseIds();
+    return allowed ? rows.filter((r) => r.warehouseId !== null && allowed.has(r.warehouseId)) : rows;
+  }
+
   async getWarehouses(): Promise<WarehouseRecord[]> {
-    return this.repository.listWarehouses();
+    const warehouses = await this.repository.listWarehouses();
+    const allowed = this.access ? await this.access.allowedWarehouseIds() : null;
+    return allowed ? warehouses.filter((w) => allowed.has(w.id)) : warehouses;
   }
 
   async createWarehouse(input: CreateWarehouseInput): Promise<WarehouseRecord> {
     const code = normalizeCode(input.code);
     const name = normalizeName(input.name);
+    if (this.access) await this.access.assertCanCreateWarehouse(input.orgNodeId);
     const existing = await this.repository.findWarehouseByCode(code);
     if (existing) {
       throw new InventoryValidationError(`a warehouse with code "${code}" already exists`);
@@ -62,11 +79,11 @@ export class InventoryService {
   }
 
   async getBalances(): Promise<StockBalanceRecord[]> {
-    return this.repository.listBalances();
+    return this.filterByWarehouse(await this.repository.listBalances());
   }
 
   async getMovements(): Promise<StockMovementRecord[]> {
-    return this.repository.listMovements();
+    return this.filterByWarehouse(await this.repository.listMovements());
   }
 
   async createMovement(input: CreateMovementInput): Promise<StockMovementRecord> {
@@ -78,6 +95,7 @@ export class InventoryService {
     if (!warehouseRecord) {
       throw new InventoryNotFoundError(`warehouse ${input.warehouseId} does not exist`);
     }
+    await this.assertWarehouseAllowed(input.warehouseId);
 
     // Backdating guard: a movement may not be dated before the latest recorded
     // movement of the same item/warehouse, unless explicitly allowed with a reason.
@@ -393,7 +411,7 @@ export class InventoryService {
   }
 
   async getBatchBalances(itemId?: string, warehouseId?: string, batchId?: string): Promise<BatchBalanceRecord[]> {
-    return this.repository.listBatchBalances(itemId, warehouseId, batchId);
+    return this.filterByWarehouse(await this.repository.listBatchBalances(itemId, warehouseId, batchId), warehouseId);
   }
 
   /**
@@ -408,6 +426,9 @@ export class InventoryService {
     if (purpose === 'manufacture_consumption') {
       throw new InventoryValidationError('manufacture_consumption is an issue, not a transfer');
     }
+    // Both ends must be allowed before anything leaves the source.
+    await this.assertWarehouseAllowed(input.fromWarehouseId);
+    await this.assertWarehouseAllowed(input.toWarehouseId);
     const target = await this.repository.findWarehouseById(input.toWarehouseId);
     if (!target) throw new InventoryNotFoundError(`warehouse ${input.toWarehouseId} does not exist`);
 
@@ -446,7 +467,7 @@ export class InventoryService {
   }
 
   async getReservations(): Promise<StockReservationRecord[]> {
-    return this.repository.listReservations();
+    return this.filterByWarehouse(await this.repository.listReservations());
   }
 
   async reserveStock(input: CreateReservationInput): Promise<StockReservationRecord> {
@@ -454,6 +475,7 @@ export class InventoryService {
     if (!Number.isFinite(quantityNum) || quantityNum <= 0) {
       throw new InventoryValidationError('reservation quantity must be a positive number');
     }
+    await this.assertWarehouseAllowed(input.warehouseId);
     if (!input.source || input.source.trim().length === 0) {
       throw new InventoryValidationError('reservation source is required');
     }
@@ -486,13 +508,14 @@ export class InventoryService {
     if (!reservation) {
       throw new InventoryNotFoundError(`reservation ${id} does not exist`);
     }
+    await this.assertWarehouseAllowed(reservation.warehouseId);
     if (reservation.status === 'released') return reservation;
     await this.repository.applyReservedDelta(reservation.itemId, reservation.warehouseId, `-${reservation.quantity}`);
     return this.repository.setReservationReleased(id);
   }
 
   async getLedgerEntries(itemId?: string, warehouseId?: string): Promise<StockLedgerEntryRecord[]> {
-    return this.repository.listLedgerEntries(itemId, warehouseId);
+    return this.filterByWarehouse(await this.repository.listLedgerEntries(itemId, warehouseId), warehouseId);
   }
 
   // --- Medical Batch & Lot Tracking ---
@@ -550,7 +573,7 @@ export class InventoryService {
 
   // --- Serial Number Tracking ---
   async getSerials(itemId?: string, warehouseId?: string, batchId?: string): Promise<SerialNumberRecord[]> {
-    return this.repository.listSerials(itemId, warehouseId, batchId);
+    return this.filterByWarehouse(await this.repository.listSerials(itemId, warehouseId, batchId), warehouseId);
   }
 
   async getSerial(id: string): Promise<SerialNumberRecord> {
@@ -617,6 +640,7 @@ export class InventoryService {
     if (!warehouseRecord) {
       throw new InventoryNotFoundError(`المخزن ${input.warehouseId} غير موجود`);
     }
+    await this.assertWarehouseAllowed(input.warehouseId);
 
     // الجرد العادي بيكتب على رصيد الصنف مباشرة، فمينفعش مع الأصناف المتتبّعة بالدفعة/السيريال
     // (كان هيلخبط أرصدة الدفعات وحالة السيريالات). التسوية لازم تتم بحركة مخزون تحدد الدفعة/السيريال.
