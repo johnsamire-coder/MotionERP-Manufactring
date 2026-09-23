@@ -1,5 +1,11 @@
 export type WarehouseStatus = 'active' | 'inactive' | 'archived';
 export type MovementType = 'receipt' | 'issue' | 'transfer_in' | 'transfer_out' | 'adjustment';
+/**
+ * What a movement is for. Kept apart from MovementType, which drives the accounting direction:
+ * - material_transfer_for_manufacture: raw material moved to a production (WIP) warehouse (transfer_out / transfer_in)
+ * - manufacture_consumption: material actually consumed by production (issue)
+ */
+export type MovementPurpose = 'general' | 'material_transfer_for_manufacture' | 'manufacture_consumption';
 export type ReservationStatus = 'active' | 'released';
 export type ItemBatchStatus = 'active' | 'expired' | 'quarantined' | 'recalled';
 export type SerialNumberStatus = 'active' | 'delivered' | 'under_maintenance' | 'decommissioned';
@@ -41,6 +47,7 @@ export interface StockMovementRecord {
   itemId: string;
   warehouseId: string;
   movementType: MovementType;
+  purpose: MovementPurpose;
   quantity: string;
   movementDate: string;
   note: string | null;
@@ -70,6 +77,27 @@ export interface CreateMovementInput {
   batchId?: string;
   /** Required for serial-tracked items (catalog item.hasSerialNo): one serial per unit. */
   serialNos?: string[];
+  /** Defaults to 'general'. */
+  purpose?: MovementPurpose;
+}
+
+export interface TransferStockInput {
+  itemId: string;
+  fromWarehouseId: string;
+  toWarehouseId: string;
+  quantity: string;
+  purpose?: MovementPurpose;
+  batchId?: string;
+  serialNos?: string[];
+  movementDate?: string;
+  note?: string;
+  sourceModule?: string;
+  sourceId?: string;
+}
+
+export interface TransferStockResult {
+  transferOut: StockMovementRecord;
+  transferIn: StockMovementRecord;
 }
 
 export interface StockReservationRecord {

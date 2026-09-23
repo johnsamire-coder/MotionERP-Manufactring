@@ -61,6 +61,7 @@ describe('InventoryService — Stock Reconciliation & Inventory Adjustment Engin
           itemId: input.itemId,
           warehouseId: input.warehouseId,
           movementType: input.movementType,
+          purpose: input.purpose ?? 'general',
           quantity: input.quantity,
           movementDate: input.movementDate,
           note: input.note ?? null,

@@ -58,6 +58,8 @@ export const stockMovement = inventorySchema.table('stock_movement', {
     .notNull()
     .references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   movementType: text('movement_type').notNull(),
+  // Business purpose, separate from the accounting direction in movement_type (plan item 3).
+  purpose: text('purpose').notNull().default('general'),
   quantity: numeric('quantity', { precision: 24, scale: 6 }).notNull(),
   unitCost: numeric('unit_cost', { precision: 18, scale: 6 }),
   totalValue: numeric('total_value', { precision: 18, scale: 4 }),
@@ -73,6 +75,7 @@ export const stockMovement = inventorySchema.table('stock_movement', {
 }, (t) => [
   check('stock_movement_type_valid', sql`${t.movementType} in ('receipt', 'issue', 'transfer_in', 'transfer_out', 'adjustment')`),
   check('stock_movement_quantity_not_zero', sql`${t.quantity} <> 0`),
+  check('stock_movement_purpose_valid', sql`${t.purpose} in ('general', 'material_transfer_for_manufacture', 'manufacture_consumption')`),
   index('stock_movement_item_warehouse_idx').on(t.itemId, t.warehouseId),
   index('stock_movement_date_idx').on(t.movementDate),
   index('stock_movement_batch_idx').on(t.batchId),

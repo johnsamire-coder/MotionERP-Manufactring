@@ -20,6 +20,7 @@ import {
   CreateWarehouseDto,
   QueryLedgerDto,
   ReconcileStockDto,
+  TransferStockDto,
   UpdateBatchStatusDto,
   UpdateSerialStatusDto,
 } from './inventory.dto';
@@ -36,6 +37,7 @@ import type {
   SerialNumberRecord,
   ReconcileStockResult,
   LandedCostVoucherRecord,
+  TransferStockResult,
 } from './inventory.types';
 
 @Controller({ path: 'inventory', version: '1' })
@@ -86,6 +88,7 @@ export class InventoryController {
       backdateReason: dto.backdateReason,
       batchId: dto.batchId,
       serialNos: dto.serialNos,
+      purpose: dto.purpose,
     });
     return { movement: created };
   }
@@ -120,6 +123,24 @@ export class InventoryController {
   }
 
   // --- Medical Batches Endpoints ---
+  @Post('transfers')
+  @HttpCode(201)
+  async transfer(@Body() dto: TransferStockDto): Promise<TransferStockResult> {
+    return this.service.transferStock({
+      itemId: dto.itemId,
+      fromWarehouseId: dto.fromWarehouseId,
+      toWarehouseId: dto.toWarehouseId,
+      quantity: dto.quantity,
+      purpose: dto.purpose,
+      batchId: dto.batchId,
+      serialNos: dto.serialNos,
+      movementDate: dto.movementDate,
+      note: dto.note,
+      sourceModule: dto.sourceModule,
+      sourceId: dto.sourceId,
+    });
+  }
+
   @Get('movements/:id/serials')
   async movementSerials(@Param('id', ParseUUIDPipe) id: string): Promise<{ serialNos: string[] }> {
     return { serialNos: await this.service.getMovementSerialNos(id) };

@@ -19,6 +19,7 @@ import type {
   CreateReservationInput,
   CreateWarehouseInput,
   MovementType,
+  MovementPurpose,
   ReservationStatus,
   StockBalanceRecord,
   StockMovementRecord,
@@ -47,7 +48,7 @@ const warehouseColumns = {
 };
 const movementColumns = {
   id: stockMovement.id, itemId: stockMovement.itemId, warehouseId: stockMovement.warehouseId,
-  movementType: stockMovement.movementType, quantity: stockMovement.quantity,
+  movementType: stockMovement.movementType, purpose: stockMovement.purpose, quantity: stockMovement.quantity,
   movementDate: stockMovement.movementDate, note: stockMovement.note, createdAt: stockMovement.createdAt,
   unitCost: stockMovement.unitCost, totalValue: stockMovement.totalValue,
   sourceModule: stockMovement.sourceModule, sourceId: stockMovement.sourceId, batchId: stockMovement.batchId,
@@ -157,7 +158,7 @@ export class InventoryRepository {
   async insertMovement(input: CreateMovementInput & { id: string; signedQuantity: string; totalValue?: string }): Promise<StockMovementRecord> {
     const rows = await this.database.db.insert(stockMovement).values({
       id: input.id, itemId: input.itemId, warehouseId: input.warehouseId,
-      movementType: input.movementType, quantity: input.signedQuantity,
+      movementType: input.movementType, purpose: input.purpose ?? 'general', quantity: input.signedQuantity,
       movementDate: input.movementDate ? new Date(input.movementDate) : new Date(),
       note: input.note ?? null,
       unitCost: input.unitCost ?? null, totalValue: input.totalValue ?? null,
@@ -166,7 +167,7 @@ export class InventoryRepository {
     const r = rows[0]!;
     return {
       id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementType: r.movementType as MovementType,
-      quantity: r.quantity, movementDate: r.movementDate.toISOString(), note: r.note, createdAt: r.createdAt.toISOString(),
+      purpose: r.purpose as MovementPurpose, quantity: r.quantity, movementDate: r.movementDate.toISOString(), note: r.note, createdAt: r.createdAt.toISOString(),
       unitCost: r.unitCost, totalValue: r.totalValue, sourceModule: r.sourceModule, sourceId: r.sourceId, batchId: r.batchId,
     };
   }
@@ -217,7 +218,7 @@ export class InventoryRepository {
     const rows = await this.database.db.select(movementColumns).from(stockMovement).orderBy(asc(stockMovement.createdAt));
     return rows.map((r) => ({
       id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementType: r.movementType as MovementType,
-      quantity: r.quantity, movementDate: r.movementDate.toISOString(), note: r.note, createdAt: r.createdAt.toISOString(),
+      purpose: r.purpose as MovementPurpose, quantity: r.quantity, movementDate: r.movementDate.toISOString(), note: r.note, createdAt: r.createdAt.toISOString(),
       unitCost: r.unitCost, totalValue: r.totalValue, sourceModule: r.sourceModule, sourceId: r.sourceId, batchId: r.batchId,
     }));
   }
@@ -550,7 +551,7 @@ export class InventoryRepository {
       .orderBy(asc(stockMovement.movementDate), asc(stockMovement.createdAt));
     return rows.map((r) => ({
       id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementType: r.movementType as MovementType,
-      quantity: r.quantity, movementDate: r.movementDate.toISOString(), note: r.note, createdAt: r.createdAt.toISOString(),
+      purpose: r.purpose as MovementPurpose, quantity: r.quantity, movementDate: r.movementDate.toISOString(), note: r.note, createdAt: r.createdAt.toISOString(),
       unitCost: r.unitCost, totalValue: r.totalValue, sourceModule: r.sourceModule, sourceId: r.sourceId, batchId: r.batchId,
     }));
   }

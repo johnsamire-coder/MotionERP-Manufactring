@@ -1,0 +1,2 @@
+ALTER TABLE "inventory"."stock_movement" ADD COLUMN "purpose" text DEFAULT 'general' NOT NULL;--> statement-breakpoint
+ALTER TABLE "inventory"."stock_movement" ADD CONSTRAINT "stock_movement_purpose_valid" CHECK ("inventory"."stock_movement"."purpose" in ('general', 'material_transfer_for_manufacture', 'manufacture_consumption'));

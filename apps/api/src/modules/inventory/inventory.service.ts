@@ -26,7 +26,18 @@ import type {
   ReconcileStockResult,
   LandedCostVoucherRecord,
   CreateLandedCostVoucherInput,
+  MovementPurpose,
+  MovementType,
+  TransferStockInput,
+  TransferStockResult,
 } from './inventory.types';
+
+// Which accounting directions each business purpose may use (plan item 3).
+const PURPOSE_MOVEMENT_TYPES: Record<MovementPurpose, readonly MovementType[]> = {
+  general: ['receipt', 'issue', 'transfer_in', 'transfer_out', 'adjustment'],
+  material_transfer_for_manufacture: ['transfer_out', 'transfer_in'],
+  manufacture_consumption: ['issue'],
+};
 
 @Injectable()
 export class InventoryService {
@@ -88,6 +99,17 @@ export class InventoryService {
         throw new InventoryValidationError('backdateReason is required when allowBackdate is true');
       }
       note = note ? `[BACKDATED: ${reason}] ${note}` : `[BACKDATED: ${reason}]`;
+    }
+
+    const purpose = input.purpose ?? 'general';
+    const allowedTypes = PURPOSE_MOVEMENT_TYPES[purpose];
+    if (!allowedTypes) {
+      throw new InventoryValidationError(`unknown movement purpose "${purpose}"`);
+    }
+    if (!allowedTypes.includes(input.movementType)) {
+      throw new InventoryValidationError(
+        `purpose "${purpose}" only allows movement types: ${allowedTypes.join(', ')} (got "${input.movementType}")`,
+      );
     }
 
     const isDecrease = input.movementType === 'issue' || input.movementType === 'transfer_out';
@@ -161,6 +183,7 @@ export class InventoryService {
       sourceModule: input.sourceModule,
       sourceId: input.sourceId,
       batchId: batchContext?.batchId,
+      purpose,
     });
 
     await this.repository.applyDelta(input.itemId, input.warehouseId, signedQuantity);
@@ -371,6 +394,55 @@ export class InventoryService {
 
   async getBatchBalances(itemId?: string, warehouseId?: string, batchId?: string): Promise<BatchBalanceRecord[]> {
     return this.repository.listBatchBalances(itemId, warehouseId, batchId);
+  }
+
+  /**
+   * Moves stock between two warehouses as a transfer_out + transfer_in pair at the source cost
+   * (batch cost for batch-tracked items). Used e.g. for "material transfer for manufacture".
+   */
+  async transferStock(input: TransferStockInput): Promise<TransferStockResult> {
+    if (input.fromWarehouseId === input.toWarehouseId) {
+      throw new InventoryValidationError('fromWarehouseId and toWarehouseId must be different');
+    }
+    const purpose = input.purpose ?? 'general';
+    if (purpose === 'manufacture_consumption') {
+      throw new InventoryValidationError('manufacture_consumption is an issue, not a transfer');
+    }
+    const target = await this.repository.findWarehouseById(input.toWarehouseId);
+    if (!target) throw new InventoryNotFoundError(`warehouse ${input.toWarehouseId} does not exist`);
+
+    // Both legs share one date; check the target leg's backdating rule before moving anything out.
+    const movementDate = input.movementDate ? new Date(input.movementDate) : new Date();
+    if (Number.isNaN(movementDate.getTime())) {
+      throw new InventoryValidationError(`movementDate "${input.movementDate}" is not a valid date`);
+    }
+    const latestAtTarget = await this.repository.findLatestMovementDate(input.itemId, input.toWarehouseId);
+    if (latestAtTarget && movementDate.getTime() < latestAtTarget.getTime()) {
+      throw new InventoryValidationError(
+        `backdated movement rejected: movementDate ${movementDate.toISOString()} is before the latest movement ` +
+        `${latestAtTarget.toISOString()} in the target warehouse`,
+      );
+    }
+
+    const shared = {
+      itemId: input.itemId,
+      quantity: input.quantity,
+      purpose,
+      batchId: input.batchId,
+      serialNos: input.serialNos,
+      movementDate: movementDate.toISOString(),
+      note: input.note,
+      sourceModule: input.sourceModule,
+      sourceId: input.sourceId,
+    };
+    const transferOut = await this.createMovement({ ...shared, warehouseId: input.fromWarehouseId, movementType: 'transfer_out' });
+    const transferIn = await this.createMovement({
+      ...shared,
+      warehouseId: input.toWarehouseId,
+      movementType: 'transfer_in',
+      unitCost: transferOut.unitCost ?? '0',
+    });
+    return { transferOut, transferIn };
   }
 
   async getReservations(): Promise<StockReservationRecord[]> {
