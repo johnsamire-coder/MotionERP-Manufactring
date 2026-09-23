@@ -210,6 +210,7 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
     // 3. Finance Repo Mock
     financeRepo = {
       countPurchaseInvoices: jest.fn().mockImplementation(async () => invoices.size),
+      findPurchaseInvoiceBySupplierNumber: jest.fn().mockResolvedValue(null),
       insertPurchaseInvoice: jest.fn().mockImplementation(async (input) => {
         invoices.set(input.id, { ...input, status: 'draft' });
         return { ...input, status: 'draft' };

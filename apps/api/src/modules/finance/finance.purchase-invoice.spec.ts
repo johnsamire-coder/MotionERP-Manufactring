@@ -37,6 +37,7 @@ describe('FinanceService — Purchase Invoices & AP Accounting Posting', () => {
 
     financeRepo = {
       countPurchaseInvoices: jest.fn().mockImplementation(async () => mockInvoices.size),
+      findPurchaseInvoiceBySupplierNumber: jest.fn().mockResolvedValue(null),
       insertPurchaseInvoice: jest.fn().mockImplementation(async (input) => {
         const record: PurchaseInvoiceRecord = {
           id: input.id,

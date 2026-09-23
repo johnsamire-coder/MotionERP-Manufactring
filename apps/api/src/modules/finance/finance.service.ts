@@ -245,6 +245,16 @@ export class FinanceService {
     const year = new Date().getFullYear();
     const systemNumber = `PINV-${year}-${String(sequence).padStart(6, '0')}`;
 
+    // Plan item 18: the database already forbids a repeated supplier invoice number for the same
+    // supplier (for all years — stricter than per fiscal year); answer 400 with the details instead
+    // of letting the unique constraint surface as a 500.
+    const duplicate = await this.repository.findPurchaseInvoiceBySupplierNumber(input.supplierId, input.invoiceNumber);
+    if (duplicate) {
+      throw new FinanceValidationError(
+        `رقم فاتورة المورد "${input.invoiceNumber.trim()}" مسجّل بالفعل لنفس المورد في ${duplicate.systemNumber} ` +
+        `بتاريخ ${duplicate.invoiceDate.toISOString().slice(0, 10)} (${duplicate.status})`,
+      );
+    }
     return this.repository.insertPurchaseInvoice({
       ...input,
       id: randomUUID(),

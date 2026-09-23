@@ -954,4 +954,14 @@ export class FinanceRepository {
       .where(and(eq(purchaseInvoiceLine.purchaseReceiptId, purchaseReceiptId), ne(purchaseInvoice.status, 'cancelled')));
     return Number(rows[0]?.total ?? 0);
   }
+
+  /** An existing invoice of this supplier with this supplier invoice number (plan item 18). */
+  async findPurchaseInvoiceBySupplierNumber(supplierId: string, invoiceNumber: string): Promise<{ systemNumber: string; invoiceDate: Date; status: string } | null> {
+    const rows = await this.database.db
+      .select({ systemNumber: purchaseInvoice.systemNumber, invoiceDate: purchaseInvoice.invoiceDate, status: purchaseInvoice.status })
+      .from(purchaseInvoice)
+      .where(and(eq(purchaseInvoice.supplierId, supplierId), eq(purchaseInvoice.invoiceNumber, invoiceNumber)))
+      .limit(1);
+    return rows[0] ?? null;
+  }
 }
