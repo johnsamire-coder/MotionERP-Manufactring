@@ -618,6 +618,19 @@ export class InventoryService {
       throw new InventoryNotFoundError(`المخزن ${input.warehouseId} غير موجود`);
     }
 
+    // الجرد العادي بيكتب على رصيد الصنف مباشرة، فمينفعش مع الأصناف المتتبّعة بالدفعة/السيريال
+    // (كان هيلخبط أرصدة الدفعات وحالة السيريالات). التسوية لازم تتم بحركة مخزون تحدد الدفعة/السيريال.
+    const tracking = await this.getItemTracking(input.itemId);
+    if (tracking?.hasBatchNo || tracking?.hasSerialNo) {
+      const trackedBy = tracking.hasBatchNo && tracking.hasSerialNo
+        ? 'الدفعة والسيريال'
+        : tracking.hasBatchNo ? 'الدفعة' : 'السيريال';
+      throw new InventoryValidationError(
+        `لا يمكن جرد هذا الصنف بالجرد العادي لأنه متتبّع بـ${trackedBy}. ` +
+        'استخدم حركة مخزون بدلاً منه: صرف (issue) للعجز أو تسوية (adjustment) للزيادة، مع تحديد الدفعة (batchId) و/أو أرقام السيريال (serialNos).',
+      );
+    }
+
     const bal = await this.repository.findBalance(input.itemId, input.warehouseId);
     const currentOnHand = bal ? Number(bal.onHand) : 0;
     const currentAvg = bal ? Number(bal.averageCost) : 0;

@@ -2,6 +2,7 @@ import { InventoryService } from './inventory.service';
 import { InventoryRepository } from './inventory.repository';
 import { PostingEngineService } from '../accounting/posting-engine.service';
 import { InventoryValidationError, InventoryNotFoundError } from './inventory.errors';
+import type { CatalogService } from '../catalog/catalog.service';
 import type {
   ReconcileStockInput,
   StockBalanceRecord,
@@ -223,5 +224,34 @@ describe('InventoryService — Stock Reconciliation & Inventory Adjustment Engin
         physicalQty: '10',
       }),
     ).rejects.toThrow(InventoryNotFoundError);
+  });
+
+  describe('5. Batch/serial-tracked items (plan item 4)', () => {
+    const withTracking = (flags: { hasBatchNo: boolean; hasSerialNo: boolean }) => {
+      const catalog = {
+        getItem: jest.fn().mockResolvedValue({ id: mockItemId, ...flags, hasExpiryDate: false, shelfLifeInDays: null }),
+      } as unknown as CatalogService;
+      return new InventoryService(inventoryRepo, postingEngine, catalog);
+    };
+
+    it.each([
+      [{ hasBatchNo: true, hasSerialNo: false }, 'الدفعة'],
+      [{ hasBatchNo: false, hasSerialNo: true }, 'السيريال'],
+      [{ hasBatchNo: true, hasSerialNo: true }, 'الدفعة والسيريال'],
+    ])('rejects reconciliation for %o and points to a stock movement', async (flags, label) => {
+      const service = withTracking(flags);
+      await expect(
+        service.reconcileStock({ itemId: mockItemId, warehouseId: mockWarehouseId, physicalQty: '40' }),
+      ).rejects.toThrow(new RegExp(`متتبّع بـ${label}.*حركة مخزون`));
+      expect(mockMovements.length).toBe(0);
+      expect(mockLedger.length).toBe(0);
+      expect(postingEngine.postStockMovement).not.toHaveBeenCalled();
+    });
+
+    it('still reconciles an untracked item when the catalog is available', async () => {
+      const service = withTracking({ hasBatchNo: false, hasSerialNo: false });
+      const result = await service.reconcileStock({ itemId: mockItemId, warehouseId: mockWarehouseId, physicalQty: '45' });
+      expect(result.adjustmentType).toBe('shortage');
+    });
   });
 });
