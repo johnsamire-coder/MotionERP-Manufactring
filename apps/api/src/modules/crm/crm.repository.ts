@@ -4,13 +4,14 @@ import { DatabaseService } from '../../core/database/database.service';
 import { customer, customerInteraction, supplier } from './crm.schema';
 import type {
   CreateCustomerInput, CreateInteractionInput, CreateSupplierInput, CustomerInteractionRecord,
-  CustomerRecord, CustomerStatus, InteractionType, SupplierRecord, SupplierStatus,
+  CustomerRecord, CustomerStatus, InteractionType, SupplierHoldType, SupplierRecord, SupplierStatus,
 } from './crm.types';
 
 const supplierColumns = {
   id: supplier.id, code: supplier.code, name: supplier.name,
   contactPhone: supplier.contactPhone, contactEmail: supplier.contactEmail,
   orgNodeId: supplier.orgNodeId, status: supplier.status,
+  holdType: supplier.holdType, holdReason: supplier.holdReason, holdReleaseDate: supplier.holdReleaseDate,
   createdAt: supplier.createdAt, updatedAt: supplier.updatedAt,
 };
 const customerColumns = {
@@ -25,13 +26,15 @@ const interactionColumns = {
   note: customerInteraction.note, createdAt: customerInteraction.createdAt,
 };
 
-interface SupplierRow { id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null; orgNodeId: string; status: string; createdAt: Date; updatedAt: Date; }
+interface SupplierRow { id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null; orgNodeId: string; status: string; holdType: string | null; holdReason: string | null; holdReleaseDate: Date | null; createdAt: Date; updatedAt: Date; }
 interface CustomerRow { id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null; orgNodeId: string; status: string; creditLimit: string | null; createdAt: Date; updatedAt: Date; }
 interface InteractionRow { id: string; customerId: string; interactionType: string; interactionDate: Date; note: string | null; createdAt: Date; }
 
 function toSupplierRecord(row: SupplierRow): SupplierRecord {
   return { id: row.id, code: row.code, name: row.name, contactPhone: row.contactPhone, contactEmail: row.contactEmail,
     orgNodeId: row.orgNodeId, status: row.status as SupplierStatus,
+    holdType: row.holdType as SupplierHoldType | null, holdReason: row.holdReason,
+    holdReleaseDate: row.holdReleaseDate ? row.holdReleaseDate.toISOString() : null,
     createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
 }
 function toCustomerRecord(row: CustomerRow): CustomerRecord {
@@ -51,6 +54,10 @@ export class CrmRepository {
   async listSuppliers(): Promise<SupplierRecord[]> {
     const rows = await this.database.db.select(supplierColumns).from(supplier).orderBy(asc(supplier.code));
     return rows.map(toSupplierRecord);
+  }
+  async setSupplierHold(id: string, hold: { holdType: SupplierHoldType | null; holdReason: string | null; holdReleaseDate: Date | null }): Promise<SupplierRecord> {
+    const rows = await this.database.db.update(supplier).set({ ...hold, updatedAt: new Date() }).where(eq(supplier.id, id)).returning(supplierColumns);
+    return toSupplierRecord(rows[0]!);
   }
   async findSupplierById(id: string): Promise<SupplierRecord | null> {
     const rows = await this.database.db.select(supplierColumns).from(supplier).where(eq(supplier.id, id)).limit(1);

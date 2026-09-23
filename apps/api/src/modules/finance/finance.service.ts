@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, Optional } from '@nestjs/common';
+import { CrmService } from '../crm/crm.service';
 import { SalesService } from '../sales/sales.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { AccountingRepository } from '../accounting/accounting.repository';
@@ -32,7 +33,15 @@ export class FinanceService {
     private readonly salesService: SalesService,
     @Optional() private readonly accountingService?: AccountingService,
     @Optional() private readonly accountingRepo?: AccountingRepository,
+    @Optional() private readonly crmService?: CrmService,
   ) {}
+
+  /** Supplier hold (plan item 8): stops invoices / payments for a held supplier. */
+  private async assertSupplierNotHeld(supplierId: string | null | undefined, action: 'invoice' | 'payment'): Promise<void> {
+    if (!supplierId || !this.crmService) return;
+    const blocked = await this.crmService.supplierBlockReason(supplierId, action);
+    if (blocked) throw new FinanceValidationError(blocked);
+  }
 
   private async getJobOrderOrThrow(jobOrderReference: string): Promise<JobOrderRecord> {
     const jobOrders = await this.salesService.getJobOrders();
@@ -161,6 +170,7 @@ export class FinanceService {
     if (!input.lines || input.lines.length === 0) {
       throw new FinanceValidationError('purchase invoice must have at least one line');
     }
+    await this.assertSupplierNotHeld(input.supplierId, 'invoice');
 
     let netTotal = 0;
     let taxTotal = 0;
@@ -213,6 +223,7 @@ export class FinanceService {
     if (invoice.status !== 'draft') {
       throw new FinanceValidationError(`purchase invoice ${id} is "${invoice.status}" and cannot be posted (must be "draft")`);
     }
+    await this.assertSupplierNotHeld(invoice.supplierId, 'invoice');
 
     if (this.accountingService && this.accountingRepo) {
       const config = await this.accountingRepo.findCompanyConfig(invoice.orgNodeId);
@@ -434,6 +445,7 @@ export class FinanceService {
 
     const amount = Number(input.amount);
     if (!Number.isFinite(amount) || amount <= 0) throw new FinanceValidationError('payment amount must be positive');
+    await this.assertSupplierNotHeld(input.supplierId, 'payment');
 
     const sequence = (await this.repository.countPayments()) + 1;
     const year = new Date().getFullYear();
@@ -452,6 +464,7 @@ export class FinanceService {
     if (p.status !== 'draft') {
       throw new FinanceValidationError(`payment ${id} is "${p.status}" and cannot be posted (must be "draft")`);
     }
+    await this.assertSupplierNotHeld(p.supplierId, 'payment');
 
     if (this.accountingService && this.accountingRepo && p.paidFromAccountId) {
       const config = await this.accountingRepo.findCompanyConfig(p.orgNodeId);

@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, UseFilters } from '@nestjs/common';
-import { CreateCustomerDto, CreateInteractionDto, CreateSupplierDto, SetCreditLimitDto } from './crm.dto';
+import { CreateCustomerDto, CreateInteractionDto, CreateSupplierDto, SetCreditLimitDto, SetSupplierHoldDto } from './crm.dto';
 import { CrmExceptionFilter } from './crm.exception-filter';
 import { CrmService } from './crm.service';
 import type { CustomerInteractionRecord, CustomerRecord, SupplierRecord } from './crm.types';
@@ -19,6 +19,12 @@ export class CrmController {
       contactEmail: dto.contactEmail, orgNodeId: dto.orgNodeId,
     });
     return { supplier: created };
+  }
+
+  @Patch('suppliers/:id/hold')
+  async setSupplierHold(@Param('id', ParseUUIDPipe) id: string, @Body() dto: SetSupplierHoldDto): Promise<{ supplier: SupplierRecord; holdActive: boolean }> {
+    const supplier = await this.service.setSupplierHold(id, { holdType: dto.holdType, reason: dto.reason, releaseDate: dto.releaseDate });
+    return { supplier, holdActive: this.service.effectiveHold(supplier) !== null };
   }
 
   @Get('customers')

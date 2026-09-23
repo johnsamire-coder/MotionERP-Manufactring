@@ -32,3 +32,10 @@ export class CreateInteractionDto {
   @IsOptional() @IsString() interactionDate?: string;
   @IsOptional() @IsString() note?: string;
 }
+
+/** holdType null lifts the hold (plan item 8). */
+export class SetSupplierHoldDto {
+  @ValidateIf((_o, v) => v !== null) @IsIn(['all', 'invoices', 'payments']) holdType!: 'all' | 'invoices' | 'payments' | null;
+  @IsOptional() @IsString() @MaxLength(500) reason?: string;
+  @IsOptional() @IsString() releaseDate?: string;
+}

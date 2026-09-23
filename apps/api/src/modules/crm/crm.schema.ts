@@ -14,10 +14,16 @@ export const supplier = crmSchema.table('supplier', {
     .notNull()
     .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   status: text('status').notNull().default('active'),
+  // Supplier hold (plan item 8): all = RFQs, quotations, invoices and payments; invoices / payments only.
+  // hold_release_date (optional) lifts the hold automatically once reached.
+  holdType: text('hold_type'),
+  holdReason: text('hold_reason'),
+  holdReleaseDate: timestamp('hold_release_date', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   unique('supplier_code_unique').on(t.code),
+  check('supplier_hold_type_valid', sql`${t.holdType} is null or ${t.holdType} in ('all', 'invoices', 'payments')`),
   check('supplier_code_format', sql`${t.code} ~ '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'`),
   check('supplier_name_not_blank', sql`length(btrim(${t.name})) > 0`),
   check('supplier_status_valid', sql`${t.status} in ('active', 'inactive', 'archived')`),

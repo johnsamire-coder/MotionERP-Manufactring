@@ -63,6 +63,7 @@ describe('RfqService — request for quotation to several suppliers (plan item 7
         if (!id.startsWith('s-')) throw new CrmNotFoundError('nope');
         return { id };
       }),
+      supplierBlockReason: jest.fn().mockImplementation(async (id: string) => (id === 's-held' ? 'المورد موقوف (إيقاف كامل)' : null)),
     } as unknown as CrmService;
     const catalog = {
       getItem: jest.fn().mockImplementation(async (id: string) => {
@@ -84,6 +85,7 @@ describe('RfqService — request for quotation to several suppliers (plan item 7
     expect(r.suppliers).toHaveLength(3);
     await expect(service.create({ ...input, supplierIds: ['s-a', 's-a'] })).rejects.toThrow(/at least two different suppliers/);
     await expect(service.create({ ...input, supplierIds: ['s-a', 'x-b'] })).rejects.toThrow(SalesNotFoundError);
+    await expect(service.create({ ...input, supplierIds: ['s-a', 's-held'] })).rejects.toThrow(/موقوف/);
     await expect(service.create({ ...input, lines: [{ itemId: 'ghost', quantity: '1' }] })).rejects.toThrow(/item ghost does not exist/);
     await expect(service.create({ ...input, lines: [{ itemId: 'steel', quantity: '1' }, { itemId: 'steel', quantity: '2' }] }))
       .rejects.toThrow(/only once/);

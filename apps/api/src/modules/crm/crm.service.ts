@@ -4,14 +4,59 @@ import { CrmNotFoundError, CrmValidationError } from './crm.errors';
 import { CrmRepository } from './crm.repository';
 import type {
   CreateCustomerInput, CreateInteractionInput, CreateSupplierInput,
-  CustomerInteractionRecord, CustomerRecord, SupplierRecord,
+  CustomerInteractionRecord, CustomerRecord, SupplierAction, SupplierHoldType, SupplierRecord,
 } from './crm.types';
+
+const HOLD_TYPES: readonly SupplierHoldType[] = ['all', 'invoices', 'payments'];
+const HOLD_LABEL: Record<SupplierHoldType, string> = { all: 'إيقاف كامل', invoices: 'منع الفواتير', payments: 'منع المدفوعات' };
 
 @Injectable()
 export class CrmService {
   constructor(private readonly repository: CrmRepository) {}
 
   async getSuppliers(): Promise<SupplierRecord[]> { return this.repository.listSuppliers(); }
+
+  /**
+   * Puts a supplier on hold (plan item 8) or lifts it (holdType null). An optional release
+   * date lifts the hold automatically once reached (checked on every use, no job needed).
+   */
+  async setSupplierHold(id: string, input: { holdType: SupplierHoldType | null; reason?: string; releaseDate?: string }): Promise<SupplierRecord> {
+    await this.getSupplier(id);
+    if (input.holdType === null) {
+      return this.repository.setSupplierHold(id, { holdType: null, holdReason: null, holdReleaseDate: null });
+    }
+    if (!HOLD_TYPES.includes(input.holdType)) throw new CrmValidationError(`holdType must be one of: ${HOLD_TYPES.join(', ')}`);
+    let releaseDate: Date | null = null;
+    if (input.releaseDate) {
+      releaseDate = new Date(input.releaseDate);
+      if (Number.isNaN(releaseDate.getTime())) throw new CrmValidationError('releaseDate is not a valid date');
+      if (releaseDate.getTime() <= Date.now()) throw new CrmValidationError('releaseDate must be in the future');
+    }
+    return this.repository.setSupplierHold(id, { holdType: input.holdType, holdReason: input.reason?.trim() || null, holdReleaseDate: releaseDate });
+  }
+
+  /** The hold in force right now, or null (no hold, or its release date has passed). */
+  effectiveHold(s: SupplierRecord, at: Date = new Date()): SupplierHoldType | null {
+    if (!s.holdType) return null;
+    if (s.holdReleaseDate && new Date(s.holdReleaseDate).getTime() <= at.getTime()) return null;
+    return s.holdType;
+  }
+
+  /**
+   * Why this purchasing action is blocked for the supplier, or null when allowed.
+   * Callers raise their own module error with the message (keeps their HTTP mapping).
+   */
+  async supplierBlockReason(supplierId: string, action: SupplierAction): Promise<string | null> {
+    const s = await this.repository.findSupplierById(supplierId);
+    if (!s) return null;
+    const hold = this.effectiveHold(s);
+    if (!hold) return null;
+    const blocked = hold === 'all' || (hold === 'invoices' && action === 'invoice') || (hold === 'payments' && action === 'payment');
+    if (!blocked) return null;
+    const until = s.holdReleaseDate ? ` حتى ${s.holdReleaseDate.slice(0, 10)}` : '';
+    const why = s.holdReason ? ` — السبب: ${s.holdReason}` : '';
+    return `المورد "${s.name}" موقوف (${HOLD_LABEL[hold]})${until}${why}`;
+  }
 
   async getSupplier(id: string): Promise<SupplierRecord> {
     const found = await this.repository.findSupplierById(id);

@@ -44,6 +44,8 @@ export class RfqService {
     }
     for (const supplierId of supplierIds) {
       await this.mustExist(() => this.crm.getSupplier(supplierId), CrmNotFoundError, `supplier ${supplierId} does not exist`);
+      const blocked = await this.crm.supplierBlockReason(supplierId, 'rfq');
+      if (blocked) throw new SalesValidationError(blocked);
     }
     const sequence = (await this.repository.count()) + 1;
     const rfqNumber = `RFQ-${new Date().getFullYear()}-${String(sequence).padStart(6, '0')}`;

@@ -4,8 +4,14 @@ export type InteractionType = 'visit' | 'call' | 'email' | 'note';
 
 export interface SupplierRecord {
   id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null;
-  orgNodeId: string; status: SupplierStatus; createdAt: string; updatedAt: string;
+  orgNodeId: string; status: SupplierStatus;
+  holdType: SupplierHoldType | null; holdReason: string | null; holdReleaseDate: string | null;
+  createdAt: string; updatedAt: string;
 }
+/** all = every purchasing document; invoices / payments = only that document type (plan item 8). */
+export type SupplierHoldType = 'all' | 'invoices' | 'payments';
+/** The purchasing action being attempted, checked against the supplier's hold. */
+export type SupplierAction = 'rfq' | 'quotation' | 'invoice' | 'payment';
 export interface CreateSupplierInput {
   code: string; name: string; contactPhone?: string; contactEmail?: string; orgNodeId: string;
 }

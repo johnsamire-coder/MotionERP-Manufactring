@@ -38,6 +38,11 @@ export class SalesService {
       if (!Number.isFinite(qty) || qty <= 0) throw new SalesValidationError('line quantity must be positive');
       if (!Number.isFinite(price) || price < 0) throw new SalesValidationError('line unit price cannot be negative');
     }
+    if (input.supplierId) {
+      // Supplier hold (plan item 8): a fully held supplier cannot quote us.
+      const blocked = await this.crmService.supplierBlockReason(input.supplierId, 'quotation');
+      if (blocked) throw new SalesValidationError(blocked);
+    }
     if (input.customerId) {
       const customer = await this.crmService.getCustomer(input.customerId);
       if (!customer) throw new SalesNotFoundError(`customer ${input.customerId} does not exist`);
