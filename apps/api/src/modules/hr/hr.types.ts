@@ -7,6 +7,7 @@ export type PayrollEntryStatus = 'draft' | 'approved' | 'paid';
 
 export interface EmployeeRecord {
   id: string; code: string; name: string; role: string; orgNodeId: string; baseSalary: string; status: EmployeeStatus;
+  reportsTo: string | null; relievingDate: string | null;
 }
 export interface CreateEmployeeInput { code: string; name: string; role: string; orgNodeId: string; baseSalary?: string; }
 

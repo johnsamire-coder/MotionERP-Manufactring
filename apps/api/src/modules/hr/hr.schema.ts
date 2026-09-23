@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, index, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, check, index, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { orgNode } from '../organization/organization.schema';
 
 export const hrSchema = pgSchema('hr');
@@ -14,10 +14,16 @@ export const employee = hrSchema.table('employee', {
     .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   baseSalary: numeric('base_salary', { precision: 12, scale: 4 }).notNull().default('0'),
   status: text('status').notNull().default('active'),
+  /** Direct manager (plan item 10). Same-module self reference. */
+  reportsTo: uuid('reports_to').references((): AnyPgColumn => employee.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  /** Last working day, set when the employee leaves (plan items 10/11). */
+  relievingDate: timestamp('relieving_date', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   unique('employee_code_unique').on(t.code),
+  check('employee_not_own_manager', sql`${t.reportsTo} is null or ${t.reportsTo} <> ${t.id}`),
+  index('employee_reports_to_idx').on(t.reportsTo),
   check('employee_code_format', sql`${t.code} ~ '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'`),
   check('employee_name_not_blank', sql`length(btrim(${t.name})) > 0`),
   check('employee_base_salary_non_negative', sql`${t.baseSalary} >= 0`),

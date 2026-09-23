@@ -1,5 +1,5 @@
-import { Body, Controller, Get, HttpCode, Post, Query, UseFilters } from '@nestjs/common';
-import { CreateCommissionRuleDto, CreateEmployeeDto, CreateExternalCommissionDto, EarnCommissionDto, GeneratePayrollDto } from './hr.dto';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, UseFilters } from '@nestjs/common';
+import { CreateCommissionRuleDto, CreateEmployeeDto, CreateExternalCommissionDto, EarnCommissionDto, GeneratePayrollDto, SetReportsToDto, TerminateEmployeeDto } from './hr.dto';
 import { HrExceptionFilter } from './hr.exception-filter';
 import { HrService } from './hr.service';
 import type { CommissionEntryRecord, CommissionRuleRecord, EmployeeRecord, ExternalCommissionRecord, PayrollEntryRecord } from './hr.types';
@@ -15,6 +15,16 @@ export class HrController {
   @Post('employees') @HttpCode(201)
   async createEmployee(@Body() dto: CreateEmployeeDto): Promise<{ employee: EmployeeRecord }> {
     return { employee: await this.service.createEmployee(dto) };
+  }
+
+  @Patch('employees/:id/reports-to')
+  async setReportsTo(@Param('id', ParseUUIDPipe) id: string, @Body() dto: SetReportsToDto): Promise<{ employee: EmployeeRecord }> {
+    return { employee: await this.service.setReportsTo(id, dto.managerId) };
+  }
+
+  @Post('employees/:id/terminate') @HttpCode(200)
+  async terminate(@Param('id', ParseUUIDPipe) id: string, @Body() dto: TerminateEmployeeDto): Promise<{ employee: EmployeeRecord }> {
+    return { employee: await this.service.terminateEmployee(id, dto.relievingDate) };
   }
 
   @Get('commission-rules')

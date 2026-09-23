@@ -21,6 +21,50 @@ export class HrService {
     return this.repository.insertEmployee({ id: randomUUID(), code, name, role: input.role, orgNodeId: input.orgNodeId, baseSalary: input.baseSalary });
   }
 
+  /** Sets (or clears with null) an employee's direct manager, refusing self-reference and loops (plan item 10). */
+  async setReportsTo(id: string, managerId: string | null): Promise<EmployeeRecord> {
+    const emp = await this.getEmployee(id);
+    if (managerId !== null) {
+      if (managerId === id) throw new HrValidationError('an employee cannot report to themself');
+      const manager = await this.getEmployee(managerId);
+      if (manager.status !== 'active') throw new HrValidationError(`manager ${manager.code} is not active`);
+      // Walk up from the new manager: reaching this employee would create a loop.
+      let cursor: EmployeeRecord | null = manager;
+      const seen = new Set<string>();
+      while (cursor?.reportsTo && !seen.has(cursor.id)) {
+        if (cursor.reportsTo === id) throw new HrValidationError(`${manager.code} already reports (directly or indirectly) to ${emp.code}; that would create a loop`);
+        seen.add(cursor.id);
+        cursor = await this.repository.findEmployeeById(cursor.reportsTo);
+      }
+    }
+    return this.repository.setEmployeeReportsTo(id, managerId);
+  }
+
+  /**
+   * Ends an employee's service (plan item 10): refused while any ACTIVE employee still reports
+   * to them — the message names each one so they can be reassigned first.
+   */
+  async terminateEmployee(id: string, relievingDate?: string): Promise<EmployeeRecord> {
+    const emp = await this.getEmployee(id);
+    if (emp.status === 'terminated') throw new HrValidationError(`employee ${emp.code} is already terminated`);
+    const subordinates = await this.repository.listActiveSubordinates(id);
+    if (subordinates.length > 0) {
+      const names = subordinates.map((s) => `${s.code} (${s.name})`).join('، ');
+      throw new HrValidationError(
+        `لا يمكن إنهاء خدمة ${emp.name}: يوجد ${subordinates.length} موظف نشط تابع له — ${names}. انقلهم لمدير آخر أولاً.`,
+      );
+    }
+    const date = relievingDate ? new Date(relievingDate) : new Date();
+    if (Number.isNaN(date.getTime())) throw new HrValidationError('relievingDate is not a valid date');
+    return this.repository.setEmployeeStatus(id, 'terminated', date);
+  }
+
+  async getEmployee(id: string): Promise<EmployeeRecord> {
+    const found = await this.repository.findEmployeeById(id);
+    if (!found) throw new HrNotFoundError(`employee ${id} does not exist`);
+    return found;
+  }
+
   async getCommissionRules(employeeId?: string): Promise<CommissionRuleRecord[]> { return this.repository.listCommissionRules(employeeId); }
 
   async createCommissionRule(input: CreateCommissionRuleInput): Promise<CommissionRuleRecord> {

@@ -8,7 +8,7 @@ import type {
   ExternalCommissionRecord, ExternalCommissionStatus, PayrollEntryRecord, PayrollEntryStatus,
 } from './hr.types';
 
-const empColumns = { id: employee.id, code: employee.code, name: employee.name, role: employee.role, orgNodeId: employee.orgNodeId, baseSalary: employee.baseSalary, status: employee.status };
+const empColumns = { id: employee.id, code: employee.code, name: employee.name, role: employee.role, orgNodeId: employee.orgNodeId, baseSalary: employee.baseSalary, status: employee.status, reportsTo: employee.reportsTo, relievingDate: employee.relievingDate };
 const ruleColumns = { id: commissionRule.id, employeeId: commissionRule.employeeId, basis: commissionRule.basis, ratePercentage: commissionRule.ratePercentage, status: commissionRule.status };
 const entryColumns = {
   id: commissionEntry.id, employeeId: commissionEntry.employeeId, jobOrderReference: commissionEntry.jobOrderReference,
@@ -24,13 +24,16 @@ const payColumns = {
   baseSalary: payrollEntry.baseSalary, totalCommissions: payrollEntry.totalCommissions, totalAmount: payrollEntry.totalAmount, status: payrollEntry.status,
 };
 
-interface EmpRow { id: string; code: string; name: string; role: string; orgNodeId: string; baseSalary: string; status: string; }
+interface EmpRow { id: string; code: string; name: string; role: string; orgNodeId: string; baseSalary: string; status: string; reportsTo: string | null; relievingDate: Date | null; }
 interface RuleRow { id: string; employeeId: string; basis: string; ratePercentage: string; status: string; }
 interface EntryRow { id: string; employeeId: string; jobOrderReference: string; sourceReference: string; baseAmount: string; commissionAmount: string; earnedDate: Date; status: string; }
 interface ExtRow { id: string; beneficiaryName: string; jobOrderReference: string; amount: string; basisDescription: string; dueDate: Date | null; status: string; }
 interface PayRow { id: string; employeeId: string; periodYear: string; periodMonth: string; baseSalary: string; totalCommissions: string; totalAmount: string; status: string; }
 
-function toEmpRecord(row: EmpRow): EmployeeRecord { return { id: row.id, code: row.code, name: row.name, role: row.role, orgNodeId: row.orgNodeId, baseSalary: row.baseSalary, status: row.status as EmployeeStatus }; }
+function toEmpRecord(row: EmpRow): EmployeeRecord {
+  return { id: row.id, code: row.code, name: row.name, role: row.role, orgNodeId: row.orgNodeId, baseSalary: row.baseSalary, status: row.status as EmployeeStatus,
+    reportsTo: row.reportsTo, relievingDate: row.relievingDate ? row.relievingDate.toISOString() : null };
+}
 function toRuleRecord(row: RuleRow): CommissionRuleRecord { return { id: row.id, employeeId: row.employeeId, basis: row.basis as CommissionBasis, ratePercentage: row.ratePercentage, status: row.status as CommissionRuleStatus }; }
 function toEntryRecord(row: EntryRow): CommissionEntryRecord {
   return { id: row.id, employeeId: row.employeeId, jobOrderReference: row.jobOrderReference, sourceReference: row.sourceReference,
@@ -56,6 +59,20 @@ export class HrRepository {
   async findEmployeeById(id: string): Promise<EmployeeRecord | null> {
     const rows = await this.database.db.select(empColumns).from(employee).where(eq(employee.id, id)).limit(1);
     return rows[0] ? toEmpRecord(rows[0]) : null;
+  }
+  async setEmployeeReportsTo(id: string, reportsTo: string | null): Promise<EmployeeRecord> {
+    const rows = await this.database.db.update(employee).set({ reportsTo, updatedAt: new Date() }).where(eq(employee.id, id)).returning(empColumns);
+    return toEmpRecord(rows[0]!);
+  }
+  async setEmployeeStatus(id: string, status: EmployeeStatus, relievingDate: Date | null): Promise<EmployeeRecord> {
+    const rows = await this.database.db.update(employee).set({ status, relievingDate, updatedAt: new Date() }).where(eq(employee.id, id)).returning(empColumns);
+    return toEmpRecord(rows[0]!);
+  }
+  /** Employees reporting directly to this one who are still active. */
+  async listActiveSubordinates(managerId: string): Promise<EmployeeRecord[]> {
+    const rows = await this.database.db.select(empColumns).from(employee)
+      .where(and(eq(employee.reportsTo, managerId), eq(employee.status, 'active'))).orderBy(asc(employee.code));
+    return rows.map(toEmpRecord);
   }
   async findEmployeeByCode(code: string): Promise<EmployeeRecord | null> {
     const rows = await this.database.db.select(empColumns).from(employee).where(eq(employee.code, code)).limit(1);

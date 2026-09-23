@@ -1,4 +1,4 @@
-import { IsIn, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
+import { IsIn, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength, ValidateIf } from 'class-validator';
 
 export class CreateEmployeeDto {
   @Matches(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/) @MaxLength(64) @IsString() code!: string;
@@ -33,4 +33,13 @@ export class GeneratePayrollDto {
   @IsUUID() employeeId!: string;
   @IsString() periodYear!: string;
   @IsString() periodMonth!: string;
+}
+
+/** managerId null clears the manager (plan item 10). */
+export class SetReportsToDto {
+  @ValidateIf((_o, v) => v !== null) @IsUUID() managerId!: string | null;
+}
+
+export class TerminateEmployeeDto {
+  @IsOptional() @IsString() relievingDate?: string;
 }
