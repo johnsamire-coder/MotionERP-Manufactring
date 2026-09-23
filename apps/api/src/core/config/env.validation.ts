@@ -11,6 +11,15 @@ export const envSchema = z.object({
   API_GLOBAL_PREFIX: z.string().min(1).default('api'),
   API_CORS_ORIGINS: z.string().default('http://localhost:5173'),
   DATABASE_URL: z.string().url(),
+  // Authentication (plan item 5.0). The secret signs login tokens; required in production.
+  AUTH_JWT_SECRET: z.string().min(32).optional(),
+  AUTH_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(8 * 60 * 60),
+  // When "true", every request without a valid token is rejected (401). Off by default so
+  // existing screens keep working until the owner switches it on.
+  AUTH_ENFORCE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
+}).refine((env) => env.NODE_ENV !== 'production' || !!env.AUTH_JWT_SECRET, {
+  message: 'AUTH_JWT_SECRET is required in production',
+  path: ['AUTH_JWT_SECRET'],
 });
 
 export type Env = z.infer<typeof envSchema>;

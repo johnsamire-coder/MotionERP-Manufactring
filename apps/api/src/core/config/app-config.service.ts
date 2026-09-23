@@ -33,4 +33,17 @@ export class AppConfigService {
   get databaseUrl(): string {
     return this.config.get('DATABASE_URL', { infer: true });
   }
+
+  /** Undefined outside production when not configured; a per-process secret is used then. */
+  get authJwtSecret(): string | undefined {
+    return this.config.get('AUTH_JWT_SECRET', { infer: true });
+  }
+
+  get authTokenTtlSeconds(): number {
+    return this.config.get('AUTH_TOKEN_TTL_SECONDS', { infer: true });
+  }
+
+  get authEnforce(): boolean {
+    return this.config.get('AUTH_ENFORCE', { infer: true });
+  }
 }

@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { AUTH_REQUIRED_EVENT, authApi, getAccessToken, setAccessToken, type SessionUser } from './app/api/client';
+import { LoginDialog } from './app/components/LoginDialog';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -90,6 +92,29 @@ interface MenuSection { title: string; items: MenuItem[]; }
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('mfg-dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // جلسة الدخول (بند 5.0): استرجاع المستخدم من التذكرة المحفوظة، وفتح نافذة الدخول لما السيرفر يطلبها.
+  const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginRequired, setLoginRequired] = useState(false);
+
+  useEffect(() => {
+    if (getAccessToken()) {
+      authApi.me().then((res) => setSessionUser(res.user)).catch(() => setSessionUser(null));
+    }
+    const onAuthRequired = (): void => {
+      setSessionUser(null);
+      setLoginRequired(true);
+      setLoginOpen(true);
+    };
+    window.addEventListener(AUTH_REQUIRED_EVENT, onAuthRequired);
+    return () => window.removeEventListener(AUTH_REQUIRED_EVENT, onAuthRequired);
+  }, []);
+
+  const logout = (): void => {
+    setAccessToken(null);
+    setSessionUser(null);
+  };
 
   const menuSections: MenuSection[] = [
     {
@@ -251,9 +276,24 @@ export const App: React.FC = () => {
           </div>
           {sidebarOpen && (
             <div className="flex-1 truncate">
-              <p className="text-xs font-bold text-white">مدير النظام والمصنع</p>
-              <p className="text-[10px] text-teal-400">Super Administrator</p>
+              <p className="text-xs font-bold text-white">{sessionUser ? sessionUser.name : 'غير مسجّل الدخول'}</p>
+              <p className="text-[10px] text-teal-400">{sessionUser ? sessionUser.role || '—' : 'Guest'}</p>
             </div>
+          )}
+          {sidebarOpen && (
+            <button
+              onClick={() => {
+                if (sessionUser) {
+                  logout();
+                } else {
+                  setLoginRequired(false);
+                  setLoginOpen(true);
+                }
+              }}
+              className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white cursor-pointer"
+            >
+              {sessionUser ? 'خروج' : 'دخول'}
+            </button>
           )}
         </div>
       </aside>
@@ -317,6 +357,14 @@ export const App: React.FC = () => {
         {currentTab === 'audit-trail' && <AuditTrailPage />}
         {currentTab === 'rbac-matrix' && <RbacPermissionsPage />}
       </main>
+
+      {loginOpen && (
+        <LoginDialog
+          required={loginRequired}
+          onLoggedIn={(user) => { setSessionUser(user); setLoginOpen(false); setLoginRequired(false); }}
+          onClose={() => setLoginOpen(false)}
+        />
+      )}
     </div>
   );
 };
