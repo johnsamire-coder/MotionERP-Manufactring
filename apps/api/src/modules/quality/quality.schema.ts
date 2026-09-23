@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, index, integer, numeric, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { orgNode } from '../organization/organization.schema';
 import { item } from '../catalog/catalog.schema';
 
@@ -93,10 +93,65 @@ export const qualityInspectionParameter = qualitySchema.table('inspection_parame
   targetValue: text('target_value').notNull(),
   actualValue: text('actual_value'),
   status: text('status').notNull().default('pending'),
+  // Acceptance criteria (plan item 9), copied from the template when the inspection is created.
+  isNumeric: boolean('is_numeric').notNull().default(false),
+  minValue: numeric('min_value', { precision: 24, scale: 6 }),
+  maxValue: numeric('max_value', { precision: 24, scale: 6 }),
+  acceptedValue: text('accepted_value'),
+  readingsRequired: integer('readings_required').notNull().default(1),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   check('valid_parameter_status', sql`${t.status} IN ('pending', 'pass', 'fail')`),
+  check('inspection_parameter_readings_required_positive', sql`${t.readingsRequired} >= 1`),
   index('idx_parameter_inspection').on(t.inspectionId),
+]);
+
+// ==================== قوالب الفحص والقراءات الفعلية (بند 9) ====================
+
+/** Standard inspection criteria for an item (or generic when item_id is null). */
+export const inspectionTemplate = qualitySchema.table('inspection_template', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: text('code').notNull(),
+  name: text('name').notNull(),
+  itemId: uuid('item_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('inspection_template_code_unique').on(t.code),
+  index('idx_inspection_template_item').on(t.itemId),
+]);
+
+/**
+ * One criterion: numeric → every reading must fall within [min, max] (either bound optional);
+ * non-numeric → every reading must equal accepted_value (case-insensitive).
+ */
+export const inspectionTemplateParameter = qualitySchema.table('inspection_template_parameter', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  templateId: uuid('template_id').notNull().references(() => inspectionTemplate.id, { onDelete: 'cascade' }),
+  parameterName: text('parameter_name').notNull(),
+  isNumeric: boolean('is_numeric').notNull().default(true),
+  minValue: numeric('min_value', { precision: 24, scale: 6 }),
+  maxValue: numeric('max_value', { precision: 24, scale: 6 }),
+  acceptedValue: text('accepted_value'),
+  readingsRequired: integer('readings_required').notNull().default(1),
+  position: integer('position').notNull().default(0),
+}, (t) => [
+  unique('inspection_template_parameter_name_unique').on(t.templateId, t.parameterName),
+  check('template_parameter_readings_required_range', sql`${t.readingsRequired} between 1 and 10`),
+  check('template_parameter_criteria', sql`(${t.isNumeric} and (${t.minValue} is not null or ${t.maxValue} is not null)) or (not ${t.isNumeric} and ${t.acceptedValue} is not null)`),
+  check('template_parameter_min_le_max', sql`${t.minValue} is null or ${t.maxValue} is null or ${t.minValue} <= ${t.maxValue}`),
+]);
+
+/** Every individual reading taken for an inspection parameter. */
+export const inspectionReading = qualitySchema.table('inspection_reading', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  parameterId: uuid('parameter_id').notNull().references(() => qualityInspectionParameter.id, { onDelete: 'cascade' }),
+  readingNo: integer('reading_no').notNull(),
+  value: text('value').notNull(),
+  withinSpec: boolean('within_spec').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('inspection_reading_unique').on(t.parameterId, t.readingNo),
+  index('idx_inspection_reading_parameter').on(t.parameterId),
 ]);
 
 export type QualityCheckPoint = typeof qualityCheckPoint.$inferSelect;
