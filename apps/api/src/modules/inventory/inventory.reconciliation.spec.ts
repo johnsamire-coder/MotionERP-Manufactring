@@ -38,6 +38,7 @@ describe('InventoryService — Stock Reconciliation & Inventory Adjustment Engin
         }
         return null;
       }),
+      findLatestMovementDate: jest.fn().mockResolvedValue(null),
       findBalance: jest.fn().mockImplementation(async (itemId: string, warehouseId: string) => {
         if (!mockBalance) return null;
         return {

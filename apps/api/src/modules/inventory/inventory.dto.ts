@@ -1,6 +1,7 @@
 import {
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsIn,
   IsNumberString,
@@ -64,6 +65,15 @@ export class CreateMovementDto {
   @IsOptional()
   @IsString()
   sourceId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  allowBackdate?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  backdateReason?: string;
 }
 
 export class CreateReservationDto {

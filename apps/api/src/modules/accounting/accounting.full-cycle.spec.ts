@@ -177,6 +177,7 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
         };
       }),
       insertMovement: jest.fn().mockImplementation(async (input) => input),
+      findLatestMovementDate: jest.fn().mockResolvedValue(null),
       applyDelta: jest.fn().mockImplementation(async (itemId, whId, delta) => {
         const key = `${itemId}-${whId}`;
         const cur = balances.get(key) ?? { onHand: 0, averageCost: 0, totalValue: 0, reserved: 0 };

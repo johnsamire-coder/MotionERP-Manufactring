@@ -63,6 +63,28 @@ export class InventoryService {
       throw new InventoryNotFoundError(`warehouse ${input.warehouseId} does not exist`);
     }
 
+    // Backdating guard: a movement may not be dated before the latest recorded
+    // movement of the same item/warehouse, unless explicitly allowed with a reason.
+    const movementDate = input.movementDate ? new Date(input.movementDate) : new Date();
+    if (Number.isNaN(movementDate.getTime())) {
+      throw new InventoryValidationError(`movementDate "${input.movementDate}" is not a valid date`);
+    }
+    let note = input.note;
+    const latestMovementDate = await this.repository.findLatestMovementDate(input.itemId, input.warehouseId);
+    if (latestMovementDate && movementDate.getTime() < latestMovementDate.getTime()) {
+      if (!input.allowBackdate) {
+        throw new InventoryValidationError(
+          `backdated movement rejected: movementDate ${movementDate.toISOString()} is before the latest movement ` +
+          `${latestMovementDate.toISOString()} for this item/warehouse (set allowBackdate with a backdateReason to override)`,
+        );
+      }
+      const reason = input.backdateReason?.trim();
+      if (!reason) {
+        throw new InventoryValidationError('backdateReason is required when allowBackdate is true');
+      }
+      note = note ? `[BACKDATED: ${reason}] ${note}` : `[BACKDATED: ${reason}]`;
+    }
+
     const isDecrease = input.movementType === 'issue' || input.movementType === 'transfer_out';
     const signedQuantity = isDecrease ? `-${input.quantity}` : input.quantity;
 
@@ -106,8 +128,8 @@ export class InventoryService {
       movementType: input.movementType,
       quantity: input.quantity,
       signedQuantity,
-      movementDate: input.movementDate,
-      note: input.note,
+      movementDate: movementDate.toISOString(),
+      note,
       unitCost: movementUnitCost.toFixed(6),
       totalValue: movementTotalValue.toFixed(4),
       sourceModule: input.sourceModule,
@@ -145,8 +167,8 @@ export class InventoryService {
         quantity: input.quantity,
         unitCost: movementUnitCost.toFixed(6),
         totalValue: movementTotalValue.toFixed(4),
-        movementDate: input.movementDate,
-        note: input.note,
+        movementDate: movementDate.toISOString(),
+        note,
         sourceModule: input.sourceModule,
         sourceId: input.sourceId,
       });

@@ -61,6 +61,9 @@ export interface CreateMovementInput {
   unitCost?: string;
   sourceModule?: string;
   sourceId?: string;
+  /** Allow a movement dated before the latest movement of the same item/warehouse (requires backdateReason). */
+  allowBackdate?: boolean;
+  backdateReason?: string;
 }
 
 export interface StockReservationRecord {

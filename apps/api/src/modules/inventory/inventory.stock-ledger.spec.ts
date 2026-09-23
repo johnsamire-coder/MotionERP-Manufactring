@@ -34,6 +34,10 @@ describe('InventoryService — Moving Weighted Average & Stock Ledger', () => {
           lastPurchaseAt: null,
         } as any;
       }),
+      findLatestMovementDate: jest.fn().mockImplementation(async () => {
+        if (mockMovements.length === 0) return null;
+        return new Date(Math.max(...mockMovements.map((m) => new Date(m.movementDate).getTime())));
+      }),
       insertMovement: jest.fn().mockImplementation(async (input) => {
         const record = { ...input, createdAt: new Date().toISOString() };
         mockMovements.push(record);
@@ -184,5 +188,63 @@ describe('InventoryService — Moving Weighted Average & Stock Ledger', () => {
     const entries = await service.getLedgerEntries('item-1', 'wh-1');
     expect(entries.length).toBe(1);
     expect(entries[0]?.stockValueAfter).toBe('500.0000');
+  });
+
+  it('6. Backdating: should reject a movement dated before the latest movement of the same item/warehouse', async () => {
+    await service.createMovement({
+      itemId: 'item-1', warehouseId: 'wh-1', movementType: 'receipt', quantity: '10', unitCost: '100',
+      movementDate: '2026-03-10T00:00:00.000Z',
+    });
+
+    await expect(
+      service.createMovement({
+        itemId: 'item-1', warehouseId: 'wh-1', movementType: 'receipt', quantity: '5', unitCost: '100',
+        movementDate: '2026-03-01T00:00:00.000Z',
+      })
+    ).rejects.toThrow(/backdated movement rejected/);
+
+    expect(mockMovements.length).toBe(1);
+    expect(mockLedger.length).toBe(1);
+  });
+
+  it('7. Backdating: should allow a same-day or later movement', async () => {
+    await service.createMovement({
+      itemId: 'item-1', warehouseId: 'wh-1', movementType: 'receipt', quantity: '10', unitCost: '100',
+      movementDate: '2026-03-10T00:00:00.000Z',
+    });
+    await service.createMovement({
+      itemId: 'item-1', warehouseId: 'wh-1', movementType: 'receipt', quantity: '10', unitCost: '100',
+      movementDate: '2026-03-10T00:00:00.000Z',
+    });
+    expect(mockMovements.length).toBe(2);
+  });
+
+  it('8. Backdating override: should require a reason and record it in the note', async () => {
+    await service.createMovement({
+      itemId: 'item-1', warehouseId: 'wh-1', movementType: 'receipt', quantity: '10', unitCost: '100',
+      movementDate: '2026-03-10T00:00:00.000Z',
+    });
+
+    await expect(
+      service.createMovement({
+        itemId: 'item-1', warehouseId: 'wh-1', movementType: 'receipt', quantity: '5', unitCost: '100',
+        movementDate: '2026-03-01T00:00:00.000Z', allowBackdate: true, backdateReason: '   ',
+      })
+    ).rejects.toThrow(/backdateReason is required/);
+
+    const movement = await service.createMovement({
+      itemId: 'item-1', warehouseId: 'wh-1', movementType: 'receipt', quantity: '5', unitCost: '100',
+      movementDate: '2026-03-01T00:00:00.000Z', allowBackdate: true, backdateReason: 'late supplier invoice', note: 'GRN-17',
+    });
+    expect(movement.note).toBe('[BACKDATED: late supplier invoice] GRN-17');
+  });
+
+  it('9. Backdating: should reject an invalid movementDate', async () => {
+    await expect(
+      service.createMovement({
+        itemId: 'item-1', warehouseId: 'wh-1', movementType: 'receipt', quantity: '5', unitCost: '100',
+        movementDate: 'not-a-date',
+      })
+    ).rejects.toThrow(/not a valid date/);
   });
 });

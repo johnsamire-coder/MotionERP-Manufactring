@@ -160,6 +160,15 @@ export class InventoryRepository {
     };
   }
 
+  async findLatestMovementDate(itemId: string, warehouseId: string): Promise<Date | null> {
+    const rows = await this.database.db.select({ movementDate: stockMovement.movementDate })
+      .from(stockMovement)
+      .where(and(eq(stockMovement.itemId, itemId), eq(stockMovement.warehouseId, warehouseId)))
+      .orderBy(desc(stockMovement.movementDate))
+      .limit(1);
+    return rows[0]?.movementDate ?? null;
+  }
+
   async listMovements(): Promise<StockMovementRecord[]> {
     const rows = await this.database.db.select(movementColumns).from(stockMovement).orderBy(asc(stockMovement.createdAt));
     return rows.map((r) => ({

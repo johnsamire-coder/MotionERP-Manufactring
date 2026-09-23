@@ -81,6 +81,8 @@ export class InventoryController {
       unitCost: dto.unitCost,
       sourceModule: dto.sourceModule,
       sourceId: dto.sourceId,
+      allowBackdate: dto.allowBackdate,
+      backdateReason: dto.backdateReason,
     });
     return { movement: created };
   }

@@ -70,6 +70,7 @@ describe('InventoryService — Landed Cost Voucher & Expense Capitalization Engi
         }
         return v;
       }),
+      findLatestMovementDate: jest.fn().mockResolvedValue(null),
       findBalance: jest.fn().mockImplementation(async (itemId: string, warehouseId: string) => {
         if (!mockBalance) return null;
         return {
