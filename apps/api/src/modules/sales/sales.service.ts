@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
+import { PricingService } from './pricing.service';
 import { CrmService } from '../crm/crm.service';
 import { SalesNotFoundError, SalesValidationError } from './sales.errors';
 import { SalesRepository } from './sales.repository';
@@ -10,6 +11,7 @@ export class SalesService {
   constructor(
     private readonly repository: SalesRepository,
     private readonly crmService: CrmService,
+    @Optional() private readonly pricing?: PricingService,
   ) {}
 
   async getQuotations(direction?: 'outgoing' | 'incoming'): Promise<QuotationRecord[]> {
@@ -31,6 +33,22 @@ export class SalesService {
     }
     if (!input.lines || input.lines.length === 0) {
       throw new SalesValidationError('a quotation must have at least one line');
+    }
+    if (input.applyPricingRules && this.pricing) {
+      // Plan item 16: rules re-price each line; product rules append free lines at rate 0.
+      const priced = await this.pricing.apply(
+        input.direction === 'outgoing' ? 'selling' : 'buying',
+        input.lines.map((l) => ({ itemId: l.itemId, quantity: l.quantity, unitPrice: l.unitPrice })),
+        input.customerId ?? input.supplierId,
+        input.quotationDate ? new Date(input.quotationDate) : new Date(),
+      );
+      input = {
+        ...input,
+        lines: [
+          ...priced.lines.map((l) => ({ itemId: l.itemId, quantity: l.quantity, unitPrice: l.rate })),
+          ...priced.freeLines.map((f) => ({ itemId: f.itemId, quantity: f.quantity, unitPrice: '0' })),
+        ],
+      };
     }
     for (const line of input.lines) {
       const qty = Number(line.quantity);

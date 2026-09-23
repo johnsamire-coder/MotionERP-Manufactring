@@ -35,6 +35,7 @@ export class SalesController {
       direction: dto.direction, customerId: dto.customerId, supplierId: dto.supplierId, orgNodeId: dto.orgNodeId,
       quotationDate: dto.quotationDate, validUntil: dto.validUntil, currency: dto.currency,
       note: dto.note, lines: dto.lines.map((l) => ({ itemId: l.itemId, quantity: l.quantity, unitPrice: l.unitPrice })),
+      applyPricingRules: dto.applyPricingRules,
     });
     return { quotation: created };
   }

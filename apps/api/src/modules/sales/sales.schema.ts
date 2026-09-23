@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
+import { boolean, check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { item } from '../catalog/catalog.schema';
 import { customer, supplier } from '../crm/crm.schema';
 import { orgNode } from '../organization/organization.schema';
@@ -145,4 +145,49 @@ export const rfqSupplier = salesSchema.table('rfq_supplier', {
   unique('rfq_supplier_unique').on(t.rfqId, t.supplierId),
   check('rfq_supplier_status_valid', sql`${t.status} in ('pending', 'received', 'declined')`),
   index('rfq_supplier_rfq_idx').on(t.rfqId),
+]);
+
+// ==================== قواعد التسعير (بند 16) ====================
+
+/**
+ * Pricing rule (ERPNext-style, simplified). Applies to one item or an item category, for selling or
+ * buying, optionally for one party, within a quantity range and validity window. Two kinds:
+ * - price:   discount_percentage, discount_amount (per unit) or a fixed rate;
+ * - product: free_qty of free_item (default: the same item), optionally for every min_qty (recursive).
+ * Items / categories / parties belong to other modules: plain UUIDs checked in the service (D2).
+ */
+export const pricingRule = salesSchema.table('pricing_rule', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: text('code').notNull(),
+  title: text('title').notNull(),
+  appliesTo: text('applies_to').notNull(),
+  applyOn: text('apply_on').notNull(),
+  itemId: uuid('item_id'),
+  categoryId: uuid('category_id'),
+  partyId: uuid('party_id'),
+  minQty: numeric('min_qty', { precision: 24, scale: 6 }).notNull().default('0'),
+  maxQty: numeric('max_qty', { precision: 24, scale: 6 }),
+  validFrom: timestamp('valid_from', { withTimezone: true }),
+  validUntil: timestamp('valid_until', { withTimezone: true }),
+  priority: integer('priority').notNull().default(0),
+  ruleType: text('rule_type').notNull(),
+  discountPercentage: numeric('discount_percentage', { precision: 6, scale: 3 }),
+  discountAmount: numeric('discount_amount', { precision: 20, scale: 4 }),
+  rate: numeric('rate', { precision: 20, scale: 4 }),
+  freeItemId: uuid('free_item_id'),
+  freeQty: numeric('free_qty', { precision: 24, scale: 6 }),
+  recursive: boolean('recursive').notNull().default(false),
+  status: text('status').notNull().default('active'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('pricing_rule_code_unique').on(t.code),
+  check('pricing_rule_applies_to_valid', sql`${t.appliesTo} in ('selling', 'buying')`),
+  check('pricing_rule_apply_on_valid', sql`(${t.applyOn} = 'item' and ${t.itemId} is not null) or (${t.applyOn} = 'item_category' and ${t.categoryId} is not null)`),
+  check('pricing_rule_type_valid', sql`${t.ruleType} in ('price', 'product')`),
+  check('pricing_rule_price_one_of', sql`${t.ruleType} <> 'price' or ((${t.discountPercentage} is not null)::int + (${t.discountAmount} is not null)::int + (${t.rate} is not null)::int) = 1`),
+  check('pricing_rule_product_free_qty', sql`${t.ruleType} <> 'product' or ${t.freeQty} > 0`),
+  check('pricing_rule_status_valid', sql`${t.status} in ('active', 'disabled')`),
+  check('pricing_rule_qty_range', sql`${t.minQty} >= 0 and (${t.maxQty} is null or ${t.maxQty} >= ${t.minQty})`),
+  index('pricing_rule_item_idx').on(t.itemId),
+  index('pricing_rule_category_idx').on(t.categoryId),
 ]);

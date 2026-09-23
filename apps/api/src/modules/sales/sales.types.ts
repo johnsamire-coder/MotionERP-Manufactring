@@ -25,6 +25,8 @@ export interface CreateQuotationInput {
   currency?: string;
   note?: string;
   lines: CreateQuotationLineInput[];
+  /** Plan item 16: re-price lines with the active pricing rules and append free-item lines. */
+  applyPricingRules?: boolean;
 }
 
 export type JobOrderSource = 'quotation' | 'internal';

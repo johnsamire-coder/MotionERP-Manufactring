@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsIn, IsNumberString, IsOptional, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsNumberString, IsOptional, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
 
 const DIRECTIONS = ['outgoing', 'incoming'] as const;
 
@@ -22,6 +22,7 @@ export class CreateQuotationDto {
   @ValidateNested({ each: true })
   @Type(() => QuotationLineDto)
   lines!: QuotationLineDto[];
+  @IsOptional() @IsBoolean() applyPricingRules?: boolean;
 }
 
 export class ApproveQuotationDto {

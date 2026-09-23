@@ -1,0 +1,35 @@
+CREATE TABLE "sales"."pricing_rule" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"code" text NOT NULL,
+	"title" text NOT NULL,
+	"applies_to" text NOT NULL,
+	"apply_on" text NOT NULL,
+	"item_id" uuid,
+	"category_id" uuid,
+	"party_id" uuid,
+	"min_qty" numeric(24, 6) DEFAULT '0' NOT NULL,
+	"max_qty" numeric(24, 6),
+	"valid_from" timestamp with time zone,
+	"valid_until" timestamp with time zone,
+	"priority" integer DEFAULT 0 NOT NULL,
+	"rule_type" text NOT NULL,
+	"discount_percentage" numeric(6, 3),
+	"discount_amount" numeric(20, 4),
+	"rate" numeric(20, 4),
+	"free_item_id" uuid,
+	"free_qty" numeric(24, 6),
+	"recursive" boolean DEFAULT false NOT NULL,
+	"status" text DEFAULT 'active' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "pricing_rule_code_unique" UNIQUE("code"),
+	CONSTRAINT "pricing_rule_applies_to_valid" CHECK ("sales"."pricing_rule"."applies_to" in ('selling', 'buying')),
+	CONSTRAINT "pricing_rule_apply_on_valid" CHECK (("sales"."pricing_rule"."apply_on" = 'item' and "sales"."pricing_rule"."item_id" is not null) or ("sales"."pricing_rule"."apply_on" = 'item_category' and "sales"."pricing_rule"."category_id" is not null)),
+	CONSTRAINT "pricing_rule_type_valid" CHECK ("sales"."pricing_rule"."rule_type" in ('price', 'product')),
+	CONSTRAINT "pricing_rule_price_one_of" CHECK ("sales"."pricing_rule"."rule_type" <> 'price' or (("sales"."pricing_rule"."discount_percentage" is not null)::int + ("sales"."pricing_rule"."discount_amount" is not null)::int + ("sales"."pricing_rule"."rate" is not null)::int) = 1),
+	CONSTRAINT "pricing_rule_product_free_qty" CHECK ("sales"."pricing_rule"."rule_type" <> 'product' or "sales"."pricing_rule"."free_qty" > 0),
+	CONSTRAINT "pricing_rule_status_valid" CHECK ("sales"."pricing_rule"."status" in ('active', 'disabled')),
+	CONSTRAINT "pricing_rule_qty_range" CHECK ("sales"."pricing_rule"."min_qty" >= 0 and ("sales"."pricing_rule"."max_qty" is null or "sales"."pricing_rule"."max_qty" >= "sales"."pricing_rule"."min_qty"))
+);
+--> statement-breakpoint
+CREATE INDEX "pricing_rule_item_idx" ON "sales"."pricing_rule" USING btree ("item_id");--> statement-breakpoint
+CREATE INDEX "pricing_rule_category_idx" ON "sales"."pricing_rule" USING btree ("category_id");
