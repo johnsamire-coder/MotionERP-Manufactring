@@ -41,6 +41,7 @@ export class CrmService {
     return this.repository.insertCustomer({
       id: randomUUID(), code, name, contactPhone: input.contactPhone,
       contactEmail: input.contactEmail, orgNodeId: input.orgNodeId, status: input.status ?? 'lead',
+      creditLimit: normalizeCreditLimit(input.creditLimit),
     });
   }
 
@@ -55,6 +56,13 @@ export class CrmService {
     if (!customer) throw new CrmNotFoundError(`customer ${id} does not exist`);
     if (customer.status !== 'lead') return customer;
     return this.repository.setCustomerStatus(id, 'active');
+  }
+
+  /** Sets or clears (null) the customer's credit limit (plan item 6). */
+  async setCreditLimit(id: string, creditLimit: string | null): Promise<CustomerRecord> {
+    const found = await this.repository.findCustomerById(id);
+    if (!found) throw new CrmNotFoundError(`customer ${id} does not exist`);
+    return this.repository.setCustomerCreditLimit(id, normalizeCreditLimit(creditLimit));
   }
 
   async getInteractions(customerId?: string): Promise<CustomerInteractionRecord[]> {
@@ -79,4 +87,11 @@ function normalizeName(raw: unknown): string {
   const trimmed = raw.trim();
   if (trimmed.length === 0) throw new CrmValidationError('name must not be blank');
   return trimmed;
+}
+
+function normalizeCreditLimit(value: string | null | undefined): string | null {
+  if (value === undefined || value === null || value === '') return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) throw new CrmValidationError('creditLimit must be a non-negative number');
+  return n.toFixed(4);
 }

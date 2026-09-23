@@ -16,7 +16,7 @@ const supplierColumns = {
 const customerColumns = {
   id: customer.id, code: customer.code, name: customer.name,
   contactPhone: customer.contactPhone, contactEmail: customer.contactEmail,
-  orgNodeId: customer.orgNodeId, status: customer.status,
+  orgNodeId: customer.orgNodeId, status: customer.status, creditLimit: customer.creditLimit,
   createdAt: customer.createdAt, updatedAt: customer.updatedAt,
 };
 const interactionColumns = {
@@ -26,7 +26,7 @@ const interactionColumns = {
 };
 
 interface SupplierRow { id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null; orgNodeId: string; status: string; createdAt: Date; updatedAt: Date; }
-interface CustomerRow { id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null; orgNodeId: string; status: string; createdAt: Date; updatedAt: Date; }
+interface CustomerRow { id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null; orgNodeId: string; status: string; creditLimit: string | null; createdAt: Date; updatedAt: Date; }
 interface InteractionRow { id: string; customerId: string; interactionType: string; interactionDate: Date; note: string | null; createdAt: Date; }
 
 function toSupplierRecord(row: SupplierRow): SupplierRecord {
@@ -36,7 +36,7 @@ function toSupplierRecord(row: SupplierRow): SupplierRecord {
 }
 function toCustomerRecord(row: CustomerRow): CustomerRecord {
   return { id: row.id, code: row.code, name: row.name, contactPhone: row.contactPhone, contactEmail: row.contactEmail,
-    orgNodeId: row.orgNodeId, status: row.status as CustomerStatus,
+    orgNodeId: row.orgNodeId, status: row.status as CustomerStatus, creditLimit: row.creditLimit,
     createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
 }
 function toInteractionRecord(row: InteractionRow): CustomerInteractionRecord {
@@ -80,8 +80,12 @@ export class CrmRepository {
     const rows = await this.database.db.insert(customer).values({
       id: input.id, code: input.code, name: input.name,
       contactPhone: input.contactPhone ?? null, contactEmail: input.contactEmail ?? null,
-      orgNodeId: input.orgNodeId, status: input.status ?? 'lead',
+      orgNodeId: input.orgNodeId, status: input.status ?? 'lead', creditLimit: input.creditLimit ?? null,
     }).returning(customerColumns);
+    return toCustomerRecord(rows[0]!);
+  }
+  async setCustomerCreditLimit(id: string, creditLimit: string | null): Promise<CustomerRecord> {
+    const rows = await this.database.db.update(customer).set({ creditLimit, updatedAt: new Date() }).where(eq(customer.id, id)).returning(customerColumns);
     return toCustomerRecord(rows[0]!);
   }
   async setCustomerStatus(id: string, status: CustomerStatus): Promise<CustomerRecord> {

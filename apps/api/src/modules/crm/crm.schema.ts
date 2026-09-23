@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, index, text, timestamp, pgSchema, uuid, unique } from 'drizzle-orm/pg-core';
+import { check, index, numeric, text, timestamp, pgSchema, uuid, unique } from 'drizzle-orm/pg-core';
 import { orgNode } from '../organization/organization.schema';
 
 export const crmSchema = pgSchema('crm');
@@ -40,10 +40,13 @@ export const customer = crmSchema.table('customer', {
     .notNull()
     .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   status: text('status').notNull().default('lead'),
+  /** Credit limit in the base currency (plan item 6). NULL = no limit. */
+  creditLimit: numeric('credit_limit', { precision: 18, scale: 4 }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   unique('customer_code_unique').on(t.code),
+  check('customer_credit_limit_non_negative', sql`${t.creditLimit} is null or ${t.creditLimit} >= 0`),
   check('customer_code_format', sql`${t.code} ~ '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'`),
   check('customer_name_not_blank', sql`length(btrim(${t.name})) > 0`),
   check('customer_status_valid', sql`${t.status} in ('lead', 'active', 'inactive', 'archived')`),

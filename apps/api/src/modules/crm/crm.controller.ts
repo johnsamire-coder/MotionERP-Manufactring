@@ -1,5 +1,5 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Query, UseFilters } from '@nestjs/common';
-import { CreateCustomerDto, CreateInteractionDto, CreateSupplierDto } from './crm.dto';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, UseFilters } from '@nestjs/common';
+import { CreateCustomerDto, CreateInteractionDto, CreateSupplierDto, SetCreditLimitDto } from './crm.dto';
 import { CrmExceptionFilter } from './crm.exception-filter';
 import { CrmService } from './crm.service';
 import type { CustomerInteractionRecord, CustomerRecord, SupplierRecord } from './crm.types';
@@ -28,9 +28,14 @@ export class CrmController {
   async createCustomer(@Body() dto: CreateCustomerDto): Promise<{ customer: CustomerRecord }> {
     const created = await this.service.createCustomer({
       code: dto.code, name: dto.name, contactPhone: dto.contactPhone,
-      contactEmail: dto.contactEmail, orgNodeId: dto.orgNodeId, status: dto.status,
+      contactEmail: dto.contactEmail, orgNodeId: dto.orgNodeId, status: dto.status, creditLimit: dto.creditLimit,
     });
     return { customer: created };
+  }
+
+  @Patch('customers/:id/credit-limit')
+  async setCreditLimit(@Param('id', ParseUUIDPipe) id: string, @Body() dto: SetCreditLimitDto): Promise<{ customer: CustomerRecord }> {
+    return { customer: await this.service.setCreditLimit(id, dto.creditLimit) };
   }
 
   @Post('customers/:id/promote') @HttpCode(200)

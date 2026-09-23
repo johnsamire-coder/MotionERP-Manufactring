@@ -12,11 +12,11 @@ export interface CreateSupplierInput {
 
 export interface CustomerRecord {
   id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null;
-  orgNodeId: string; status: CustomerStatus; createdAt: string; updatedAt: string;
+  orgNodeId: string; status: CustomerStatus; creditLimit: string | null; createdAt: string; updatedAt: string;
 }
 export interface CreateCustomerInput {
   code: string; name: string; contactPhone?: string; contactEmail?: string;
-  orgNodeId: string; status?: CustomerStatus;
+  orgNodeId: string; status?: CustomerStatus; creditLimit?: string | null;
 }
 
 export interface CustomerInteractionRecord {

@@ -1,4 +1,4 @@
-import { IsEmail, IsIn, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
+import { IsEmail, IsIn, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength, ValidateIf } from 'class-validator';
 
 const CUSTOMER_STATUSES = ['lead', 'active', 'inactive', 'archived'] as const;
 const INTERACTION_TYPES = ['visit', 'call', 'email', 'note'] as const;
@@ -18,6 +18,12 @@ export class CreateCustomerDto {
   @IsOptional() @IsEmail() contactEmail?: string;
   @IsUUID() orgNodeId!: string;
   @IsOptional() @IsIn(CUSTOMER_STATUSES) status?: (typeof CUSTOMER_STATUSES)[number];
+  @IsOptional() @IsNumberString() creditLimit?: string;
+}
+
+/** null clears the limit (= unlimited). */
+export class SetCreditLimitDto {
+  @ValidateIf((_o, v) => v !== null) @IsNumberString() creditLimit!: string | null;
 }
 
 export class CreateInteractionDto {
