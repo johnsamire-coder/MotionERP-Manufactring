@@ -3,6 +3,7 @@ import { Injectable, Optional } from '@nestjs/common';
 import { CrmService } from '../crm/crm.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { PurchaseAllowanceService } from '../settings/purchase-allowance.service';
+import { PurchaseInvoiceHoldService } from './purchase-invoice-hold.service';
 import { SalesService } from '../sales/sales.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { AccountingRepository } from '../accounting/accounting.repository';
@@ -38,7 +39,15 @@ export class FinanceService {
     @Optional() private readonly crmService?: CrmService,
     @Optional() private readonly inventoryService?: InventoryService,
     @Optional() private readonly allowances?: PurchaseAllowanceService,
+    @Optional() private readonly invoiceHolds?: PurchaseInvoiceHoldService,
   ) {}
+
+  /** Plan item 19: no payment against a purchase invoice that is individually on hold. */
+  private async assertInvoiceNotHeld(purchaseInvoiceId: string | null | undefined): Promise<void> {
+    if (!purchaseInvoiceId || !this.invoiceHolds) return;
+    const blocked = await this.invoiceHolds.blockReason(purchaseInvoiceId);
+    if (blocked) throw new FinanceValidationError(blocked);
+  }
 
   /**
    * Over-billing allowance (plan item 12): invoice lines that reference a receipt (stock
@@ -494,6 +503,7 @@ export class FinanceService {
     const amount = Number(input.amount);
     if (!Number.isFinite(amount) || amount <= 0) throw new FinanceValidationError('payment amount must be positive');
     await this.assertSupplierNotHeld(input.supplierId, 'payment');
+    await this.assertInvoiceNotHeld(input.purchaseInvoiceId);
 
     const sequence = (await this.repository.countPayments()) + 1;
     const year = new Date().getFullYear();
@@ -513,6 +523,7 @@ export class FinanceService {
       throw new FinanceValidationError(`payment ${id} is "${p.status}" and cannot be posted (must be "draft")`);
     }
     await this.assertSupplierNotHeld(p.supplierId, 'payment');
+    await this.assertInvoiceNotHeld(p.purchaseInvoiceId);
 
     if (this.accountingService && this.accountingRepo && p.paidFromAccountId) {
       const config = await this.accountingRepo.findCompanyConfig(p.orgNodeId);

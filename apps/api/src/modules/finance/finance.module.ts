@@ -7,12 +7,14 @@ import { AccountingModule } from '../accounting/accounting.module';
 import { FinanceController } from './finance.controller';
 import { FinanceRepository } from './finance.repository';
 import { FinanceService } from './finance.service';
+import { PurchaseInvoiceHoldService } from './purchase-invoice-hold.service';
+import { PurchaseInvoiceHoldController } from './purchase-invoice-hold.controller';
 import { AccountingRepository } from '../accounting/accounting.repository';
 
 @Module({
   imports: [SalesModule, AccountingModule, CrmModule, InventoryModule, SettingsModule],
-  controllers: [FinanceController],
-  providers: [FinanceService, FinanceRepository, AccountingRepository],
+  controllers: [FinanceController, PurchaseInvoiceHoldController],
+  providers: [FinanceService, FinanceRepository, AccountingRepository, PurchaseInvoiceHoldService],
   exports: [FinanceService],
 })
 export class FinanceModule {}

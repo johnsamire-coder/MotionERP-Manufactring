@@ -90,6 +90,24 @@ export const purchaseInvoice = financeSchema.table('purchase_invoice', {
   index('idx_purchase_invoice_org').on(t.orgNodeId),
 ]);
 
+/**
+ * Hold on ONE purchase invoice (plan item 19), separate from a supplier-wide hold (item 8):
+ * no payment may be made against the invoice while the hold is in force. An optional release
+ * date lifts it automatically. Kept in its own table so the invoice record itself is untouched.
+ */
+export const purchaseInvoiceHold = financeSchema.table('purchase_invoice_hold', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  purchaseInvoiceId: uuid('purchase_invoice_id')
+    .notNull()
+    .references(() => purchaseInvoice.id, { onDelete: 'cascade' }),
+  reason: text('reason').notNull(),
+  releaseDate: timestamp('release_date', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('purchase_invoice_hold_invoice_unique').on(t.purchaseInvoiceId),
+  check('purchase_invoice_hold_reason_not_blank', sql`length(btrim(${t.reason})) > 0`),
+]);
+
 export const purchaseInvoiceLine = financeSchema.table('purchase_invoice_line', {
   id: uuid('id').primaryKey().defaultRandom(),
   purchaseInvoiceId: uuid('purchase_invoice_id')
