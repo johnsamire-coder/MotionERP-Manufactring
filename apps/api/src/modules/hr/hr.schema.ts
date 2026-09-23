@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { type AnyPgColumn, check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, boolean, check, index, integer, numeric, pgSchema, text, timestamp, uniqueIndex, uuid, unique } from 'drizzle-orm/pg-core';
 import { orgNode } from '../organization/organization.schema';
 
 export const hrSchema = pgSchema('hr');
@@ -148,4 +148,40 @@ export const leaveAllocation = hrSchema.table('leave_allocation', {
   check('leave_allocation_days_positive', sql`${t.days} > 0`),
   check('leave_allocation_period_valid', sql`${t.toDate} >= ${t.fromDate}`),
   index('leave_allocation_employee_idx').on(t.employeeId, t.leaveTypeId),
+]);
+
+// ==================== التسوية النهائية عند ترك الخدمة (بند 21) ====================
+
+/** Full and final settlement of a leaving employee: what the company owes them and what they owe back. */
+export const finalSettlement = hrSchema.table('final_settlement', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  settlementNumber: text('settlement_number').notNull(),
+  employeeId: uuid('employee_id').notNull().references(() => employee.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  relievingDate: timestamp('relieving_date', { withTimezone: true }).notNull(),
+  status: text('status').notNull().default('draft'),
+  totalPayable: numeric('total_payable', { precision: 14, scale: 4 }).notNull().default('0'),
+  totalReceivable: numeric('total_receivable', { precision: 14, scale: 4 }).notNull().default('0'),
+  netAmount: numeric('net_amount', { precision: 14, scale: 4 }).notNull().default('0'),
+  submittedAt: timestamp('submitted_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('final_settlement_number_unique').on(t.settlementNumber),
+  check('final_settlement_status_valid', sql`${t.status} in ('draft', 'submitted', 'cancelled')`),
+  uniqueIndex('final_settlement_one_open_per_employee').on(t.employeeId).where(sql`${t.status} <> 'cancelled'`),
+]);
+
+export const finalSettlementLine = hrSchema.table('final_settlement_line', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  settlementId: uuid('settlement_id').notNull().references(() => finalSettlement.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
+  /** payable = the company owes the employee; receivable = the employee owes the company. */
+  direction: text('direction').notNull(),
+  component: text('component').notNull(),
+  description: text('description').notNull(),
+  amount: numeric('amount', { precision: 14, scale: 4 }).notNull(),
+  /** Suggested automatically (true) or added by hand (false). */
+  isAuto: boolean('is_auto').notNull().default(false),
+}, (t) => [
+  check('final_settlement_line_direction_valid', sql`${t.direction} in ('payable', 'receivable')`),
+  check('final_settlement_line_amount_positive', sql`${t.amount} > 0`),
+  index('final_settlement_line_settlement_idx').on(t.settlementId),
 ]);
