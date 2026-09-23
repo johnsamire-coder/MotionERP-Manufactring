@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, Optional } from '@nestjs/common';
 import { PostingEngineService } from '../accounting/posting-engine.service';
+import { CatalogNotFoundError } from '../catalog/catalog.errors';
+import { CatalogService } from '../catalog/catalog.service';
+import type { ItemRecord } from '../catalog/catalog.types';
 import { InventoryNotFoundError, InventoryValidationError } from './inventory.errors';
 import { InventoryRepository } from './inventory.repository';
 import type {
@@ -13,6 +16,7 @@ import type {
   WarehouseRecord,
   StockLedgerEntryRecord,
   ItemBatchRecord,
+  BatchBalanceRecord,
   CreateItemBatchInput,
   ItemBatchStatus,
   SerialNumberRecord,
@@ -29,6 +33,7 @@ export class InventoryService {
   constructor(
     private readonly repository: InventoryRepository,
     @Optional() private readonly postingEngine?: PostingEngineService,
+    @Optional() private readonly catalogService?: CatalogService,
   ) {}
 
   async getWarehouses(): Promise<WarehouseRecord[]> {
@@ -88,6 +93,9 @@ export class InventoryService {
     const isDecrease = input.movementType === 'issue' || input.movementType === 'transfer_out';
     const signedQuantity = isDecrease ? `-${input.quantity}` : input.quantity;
 
+    // Per-batch costing: batch-tracked items must name a batch; issues use that batch's own cost.
+    const batchContext = await this.resolveBatchContext(input, isDecrease, movementDate, quantityNum);
+
     if (isDecrease) {
       const balance = await this.repository.findBalance(input.itemId, input.warehouseId);
       const currentOnHand = balance ? Number(balance.onHand) : 0;
@@ -104,7 +112,9 @@ export class InventoryService {
     let movementUnitCost: number;
 
     if (isDecrease) {
-      movementUnitCost = oldAvg;
+      movementUnitCost = batchContext
+        ? (batchContext.quantity > 0 ? batchContext.totalValue / batchContext.quantity : 0)
+        : oldAvg;
     } else {
       if (input.unitCost === undefined || input.unitCost === null || input.unitCost === '') {
         throw new InventoryValidationError('unitCost is required for receipts and inbound transfers');
@@ -115,11 +125,24 @@ export class InventoryService {
       }
     }
 
-    const movementTotalValue = movementUnitCost * quantityNum;
+    // Issuing a whole batch removes its exact value (no rounding residue).
+    const movementTotalValue = batchContext && isDecrease && quantityNum === batchContext.quantity
+      ? batchContext.totalValue
+      : movementUnitCost * quantityNum;
     const newQty = isDecrease ? oldQty - quantityNum : oldQty + quantityNum;
-    const newAvg = isDecrease
-      ? oldAvg
-      : (newQty > 0 ? ((oldQty * oldAvg) + movementTotalValue) / newQty : movementUnitCost);
+    let newAvg: number;
+    let newStockValue: number;
+    if (batchContext) {
+      // Item value = sum of its batch values; the item average is derived from it.
+      const oldValue = bal ? Number(bal.totalValue) : 0;
+      newStockValue = newQty > 0 ? (isDecrease ? oldValue - movementTotalValue : oldValue + movementTotalValue) : 0;
+      newAvg = newQty > 0 ? newStockValue / newQty : 0;
+    } else {
+      newAvg = isDecrease
+        ? oldAvg
+        : (newQty > 0 ? ((oldQty * oldAvg) + movementTotalValue) / newQty : movementUnitCost);
+      newStockValue = newQty * newAvg;
+    }
 
     const movement = await this.repository.insertMovement({
       id: randomUUID(),
@@ -134,13 +157,29 @@ export class InventoryService {
       totalValue: movementTotalValue.toFixed(4),
       sourceModule: input.sourceModule,
       sourceId: input.sourceId,
+      batchId: batchContext?.batchId,
     });
 
     await this.repository.applyDelta(input.itemId, input.warehouseId, signedQuantity);
+
+    if (batchContext) {
+      const batchQty = isDecrease ? batchContext.quantity - quantityNum : batchContext.quantity + quantityNum;
+      const batchValue = batchQty > 0
+        ? (isDecrease ? batchContext.totalValue - movementTotalValue : batchContext.totalValue + movementTotalValue)
+        : 0;
+      await this.repository.upsertBatchBalance({
+        batchId: batchContext.batchId,
+        itemId: input.itemId,
+        warehouseId: input.warehouseId,
+        quantity: batchQty.toFixed(6),
+        valuationRate: (batchQty > 0 ? batchValue / batchQty : 0).toFixed(6),
+        totalValue: batchValue.toFixed(6),
+      });
+    }
     
     await this.repository.applyValuation(input.itemId, input.warehouseId, {
       averageCost: newAvg.toFixed(6),
-      totalValue: (newQty * newAvg).toFixed(4),
+      totalValue: newStockValue.toFixed(4),
       lastPurchaseCost: input.movementType === 'receipt' ? movementUnitCost.toFixed(6) : undefined,
     });
 
@@ -149,12 +188,13 @@ export class InventoryService {
       itemId: input.itemId,
       warehouseId: input.warehouseId,
       movementId: movement.id,
+      batchId: batchContext?.batchId,
       quantityChange: signedQuantity,
       balanceQtyAfter: newQty.toFixed(6),
       incomingRate: isDecrease ? '0' : movementUnitCost.toFixed(6),
       valuationRate: newAvg.toFixed(6),
       stockValueChange: isDecrease ? `-${movementTotalValue.toFixed(4)}` : movementTotalValue.toFixed(4),
-      stockValueAfter: (newQty * newAvg).toFixed(4),
+      stockValueAfter: newStockValue.toFixed(4),
     });
 
     if (this.postingEngine && movementTotalValue > 0) {
@@ -175,6 +215,62 @@ export class InventoryService {
     }
 
     return movement;
+  }
+
+  private async getItemTracking(itemId: string): Promise<ItemRecord | null> {
+    if (!this.catalogService) return null;
+    try {
+      return await this.catalogService.getItem(itemId);
+    } catch (err) {
+      if (err instanceof CatalogNotFoundError) throw new InventoryNotFoundError(`item ${itemId} does not exist`);
+      throw err;
+    }
+  }
+
+  private async resolveBatchContext(
+    input: CreateMovementInput,
+    isDecrease: boolean,
+    movementDate: Date,
+    quantityNum: number,
+  ): Promise<{ batchId: string; quantity: number; totalValue: number } | null> {
+    const tracking = await this.getItemTracking(input.itemId);
+    if (!tracking?.hasBatchNo) {
+      if (input.batchId) {
+        throw new InventoryValidationError(`item ${input.itemId} is not batch-tracked; batchId must not be set`);
+      }
+      return null;
+    }
+    if (!input.batchId) {
+      throw new InventoryValidationError(`item ${input.itemId} is batch-tracked: batchId is required for every stock movement`);
+    }
+    const batch = await this.repository.findBatchById(input.batchId);
+    if (!batch) throw new InventoryNotFoundError(`item batch ${input.batchId} does not exist`);
+    if (batch.itemId !== input.itemId) {
+      throw new InventoryValidationError(`batch ${batch.batchNumber} belongs to a different item`);
+    }
+    if (isDecrease) {
+      if (batch.status !== 'active') {
+        throw new InventoryValidationError(`batch ${batch.batchNumber} is "${batch.status}" and cannot be issued`);
+      }
+      if (batch.expiryDate && new Date(batch.expiryDate).getTime() < movementDate.getTime()) {
+        throw new InventoryValidationError(`batch ${batch.batchNumber} expired on ${batch.expiryDate} and cannot be issued`);
+      }
+    } else if (batch.status === 'recalled') {
+      throw new InventoryValidationError(`batch ${batch.batchNumber} is recalled and cannot receive stock`);
+    }
+    const balance = await this.repository.findBatchBalance(batch.id, input.warehouseId);
+    const quantity = balance ? Number(balance.quantity) : 0;
+    const totalValue = balance ? Number(balance.totalValue) : 0;
+    if (isDecrease && quantity < quantityNum) {
+      throw new InventoryValidationError(
+        `insufficient stock in batch ${batch.batchNumber}: available ${quantity}, requested ${quantityNum}`,
+      );
+    }
+    return { batchId: batch.id, quantity, totalValue };
+  }
+
+  async getBatchBalances(itemId?: string, warehouseId?: string, batchId?: string): Promise<BatchBalanceRecord[]> {
+    return this.repository.listBatchBalances(itemId, warehouseId, batchId);
   }
 
   async getReservations(): Promise<StockReservationRecord[]> {
@@ -250,8 +346,26 @@ export class InventoryService {
       throw new InventoryValidationError(`batch number "${input.batchNumber}" already exists for this item`);
     }
 
+    // Expiry rules from the item: derive expiry from shelf life, and require it for expiry-tracked items.
+    let expiryDate = input.expiryDate;
+    const tracking = await this.getItemTracking(input.itemId);
+    if (!expiryDate && input.manufacturingDate && tracking?.shelfLifeInDays != null) {
+      const derived = new Date(input.manufacturingDate);
+      derived.setUTCDate(derived.getUTCDate() + tracking.shelfLifeInDays);
+      expiryDate = derived.toISOString();
+    }
+    if (tracking?.hasExpiryDate && !expiryDate) {
+      throw new InventoryValidationError(
+        'expiryDate is required for this item (or give manufacturingDate and set the item shelfLifeInDays)',
+      );
+    }
+    if (expiryDate && input.manufacturingDate && new Date(expiryDate) < new Date(input.manufacturingDate)) {
+      throw new InventoryValidationError('expiryDate cannot be before manufacturingDate');
+    }
+
     return this.repository.insertBatch({
       ...input,
+      expiryDate,
       id: randomUUID(),
       batchNumber: input.batchNumber.trim(),
     });

@@ -32,6 +32,7 @@ import type {
   WarehouseRecord,
   StockLedgerEntryRecord,
   ItemBatchRecord,
+  BatchBalanceRecord,
   SerialNumberRecord,
   ReconcileStockResult,
   LandedCostVoucherRecord,
@@ -83,6 +84,7 @@ export class InventoryController {
       sourceId: dto.sourceId,
       allowBackdate: dto.allowBackdate,
       backdateReason: dto.backdateReason,
+      batchId: dto.batchId,
     });
     return { movement: created };
   }
@@ -117,6 +119,15 @@ export class InventoryController {
   }
 
   // --- Medical Batches Endpoints ---
+  @Get('batch-balances')
+  async batchBalances(
+    @Query('itemId') itemId?: string,
+    @Query('warehouseId') warehouseId?: string,
+    @Query('batchId') batchId?: string,
+  ): Promise<{ batchBalances: BatchBalanceRecord[] }> {
+    return { batchBalances: await this.service.getBatchBalances(itemId, warehouseId, batchId) };
+  }
+
   @Get('batches')
   async batches(
     @Query('itemId') itemId?: string,

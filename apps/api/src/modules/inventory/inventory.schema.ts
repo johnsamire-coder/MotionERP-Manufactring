@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, index, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, check, index, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { item } from '../catalog/catalog.schema';
 import { orgNode } from '../organization/organization.schema';
 import { chartOfAccounts } from '../accounting/accounting.schema';
@@ -63,6 +63,9 @@ export const stockMovement = inventorySchema.table('stock_movement', {
   totalValue: numeric('total_value', { precision: 18, scale: 4 }),
   sourceModule: text('source_module'),
   sourceId: text('source_id'),
+  // Batch the movement belongs to (required for batch-tracked items). Same-module FK.
+  batchId: uuid('batch_id')
+    .references((): AnyPgColumn => itemBatch.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   movementDate: timestamp('movement_date', { withTimezone: true }).notNull(),
   note: text('note'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -72,6 +75,7 @@ export const stockMovement = inventorySchema.table('stock_movement', {
   check('stock_movement_quantity_not_zero', sql`${t.quantity} <> 0`),
   index('stock_movement_item_warehouse_idx').on(t.itemId, t.warehouseId),
   index('stock_movement_date_idx').on(t.movementDate),
+  index('stock_movement_batch_idx').on(t.batchId),
 ]);
 
 export const stockReservation = inventorySchema.table('stock_reservation', {
@@ -103,6 +107,8 @@ export const stockLedgerEntry = inventorySchema.table('stock_ledger_entry', {
     .references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   movementId: uuid('movement_id')
     .references(() => stockMovement.id, { onUpdate: 'cascade', onDelete: 'set null' }),
+  batchId: uuid('batch_id')
+    .references((): AnyPgColumn => itemBatch.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   quantityChange: numeric('quantity_change', { precision: 24, scale: 6 }).notNull(),
   balanceQtyAfter: numeric('balance_qty_after', { precision: 24, scale: 6 }).notNull(),
   incomingRate: numeric('incoming_rate', { precision: 24, scale: 6 }).notNull().default('0'),
@@ -169,6 +175,26 @@ export const serialNumber = inventorySchema.table('serial_number', {
   index('idx_serial_number_org').on(t.orgNodeId),
 ]);
 
+// رصيد وتكلفة كل دفعة في كل مخزن (تكلفة لكل دفعة — بند 2)
+export const batchBalance = inventorySchema.table('batch_balance', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  batchId: uuid('batch_id')
+    .notNull()
+    .references(() => itemBatch.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  itemId: uuid('item_id').notNull(),
+  warehouseId: uuid('warehouse_id')
+    .notNull()
+    .references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  quantity: numeric('quantity', { precision: 24, scale: 6 }).notNull().default('0'),
+  valuationRate: numeric('valuation_rate', { precision: 24, scale: 6 }).notNull().default('0'),
+  totalValue: numeric('total_value', { precision: 24, scale: 6 }).notNull().default('0'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('batch_balance_batch_warehouse_unique').on(t.batchId, t.warehouseId),
+  check('batch_balance_quantity_non_negative', sql`${t.quantity} >= 0`),
+  index('idx_batch_balance_item_wh').on(t.itemId, t.warehouseId),
+]);
+
 // ==================== 3. محرك تكلفة الواردات ورسملة الشحن (Landed Cost Engine) ====================
 
 export const landedCostVoucher = inventorySchema.table('landed_cost_voucher', {
@@ -225,6 +251,7 @@ export type StockMovement = typeof stockMovement.$inferSelect;
 export type StockReservation = typeof stockReservation.$inferSelect;
 export type StockLedgerEntry = typeof stockLedgerEntry.$inferSelect;
 export type ItemBatch = typeof itemBatch.$inferSelect;
+export type BatchBalance = typeof batchBalance.$inferSelect;
 export type SerialNumber = typeof serialNumber.$inferSelect;
 export type LandedCostVoucher = typeof landedCostVoucher.$inferSelect;
 export type LandedCostItem = typeof landedCostItem.$inferSelect;

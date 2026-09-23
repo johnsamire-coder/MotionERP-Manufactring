@@ -407,6 +407,13 @@
       "when": 1790063087812,
       "tag": "0057_common_yellow_claw",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1790189000358,
+      "tag": "0058_bitter_charles_xavier",
+      "breakpoints": true
     }
   ]
 }

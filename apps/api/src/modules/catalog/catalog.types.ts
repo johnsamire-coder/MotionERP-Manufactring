@@ -32,9 +32,13 @@ export interface ItemCategoryTreeNode extends ItemCategoryRecord { children: Ite
 export interface ItemRecord {
   id: string; code: string; name: string; description: string | null;
   itemType: ItemType; categoryId: string; baseUnitId: string; status: ItemStatus;
+  hasBatchNo: boolean; hasSerialNo: boolean; hasExpiryDate: boolean; shelfLifeInDays: number | null;
   createdAt: string; updatedAt: string;
 }
-export interface CreateItemInput {
+export interface ItemTrackingInput {
+  hasBatchNo?: boolean; hasSerialNo?: boolean; hasExpiryDate?: boolean; shelfLifeInDays?: number | null;
+}
+export interface CreateItemInput extends ItemTrackingInput {
   code: string; name: string; nameAr?: string; nameEn?: string; description?: string;
   itemType: ItemType; categoryId: string; baseUnitId: string;
 }

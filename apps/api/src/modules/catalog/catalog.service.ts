@@ -11,6 +11,7 @@ import type {
   ItemCategoryRecord,
   ItemCategoryTreeNode,
   ItemRecord,
+  ItemTrackingInput,
   ItemType,
   Language,
   UomClassRecord,
@@ -19,7 +20,17 @@ import type {
 } from './catalog.types';
 
 export interface UpdateItemCategoryInput { name?: string; description?: string | null; position?: number; parentId?: string | null; }
-export interface UpdateItemInput { name?: string; nameAr?: string; nameEn?: string; description?: string | null; itemType?: ItemType; categoryId?: string; baseUnitId?: string; }
+export interface UpdateItemInput extends ItemTrackingInput { name?: string; nameAr?: string; nameEn?: string; description?: string | null; itemType?: ItemType; categoryId?: string; baseUnitId?: string; }
+
+function validateItemTracking(input: ItemTrackingInput): void {
+  if (input.hasExpiryDate && !input.hasBatchNo) {
+    throw new CatalogValidationError('hasExpiryDate requires hasBatchNo (expiry is tracked per batch)');
+  }
+  const shelfLife = input.shelfLifeInDays;
+  if (shelfLife !== undefined && shelfLife !== null && (!Number.isInteger(shelfLife) || shelfLife < 0)) {
+    throw new CatalogValidationError('shelfLifeInDays must be a non-negative integer');
+  }
+}
 
 function buildCategoryForest(rows: ItemCategoryRecord[]): ItemCategoryTreeNode[] {
   const byId = new Map<string, ItemCategoryTreeNode>();
@@ -142,16 +153,28 @@ export class CatalogService {
     if (category.status === 'archived') throw new CatalogValidationError(`item category ${input.categoryId} is archived and cannot take new items`);
     const baseUnit = await this.repository.findUomById(input.baseUnitId);
     if (!baseUnit) throw new CatalogNotFoundError(`UOM ${input.baseUnitId} does not exist`);
+    validateItemTracking(input);
     return this.repository.insertItem({
       id: randomUUID(), code, name, nameAr: input.nameAr, nameEn: input.nameEn,
       description: input.description, itemType: input.itemType, categoryId: category.id, baseUnitId: baseUnit.id,
+      hasBatchNo: input.hasBatchNo, hasSerialNo: input.hasSerialNo,
+      hasExpiryDate: input.hasExpiryDate, shelfLifeInDays: input.shelfLifeInDays,
     });
   }
   async updateItem(id: string, patch: UpdateItemInput): Promise<ItemRecord> {
     const found = await this.repository.findItemById(id);
     if (!found) throw new CatalogNotFoundError(`item ${id} does not exist`);
     if (found.status === 'archived') throw new CatalogValidationError(`item ${id} is archived and cannot be modified`);
-    const fields: { name?: string; description?: string | null; itemType?: ItemType; categoryId?: string; baseUnitId?: string } = {};
+    const fields: { name?: string; description?: string | null; itemType?: ItemType; categoryId?: string; baseUnitId?: string } & ItemTrackingInput = {};
+    if (patch.hasBatchNo !== undefined) fields.hasBatchNo = patch.hasBatchNo;
+    if (patch.hasSerialNo !== undefined) fields.hasSerialNo = patch.hasSerialNo;
+    if (patch.hasExpiryDate !== undefined) fields.hasExpiryDate = patch.hasExpiryDate;
+    if (patch.shelfLifeInDays !== undefined) fields.shelfLifeInDays = patch.shelfLifeInDays;
+    validateItemTracking({
+      hasBatchNo: fields.hasBatchNo ?? found.hasBatchNo,
+      hasExpiryDate: fields.hasExpiryDate ?? found.hasExpiryDate,
+      shelfLifeInDays: fields.shelfLifeInDays !== undefined ? fields.shelfLifeInDays : found.shelfLifeInDays,
+    });
     if (patch.name !== undefined) fields.name = normalizeName(patch.name);
     if (patch.description !== undefined) fields.description = patch.description;
     if (patch.itemType !== undefined) fields.itemType = patch.itemType;

@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsIn,
   IsInt,
   IsNumberString,
@@ -134,6 +135,23 @@ export class CreateItemDto {
 
   @IsUUID()
   baseUnitId!: string;
+
+  @IsOptional()
+  @IsBoolean()
+  hasBatchNo?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  hasSerialNo?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  hasExpiryDate?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  shelfLifeInDays?: number | null;
 }
 
 export class UpdateItemDto {
@@ -167,6 +185,23 @@ export class UpdateItemDto {
   @IsOptional()
   @IsUUID()
   baseUnitId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  hasBatchNo?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  hasSerialNo?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  hasExpiryDate?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  shelfLifeInDays?: number | null;
 }
 
 // --- UOM Conversion DTOs ---

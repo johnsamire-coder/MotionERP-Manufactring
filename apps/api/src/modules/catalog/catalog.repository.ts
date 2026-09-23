@@ -19,6 +19,7 @@ import type {
   ItemCategoryRecord,
   ItemCategoryStatus,
   ItemRecord,
+  ItemTrackingInput,
   ItemStatus,
   ItemType,
   Language,
@@ -42,7 +43,9 @@ const categoryColumns = {
 const itemColumns = {
   id: item.id, code: item.code, name: item.name, description: item.description,
   itemType: item.itemType, categoryId: item.categoryId, baseUnitId: item.baseUnitId,
-  status: item.status, createdAt: item.createdAt, updatedAt: item.updatedAt,
+  status: item.status, hasBatchNo: item.hasBatchNo, hasSerialNo: item.hasSerialNo,
+  hasExpiryDate: item.hasExpiryDate, shelfLifeInDays: item.shelfLifeInDays,
+  createdAt: item.createdAt, updatedAt: item.updatedAt,
 };
 const uomConvColumns = {
   id: uomConversion.id,
@@ -56,7 +59,7 @@ const uomConvColumns = {
 
 interface UomRow { id: string; code: string; name: string; symbol: string | null; classCode: string; decimalPrecision: number; status: string; createdAt: Date; updatedAt: Date; }
 interface CategoryRow { id: string; code: string; name: string; description: string | null; parentId: string | null; status: string; position: number; createdAt: Date; updatedAt: Date; }
-interface ItemRow { id: string; code: string; name: string; description: string | null; itemType: string; categoryId: string; baseUnitId: string; status: string; createdAt: Date; updatedAt: Date; }
+interface ItemRow { id: string; code: string; name: string; description: string | null; itemType: string; categoryId: string; baseUnitId: string; status: string; hasBatchNo: boolean; hasSerialNo: boolean; hasExpiryDate: boolean; shelfLifeInDays: number | null; createdAt: Date; updatedAt: Date; }
 interface UomConvRow { id: string; itemId: string; fromUnitId: string; toUnitId: string; conversionFactor: string; createdAt: Date; updatedAt: Date; }
 
 function toUomRecord(row: UomRow, name: string): UomRecord {
@@ -72,7 +75,9 @@ function toCategoryRecord(row: CategoryRow, name: string): ItemCategoryRecord {
 function toItemRecord(row: ItemRow, name: string): ItemRecord {
   return { id: row.id, code: row.code, name, description: row.description,
     itemType: row.itemType as ItemType, categoryId: row.categoryId, baseUnitId: row.baseUnitId,
-    status: row.status as ItemStatus, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
+    status: row.status as ItemStatus, hasBatchNo: row.hasBatchNo, hasSerialNo: row.hasSerialNo,
+    hasExpiryDate: row.hasExpiryDate, shelfLifeInDays: row.shelfLifeInDays,
+    createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
 }
 function toUomConvRecord(row: UomConvRow): UomConversionRecord {
   return {
@@ -210,13 +215,15 @@ export class CatalogRepository {
     const rows = await this.database.db.insert(item).values({
       id: input.id, code: input.code, name: input.name, description: input.description ?? null,
       itemType: input.itemType, categoryId: input.categoryId, baseUnitId: input.baseUnitId,
+      hasBatchNo: input.hasBatchNo ?? false, hasSerialNo: input.hasSerialNo ?? false,
+      hasExpiryDate: input.hasExpiryDate ?? false, shelfLifeInDays: input.shelfLifeInDays ?? null,
     }).returning(itemColumns);
     const inserted = rows[0]!;
     if (input.nameAr) await this.database.db.insert(itemTranslation).values({ itemId: inserted.id, language: 'ar', name: input.nameAr });
     if (input.nameEn) await this.database.db.insert(itemTranslation).values({ itemId: inserted.id, language: 'en', name: input.nameEn });
     return toItemRecord(inserted, inserted.name);
   }
-  async updateItemFields(id: string, fields: { name?: string; description?: string | null; itemType?: ItemType; categoryId?: string; baseUnitId?: string }): Promise<ItemRecord> {
+  async updateItemFields(id: string, fields: { name?: string; description?: string | null; itemType?: ItemType; categoryId?: string; baseUnitId?: string } & ItemTrackingInput): Promise<ItemRecord> {
     const rows = await this.database.db.update(item).set(fields).where(eq(item.id, id)).returning(itemColumns);
     return toItemRecord(rows[0]!, rows[0]!.name);
   }

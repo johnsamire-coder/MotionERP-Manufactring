@@ -106,6 +106,10 @@ export class CatalogController {
     if (dto.itemType !== undefined) patch.itemType = dto.itemType;
     if (dto.categoryId !== undefined) patch.categoryId = dto.categoryId;
     if (dto.baseUnitId !== undefined) patch.baseUnitId = dto.baseUnitId;
+    if (dto.hasBatchNo !== undefined) patch.hasBatchNo = dto.hasBatchNo;
+    if (dto.hasSerialNo !== undefined) patch.hasSerialNo = dto.hasSerialNo;
+    if (dto.hasExpiryDate !== undefined) patch.hasExpiryDate = dto.hasExpiryDate;
+    if (dto.shelfLifeInDays !== undefined) patch.shelfLifeInDays = dto.shelfLifeInDays;
     return { item: await this.service.updateItem(id, patch) };
   }
 

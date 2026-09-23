@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
-  check, index, integer, numeric, pgSchema, primaryKey, text, timestamp, uuid, unique,
+  boolean, check, index, integer, numeric, pgSchema, primaryKey, text, timestamp, uuid, unique,
 } from 'drizzle-orm/pg-core';
 
 export const catalogSchema = pgSchema('catalog');
@@ -93,6 +93,11 @@ export const item = catalogSchema.table('item', {
     .notNull()
     .references(() => uom.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   status: text('status').notNull().default('active'),
+  // Batch / serial / expiry tracking flags (plan item 2).
+  hasBatchNo: boolean('has_batch_no').notNull().default(false),
+  hasSerialNo: boolean('has_serial_no').notNull().default(false),
+  hasExpiryDate: boolean('has_expiry_date').notNull().default(false),
+  shelfLifeInDays: integer('shelf_life_in_days'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
@@ -104,6 +109,8 @@ export const item = catalogSchema.table('item', {
     sql`${t.itemType} in ('raw_material', 'finished_product', 'semi_finished_product', 'consumable', 'spare_part', 'service')`,
   ),
   check('item_status_valid', sql`${t.status} in ('active', 'inactive', 'archived')`),
+  check('item_expiry_requires_batch', sql`not ${t.hasExpiryDate} or ${t.hasBatchNo}`),
+  check('item_shelf_life_non_negative', sql`${t.shelfLifeInDays} is null or ${t.shelfLifeInDays} >= 0`),
   index('item_category_idx').on(t.categoryId),
   index('item_base_unit_idx').on(t.baseUnitId),
 ]);

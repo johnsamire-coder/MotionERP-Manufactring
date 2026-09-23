@@ -49,6 +49,7 @@ export interface StockMovementRecord {
   totalValue: string | null;
   sourceModule: string | null;
   sourceId: string | null;
+  batchId?: string | null;
 }
 
 export interface CreateMovementInput {
@@ -64,6 +65,8 @@ export interface CreateMovementInput {
   /** Allow a movement dated before the latest movement of the same item/warehouse (requires backdateReason). */
   allowBackdate?: boolean;
   backdateReason?: string;
+  /** Required for batch-tracked items (catalog item.hasBatchNo). */
+  batchId?: string;
 }
 
 export interface StockReservationRecord {
@@ -90,6 +93,7 @@ export interface StockLedgerEntryRecord {
   itemId: string;
   warehouseId: string;
   movementId: string | null;
+  batchId?: string | null;
   quantityChange: string;
   balanceQtyAfter: string;
   incomingRate: string;
@@ -103,6 +107,7 @@ export interface CreateStockLedgerEntryInput {
   itemId: string;
   warehouseId: string;
   movementId?: string | null;
+  batchId?: string | null;
   quantityChange: string;
   balanceQtyAfter: string;
   incomingRate?: string;
@@ -132,6 +137,17 @@ export interface CreateItemBatchInput {
   manufacturingDate?: string;
   expiryDate?: string;
   notes?: string;
+}
+
+export interface BatchBalanceRecord {
+  id: string;
+  batchId: string;
+  itemId: string;
+  warehouseId: string;
+  quantity: string;
+  valuationRate: string;
+  totalValue: string;
+  updatedAt: string;
 }
 
 // --- Serial Number Tracking Types ---

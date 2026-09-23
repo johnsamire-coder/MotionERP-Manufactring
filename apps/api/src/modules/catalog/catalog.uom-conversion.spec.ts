@@ -33,6 +33,10 @@ describe('CatalogService — Multi-UOM Conversion Engine', () => {
       name: 'صاج مجلفن 1.2 مم',
       description: null,
       itemType: 'raw_material',
+      hasBatchNo: false,
+      hasSerialNo: false,
+      hasExpiryDate: false,
+      shelfLifeInDays: null,
       categoryId: 'cat-raw-1',
       baseUnitId: mockUomSqmId, // Base Unit is Square Meter (m2)
       status: 'active',

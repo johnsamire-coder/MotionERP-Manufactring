@@ -67,6 +67,10 @@ export class CreateMovementDto {
   sourceId?: string;
 
   @IsOptional()
+  @IsUUID()
+  batchId?: string;
+
+  @IsOptional()
   @IsBoolean()
   allowBackdate?: boolean;
 

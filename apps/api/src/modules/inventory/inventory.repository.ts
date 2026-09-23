@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import {
+  batchBalance,
   itemBatch,
   landedCostItem,
   landedCostVoucher,
@@ -26,6 +27,7 @@ import type {
   StockLedgerEntryRecord,
   CreateStockLedgerEntryInput,
   ItemBatchRecord,
+  BatchBalanceRecord,
   CreateItemBatchInput,
   ItemBatchStatus,
   SerialNumberRecord,
@@ -47,7 +49,7 @@ const movementColumns = {
   movementType: stockMovement.movementType, quantity: stockMovement.quantity,
   movementDate: stockMovement.movementDate, note: stockMovement.note, createdAt: stockMovement.createdAt,
   unitCost: stockMovement.unitCost, totalValue: stockMovement.totalValue,
-  sourceModule: stockMovement.sourceModule, sourceId: stockMovement.sourceId,
+  sourceModule: stockMovement.sourceModule, sourceId: stockMovement.sourceId, batchId: stockMovement.batchId,
 };
 const reservationColumns = {
   id: stockReservation.id, itemId: stockReservation.itemId, warehouseId: stockReservation.warehouseId,
@@ -56,7 +58,7 @@ const reservationColumns = {
 };
 const ledgerColumns = {
   id: stockLedgerEntry.id, itemId: stockLedgerEntry.itemId, warehouseId: stockLedgerEntry.warehouseId,
-  movementId: stockLedgerEntry.movementId, quantityChange: stockLedgerEntry.quantityChange,
+  movementId: stockLedgerEntry.movementId, batchId: stockLedgerEntry.batchId, quantityChange: stockLedgerEntry.quantityChange,
   balanceQtyAfter: stockLedgerEntry.balanceQtyAfter, incomingRate: stockLedgerEntry.incomingRate,
   valuationRate: stockLedgerEntry.valuationRate, stockValueChange: stockLedgerEntry.stockValueChange,
   stockValueAfter: stockLedgerEntry.stockValueAfter, createdAt: stockLedgerEntry.createdAt,
@@ -84,6 +86,14 @@ const lciColumns = {
   originalRate: landedCostItem.originalRate, allocatedExpense: landedCostItem.allocatedExpense,
   newValuationRate: landedCostItem.newValuationRate, createdAt: landedCostItem.createdAt,
 };
+
+function toBatchBalanceRecord(r: typeof batchBalance.$inferSelect): BatchBalanceRecord {
+  return {
+    id: r.id, batchId: r.batchId, itemId: r.itemId, warehouseId: r.warehouseId,
+    quantity: r.quantity, valuationRate: r.valuationRate, totalValue: r.totalValue,
+    updatedAt: r.updatedAt.toISOString(),
+  };
+}
 
 @Injectable()
 export class InventoryRepository {
@@ -150,13 +160,13 @@ export class InventoryRepository {
       movementDate: input.movementDate ? new Date(input.movementDate) : new Date(),
       note: input.note ?? null,
       unitCost: input.unitCost ?? null, totalValue: input.totalValue ?? null,
-      sourceModule: input.sourceModule ?? null, sourceId: input.sourceId ?? null,
+      sourceModule: input.sourceModule ?? null, sourceId: input.sourceId ?? null, batchId: input.batchId ?? null,
     }).returning(movementColumns);
     const r = rows[0]!;
     return {
       id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementType: r.movementType as MovementType,
       quantity: r.quantity, movementDate: r.movementDate.toISOString(), note: r.note, createdAt: r.createdAt.toISOString(),
-      unitCost: r.unitCost, totalValue: r.totalValue, sourceModule: r.sourceModule, sourceId: r.sourceId,
+      unitCost: r.unitCost, totalValue: r.totalValue, sourceModule: r.sourceModule, sourceId: r.sourceId, batchId: r.batchId,
     };
   }
 
@@ -169,12 +179,45 @@ export class InventoryRepository {
     return rows[0]?.movementDate ?? null;
   }
 
+  // --- Batch Balances (per-batch costing) ---
+  async findBatchBalance(batchId: string, warehouseId: string): Promise<BatchBalanceRecord | null> {
+    const rows = await this.database.db.select().from(batchBalance)
+      .where(and(eq(batchBalance.batchId, batchId), eq(batchBalance.warehouseId, warehouseId)))
+      .limit(1);
+    return rows[0] ? toBatchBalanceRecord(rows[0]) : null;
+  }
+
+  async listBatchBalances(itemId?: string, warehouseId?: string, batchId?: string): Promise<BatchBalanceRecord[]> {
+    const conditions = [];
+    if (itemId) conditions.push(eq(batchBalance.itemId, itemId));
+    if (warehouseId) conditions.push(eq(batchBalance.warehouseId, warehouseId));
+    if (batchId) conditions.push(eq(batchBalance.batchId, batchId));
+    const query = this.database.db.select().from(batchBalance);
+    const rows = conditions.length > 0
+      ? await query.where(and(...conditions)).orderBy(asc(batchBalance.updatedAt))
+      : await query.orderBy(asc(batchBalance.updatedAt));
+    return rows.map(toBatchBalanceRecord);
+  }
+
+  async upsertBatchBalance(input: {
+    batchId: string; itemId: string; warehouseId: string; quantity: string; valuationRate: string; totalValue: string;
+  }): Promise<BatchBalanceRecord> {
+    const rows = await this.database.db.insert(batchBalance).values({
+      batchId: input.batchId, itemId: input.itemId, warehouseId: input.warehouseId,
+      quantity: input.quantity, valuationRate: input.valuationRate, totalValue: input.totalValue,
+    }).onConflictDoUpdate({
+      target: [batchBalance.batchId, batchBalance.warehouseId],
+      set: { quantity: input.quantity, valuationRate: input.valuationRate, totalValue: input.totalValue, updatedAt: new Date() },
+    }).returning();
+    return toBatchBalanceRecord(rows[0]!);
+  }
+
   async listMovements(): Promise<StockMovementRecord[]> {
     const rows = await this.database.db.select(movementColumns).from(stockMovement).orderBy(asc(stockMovement.createdAt));
     return rows.map((r) => ({
       id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementType: r.movementType as MovementType,
       quantity: r.quantity, movementDate: r.movementDate.toISOString(), note: r.note, createdAt: r.createdAt.toISOString(),
-      unitCost: r.unitCost, totalValue: r.totalValue, sourceModule: r.sourceModule, sourceId: r.sourceId,
+      unitCost: r.unitCost, totalValue: r.totalValue, sourceModule: r.sourceModule, sourceId: r.sourceId, batchId: r.batchId,
     }));
   }
 
@@ -252,6 +295,7 @@ export class InventoryRepository {
       itemId: input.itemId,
       warehouseId: input.warehouseId,
       movementId: input.movementId ?? null,
+      batchId: input.batchId ?? null,
       quantityChange: input.quantityChange,
       balanceQtyAfter: input.balanceQtyAfter,
       incomingRate: input.incomingRate ?? '0',
@@ -261,7 +305,7 @@ export class InventoryRepository {
     }).returning(ledgerColumns);
     const r = rows[0]!;
     return {
-      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementId: r.movementId,
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementId: r.movementId, batchId: r.batchId,
       quantityChange: r.quantityChange, balanceQtyAfter: r.balanceQtyAfter, incomingRate: r.incomingRate,
       valuationRate: r.valuationRate, stockValueChange: r.stockValueChange, stockValueAfter: r.stockValueAfter,
       createdAt: r.createdAt.toISOString(),
@@ -277,7 +321,7 @@ export class InventoryRepository {
     if (!rows[0]) return null;
     const r = rows[0];
     return {
-      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementId: r.movementId,
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementId: r.movementId, batchId: r.batchId,
       quantityChange: r.quantityChange, balanceQtyAfter: r.balanceQtyAfter, incomingRate: r.incomingRate,
       valuationRate: r.valuationRate, stockValueChange: r.stockValueChange, stockValueAfter: r.stockValueAfter,
       createdAt: r.createdAt.toISOString(),
@@ -295,7 +339,7 @@ export class InventoryRepository {
       : await query.orderBy(asc(stockLedgerEntry.createdAt));
       
     return rows.map((r) => ({
-      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementId: r.movementId,
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementId: r.movementId, batchId: r.batchId,
       quantityChange: r.quantityChange, balanceQtyAfter: r.balanceQtyAfter, incomingRate: r.incomingRate,
       valuationRate: r.valuationRate, stockValueChange: r.stockValueChange, stockValueAfter: r.stockValueAfter,
       createdAt: r.createdAt.toISOString(),
