@@ -26,6 +26,7 @@ import {
 } from './inventory.dto';
 import { InventoryExceptionFilter } from './inventory.exception-filter';
 import { InventoryService } from './inventory.service';
+import { GrniReportService, type ReceivedNotBilledReport } from './grni-report.service';
 import type {
   StockBalanceRecord,
   StockMovementRecord,
@@ -44,7 +45,19 @@ import type {
 @Controller({ path: 'inventory', version: '1' })
 @UseFilters(InventoryExceptionFilter)
 export class InventoryController {
-  constructor(private readonly service: InventoryService) {}
+  constructor(
+    private readonly service: InventoryService,
+    private readonly grni: GrniReportService,
+  ) {}
+
+  /** Purchase receipts not yet (fully) billed, reconciled with the GRNI ledger balance (plan item 14). */
+  @Get('reports/received-not-billed')
+  async receivedNotBilled(
+    @Query('orgNodeId') orgNodeId?: string,
+    @Query('includeFullyBilled') includeFullyBilled?: string,
+  ): Promise<{ report: ReceivedNotBilledReport }> {
+    return { report: await this.grni.receivedNotBilled(orgNodeId, includeFullyBilled === 'true') };
+  }
 
   @Get('warehouses')
   async warehouses(): Promise<{ warehouses: WarehouseRecord[] }> {

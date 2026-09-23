@@ -8,6 +8,8 @@ import { OrganizationModule } from '../organization/organization.module';
 import { SalesModule } from '../sales/sales.module';
 import { SettingsModule } from '../settings/settings.module';
 import { InventoryAccessService } from './inventory-access.service';
+import { GrniReportRepository } from './grni-report.repository';
+import { GrniReportService } from './grni-report.service';
 import { InventoryController } from './inventory.controller';
 import { InventoryRepository } from './inventory.repository';
 import { InventoryService } from './inventory.service';
@@ -15,7 +17,7 @@ import { InventoryService } from './inventory.service';
 @Module({
   imports: [AccountingModule, CatalogModule, AuthModule, OrganizationModule, SalesModule, SettingsModule],
   controllers: [PurchaseBatchLinkController, InventoryController],
-  providers: [PurchaseBatchLinkService, InventoryService, InventoryRepository, InventoryAccessService],
+  providers: [PurchaseBatchLinkService, InventoryService, InventoryRepository, InventoryAccessService, GrniReportService, GrniReportRepository],
   exports: [InventoryService],
 })
 export class InventoryModule {}
