@@ -214,6 +214,30 @@ export class InventoryRepository {
     return toBatchBalanceRecord(rows[0]!);
   }
 
+  /** Quantity already received for an item against a purchase order (plan item 12). */
+  async sumReceivedForOrder(purchaseOrderId: string, itemId: string): Promise<number> {
+    const rows = await this.database.db
+      .select({ total: sql<string>`coalesce(sum(${stockMovement.quantity}), 0)` })
+      .from(stockMovement)
+      .where(and(
+        eq(stockMovement.sourceModule, 'purchase_order'), eq(stockMovement.sourceId, purchaseOrderId),
+        eq(stockMovement.itemId, itemId), eq(stockMovement.movementType, 'receipt'),
+      ));
+    return Number(rows[0]?.total ?? 0);
+  }
+
+  async findMovementById(id: string): Promise<StockMovementRecord | null> {
+    const rows = await this.database.db.select(movementColumns).from(stockMovement).where(eq(stockMovement.id, id)).limit(1);
+    const r = rows[0];
+    if (!r) return null;
+    return {
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementType: r.movementType as MovementType,
+      purpose: r.purpose as MovementPurpose, quantity: r.quantity, movementDate: r.movementDate.toISOString(), note: r.note,
+      createdAt: r.createdAt.toISOString(), unitCost: r.unitCost, totalValue: r.totalValue,
+      sourceModule: r.sourceModule, sourceId: r.sourceId, batchId: r.batchId,
+    };
+  }
+
   async listMovements(): Promise<StockMovementRecord[]> {
     const rows = await this.database.db.select(movementColumns).from(stockMovement).orderBy(asc(stockMovement.createdAt));
     return rows.map((r) => ({

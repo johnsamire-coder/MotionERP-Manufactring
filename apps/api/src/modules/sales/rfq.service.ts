@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
+import { PurchaseAllowanceService } from '../settings/purchase-allowance.service';
 import { CatalogNotFoundError } from '../catalog/catalog.errors';
 import { CatalogService } from '../catalog/catalog.service';
 import { CrmNotFoundError } from '../crm/crm.errors';
@@ -21,6 +22,7 @@ export class RfqService {
     private readonly sales: SalesService,
     private readonly crm: CrmService,
     private readonly catalog: CatalogService,
+    @Optional() private readonly allowances?: PurchaseAllowanceService,
   ) {}
 
   async list(): Promise<RfqRecord[]> { return this.repository.list(); }
@@ -64,14 +66,30 @@ export class RfqService {
     const found = await this.get(id);
     const invited = this.invitedPending(found, supplierId);
     const prices = new Map<string, string>();
+    const quantities = new Map<string, string>();
     for (const line of input.lines ?? []) {
       if (prices.has(line.itemId)) throw new SalesValidationError(`item ${line.itemId} is priced twice`);
       prices.set(line.itemId, line.unitPrice);
+      if (line.quantity !== undefined) quantities.set(line.itemId, line.quantity);
     }
     const missing = found.lines.filter((l) => !prices.has(l.itemId));
     const extra = [...prices.keys()].filter((itemId) => !found.lines.some((l) => l.itemId === itemId));
     if (missing.length > 0 || extra.length > 0) {
       throw new SalesValidationError('the response must price exactly the RFQ items (no missing or extra items)');
+    }
+    // Over-order allowance (plan item 12): a supplier may offer more than requested only within the %.
+    if (quantities.size > 0) {
+      const pct = this.allowances ? (await this.allowances.resolve(found.orgNodeId)).overOrderPct : 0;
+      for (const l of found.lines) {
+        const offered = quantities.get(l.itemId);
+        if (offered === undefined) continue;
+        const q = Number(offered);
+        if (!Number.isFinite(q) || q <= 0) throw new SalesValidationError('offered quantity must be positive');
+        const max = PurchaseAllowanceService.limit(Number(l.quantity), pct);
+        if (q > max + 1e-9) {
+          throw new SalesValidationError(`الكمية المعروضة ${q} تتجاوز المطلوب ${Number(l.quantity)} بأكثر من نسبة السماح ${pct}% (الحد ${Number(max.toFixed(4))})`);
+        }
+      }
     }
     const quotation = await this.sales.createQuotation({
       direction: 'incoming',
@@ -79,7 +97,7 @@ export class RfqService {
       orgNodeId: found.orgNodeId ?? undefined,
       validUntil: input.validUntil,
       note: input.note ?? `رد على طلب عرض الأسعار ${found.rfqNumber}`,
-      lines: found.lines.map((l) => ({ itemId: l.itemId, quantity: l.quantity, unitPrice: prices.get(l.itemId)! })),
+      lines: found.lines.map((l) => ({ itemId: l.itemId, quantity: quantities.get(l.itemId) ?? l.quantity, unitPrice: prices.get(l.itemId)! })),
     });
     await this.repository.setSupplierResponse(id, supplierId, 'received', quotation.id);
     return { rfq: await this.get(id), quotation };

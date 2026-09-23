@@ -22,7 +22,8 @@ export interface CreateRfqInput {
 }
 
 export interface RecordRfqResponseInput {
-  lines: Array<{ itemId: string; unitPrice: string }>;
+  /** quantity defaults to the RFQ quantity; more is allowed only within the over-order allowance (plan item 12). */
+  lines: Array<{ itemId: string; unitPrice: string; quantity?: string }>;
   validUntil?: string;
   note?: string;
 }

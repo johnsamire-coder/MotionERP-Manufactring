@@ -79,6 +79,11 @@ export interface CreateMovementInput {
   serialNos?: string[];
   /** Defaults to 'general'. */
   purpose?: MovementPurpose;
+  /**
+   * Receipt against an approved supplier quotation (the purchase order, plan item 12): the
+   * cumulative received quantity may exceed the ordered one only within the over-receipt %.
+   */
+  purchaseOrderId?: string;
 }
 
 export interface TransferStockInput {

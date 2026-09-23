@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, ne, sql } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import {
   bankReconciliation,
@@ -943,5 +943,15 @@ export class FinanceRepository {
       createdAt: r.createdAt.toISOString(),
       updatedAt: r.updatedAt.toISOString(),
     };
+  }
+
+  /** Net amount already billed (non-cancelled invoices) against a receipt movement (plan item 12). */
+  async sumBilledForReceipt(purchaseReceiptId: string): Promise<number> {
+    const rows = await this.database.db
+      .select({ total: sql<string>`coalesce(sum(${purchaseInvoiceLine.quantity} * ${purchaseInvoiceLine.unitCost}), 0)` })
+      .from(purchaseInvoiceLine)
+      .innerJoin(purchaseInvoice, eq(purchaseInvoice.id, purchaseInvoiceLine.purchaseInvoiceId))
+      .where(and(eq(purchaseInvoiceLine.purchaseReceiptId, purchaseReceiptId), ne(purchaseInvoice.status, 'cancelled')));
+    return Number(rows[0]?.total ?? 0);
   }
 }

@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, Optional } from '@nestjs/common';
 import { CrmService } from '../crm/crm.service';
+import { InventoryService } from '../inventory/inventory.service';
+import { PurchaseAllowanceService } from '../settings/purchase-allowance.service';
 import { SalesService } from '../sales/sales.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { AccountingRepository } from '../accounting/accounting.repository';
@@ -34,7 +36,42 @@ export class FinanceService {
     @Optional() private readonly accountingService?: AccountingService,
     @Optional() private readonly accountingRepo?: AccountingRepository,
     @Optional() private readonly crmService?: CrmService,
+    @Optional() private readonly inventoryService?: InventoryService,
+    @Optional() private readonly allowances?: PurchaseAllowanceService,
   ) {}
+
+  /**
+   * Over-billing allowance (plan item 12): invoice lines that reference a receipt (stock
+   * movement) may bill, together with earlier non-cancelled invoices, at most the received
+   * value plus the configured %. Guard only — no posting logic changes.
+   */
+  private async assertBillingWithinReceipts(
+    orgNodeId: string, lines: Array<{ itemId: string; quantity: string; unitCost: string; purchaseReceiptId?: string }>,
+  ): Promise<void> {
+    const byReceipt = new Map<string, { itemId: string; amount: number }>();
+    for (const l of lines) {
+      if (!l.purchaseReceiptId) continue;
+      const prev = byReceipt.get(l.purchaseReceiptId);
+      if (prev && prev.itemId !== l.itemId) throw new FinanceValidationError(`receipt ${l.purchaseReceiptId} is referenced for two different items`);
+      byReceipt.set(l.purchaseReceiptId, { itemId: l.itemId, amount: (prev?.amount ?? 0) + Number(l.quantity) * Number(l.unitCost) });
+    }
+    if (byReceipt.size === 0 || !this.inventoryService) return;
+    const pct = this.allowances ? (await this.allowances.resolve(orgNodeId)).overBillingPct : 0;
+    for (const [receiptId, line] of byReceipt) {
+      const receipt = await this.inventoryService.getMovement(receiptId).catch(() => null);
+      if (!receipt || receipt.movementType !== 'receipt') throw new FinanceValidationError(`purchase receipt ${receiptId} does not exist`);
+      if (receipt.itemId !== line.itemId) throw new FinanceValidationError(`purchase receipt ${receiptId} is for a different item`);
+      const received = Number(receipt.totalValue ?? 0);
+      const billed = await this.repository.sumBilledForReceipt(receiptId);
+      const max = PurchaseAllowanceService.limit(received, pct);
+      if (billed + line.amount > max + 1e-6) {
+        throw new FinanceValidationError(
+          `الفاتورة تتجاوز قيمة الاستلام: قيمة الاستلام ${received.toFixed(2)}، المفوتر سابقاً ${billed.toFixed(2)}، ` +
+          `الحالي ${line.amount.toFixed(2)}، والحد ${max.toFixed(2)} (نسبة السماح ${pct}%)`,
+        );
+      }
+    }
+  }
 
   /** Supplier hold (plan item 8): stops invoices / payments for a held supplier. */
   private async assertSupplierNotHeld(supplierId: string | null | undefined, action: 'invoice' | 'payment'): Promise<void> {
@@ -171,6 +208,7 @@ export class FinanceService {
       throw new FinanceValidationError('purchase invoice must have at least one line');
     }
     await this.assertSupplierNotHeld(input.supplierId, 'invoice');
+    await this.assertBillingWithinReceipts(input.orgNodeId, input.lines);
 
     let netTotal = 0;
     let taxTotal = 0;

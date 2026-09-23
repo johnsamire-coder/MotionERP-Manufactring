@@ -3,6 +3,8 @@ import { Injectable, Optional } from '@nestjs/common';
 import { PostingEngineService } from '../accounting/posting-engine.service';
 import { CatalogNotFoundError } from '../catalog/catalog.errors';
 import { CatalogService } from '../catalog/catalog.service';
+import { SalesService } from '../sales/sales.service';
+import { PurchaseAllowanceService } from '../settings/purchase-allowance.service';
 import type { ItemRecord } from '../catalog/catalog.types';
 import { InventoryNotFoundError, InventoryValidationError } from './inventory.errors';
 import { InventoryRepository } from './inventory.repository';
@@ -47,7 +49,43 @@ export class InventoryService {
     @Optional() private readonly postingEngine?: PostingEngineService,
     @Optional() private readonly catalogService?: CatalogService,
     @Optional() private readonly access?: InventoryAccessService,
+    @Optional() private readonly salesService?: SalesService,
+    @Optional() private readonly allowances?: PurchaseAllowanceService,
   ) {}
+
+  /**
+   * Over-receipt allowance (plan item 12): a receipt against a purchase order (an approved
+   * incoming quotation) may bring the received total above the ordered quantity only within
+   * the configured %. Returns the source fields to stamp on the movement.
+   */
+  private async checkReceiptAgainstOrder(
+    input: CreateMovementInput, quantityNum: number, orgNodeId: string,
+  ): Promise<{ sourceModule: string; sourceId: string } | null> {
+    if (!input.purchaseOrderId) return null;
+    if (input.movementType !== 'receipt') throw new InventoryValidationError('purchaseOrderId only applies to receipts');
+    if (!this.salesService) throw new InventoryValidationError('purchase orders are not available');
+    const order = await this.salesService.getQuotation(input.purchaseOrderId).catch(() => null);
+    if (!order || order.direction !== 'incoming') throw new InventoryNotFoundError(`purchase order ${input.purchaseOrderId} does not exist`);
+    if (order.status !== 'approved') throw new InventoryValidationError(`purchase order ${order.quotationNumber} is "${order.status}", not approved`);
+    const ordered = order.lines.filter((l) => l.itemId === input.itemId).reduce((a, l) => a + Number(l.quantity), 0);
+    if (ordered <= 0) throw new InventoryValidationError(`item ${input.itemId} is not on purchase order ${order.quotationNumber}`);
+    const received = await this.repository.sumReceivedForOrder(order.id, input.itemId);
+    const pct = this.allowances ? (await this.allowances.resolve(orgNodeId)).overReceiptPct : 0;
+    const max = PurchaseAllowanceService.limit(ordered, pct);
+    if (received + quantityNum > max + 1e-9) {
+      throw new InventoryValidationError(
+        `الاستلام يتجاوز أمر الشراء ${order.quotationNumber}: المطلوب ${ordered}، المستلم سابقاً ${received}، ` +
+        `الحالي ${quantityNum}، والحد المسموح ${Number(max.toFixed(4))} (نسبة السماح ${pct}%)`,
+      );
+    }
+    return { sourceModule: 'purchase_order', sourceId: order.id };
+  }
+
+  async getMovement(id: string): Promise<StockMovementRecord> {
+    const found = await this.repository.findMovementById(id);
+    if (!found) throw new InventoryNotFoundError(`stock movement ${id} does not exist`);
+    return found;
+  }
 
   // --- User restrictions (plan item 5.2): no-ops without a logged-in, restricted user ---
   private async assertWarehouseAllowed(warehouseId: string): Promise<void> {
@@ -96,6 +134,7 @@ export class InventoryService {
       throw new InventoryNotFoundError(`warehouse ${input.warehouseId} does not exist`);
     }
     await this.assertWarehouseAllowed(input.warehouseId);
+    const orderSource = await this.checkReceiptAgainstOrder(input, quantityNum, warehouseRecord.orgNodeId);
 
     // Backdating guard: a movement may not be dated before the latest recorded
     // movement of the same item/warehouse, unless explicitly allowed with a reason.
@@ -198,8 +237,8 @@ export class InventoryService {
       note,
       unitCost: movementUnitCost.toFixed(6),
       totalValue: movementTotalValue.toFixed(4),
-      sourceModule: input.sourceModule,
-      sourceId: input.sourceId,
+      sourceModule: orderSource?.sourceModule ?? input.sourceModule,
+      sourceId: orderSource?.sourceId ?? input.sourceId,
       batchId: batchContext?.batchId,
       purpose,
     });

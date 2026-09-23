@@ -82,6 +82,10 @@ export class CreateMovementDto {
   purpose?: (typeof MOVEMENT_PURPOSES)[number];
 
   @IsOptional()
+  @IsUUID()
+  purchaseOrderId?: string;
+
+  @IsOptional()
   @IsBoolean()
   allowBackdate?: boolean;
 

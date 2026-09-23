@@ -89,6 +89,7 @@ export class InventoryController {
       batchId: dto.batchId,
       serialNos: dto.serialNos,
       purpose: dto.purpose,
+      purchaseOrderId: dto.purchaseOrderId,
     });
     return { movement: created };
   }

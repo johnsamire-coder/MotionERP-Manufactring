@@ -18,6 +18,7 @@ export class CreateRfqDto {
 export class RfqResponseLineDto {
   @IsUUID() itemId!: string;
   @IsNumberString() unitPrice!: string;
+  @IsOptional() @IsNumberString() quantity?: string;
 }
 
 export class RecordRfqResponseDto {
