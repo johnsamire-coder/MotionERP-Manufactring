@@ -36,3 +36,11 @@ export class CreateJobOrderDto {
   @IsOptional() @IsUUID() orgNodeId?: string;
   @IsOptional() @IsString() note?: string;
 }
+
+export class QuotationFromOpportunityDto {
+  @IsOptional() @IsUUID() orgNodeId?: string;
+  @IsOptional() @IsString() validUntil?: string;
+  @IsOptional() @IsBoolean() applyPricingRules?: boolean;
+  /** itemId → unit price; falls back to the opportunity's expected rate. */
+  @IsOptional() prices?: Record<string, string>;
+}

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, Optional } from '@nestjs/common';
 import { PricingService } from './pricing.service';
+import { OpportunityService } from '../crm/opportunity.service';
 import { CrmService } from '../crm/crm.service';
 import { SalesNotFoundError, SalesValidationError } from './sales.errors';
 import { SalesRepository } from './sales.repository';
@@ -12,7 +13,38 @@ export class SalesService {
     private readonly repository: SalesRepository,
     private readonly crmService: CrmService,
     @Optional() private readonly pricing?: PricingService,
+    @Optional() private readonly opportunities?: OpportunityService,
   ) {}
+
+  /**
+   * Plan item 17: turns an opportunity into a formal outgoing quotation (its items at the given or
+   * expected prices, optionally through the pricing rules) and moves the opportunity to "quoted".
+   */
+  async createQuotationFromOpportunity(
+    opportunityId: string,
+    input: { orgNodeId?: string; validUntil?: string; applyPricingRules?: boolean; prices?: Record<string, string> },
+  ): Promise<QuotationRecord> {
+    if (!this.opportunities) throw new SalesValidationError('opportunities are not available');
+    const opp = await this.opportunities.get(opportunityId).catch(() => null);
+    if (!opp) throw new SalesNotFoundError(`opportunity ${opportunityId} does not exist`);
+    if (opp.stage !== 'open' && opp.stage !== 'qualified') {
+      throw new SalesValidationError(`opportunity ${opp.opportunityNumber} is "${opp.stage}" and cannot be quoted`);
+    }
+    if (opp.items.length === 0) throw new SalesValidationError(`opportunity ${opp.opportunityNumber} has no items to quote`);
+    const lines = opp.items.map((i) => {
+      const price = input.prices?.[i.itemId] ?? i.expectedRate ?? undefined;
+      if (price === undefined && !input.applyPricingRules) {
+        throw new SalesValidationError(`no price for item ${i.itemId}: give prices, expected rates, or applyPricingRules`);
+      }
+      return { itemId: i.itemId, quantity: i.quantity, unitPrice: price ?? '' };
+    });
+    const quotation = await this.createQuotation({
+      direction: 'outgoing', customerId: opp.customerId, orgNodeId: input.orgNodeId, validUntil: input.validUntil,
+      note: `من فرصة البيع ${opp.opportunityNumber}: ${opp.title}`, lines, applyPricingRules: input.applyPricingRules,
+    });
+    await this.opportunities.markQuoted(opp.id, quotation.id);
+    return quotation;
+  }
 
   async getQuotations(direction?: 'outgoing' | 'incoming'): Promise<QuotationRecord[]> {
     return this.repository.listQuotations(direction);
@@ -108,6 +140,7 @@ export class SalesService {
     if (quotation.direction === 'outgoing') {
       if (quotation.customerId) await this.crmService.promoteToActive(quotation.customerId);
       const updated = await this.repository.setQuotationStatus(id, 'approved', customerPoReference);
+      if (this.opportunities) await this.opportunities.markWonByQuotation(id); // plan item 17
       createdJobOrder = await this.createJobOrder({
         source: 'quotation',
         quotationReference: updated.quotationNumber,

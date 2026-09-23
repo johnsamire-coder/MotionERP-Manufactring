@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, index, numeric, text, timestamp, pgSchema, uuid, unique } from 'drizzle-orm/pg-core';
+import { check, index, integer, numeric, text, timestamp, pgSchema, uuid, unique } from 'drizzle-orm/pg-core';
 import { orgNode } from '../organization/organization.schema';
 
 export const crmSchema = pgSchema('crm');
@@ -80,3 +80,42 @@ export const customerInteraction = crmSchema.table('customer_interaction', {
 export type Supplier = typeof supplier.$inferSelect;
 export type Customer = typeof customer.$inferSelect;
 export type CustomerInteraction = typeof customerInteraction.$inferSelect;
+
+/**
+ * Opportunity (plan item 17): the stage between an interested lead and a formal quotation.
+ * open → qualified → quoted → won | lost. The quotation lives in the sales module, so it is
+ * referenced by plain UUID (D2); items likewise.
+ */
+export const opportunity = crmSchema.table('opportunity', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  opportunityNumber: text('opportunity_number').notNull(),
+  customerId: uuid('customer_id').notNull().references(() => customer.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  title: text('title').notNull(),
+  source: text('source'),
+  expectedAmount: numeric('expected_amount', { precision: 18, scale: 4 }),
+  probability: integer('probability').notNull().default(10),
+  expectedCloseDate: timestamp('expected_close_date', { withTimezone: true }),
+  stage: text('stage').notNull().default('open'),
+  lostReason: text('lost_reason'),
+  quotationId: uuid('quotation_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('opportunity_number_unique').on(t.opportunityNumber),
+  check('opportunity_stage_valid', sql`${t.stage} in ('open', 'qualified', 'quoted', 'won', 'lost')`),
+  check('opportunity_probability_range', sql`${t.probability} between 0 and 100`),
+  check('opportunity_lost_needs_reason', sql`${t.stage} <> 'lost' or ${t.lostReason} is not null`),
+  index('opportunity_customer_idx').on(t.customerId),
+  index('opportunity_quotation_idx').on(t.quotationId),
+]);
+
+export const opportunityItem = crmSchema.table('opportunity_item', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  opportunityId: uuid('opportunity_id').notNull().references(() => opportunity.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
+  itemId: uuid('item_id').notNull(),
+  quantity: numeric('quantity', { precision: 24, scale: 6 }).notNull(),
+  expectedRate: numeric('expected_rate', { precision: 20, scale: 4 }),
+}, (t) => [
+  check('opportunity_item_quantity_positive', sql`${t.quantity} > 0`),
+  index('opportunity_item_opportunity_idx').on(t.opportunityId),
+]);

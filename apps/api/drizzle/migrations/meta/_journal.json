@@ -498,6 +498,13 @@
       "when": 1790200040976,
       "tag": "0070_noisy_chameleon",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1790200250359,
+      "tag": "0071_little_ultragirl",
+      "breakpoints": true
     }
   ]
 }

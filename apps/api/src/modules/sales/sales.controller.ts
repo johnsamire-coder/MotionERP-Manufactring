@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseFilters } from '@nestjs/common';
-import { ApproveQuotationDto, CreateJobOrderDto, CreateQuotationDto } from './sales.dto';
+import { ApproveQuotationDto, CreateJobOrderDto, CreateQuotationDto, QuotationFromOpportunityDto } from './sales.dto';
 import { SalesExceptionFilter } from './sales.exception-filter';
 import { SalesService } from './sales.service';
 import { CustomerCreditService, type CustomerCreditStatus } from './customer-credit.service';
@@ -38,6 +38,15 @@ export class SalesController {
       applyPricingRules: dto.applyPricingRules,
     });
     return { quotation: created };
+  }
+
+  /** Plan item 17: formal quotation from an opportunity. */
+  @Post('opportunities/:id/quotation') @HttpCode(201)
+  async quotationFromOpportunity(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: QuotationFromOpportunityDto,
+  ): Promise<{ quotation: QuotationRecord }> {
+    return { quotation: await this.service.createQuotationFromOpportunity(id, dto) };
   }
 
   @Post('quotations/:id/send') @HttpCode(200)
