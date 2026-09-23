@@ -13,6 +13,12 @@ export class CrmService {
 
   async getSuppliers(): Promise<SupplierRecord[]> { return this.repository.listSuppliers(); }
 
+  async getSupplier(id: string): Promise<SupplierRecord> {
+    const found = await this.repository.findSupplierById(id);
+    if (!found) throw new CrmNotFoundError(`supplier ${id} does not exist`);
+    return found;
+  }
+
   async createSupplier(input: CreateSupplierInput): Promise<SupplierRecord> {
     const code = normalizeCode(input.code);
     const name = normalizeName(input.name);

@@ -63,6 +63,7 @@ import PeriodAndYearClosingPage from './pages/PeriodAndYearClosingPage';
 import AuditTrailPage from './pages/AuditTrailPage';
 import RbacPermissionsPage from './pages/RbacPermissionsPage';
 import UserRestrictionsPage from './app/pages/UserRestrictionsPage';
+import RfqPage from './app/pages/RfqPage';
 
 // ── 2. شاشات التخطيط والتصنيع (الشغل الأصلي - ERPNext parity) ──
 import { ManufacturingPage } from './app/pages/ManufacturingPage';
@@ -128,6 +129,7 @@ export const App: React.FC = () => {
       title: '2. المشتريات والموردين (Purchases)',
       items: [
         { id: 'purchase-orders', label: 'فواتير المشتريات والـ GRNI', icon: ShoppingBag },
+        { id: 'rfq', label: 'طلبات عروض الأسعار (RFQ)', icon: ClipboardList },
       ],
     },
     {
@@ -305,6 +307,7 @@ export const App: React.FC = () => {
         {/* 1. المبيعات والمشتريات */}
         {currentTab === 'sales-invoices' && <SalesInvoicePage />}
         {currentTab === 'purchase-orders' && <PurchaseOrderPage />}
+        {currentTab === 'rfq' && <RfqPage />}
 
         {/* 2. المخازن والتتبع الطبي */}
         {currentTab === 'inventory-main' && <InventoryPage />}

@@ -52,6 +52,10 @@ export class CrmRepository {
     const rows = await this.database.db.select(supplierColumns).from(supplier).orderBy(asc(supplier.code));
     return rows.map(toSupplierRecord);
   }
+  async findSupplierById(id: string): Promise<SupplierRecord | null> {
+    const rows = await this.database.db.select(supplierColumns).from(supplier).where(eq(supplier.id, id)).limit(1);
+    return rows[0] ? toSupplierRecord(rows[0]) : null;
+  }
   async findSupplierByCode(code: string): Promise<SupplierRecord | null> {
     const rows = await this.database.db.select(supplierColumns).from(supplier).where(eq(supplier.code, code)).limit(1);
     return rows[0] ? toSupplierRecord(rows[0]) : null;

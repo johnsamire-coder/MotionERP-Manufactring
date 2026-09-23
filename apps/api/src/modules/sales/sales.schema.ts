@@ -97,3 +97,52 @@ export const jobOrder = salesSchema.table('job_order', {
 export type JobOrder = typeof jobOrder.$inferSelect;
 
 export type QuotationLine = typeof quotationLine.$inferSelect;
+
+// ==================== طلب عرض أسعار لعدة موردين (RFQ — بند 7) ====================
+
+/**
+ * Request for Quotation: one request sent to several suppliers; each supplier's answer is
+ * stored as a normal incoming quotation linked back through rfq_supplier. Items, suppliers
+ * and material requests belong to other modules, so they are plain UUIDs / text here (D2).
+ */
+export const rfq = salesSchema.table('rfq', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  rfqNumber: text('rfq_number').notNull(),
+  orgNodeId: uuid('org_node_id'),
+  rfqDate: timestamp('rfq_date', { withTimezone: true }).notNull(),
+  respondBy: timestamp('respond_by', { withTimezone: true }),
+  status: text('status').notNull().default('draft'),
+  materialRequestReference: text('material_request_reference'),
+  awardedSupplierId: uuid('awarded_supplier_id'),
+  note: text('note'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('rfq_number_unique').on(t.rfqNumber),
+  check('rfq_status_valid', sql`${t.status} in ('draft', 'sent', 'closed', 'cancelled')`),
+]);
+
+export const rfqLine = salesSchema.table('rfq_line', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  rfqId: uuid('rfq_id').notNull().references(() => rfq.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
+  itemId: uuid('item_id').notNull(),
+  quantity: numeric('quantity', { precision: 24, scale: 6 }).notNull(),
+  lineNumber: integer('line_number').notNull().default(0),
+}, (t) => [
+  unique('rfq_line_item_unique').on(t.rfqId, t.itemId),
+  check('rfq_line_quantity_positive', sql`${t.quantity} > 0`),
+  index('rfq_line_rfq_idx').on(t.rfqId),
+]);
+
+export const rfqSupplier = salesSchema.table('rfq_supplier', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  rfqId: uuid('rfq_id').notNull().references(() => rfq.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
+  supplierId: uuid('supplier_id').notNull(),
+  status: text('status').notNull().default('pending'),
+  quotationId: uuid('quotation_id').references(() => quotation.id, { onUpdate: 'cascade', onDelete: 'set null' }),
+  respondedAt: timestamp('responded_at', { withTimezone: true }),
+}, (t) => [
+  unique('rfq_supplier_unique').on(t.rfqId, t.supplierId),
+  check('rfq_supplier_status_valid', sql`${t.status} in ('pending', 'received', 'declined')`),
+  index('rfq_supplier_rfq_idx').on(t.rfqId),
+]);
