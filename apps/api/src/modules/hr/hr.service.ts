@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
+import { AuthService } from '../auth/auth.service';
 import { HrNotFoundError, HrValidationError } from './hr.errors';
 import { HrRepository } from './hr.repository';
 import type {
@@ -9,7 +10,10 @@ import type {
 
 @Injectable()
 export class HrService {
-  constructor(private readonly repository: HrRepository) {}
+  constructor(
+    private readonly repository: HrRepository,
+    @Optional() private readonly authService?: AuthService,
+  ) {}
 
   async getEmployees(): Promise<EmployeeRecord[]> { return this.repository.listEmployees(); }
 
@@ -44,7 +48,7 @@ export class HrService {
    * Ends an employee's service (plan item 10): refused while any ACTIVE employee still reports
    * to them — the message names each one so they can be reassigned first.
    */
-  async terminateEmployee(id: string, relievingDate?: string): Promise<EmployeeRecord> {
+  async terminateEmployee(id: string, relievingDate?: string): Promise<EmployeeRecord & { deactivatedUsers: string[] }> {
     const emp = await this.getEmployee(id);
     if (emp.status === 'terminated') throw new HrValidationError(`employee ${emp.code} is already terminated`);
     const subordinates = await this.repository.listActiveSubordinates(id);
@@ -56,7 +60,10 @@ export class HrService {
     }
     const date = relievingDate ? new Date(relievingDate) : new Date();
     if (Number.isNaN(date.getTime())) throw new HrValidationError('relievingDate is not a valid date');
-    return this.repository.setEmployeeStatus(id, 'terminated', date);
+    const terminated = await this.repository.setEmployeeStatus(id, 'terminated', date);
+    // Plan item 11: the employee's login(s) are disabled in the same step.
+    const deactivatedUsers = this.authService ? await this.authService.deactivateUsersForEmployee([emp.code, emp.id]) : [];
+    return { ...terminated, deactivatedUsers };
   }
 
   async getEmployee(id: string): Promise<EmployeeRecord> {

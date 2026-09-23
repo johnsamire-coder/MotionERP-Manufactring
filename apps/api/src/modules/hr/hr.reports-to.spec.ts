@@ -52,4 +52,12 @@ describe('Manager hierarchy and leaving (plan item 10)', () => {
     await service.terminateEmployee('lone');
     await expect(service.terminateEmployee('lone')).rejects.toThrow(/already terminated/);
   });
+
+  it('4. (plan item 11) terminating disables the linked login(s) and reports them', async () => {
+    const auth = { deactivateUsersForEmployee: jest.fn().mockResolvedValue(['lone.user']) };
+    const withAuth = new HrService((service as unknown as { repository: HrRepository }).repository, auth as never);
+    const res = await withAuth.terminateEmployee('lone');
+    expect(auth.deactivateUsersForEmployee).toHaveBeenCalledWith(['LONE', 'lone']);
+    expect(res.deactivatedUsers).toEqual(['lone.user']);
+  });
 });

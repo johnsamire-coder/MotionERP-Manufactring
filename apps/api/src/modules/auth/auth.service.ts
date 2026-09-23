@@ -34,6 +34,17 @@ export class AuthService {
 
   async getUsers(): Promise<UserRecord[]> { return this.repository.listUsers(); }
 
+  /**
+   * Disables every active login linked to an employee (plan item 11). The link is the user's
+   * employee_reference, holding the employee's code or id. Returns the usernames disabled.
+   * Takes effect immediately: every request re-reads the user status (plan item 5.0).
+   */
+  async deactivateUsersForEmployee(employeeRefs: string[]): Promise<string[]> {
+    const users = await this.repository.listActiveUsersByEmployeeReference(employeeRefs.filter((r) => r.length > 0));
+    for (const u of users) await this.repository.setUserStatus(u.id, 'inactive');
+    return users.map((u) => u.username);
+  }
+
   /** Passwords are always hashed (never stored plain), consistent with the architecture's Argon2 requirement — bcryptjs used here as the practical equivalent that installs cleanly on this environment (see progress log). */
   async createUser(input: CreateUserInput): Promise<UserRecord> {
     const username = input.username.trim().toLowerCase();

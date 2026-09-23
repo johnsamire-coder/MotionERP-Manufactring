@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import { orgNode } from '../organization/organization.schema';
 import { warehouse } from '../inventory/inventory.schema';
@@ -92,6 +92,16 @@ export class AuthRepository {
   async findUserByUsername(username: string): Promise<UserRecord | null> {
     const rows = await this.database.db.select(userColumns).from(user).where(eq(user.username, username)).limit(1);
     return rows[0] ? toUserRecord(rows[0]) : null;
+  }
+  /** Active users whose employee_reference is one of the given values (plan item 11). */
+  async listActiveUsersByEmployeeReference(refs: string[]): Promise<UserRecord[]> {
+    if (refs.length === 0) return [];
+    const rows = await this.database.db.select(userColumns).from(user)
+      .where(and(inArray(user.employeeReference, refs), eq(user.status, 'active')));
+    return rows.map(toUserRecord);
+  }
+  async setUserStatus(id: string, status: UserStatus): Promise<void> {
+    await this.database.db.update(user).set({ status, updatedAt: new Date() }).where(eq(user.id, id));
   }
   async findUserWithPasswordByUsername(username: string): Promise<UserWithPasswordRow | null> {
     const rows = await this.database.db.select(userWithPasswordColumns).from(user).where(eq(user.username, username)).limit(1);

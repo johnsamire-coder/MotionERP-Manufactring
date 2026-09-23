@@ -23,8 +23,9 @@ export class HrController {
   }
 
   @Post('employees/:id/terminate') @HttpCode(200)
-  async terminate(@Param('id', ParseUUIDPipe) id: string, @Body() dto: TerminateEmployeeDto): Promise<{ employee: EmployeeRecord }> {
-    return { employee: await this.service.terminateEmployee(id, dto.relievingDate) };
+  async terminate(@Param('id', ParseUUIDPipe) id: string, @Body() dto: TerminateEmployeeDto): Promise<{ employee: EmployeeRecord; deactivatedUsers: string[] }> {
+    const { deactivatedUsers, ...employee } = await this.service.terminateEmployee(id, dto.relievingDate);
+    return { employee, deactivatedUsers };
   }
 
   @Get('commission-rules')
