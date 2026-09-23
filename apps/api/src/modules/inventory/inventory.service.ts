@@ -905,6 +905,22 @@ export class InventoryService {
       throw new InventoryValidationError(`Voucher ${id} is "${voucher.status}" and cannot be posted`);
     }
 
+    // Plan item 15 (per-batch costing, item 2a): a receipt into a batch also carries its share of the
+    // landed cost into that batch's own cost, so the item value keeps equalling the sum of its batches.
+    // Validated for every line before anything is written.
+    const batchShares: Array<{ batchId: string; itemId: string; warehouseId: string; expense: number }> = [];
+    for (const item of voucher.items) {
+      const receipt = item.receiptMovementId ? await this.repository.findMovementById(item.receiptMovementId) : null;
+      if (!receipt?.batchId) continue;
+      const bb = await this.repository.findBatchBalance(receipt.batchId, item.warehouseId);
+      if (!bb || Number(bb.quantity) <= 0) {
+        throw new InventoryValidationError(
+          `الدفعة المرتبطة بالاستلام ${item.receiptMovementId} لم يعد لها رصيد في المخزن؛ سجّل تكلفة الاستيراد قبل صرف الدفعة`,
+        );
+      }
+      batchShares.push({ batchId: receipt.batchId, itemId: item.itemId, warehouseId: item.warehouseId, expense: Number(item.allocatedExpense) });
+    }
+
     // Capitalize expenses onto stock balance & stock ledger
     for (const item of voucher.items) {
       const addedExpenseVal = Number(item.allocatedExpense);
@@ -934,6 +950,16 @@ export class InventoryService {
         valuationRate: updatedAvg.toFixed(6),
         stockValueChange: addedExpenseVal.toFixed(4),
         stockValueAfter: updatedTotalVal.toFixed(4),
+      });
+    }
+
+    for (const share of batchShares) {
+      const bb = (await this.repository.findBatchBalance(share.batchId, share.warehouseId))!;
+      const qty = Number(bb.quantity);
+      const value = Number(bb.totalValue) + share.expense;
+      await this.repository.upsertBatchBalance({
+        batchId: share.batchId, itemId: share.itemId, warehouseId: share.warehouseId,
+        quantity: bb.quantity, totalValue: value.toFixed(6), valuationRate: (value / qty).toFixed(6),
       });
     }
 
