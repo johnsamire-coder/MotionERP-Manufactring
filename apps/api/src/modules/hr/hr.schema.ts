@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { type AnyPgColumn, check, index, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { orgNode } from '../organization/organization.schema';
 
 export const hrSchema = pgSchema('hr');
@@ -118,3 +118,34 @@ export type CommissionRule = typeof commissionRule.$inferSelect;
 export type CommissionEntry = typeof commissionEntry.$inferSelect;
 export type ExternalCommission = typeof externalCommission.$inferSelect;
 export type PayrollEntry = typeof payrollEntry.$inferSelect;
+
+// ==================== الإجازات (بند 20) ====================
+
+export const leaveType = hrSchema.table('leave_type', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: text('code').notNull(),
+  name: text('name').notNull(),
+  /** Upper bound for one allocation, in days (null = no bound). */
+  maxDaysPerAllocation: numeric('max_days_per_allocation', { precision: 6, scale: 2 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('leave_type_code_unique').on(t.code),
+  check('leave_type_name_not_blank', sql`length(btrim(${t.name})) > 0`),
+]);
+
+/** Days of one leave type granted to one employee for a period (overlaps are refused in the service). */
+export const leaveAllocation = hrSchema.table('leave_allocation', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  employeeId: uuid('employee_id').notNull().references(() => employee.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  leaveTypeId: uuid('leave_type_id').notNull().references(() => leaveType.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  fromDate: timestamp('from_date', { withTimezone: true }).notNull(),
+  toDate: timestamp('to_date', { withTimezone: true }).notNull(),
+  days: numeric('days', { precision: 6, scale: 2 }).notNull(),
+  /** Bulk run that created it, if any. */
+  batchReference: text('batch_reference'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  check('leave_allocation_days_positive', sql`${t.days} > 0`),
+  check('leave_allocation_period_valid', sql`${t.toDate} >= ${t.fromDate}`),
+  index('leave_allocation_employee_idx').on(t.employeeId, t.leaveTypeId),
+]);

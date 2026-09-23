@@ -512,6 +512,13 @@
       "when": 1790200644102,
       "tag": "0072_pale_rachel_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1790200787375,
+      "tag": "0073_chubby_falcon",
+      "breakpoints": true
     }
   ]
 }
