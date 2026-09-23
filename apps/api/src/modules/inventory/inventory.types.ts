@@ -50,6 +50,7 @@ export interface StockMovementRecord {
   sourceModule: string | null;
   sourceId: string | null;
   batchId?: string | null;
+  serialNos?: string[];
 }
 
 export interface CreateMovementInput {
@@ -67,6 +68,8 @@ export interface CreateMovementInput {
   backdateReason?: string;
   /** Required for batch-tracked items (catalog item.hasBatchNo). */
   batchId?: string;
+  /** Required for serial-tracked items (catalog item.hasSerialNo): one serial per unit. */
+  serialNos?: string[];
 }
 
 export interface StockReservationRecord {

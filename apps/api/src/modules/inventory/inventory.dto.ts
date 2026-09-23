@@ -71,6 +71,12 @@ export class CreateMovementDto {
   batchId?: string;
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(128, { each: true })
+  serialNos?: string[];
+
+  @IsOptional()
   @IsBoolean()
   allowBackdate?: boolean;
 

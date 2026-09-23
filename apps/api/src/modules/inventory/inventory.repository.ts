@@ -7,6 +7,7 @@ import {
   landedCostItem,
   landedCostVoucher,
   serialNumber,
+  stockMovementSerial,
   stockBalance,
   stockLedgerEntry,
   stockMovement,
@@ -513,6 +514,45 @@ export class InventoryRepository {
       purchaseReceiptId: r.purchaseReceiptId, deliveryOrderId: r.deliveryOrderId,
       workOrderId: r.workOrderId, notes: r.notes, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
     };
+  }
+
+  async moveSerial(
+    id: string,
+    changes: { status: SerialNumberStatus; warehouseId: string | null; batchId?: string | null },
+  ): Promise<void> {
+    await this.database.db.update(serialNumber).set({
+      status: changes.status,
+      warehouseId: changes.warehouseId,
+      ...(changes.batchId !== undefined ? { batchId: changes.batchId } : {}),
+      updatedAt: new Date(),
+    }).where(eq(serialNumber.id, id));
+  }
+
+  async insertMovementSerials(movementId: string, serialIds: string[]): Promise<void> {
+    if (serialIds.length === 0) return;
+    await this.database.db.insert(stockMovementSerial).values(serialIds.map((serialId) => ({ movementId, serialId })));
+  }
+
+  async listMovementSerialNos(movementId: string): Promise<string[]> {
+    const rows = await this.database.db.select({ serialNo: serialNumber.serialNo })
+      .from(stockMovementSerial)
+      .innerJoin(serialNumber, eq(serialNumber.id, stockMovementSerial.serialId))
+      .where(eq(stockMovementSerial.movementId, movementId))
+      .orderBy(asc(serialNumber.serialNo));
+    return rows.map((r) => r.serialNo);
+  }
+
+  async listSerialMovements(serialId: string): Promise<StockMovementRecord[]> {
+    const rows = await this.database.db.select(movementColumns)
+      .from(stockMovementSerial)
+      .innerJoin(stockMovement, eq(stockMovement.id, stockMovementSerial.movementId))
+      .where(eq(stockMovementSerial.serialId, serialId))
+      .orderBy(asc(stockMovement.movementDate), asc(stockMovement.createdAt));
+    return rows.map((r) => ({
+      id: r.id, itemId: r.itemId, warehouseId: r.warehouseId, movementType: r.movementType as MovementType,
+      quantity: r.quantity, movementDate: r.movementDate.toISOString(), note: r.note, createdAt: r.createdAt.toISOString(),
+      unitCost: r.unitCost, totalValue: r.totalValue, sourceModule: r.sourceModule, sourceId: r.sourceId, batchId: r.batchId,
+    }));
   }
 
   // --- Landed Cost Voucher Management ---

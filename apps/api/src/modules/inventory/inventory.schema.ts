@@ -195,6 +195,21 @@ export const batchBalance = inventorySchema.table('batch_balance', {
   index('idx_batch_balance_item_wh').on(t.itemId, t.warehouseId),
 ]);
 
+// ربط السيريال بحركة المخزون (بند 2ب) — سجل تتبّع لكل سيريال دخل أو خرج في حركة
+export const stockMovementSerial = inventorySchema.table('stock_movement_serial', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  movementId: uuid('movement_id')
+    .notNull()
+    .references(() => stockMovement.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  serialId: uuid('serial_id')
+    .notNull()
+    .references(() => serialNumber.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('stock_movement_serial_unique').on(t.movementId, t.serialId),
+  index('idx_stock_movement_serial_serial').on(t.serialId),
+]);
+
 // ==================== 3. محرك تكلفة الواردات ورسملة الشحن (Landed Cost Engine) ====================
 
 export const landedCostVoucher = inventorySchema.table('landed_cost_voucher', {

@@ -85,6 +85,7 @@ export class InventoryController {
       allowBackdate: dto.allowBackdate,
       backdateReason: dto.backdateReason,
       batchId: dto.batchId,
+      serialNos: dto.serialNos,
     });
     return { movement: created };
   }
@@ -119,6 +120,16 @@ export class InventoryController {
   }
 
   // --- Medical Batches Endpoints ---
+  @Get('movements/:id/serials')
+  async movementSerials(@Param('id', ParseUUIDPipe) id: string): Promise<{ serialNos: string[] }> {
+    return { serialNos: await this.service.getMovementSerialNos(id) };
+  }
+
+  @Get('serials/:id/movements')
+  async serialMovements(@Param('id', ParseUUIDPipe) id: string): Promise<{ movements: StockMovementRecord[] }> {
+    return { movements: await this.service.getSerialMovements(id) };
+  }
+
   @Get('batch-balances')
   async batchBalances(
     @Query('itemId') itemId?: string,

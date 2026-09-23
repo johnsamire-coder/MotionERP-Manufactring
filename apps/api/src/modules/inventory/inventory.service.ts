@@ -94,7 +94,10 @@ export class InventoryService {
     const signedQuantity = isDecrease ? `-${input.quantity}` : input.quantity;
 
     // Per-batch costing: batch-tracked items must name a batch; issues use that batch's own cost.
-    const batchContext = await this.resolveBatchContext(input, isDecrease, movementDate, quantityNum);
+    // Serial-tracked items must list one serial per unit, validated before anything is written.
+    const tracking = await this.getItemTracking(input.itemId);
+    const batchContext = await this.resolveBatchContext(input, tracking, isDecrease, movementDate, quantityNum);
+    const serialPlan = await this.resolveSerials(input, tracking, isDecrease, quantityNum, batchContext?.batchId ?? null);
 
     if (isDecrease) {
       const balance = await this.repository.findBalance(input.itemId, input.warehouseId);
@@ -162,6 +165,10 @@ export class InventoryService {
 
     await this.repository.applyDelta(input.itemId, input.warehouseId, signedQuantity);
 
+    if (serialPlan) {
+      await this.applySerialMovement(serialPlan, movement.id, input, isDecrease, batchContext?.batchId ?? null, warehouseRecord.orgNodeId);
+    }
+
     if (batchContext) {
       const batchQty = isDecrease ? batchContext.quantity - quantityNum : batchContext.quantity + quantityNum;
       const batchValue = batchQty > 0
@@ -214,7 +221,7 @@ export class InventoryService {
       });
     }
 
-    return movement;
+    return serialPlan ? { ...movement, serialNos: serialPlan.map((p) => p.serialNo) } : movement;
   }
 
   private async getItemTracking(itemId: string): Promise<ItemRecord | null> {
@@ -229,11 +236,11 @@ export class InventoryService {
 
   private async resolveBatchContext(
     input: CreateMovementInput,
+    tracking: ItemRecord | null,
     isDecrease: boolean,
     movementDate: Date,
     quantityNum: number,
   ): Promise<{ batchId: string; quantity: number; totalValue: number } | null> {
-    const tracking = await this.getItemTracking(input.itemId);
     if (!tracking?.hasBatchNo) {
       if (input.batchId) {
         throw new InventoryValidationError(`item ${input.itemId} is not batch-tracked; batchId must not be set`);
@@ -267,6 +274,99 @@ export class InventoryService {
       );
     }
     return { batchId: batch.id, quantity, totalValue };
+  }
+
+  private async resolveSerials(
+    input: CreateMovementInput,
+    tracking: ItemRecord | null,
+    isDecrease: boolean,
+    quantityNum: number,
+    batchId: string | null,
+  ): Promise<Array<{ serialNo: string; existing: SerialNumberRecord | null }> | null> {
+    if (!tracking?.hasSerialNo) {
+      if (input.serialNos && input.serialNos.length > 0) {
+        throw new InventoryValidationError(`item ${input.itemId} is not serial-tracked; serialNos must not be set`);
+      }
+      return null;
+    }
+    if (!Number.isInteger(quantityNum)) {
+      throw new InventoryValidationError('quantity must be a whole number for serial-tracked items');
+    }
+    const serialNos = (input.serialNos ?? []).map((s) => s.trim()).filter((s) => s.length > 0);
+    if (serialNos.length !== quantityNum) {
+      throw new InventoryValidationError(
+        `item ${input.itemId} is serial-tracked: ${quantityNum} serial numbers required, got ${serialNos.length}`,
+      );
+    }
+    const duplicate = serialNos.find((s, idx) => serialNos.indexOf(s) !== idx);
+    if (duplicate) throw new InventoryValidationError(`serial number "${duplicate}" is listed more than once`);
+
+    const plan: Array<{ serialNo: string; existing: SerialNumberRecord | null }> = [];
+    for (const serialNo of serialNos) {
+      const existing = await this.repository.findSerialByNo(input.itemId, serialNo);
+      if (isDecrease) {
+        if (!existing) throw new InventoryNotFoundError(`serial number "${serialNo}" does not exist for this item`);
+        if (existing.status !== 'active' || existing.warehouseId !== input.warehouseId) {
+          throw new InventoryValidationError(`serial number "${serialNo}" is not in stock in this warehouse`);
+        }
+        if (batchId && existing.batchId !== batchId) {
+          throw new InventoryValidationError(`serial number "${serialNo}" does not belong to the selected batch`);
+        }
+      } else if (existing) {
+        if (existing.status === 'active' && existing.warehouseId) {
+          throw new InventoryValidationError(`serial number "${serialNo}" is already in stock`);
+        }
+        if (existing.status === 'decommissioned') {
+          throw new InventoryValidationError(`serial number "${serialNo}" is decommissioned and cannot be received`);
+        }
+      }
+      plan.push({ serialNo, existing });
+    }
+    return plan;
+  }
+
+  private async applySerialMovement(
+    plan: Array<{ serialNo: string; existing: SerialNumberRecord | null }>,
+    movementId: string,
+    input: CreateMovementInput,
+    isDecrease: boolean,
+    batchId: string | null,
+    orgNodeId: string,
+  ): Promise<void> {
+    const serialIds: string[] = [];
+    for (const { serialNo, existing } of plan) {
+      if (isDecrease) {
+        // issue = left the company; transfer_out = in transit until the matching transfer_in.
+        await this.repository.moveSerial(existing!.id, {
+          status: input.movementType === 'issue' ? 'delivered' : 'active',
+          warehouseId: null,
+        });
+        serialIds.push(existing!.id);
+      } else if (existing) {
+        await this.repository.moveSerial(existing.id, { status: 'active', warehouseId: input.warehouseId, batchId });
+        serialIds.push(existing.id);
+      } else {
+        const created = await this.repository.insertSerial({
+          id: randomUUID(),
+          serialNo,
+          itemId: input.itemId,
+          orgNodeId,
+          warehouseId: input.warehouseId,
+          batchId: batchId ?? undefined,
+        });
+        serialIds.push(created.id);
+      }
+    }
+    await this.repository.insertMovementSerials(movementId, serialIds);
+  }
+
+  async getMovementSerialNos(movementId: string): Promise<string[]> {
+    return this.repository.listMovementSerialNos(movementId);
+  }
+
+  async getSerialMovements(serialId: string): Promise<StockMovementRecord[]> {
+    await this.getSerial(serialId);
+    return this.repository.listSerialMovements(serialId);
   }
 
   async getBatchBalances(itemId?: string, warehouseId?: string, batchId?: string): Promise<BatchBalanceRecord[]> {
