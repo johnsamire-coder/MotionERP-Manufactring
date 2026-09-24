@@ -5,62 +5,62 @@
 
 ## 1. جدول حالة البنود
 
-| #   | البند                                                                             | الحالة                                                          | الـ Commit                                                                                             | ملاحظات                                                                                                              |
-| --- | --------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| 1   | تجميد فترات المخزون + منع الحركة بأثر رجعي                                        | ✅ تم                                                           | `feat(inventory): block backdated stock movements`                                                     | راجع التفاصيل تحت                                                                                                    |
-| 2أ  | الدفعات: أعلام الصنف + تكلفة لكل دفعة                                             | ✅ تم                                                           | `feat(inventory): per-batch costing + item batch/serial/expiry flags`                                  | راجع التفاصيل تحت                                                                                                    |
-| 2ب  | ربط السيريال بحركة المخزون                                                        | ✅ تم                                                           | `feat(inventory): serial numbers on stock movements`                                                   | راجع التفاصيل تحت. **بند 2 كله خلص**                                                                                 |
-| 3   | فصل "نقل خامة لمخزن الإنتاج" عن "استهلاك فعلي في التصنيع"                         | ✅ تم (جانب المخزون)                                            | `feat(inventory): movement purpose + transfers for manufacture`                                        | ربط التصنيع بيه مستني موافقة المالك                                                                                  |
-| 4   | الجرد الفعلي يرفض الأصناف المتتبّعة بالدفعة أو السيريال                           | ✅ تم                                                           | `feat(inventory): block plain reconciliation for batch/serial items`                                   | راجع التفاصيل تحت                                                                                                    |
-| 5.0 | أساس الدخول: تذكرة دخول + حارس عام + شاشة دخول                                    | ✅ تم                                                           | `feat(auth): login tokens, global authentication guard and login dialog`                               | ده شرط لازم قبل بند 5                                                                                                |
-| 5.1 | جدول تقييد المستخدم (فرع / مخزن) + API + شاشة                                     | ✅ تم                                                           | `feat(auth): per-user restrictions by org node / warehouse`                                            | التطبيق الفعلي على المخزون في 5.2                                                                                    |
-| 5.2 | تطبيق تقييد المستخدم على المخزون                                                  | ✅ تم                                                           | `feat(inventory): enforce per-user warehouse / org-node restrictions`                                  |                                                                                                                      |
-| 5.3 | التفعيل (`AUTH_ENFORCE=true`)                                                     | ⏳ قرار المالك                                                  | —                                                                                                      | راجع ملاحظات 5.0                                                                                                     |
-| 6   | حد الائتمان المركّب                                                               | ✅ تم (تحذير بس)                                                | `feat(sales): composite customer credit limit with approval warning`                                   | الرصيد من دفتر الأستاذ، والتحذير عند اعتماد أمر الشغل                                                                |
-| 7   | طلب عرض أسعار لعدة موردين (RFQ) + مقارنة                                          | ✅ تم                                                           | `feat(sales): request for quotation to several suppliers with comparison`                              | الخطوة الأخيرة هي اعتماد عرض الفائز (مفيش أمر شراء في النظام)                                                        |
-| 8   | إيقاف المورد (3 مستويات + إفراج تلقائي)                                           | ✅ تم                                                           | `feat(crm): supplier hold with three levels and automatic release`                                     |                                                                                                                      |
-| 9   | فحص جودة بقراءات فعلية ونتيجة محسوبة                                              | ✅ تم                                                           | `feat(quality): inspection templates with real readings and computed result`                           |                                                                                                                      |
-| 10  | منع إنهاء خدمة مدير ليه موظفين نشطين                                              | ✅ تم                                                           | `feat(hr): manager hierarchy and leaving guard for managers`                                           |                                                                                                                      |
-| 11  | تعطيل حساب الموظف تلقائيًا عند إنهاء خدمته                                        | ✅ تم                                                           | `feat(hr): disable the employee's login when their service ends`                                       |                                                                                                                      |
-| 12  | 3 نسب سماح منفصلة في المشتريات (الطلب/الاستلام/الفاتورة)                          | ✅ تم                                                           | `feat(purchasing): three over-allowances for order, receipt and billing`                               | "الطلب" = عرض المورد المعتمد (مفيش أوامر شراء)                                                                       |
-| 13  | 7 أنواع حجز وطلب منفصلة في رصيد المخزون (Bin)                                     | ✅ تم                                                           | `feat(inventory): seven reservation types, bin view, and restore reservation id`                       | + إصلاح bug قديم: الحجز كان معطّل                                                                                    |
-| 14  | حساب "بضاعة اتسلّمت ولسه ما اتفوترتش" (GRNI)                                      | ✅ القيود **موجودة بالفعل**، واتضاف التقرير                     | `feat(inventory): received-not-billed report reconciled with GRNI ledger`                              |                                                                                                                      |
-| 15  | تكلفة الاستيراد (Landed Cost)                                                     | ✅ **موجودة بالفعل**، واتسدّت فجوة الدفعات                      | `fix(inventory): landed cost now reaches per-batch cost`                                               |                                                                                                                      |
-| 16  | قواعد التسعير: خصم سعر + خصم منتج (اشتري X خد Y)                                  | ✅ تم                                                           | `feat(sales): pricing rules with price and product discounts`                                          |                                                                                                                      |
-| 17  | فرصة البيع (Opportunity) كمرحلة منفصلة                                            | ✅ تم                                                           | `feat(crm): opportunity stage between lead and quotation`                                              |                                                                                                                      |
-| 18  | منع تكرار رقم فاتورة المورد                                                       | ✅ **موجود بالفعل (وأشد)**، واتصلّح رد الخطأ                    | `fix(finance): clear 400 for a repeated supplier invoice number`                                       | القيد على طول، مش في السنة بس                                                                                        |
-| 19  | إيقاف فاتورة شراء واحدة عن الدفع                                                  | ✅ تم                                                           | `feat(finance): hold a single purchase invoice for payment`                                            | منفصل عن إيقاف المورد (بند 8)                                                                                        |
-| 20  | تخصيص إجازات بالجملة بفلاتر                                                       | ✅ تم                                                           | `feat(hr): leave types, allocations and bulk allocation by filters`                                    | اتبنى أساس الإجازات من الصفر                                                                                         |
-| 21  | تسوية نهائية رسمية عند ترك الخدمة                                                 | ✅ تم                                                           | `feat(hr): full and final settlement on leaving`                                                       |                                                                                                                      |
-| 22  | حد إعادة الطلب (Reorder Level) لكل صنف في كل مخزن                                 | ✅ تم                                                           | `feat(inventory): reorder level per item and warehouse`                                                |                                                                                                                      |
-| 23  | مخازن شجرية (مخزن مجموعة)                                                         | ✅ تم                                                           | `feat(inventory): tree warehouses with group warehouses and rolled-up stock`                           |                                                                                                                      |
-| 24  | 6 أغراض لطلب المواد                                                               | ⏸️ **موجود جزئيًا (4 أغراض)**، والإكمال مؤجّل                   | —                                                                                                      | طلب المواد في موديول التخطيط (جزء من التصنيع). راجع التفاصيل                                                         |
-| 25  | دورة Lead ← Contact ← Prospect ← Customer                                         | ✅ تم                                                           | `feat(crm): lead, contact activity, prospect and conversion to customer`                               | من غير كيان Contact مستقل (ده بند 26)                                                                                |
-| 26  | Contact/Address ككيانات مستقلة                                                    | ⏸️ **قرار المالك**                                              | —                                                                                                      | الوثيقة بتقول صراحة "اسألني قبل التنفيذ"                                                                             |
-| 27  | انتقاء تلقائي ذكي (Pick List) بـ FIFO للدفعات                                     | ✅ تم                                                           | `feat(inventory): pick list with automatic FIFO / earliest-expiry batch picking`                       |                                                                                                                      |
-| 28  | مجموعات عملاء/موردين شجرية                                                        | ✅ تم                                                           | `feat(crm): customer and supplier group trees with inherited credit limit`                             |                                                                                                                      |
-| 29  | فترة اختبار رسمية بتاريخ تثبيت                                                    | ✅ تم                                                           | `feat(hr): formal probation with confirmation date`                                                    |                                                                                                                      |
-| 30  | حضور بصمة GPS                                                                     | ⏸️ مؤجّل                                                        | —                                                                                                      | الجدول والـ DTOs المذكورين في البرومبت مش موجودين في المستودع (غالبًا على جهاز المالك ومترفعوش). اتأجّل بقرار المالك |
-| 31  | تجميد قيد الأستاذ ضد الإلغاء الفردي                                               | ✅ تم                                                           | `feat(accounting): frozen journal entries — reversal only, document entries only via their document`   | + إصلاح bug قديم: شاشات إنشاء الحسابات والقيود كانت بترجع 500                                                        |
-| 32  | أنواع حسابات معيارية بسلوك مختلف                                                  | ✅ تم (30 نوع)                                                  | `feat(accounting): standard account roles with per-role behaviour`                                     | الوثيقة قالت 28، وقائمة ERPNext الحالية 30، فاتنفّذت كاملة                                                           |
-| 33  | 19 حساب افتراضي إجباري لكل شركة                                                   | ✅ تم                                                           | `feat(accounting): 19 company default accounts with validation, readiness and optional enforcement`    | + إصلاح bug: حفظ الإعدادات كان بيغيّر رقم السجل                                                                      |
-| 34  | 17 نوع قيد يومي                                                                   | ✅ تم                                                           | `feat(accounting): 17 journal entry types with per-type rules`                                         |                                                                                                                      |
-| 35  | التسوية الدورية: رصيد المخزون المحاسبي مقابل الفعلي + قيد تصحيح                   | ✅ تم                                                           | `feat(inventory): stock vs ledger reconciliation with a correction entry`                              |                                                                                                                      |
-| 36  | إقفال الفترة: تصفير الأرباح والخسائر + منع القيود الرجعية في الكود                | ✅ تم                                                           | `feat(accounting): real year-end closing into retained earnings and hard backdating guards`            | الإقفال القديم كان **محاكاة بأرقام ثابتة**، واتساب زي ما هو                                                          |
-| 37  | أداة "صحة الأستاذ": مهمة دورية تقارن دفترين وتسجّل أي تعارض                       | ✅ تم                                                           | `feat(finance): periodic ledger health check between document books and the general ledger`            |                                                                                                                      |
-| 38  | حجز السلف (الدفعات المقدمة) في حساب منفصل                                         | ✅ تم                                                           | `feat(finance): book customer / supplier advances in their own accounts with allocation`               | + إصلاح bug: فاتورة عليها ضريبة من غير حساب ضريبة كانت بترجع 500                                                     |
-| 39  | تخصيص الدفعة على فواتير/أقساط متعددة + فحص "أحدث بيانات"                          | ✅ تم                                                           | `feat(finance): allocate a payment over several invoices and installments with a latest-data check`    |                                                                                                                      |
-| 40  | محرك تحقق ميزانية مدمج في كل قيد                                                  | ✅ تم                                                           | `feat(accounting): budget control on every journal entry`                                              |                                                                                                                      |
-| 41  | مركز تكلفة إجباري + اتجاه الرصيد + منع الحساب الأب + تجميد حساب + أبعاد محاسبية   | ✅ تم (منع الحساب الأب **كان موجود بالفعل**)                    | `feat(accounting): cost center rule, balance side, frozen accounts and accounting dimensions`          |                                                                                                                      |
-| 42  | محرك سير عمل عام (حالات + انتقالات + أدوار + شروط ديناميكية)                      | ✅ تم (أساس للاعتمادات الجديدة بس)                              | `feat(workflow): generic workflow engine with roles and dynamic conditions`                            | الاعتمادات الشغالة **متلمستش**                                                                                       |
-| 43  | دعم فني: تذاكر بـ SLA على ساعات العمل والإجازات + تقسيم + إغلاق تلقائي            | ✅ تم                                                           | `feat(support): helpdesk with working-hours SLA, holidays, split and auto-close`                       | موديول جديد                                                                                                          |
-| 44  | إدارة مشاريع: إنجاز بـ 4 طرق + تقرير دوري بالإيميل + ربحية مشروع                  | ✅ تم                                                           | `feat(projects): projects with four progress methods, profitability and e-mailed status reports`       | الإيميل محتاج `SMTP_URL` من المالك                                                                                   |
-| 45  | دورة تصنيع بالباطن كاملة                                                          | ⏸️ **موجود جزئيًا** في `production_ops` (تصنيع)، والإكمال ممنوع | —                                                                                                      | راجع التفاصيل                                                                                                        |
-| 46  | أصول ثابتة: أصل تحت التنفيذ (CWIP) + 4 طرق إهلاك + جدول إهلاك بإعادة حساب تلقائية | ✅ تم (موديول جديد)                                             | `feat(assets): fixed assets with CWIP, four depreciation methods and a self-rebuilding schedule`       | الأصول القديمة البسيطة في المحاسبة متلمستش                                                                           |
-| 47  | نظام طباعة عام: ترويسة منفصلة + قوالب متعددة + منع طباعة المسودات والملغي         | ✅ تم                                                           | `feat(printing): letterheads, multiple print formats and no printing of drafts or cancelled documents` | موديول جديد                                                                                                          |
-| 48  | طبقة إقليمية منفصلة للفوترة الإلكترونية المصرية                                   | ✅ تم (البنية + التجهيز + الإرسال)                              | `feat(regional-eg): separate regional layer for Egyptian e-invoicing (ETA)`                            | الإرسال الحقيقي محتاج بيانات ربط وتوقيع من المالك                                                                    |
-| 49  | تتبّع حركة الأصل + تأمين الأصل + أصل مركّب                                        | ✅ تم                                                           | `feat(assets): asset movements, insurance and composite assets`                                        |                                                                                                                      |
-| 50  | طباعة بالجملة في الخلفية + طابعة شبكية + مهام تلقائية مع انتقالات سير العمل       | ✅ تم                                                           | `feat(printing,workflow): background bulk printing, network printers and transition tasks`             | الطابعة بتستقبل نص (مفيش محرك PDF)                                                                                   |
+| #   | البند                                                                             | الحالة                                       | الـ Commit                                                                                             | ملاحظات                                                                                                              |
+| --- | --------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| 1   | تجميد فترات المخزون + منع الحركة بأثر رجعي                                        | ✅ تم                                        | `feat(inventory): block backdated stock movements`                                                     | راجع التفاصيل تحت                                                                                                    |
+| 2أ  | الدفعات: أعلام الصنف + تكلفة لكل دفعة                                             | ✅ تم                                        | `feat(inventory): per-batch costing + item batch/serial/expiry flags`                                  | راجع التفاصيل تحت                                                                                                    |
+| 2ب  | ربط السيريال بحركة المخزون                                                        | ✅ تم                                        | `feat(inventory): serial numbers on stock movements`                                                   | راجع التفاصيل تحت. **بند 2 كله خلص**                                                                                 |
+| 3   | فصل "نقل خامة لمخزن الإنتاج" عن "استهلاك فعلي في التصنيع"                         | ✅ تم (جانب المخزون)                         | `feat(inventory): movement purpose + transfers for manufacture`                                        | ربط التصنيع بيه مستني موافقة المالك                                                                                  |
+| 4   | الجرد الفعلي يرفض الأصناف المتتبّعة بالدفعة أو السيريال                           | ✅ تم                                        | `feat(inventory): block plain reconciliation for batch/serial items`                                   | راجع التفاصيل تحت                                                                                                    |
+| 5.0 | أساس الدخول: تذكرة دخول + حارس عام + شاشة دخول                                    | ✅ تم                                        | `feat(auth): login tokens, global authentication guard and login dialog`                               | ده شرط لازم قبل بند 5                                                                                                |
+| 5.1 | جدول تقييد المستخدم (فرع / مخزن) + API + شاشة                                     | ✅ تم                                        | `feat(auth): per-user restrictions by org node / warehouse`                                            | التطبيق الفعلي على المخزون في 5.2                                                                                    |
+| 5.2 | تطبيق تقييد المستخدم على المخزون                                                  | ✅ تم                                        | `feat(inventory): enforce per-user warehouse / org-node restrictions`                                  |                                                                                                                      |
+| 5.3 | التفعيل (`AUTH_ENFORCE=true`)                                                     | ✅ اتفعّل (قرار المالك)                      | `feat(auth): enforce login by default with a bootstrap administrator (plan item 5.3)`                  | الافتراضي `AUTH_ENFORCE=true` + مدير أول من الـ env                                                                  |
+| 6   | حد الائتمان المركّب                                                               | ✅ تم (تحذير بس)                             | `feat(sales): composite customer credit limit with approval warning`                                   | الرصيد من دفتر الأستاذ، والتحذير عند اعتماد أمر الشغل                                                                |
+| 7   | طلب عرض أسعار لعدة موردين (RFQ) + مقارنة                                          | ✅ تم                                        | `feat(sales): request for quotation to several suppliers with comparison`                              | الخطوة الأخيرة هي اعتماد عرض الفائز (مفيش أمر شراء في النظام)                                                        |
+| 8   | إيقاف المورد (3 مستويات + إفراج تلقائي)                                           | ✅ تم                                        | `feat(crm): supplier hold with three levels and automatic release`                                     |                                                                                                                      |
+| 9   | فحص جودة بقراءات فعلية ونتيجة محسوبة                                              | ✅ تم                                        | `feat(quality): inspection templates with real readings and computed result`                           |                                                                                                                      |
+| 10  | منع إنهاء خدمة مدير ليه موظفين نشطين                                              | ✅ تم                                        | `feat(hr): manager hierarchy and leaving guard for managers`                                           |                                                                                                                      |
+| 11  | تعطيل حساب الموظف تلقائيًا عند إنهاء خدمته                                        | ✅ تم                                        | `feat(hr): disable the employee's login when their service ends`                                       |                                                                                                                      |
+| 12  | 3 نسب سماح منفصلة في المشتريات (الطلب/الاستلام/الفاتورة)                          | ✅ تم                                        | `feat(purchasing): three over-allowances for order, receipt and billing`                               | "الطلب" = عرض المورد المعتمد (مفيش أوامر شراء)                                                                       |
+| 13  | 7 أنواع حجز وطلب منفصلة في رصيد المخزون (Bin)                                     | ✅ تم                                        | `feat(inventory): seven reservation types, bin view, and restore reservation id`                       | + إصلاح bug قديم: الحجز كان معطّل                                                                                    |
+| 14  | حساب "بضاعة اتسلّمت ولسه ما اتفوترتش" (GRNI)                                      | ✅ القيود **موجودة بالفعل**، واتضاف التقرير  | `feat(inventory): received-not-billed report reconciled with GRNI ledger`                              |                                                                                                                      |
+| 15  | تكلفة الاستيراد (Landed Cost)                                                     | ✅ **موجودة بالفعل**، واتسدّت فجوة الدفعات   | `fix(inventory): landed cost now reaches per-batch cost`                                               |                                                                                                                      |
+| 16  | قواعد التسعير: خصم سعر + خصم منتج (اشتري X خد Y)                                  | ✅ تم                                        | `feat(sales): pricing rules with price and product discounts`                                          |                                                                                                                      |
+| 17  | فرصة البيع (Opportunity) كمرحلة منفصلة                                            | ✅ تم                                        | `feat(crm): opportunity stage between lead and quotation`                                              |                                                                                                                      |
+| 18  | منع تكرار رقم فاتورة المورد                                                       | ✅ **موجود بالفعل (وأشد)**، واتصلّح رد الخطأ | `fix(finance): clear 400 for a repeated supplier invoice number`                                       | القيد على طول، مش في السنة بس                                                                                        |
+| 19  | إيقاف فاتورة شراء واحدة عن الدفع                                                  | ✅ تم                                        | `feat(finance): hold a single purchase invoice for payment`                                            | منفصل عن إيقاف المورد (بند 8)                                                                                        |
+| 20  | تخصيص إجازات بالجملة بفلاتر                                                       | ✅ تم                                        | `feat(hr): leave types, allocations and bulk allocation by filters`                                    | اتبنى أساس الإجازات من الصفر                                                                                         |
+| 21  | تسوية نهائية رسمية عند ترك الخدمة                                                 | ✅ تم                                        | `feat(hr): full and final settlement on leaving`                                                       |                                                                                                                      |
+| 22  | حد إعادة الطلب (Reorder Level) لكل صنف في كل مخزن                                 | ✅ تم                                        | `feat(inventory): reorder level per item and warehouse`                                                |                                                                                                                      |
+| 23  | مخازن شجرية (مخزن مجموعة)                                                         | ✅ تم                                        | `feat(inventory): tree warehouses with group warehouses and rolled-up stock`                           |                                                                                                                      |
+| 24  | 6 أغراض لطلب المواد                                                               | ✅ تم (قرار المالك)                          | `feat(planning): customer-provided and subcontracting material request purposes (plan item 24)`        | الـ 6 أغراض كاملين                                                                                                   |
+| 25  | دورة Lead ← Contact ← Prospect ← Customer                                         | ✅ تم                                        | `feat(crm): lead, contact activity, prospect and conversion to customer`                               | من غير كيان Contact مستقل (ده بند 26)                                                                                |
+| 26  | Contact/Address ككيانات مستقلة                                                    | ✅ تم (قرار المالك)                          | `feat(crm): contacts and addresses as their own records (plan item 26)`                                | جداول `contact` و`address` و`party_link`                                                                             |
+| 27  | انتقاء تلقائي ذكي (Pick List) بـ FIFO للدفعات                                     | ✅ تم                                        | `feat(inventory): pick list with automatic FIFO / earliest-expiry batch picking`                       |                                                                                                                      |
+| 28  | مجموعات عملاء/موردين شجرية                                                        | ✅ تم                                        | `feat(crm): customer and supplier group trees with inherited credit limit`                             |                                                                                                                      |
+| 29  | فترة اختبار رسمية بتاريخ تثبيت                                                    | ✅ تم                                        | `feat(hr): formal probation with confirmation date`                                                    |                                                                                                                      |
+| 30  | حضور بصمة GPS                                                                     | ⏸️ مؤجّل                                     | —                                                                                                      | الجدول والـ DTOs المذكورين في البرومبت مش موجودين في المستودع (غالبًا على جهاز المالك ومترفعوش). اتأجّل بقرار المالك |
+| 31  | تجميد قيد الأستاذ ضد الإلغاء الفردي                                               | ✅ تم                                        | `feat(accounting): frozen journal entries — reversal only, document entries only via their document`   | + إصلاح bug قديم: شاشات إنشاء الحسابات والقيود كانت بترجع 500                                                        |
+| 32  | أنواع حسابات معيارية بسلوك مختلف                                                  | ✅ تم (30 نوع)                               | `feat(accounting): standard account roles with per-role behaviour`                                     | الوثيقة قالت 28، وقائمة ERPNext الحالية 30، فاتنفّذت كاملة                                                           |
+| 33  | 19 حساب افتراضي إجباري لكل شركة                                                   | ✅ تم                                        | `feat(accounting): 19 company default accounts with validation, readiness and optional enforcement`    | + إصلاح bug: حفظ الإعدادات كان بيغيّر رقم السجل                                                                      |
+| 34  | 17 نوع قيد يومي                                                                   | ✅ تم                                        | `feat(accounting): 17 journal entry types with per-type rules`                                         |                                                                                                                      |
+| 35  | التسوية الدورية: رصيد المخزون المحاسبي مقابل الفعلي + قيد تصحيح                   | ✅ تم                                        | `feat(inventory): stock vs ledger reconciliation with a correction entry`                              |                                                                                                                      |
+| 36  | إقفال الفترة: تصفير الأرباح والخسائر + منع القيود الرجعية في الكود                | ✅ تم                                        | `feat(accounting): real year-end closing into retained earnings and hard backdating guards`            | الإقفال القديم كان **محاكاة بأرقام ثابتة**، واتساب زي ما هو                                                          |
+| 37  | أداة "صحة الأستاذ": مهمة دورية تقارن دفترين وتسجّل أي تعارض                       | ✅ تم                                        | `feat(finance): periodic ledger health check between document books and the general ledger`            |                                                                                                                      |
+| 38  | حجز السلف (الدفعات المقدمة) في حساب منفصل                                         | ✅ تم                                        | `feat(finance): book customer / supplier advances in their own accounts with allocation`               | + إصلاح bug: فاتورة عليها ضريبة من غير حساب ضريبة كانت بترجع 500                                                     |
+| 39  | تخصيص الدفعة على فواتير/أقساط متعددة + فحص "أحدث بيانات"                          | ✅ تم                                        | `feat(finance): allocate a payment over several invoices and installments with a latest-data check`    |                                                                                                                      |
+| 40  | محرك تحقق ميزانية مدمج في كل قيد                                                  | ✅ تم                                        | `feat(accounting): budget control on every journal entry`                                              |                                                                                                                      |
+| 41  | مركز تكلفة إجباري + اتجاه الرصيد + منع الحساب الأب + تجميد حساب + أبعاد محاسبية   | ✅ تم (منع الحساب الأب **كان موجود بالفعل**) | `feat(accounting): cost center rule, balance side, frozen accounts and accounting dimensions`          |                                                                                                                      |
+| 42  | محرك سير عمل عام (حالات + انتقالات + أدوار + شروط ديناميكية)                      | ✅ تم (أساس للاعتمادات الجديدة بس)           | `feat(workflow): generic workflow engine with roles and dynamic conditions`                            | الاعتمادات الشغالة **متلمستش**                                                                                       |
+| 43  | دعم فني: تذاكر بـ SLA على ساعات العمل والإجازات + تقسيم + إغلاق تلقائي            | ✅ تم                                        | `feat(support): helpdesk with working-hours SLA, holidays, split and auto-close`                       | موديول جديد                                                                                                          |
+| 44  | إدارة مشاريع: إنجاز بـ 4 طرق + تقرير دوري بالإيميل + ربحية مشروع                  | ✅ تم                                        | `feat(projects): projects with four progress methods, profitability and e-mailed status reports`       | الإيميل محتاج `SMTP_URL` من المالك                                                                                   |
+| 45  | دورة تصنيع بالباطن كاملة                                                          | ✅ تم (قرار المالك)                          | `feat(production_ops): subcontracting receipt and invoice link (plan item 45)`                         | استلام من المقاول + ربط فاتورته                                                                                      |
+| 46  | أصول ثابتة: أصل تحت التنفيذ (CWIP) + 4 طرق إهلاك + جدول إهلاك بإعادة حساب تلقائية | ✅ تم (موديول جديد)                          | `feat(assets): fixed assets with CWIP, four depreciation methods and a self-rebuilding schedule`       | الأصول القديمة البسيطة في المحاسبة متلمستش                                                                           |
+| 47  | نظام طباعة عام: ترويسة منفصلة + قوالب متعددة + منع طباعة المسودات والملغي         | ✅ تم                                        | `feat(printing): letterheads, multiple print formats and no printing of drafts or cancelled documents` | موديول جديد                                                                                                          |
+| 48  | طبقة إقليمية منفصلة للفوترة الإلكترونية المصرية                                   | ✅ تم (البنية + التجهيز + الإرسال)           | `feat(regional-eg): separate regional layer for Egyptian e-invoicing (ETA)`                            | الإرسال الحقيقي محتاج بيانات ربط وتوقيع من المالك                                                                    |
+| 49  | تتبّع حركة الأصل + تأمين الأصل + أصل مركّب                                        | ✅ تم                                        | `feat(assets): asset movements, insurance and composite assets`                                        |                                                                                                                      |
+| 50  | طباعة بالجملة في الخلفية + طابعة شبكية + مهام تلقائية مع انتقالات سير العمل       | ✅ تم                                        | `feat(printing,workflow): background bulk printing, network printers and transition tasks`             | الطابعة بتستقبل نص (مفيش محرك PDF)                                                                                   |
 
 ## 2. تفاصيل البنود المنفّذة
 
@@ -407,6 +407,27 @@ POST /api/v1/inventory/movements
 - **الثغرة لسه قايمة لحد التفعيل:** طول ما `AUTH_ENFORCE=false`، أي حد لسه يقدر يعمل أي حاجة من غير تسجيل دخول، زي قبل كده بالظبط.
 - **`CurrentUser`:** لسه بيفترض "مدير النظام" لو مفيش مستخدم. ده مقصود عشان التوافق وهو مقفول، وهيتراجع وقت التفعيل.
 - **رسالة "invalid username or password":** رسالة قديمة من `auth.service`، ومتركتش زي ما هي بالإنجليزي.
+
+### بند 5.3 — تفعيل الدخول الإجباري (بعد قرار المالك)
+
+**اللي اتعمل:**
+
+- `AUTH_ENFORCE` بقى **`true` افتراضيًا**. أي طلب من غير تذكرة صالحة بيرجع 401، والـ health وتسجيل الدخول بس هما اللي مفتوحين.
+- **المدير الأول:** `AUTH_BOOTSTRAP_USERNAME` و`AUTH_BOOTSTRAP_PASSWORD` في الـ env. عند التشغيل، لو اسم المستخدم ده مش موجود، بيتعمل هو ودور `admin`. لو موجود، **مبيتلمسش** (يعني تقدر تغيّر الباسورد براحتك بعدها).
+- لو الدخول إجباري ومفيش ولا مستخدم ومفيش مدير أول في الـ env، السيرفر بيكتب تحذير واضح وقت التشغيل.
+- **الواجهة:** شاشات قديمة كانت بتكلّم الـ API بـ `fetch` مباشرة من غير تذكرة (9 ملفات). اتضاف غلاف واحد بيحط التذكرة على أي طلب رايح للـ API، وبيفتح نافذة الدخول لو رجع 401.
+
+**الاختبار الحي:**
+
+| الاختبار                                            | النتيجة                                                    |
+| --------------------------------------------------- | ---------------------------------------------------------- |
+| تشغيل بقاعدة فيها المدير الأول في الـ env           | اتعمل المستخدم `owner` ✅                                  |
+| طلب من غير تذكرة                                    | 401 ✅                                                     |
+| فتح الواجهة                                         | نافذة الدخول فتحت لوحدها ✅                                |
+| بعد الدخول وإعادة التحميل                           | كل الطلبات (حتى الـ `fetch` القديمة) 200 ومعاها التذكرة ✅ |
+| e2e جديد: 401، دخول بالمدير الأول، رفض تذكرة مزوّرة | ناجح ✅                                                    |
+
+**مهم:** اختبارات الـ e2e القديمة بتشتغل بـ `AUTH_ENFORCE=false` صراحة، واختبار الدخول بيشغّلها لنفسه.
 
 ### بند 5.1 — جدول تقييد المستخدم (User Permission)
 
@@ -1455,9 +1476,20 @@ POST /api/v1/inventory/movements
 
 ### بند 24 — 6 أغراض لطلب المواد
 
-**اللي لقيته:** طلب المواد **موجود بالفعل** في موديول التخطيط (`planning.material_request`)، وفيه 4 أغراض: شراء، ونقل خامة، وصرف خامة، وتصنيع. ناقص غرضين من ERPNext: "خامة من العميل" و"تصنيع بالباطن".
+**قبل:** 4 أغراض بس (شراء، ونقل خامة، وصرف خامة، وتصنيع). البند كان متأجّل لأن التصنيع ممنوع، والمالك وافق بعدها.
 
-**القرار:** اتأجّل. موديول التخطيط (تخطيط الإنتاج وطلبات المواد) جزء من التصنيع، والقاعدة بتقول ميتلمسش. ده نفس القرار اللي اتاخد في بند 22. الإكمال محتاج سطر واحد في قيد الأغراض، ومعاه منطق "خامة من العميل" (استلام من غير تكلفة). والمالك يقرّر.
+**اللي اتعمل:**
+
+- الغرضين الناقصين: **"خامة من العميل"** و**"تصنيع بالباطن"**.
+- "خامة من العميل" **لازم** يبقى معاها العميل (`customerId`)، ومتحققة من موديول العملاء، ومتأكدة في قاعدة البيانات كمان.
+- "تصنيع بالباطن" ممكن يبقى معاها المقاول (`supplierId`).
+- العميل والمورد مينفعش يتحطّوا مع غرض غير بتاعهم.
+- الشاشة فيها الغرضين، وبتطلع قائمة العملاء أو الموردين حسب الغرض. واتضافت ترجمة عربي للشاشة كلها (كانت إنجليزي بس).
+- migration `0103`.
+
+**الاختبار الحي:** 6 حالات. من غير عميل 400، وبعميل 201، وبعميل مش موجود 404، والمقاول 201، ومن غير مقاول 201، و`customerId` مع غرض شراء 400 ✅.
+
+**ملاحظة:** استلام "خامة من العميل" بتكلفة صفر ممكن من المخزون من غير أي تعديل (الحركة بتقبل تكلفة صفر).
 
 ### بند 25 — دورة Lead ← Contact ← Prospect ← Customer
 
@@ -1514,15 +1546,17 @@ POST /api/v1/inventory/movements
 
 ### بند 26 — Contact/Address ككيانات مستقلة
 
-**متنفّذش.** الوثيقة نفسها بتقول: "قرار معماري كبير — اسألني قبل التنفيذ". وتفويض "متوقفش" مش بيلغي شرط صريح زي ده. البند مستني قرار المالك.
+**اللي اتعمل (بعد موافقة المالك، بنفس الاقتراح):**
 
-**الوضع الحالي:** العميل والمورد عندهم تليفون وإيميل كأعمدة، وسجل التواصل بقى على الـ Lead (بند 25).
+- **`crm.contact`**: الاسم، والوظيفة، والإيميل، والتليفون، والموبايل، والحالة.
+- **`crm.address`**: العنوان، ونوعه (فواتير، أو شحن، أو مكتب، أو مخزن، أو موقع، أو أخرى)، والمدينة، والمحافظة، والدولة (مصر افتراضيًا).
+- **`crm.party_link`**: ربط عام (نوع الطرف + UUID) لعميل أو مورد أو عميل محتمل، من غير FK بين الجداول، والتحقق في الخدمة. نفس الشخص أو العنوان ممكن يترتبط بكذا طرف.
+- **لكل طرف جهة اتصال أساسية واحدة وعنوان أساسي واحد** (index فريد جزئي). لما تخلّي حاجة أساسية، اللي قبلها بيتشال منها الأساسي.
+- **البيانات القديمة:** تليفون وإيميل كل عميل ومورد اتحوّلوا لجهة اتصال أساسية. الأعمدة القديمة فضلت زي ما هي.
+- **الشاشة:** "جهات الاتصال والعناوين" تحت المبيعات والعملاء.
+- migration `0102`.
 
-**اقتراح للمالك (لو وافق):**
-
-- جدول `crm.contact` وجدول `crm.address`.
-- جدول ربط عام `crm.party_link` فيه (نوع الطرف + الـ UUID). ده بيسمح لنفس الشخص يترتبط بعميل ومورد وLead، من غير FK بين الموديولات، والتحقق بيتم في الخدمة.
-- الأعمدة القديمة تفضل زي ما هي عشان التوافق.
+**الاختبار الحي:** جهة اتصال مربوطة بعميل ومورد، وتبديل الأساسي، وإيميل غلط 400، وطرف مش موجود 404، وفك الربط 204 ✅. وe2e بيغطي ده كله في الـ CI.
 
 ### بند 27 — انتقاء تلقائي ذكي (Pick List)
 
@@ -1921,6 +1955,8 @@ POST /api/v1/inventory/movements
 - إقفال شهري بتصفير (ERPNext بيقفل سنوي).
 - صلاحية تتجاوز التجميد لدور معيّن (محتاج بند 5.3).
 
+**تحديث (بعد قرار المالك):** خدمات الإقفال القديمة الوهمية (الشهري والسنوي والقيود الافتتاحية) **اتشالت**، وشاشة "إقفال الفترات والسنوات" بقت على البيانات الحقيقية: فتح وقفل الفترات، ومعاينة وتنفيذ الإقفال السنوي من `accounting/year-end`.
+
 ### بند 37 — أداة "صحة الأستاذ"
 
 **قبل:** مفيش أي فحص إن الدفاتر متسقة مع بعض.
@@ -2304,18 +2340,20 @@ POST /api/v1/inventory/movements
 
 ### بند 45 — دورة تصنيع بالباطن كاملة
 
-**اللي لقيته (موجود بالفعل، في موديول `production_ops`، وده جزء من التصنيع):**
+**اللي كان موجود:** أمر التصنيع بالباطن، وترحيله (رسملة المصنعية على "إنتاج تحت التشغيل"، وصرف الخامة من مخزن عهدة المقاول).
 
-- أمر تصنيع بالباطن (`subcontracting_order`) فيه المورد، وحساب الخدمة، والأصناف بتكلفة الخامة وسعر الخدمة، والتكلفة الجديدة للوحدة.
-- **ترحيل الأمر** بيعمل قيد رسملة المصنعية على "إنتاج تحت التشغيل"، و**بيصرف الخامات** من مخزن المقاول.
-- **إرسال الخامات للمقاول** ممكن من غير أي تعديل، بالتحويل بين المخازن (`POST inventory/transfers` من بند 3).
+**اللي اتضاف (بعد موافقة المالك):**
 
-**الناقص عشان الدورة تكمل:**
+- **الاستلام من المقاول** (`POST production-ops/subcontracting/:id/receive`): المنتج بيرجع للمخزن بالتكلفة المدمجة (الخامة + المصنعية)، كاستلام إنتاج، فبيقفل "إنتاج تحت التشغيل". الاستلام الجزئي مسموح، والحالة بتبقى "مستلم جزئيًا" ثم "مكتمل".
+- **ربط فاتورة المقاول** (`POST .../invoice`): لازم تكون من نفس المورد، ومش ملغية، ومتربطش بأمرين.
+- الأمر اللي اتستلم منه حاجة مينفعش يتلغي.
+- migration `0104`.
 
-- استلام المنتج التام من المقاول واستهلاك الخامات تلقائيًا بنسبة المستلم.
-- ربط فاتورة المقاول بالأمر.
+**الاختبار الحي (دورة كاملة):** 8 قطع بـ 400 خامة و160 مصنعية، والتكلفة الجديدة 70 للقطعة. **"إنتاج تحت التشغيل" رجع صفر بالظبط** (+160 مصنعية، و+400 خامة، و-560 استلام) ✅. وربط الفاتورة نجح، وفاتورة من مورد تاني اترفضت ✅.
 
-**القرار:** اتأجّل. الإكمال محتاج تعديل في `production_ops` (تصنيع)، والقاعدة: **التصنيع ميتلمسش**. ولو المالك وافق، الإضافة صغيرة: عمود "مستلم" وخطوة استلام في نفس الموديول، وربط الفاتورة من `finance`.
+**لقيتها أثناء الاختبار (قديمة):** مخزن تابع لفرع مالوش إعدادات محاسبية حركاته **مبتترحّلش** (تحذير في الـ log بس)، لأن الترحيل بيدوّر على إعدادات الفرع نفسه مش الشركة الأم. متصلحتش لأنها في محرك الترحيل، ومحتاجة قرار.
+
+**مفيش شاشة للتصنيع بالباطن خالص** (ولا حتى إنشاء الأمر). الدورة كلها بالـ API.
 
 ### بند 46 — نظام أصول ثابتة كامل
 
@@ -2371,6 +2409,8 @@ POST /api/v1/inventory/movements
 - قسط أول جزئي حسب أيام الاستخدام.
 - بيع أو استبعاد الأصل بقيد أرباح وخسائر.
 - شاشة ويب.
+
+**تحديث (بعد قرار المالك):** الأصول القديمة (`accounting.fixed_asset`) **اتنقلت** للموديول الجديد بـ migration `0100`: نفس الـ id، وفئة لكل شركة ومجموعة حسابات، وأقساط الإهلاك القديمة بقت صفوف مرحّلة، والباقي اتقسم قسط ثابت على الشهور الفاضلة. الـ endpoints القديمة اتشالت، والجداول القديمة فضلت للمراجعة. والشاشة "تقارير الدفاتر وسجل الأصول" بقت على `/assets`.
 
 ### بند 47 — نظام طباعة عام
 
@@ -2558,28 +2598,31 @@ POST /api/v1/inventory/movements
 
 ## 3. قراراتي المسجّلة
 
-| التاريخ    | البند | القرار                                                                                                                                                                                                                                                       |
-| ---------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-09-23 | 30    | تأجيل بند 30 والبدء ببند 1                                                                                                                                                                                                                                   |
-| 2026-09-23 | 1     | الخيار (ب): السماح بالتجاوز بخانة اختيارية مع سبب إجباري بيتسجّل في الملاحظة، لحد ما الصلاحيات تتوصّل في بند 5                                                                                                                                               |
-| 2026-09-23 | 2     | **تكلفة منفصلة لكل دفعة**                                                                                                                                                                                                                                    |
-| 2026-09-23 | 2     | الخيار (ب): أي حركة لصنف متتبّع بالدفعة من غير رقم دفعة بتترفض، ومفيش اختيار تلقائي (FIFO)                                                                                                                                                                   |
-| 2026-09-23 | 2     | تقسيم البند لخطوتين: 2أ (الصنف + تكلفة الدفعة) و2ب (السيريال)                                                                                                                                                                                                |
-| 2026-09-23 | 3     | ربط التصنيع بالأغراض الجديدة **اتأجّل**. المالك ماوافقش صراحة على تعديل ملفات التصنيع، فالافتراضي إنها متتلمسش                                                                                                                                               |
-| 2026-09-23 | 5     | الموافقة على خطة المراحل الأربعة (5.0 ← 5.3)، وعلى مكتبة `@nestjs/jwt`، وإن التقييد يبدأ بالفرع والمخزن                                                                                                                                                      |
-| 2026-09-23 | 5.3   | التفعيل (`AUTH_ENFORCE=true`) **اتأجّل** لحد ما المالك يجرّب على جهازه                                                                                                                                                                                       |
-| 2026-09-23 | 6     | الرصيد الفعلي يتحسب من **دفتر الأستاذ** (ب)، والتخطّي **تحذير بس** (ب). ولأن المالك مجاوبش على سؤال لمس `finance`، الموديول ده متعدّلش                                                                                                                       |
-| 2026-09-23 | 7     | الموافقة على تصميم RFQ: 3 جداول في المبيعات، والرد بيبقى عرض سعر وارد، والاختيار بيعتمد عرض الفائز                                                                                                                                                           |
-| 2026-09-23 | 19    | إيقاف الفاتورة متسجّل في جدول لوحده (`purchase_invoice_hold`) بدل أعمدة على جدول الفاتورة، عشان أقل تدخل ممكن في `finance`                                                                                                                                   |
-| 2026-09-23 | 18    | قيد منع تكرار رقم فاتورة المورد **على طول** (أشد من "في السنة المالية") اتساب زي ما هو. تخفيفه محتاج قرار المالك                                                                                                                                             |
-| 2026-09-23 | 12    | مفيش أوامر شراء، فـ"أمر الشراء" هو **عرض المورد المعتمد**. النسب التلاتة: رد RFQ مقابل المطلوب، والاستلام مقابل الأمر، والفاتورة مقابل قيمة الاستلام. وكل النسب بتتضبط في الإعدادات، وأقرب عقدة في الشجرة هي اللي بتتطبق                                     |
-| 2026-09-24 | 24    | موديول التخطيط (طلب المواد وخطة الإنتاج) اتعامل على إنه **جزء من التصنيع**، فمتلمسش. البند اتسجّل "موجود جزئيًا"                                                                                                                                             |
-| 2026-09-24 | 25    | العميل الناتج من التحويل حالته **نشط** على طول، زي ERPNext. والتواصل اتسجّل كسجل نشاط على الشخص، مش كيان Contact مستقل (بند 26)                                                                                                                              |
-| 2026-09-24 | 26    | **متنفّذش**. الوثيقة طالبة سؤال المالك صراحة، واتكتب اقتراح في التقرير                                                                                                                                                                                       |
-| 2026-09-24 | 27    | إتمام الانتقاء هو اللي بيحرّك المخزون (صرف أو تحويل)، لأن موديول التسليم الحالي مبيعملش حركات مخزون                                                                                                                                                          |
-| 2026-09-24 | 31    | القيد المرحّل بيتصحّح **بقيد عكسي** مربوط بيه، مش بإلغاء ولا تعديل. وإلغاء المستندات المرحّلة فضل ممنوع زي ما هو، والدالة `reverseForSource` جاهزة لو المالك سمح بيه بعدين                                                                                   |
-| 2026-09-24 | 36    | ملفات الإقفال القديمة (محاكاة بأرقام ثابتة) **متلمستش**، والإقفال الحقيقي اتعمل في ملف جديد على مسار `accounting/year-end`. ومستني قرار المالك يلغي القديم                                                                                                   |
-| 2026-09-23 | عام   | **تفويض المالك: العمل المستمر من غير توقف**، وأي قرار ياخده Claude حسب فهمه للوثيقة. تفسيري: موديول `finance` مسموح فيه **إضافة فحوصات بس** للبنود اللي بتطلبها صراحة (8 و18 و19)، ومنطق القيود المحاسبية ميتلمسش إلا في البنود 31-41. والتصنيع ميتلمسش خالص |
+| التاريخ    | البند         | القرار                                                                                                                                                                                                                                                       |
+| ---------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-09-23 | 30            | تأجيل بند 30 والبدء ببند 1                                                                                                                                                                                                                                   |
+| 2026-09-23 | 1             | الخيار (ب): السماح بالتجاوز بخانة اختيارية مع سبب إجباري بيتسجّل في الملاحظة، لحد ما الصلاحيات تتوصّل في بند 5                                                                                                                                               |
+| 2026-09-23 | 2             | **تكلفة منفصلة لكل دفعة**                                                                                                                                                                                                                                    |
+| 2026-09-23 | 2             | الخيار (ب): أي حركة لصنف متتبّع بالدفعة من غير رقم دفعة بتترفض، ومفيش اختيار تلقائي (FIFO)                                                                                                                                                                   |
+| 2026-09-23 | 2             | تقسيم البند لخطوتين: 2أ (الصنف + تكلفة الدفعة) و2ب (السيريال)                                                                                                                                                                                                |
+| 2026-09-23 | 3             | ربط التصنيع بالأغراض الجديدة **اتأجّل**. المالك ماوافقش صراحة على تعديل ملفات التصنيع، فالافتراضي إنها متتلمسش                                                                                                                                               |
+| 2026-09-23 | 5             | الموافقة على خطة المراحل الأربعة (5.0 ← 5.3)، وعلى مكتبة `@nestjs/jwt`، وإن التقييد يبدأ بالفرع والمخزن                                                                                                                                                      |
+| 2026-09-23 | 5.3           | التفعيل (`AUTH_ENFORCE=true`) **اتأجّل** لحد ما المالك يجرّب على جهازه                                                                                                                                                                                       |
+| 2026-09-23 | 6             | الرصيد الفعلي يتحسب من **دفتر الأستاذ** (ب)، والتخطّي **تحذير بس** (ب). ولأن المالك مجاوبش على سؤال لمس `finance`، الموديول ده متعدّلش                                                                                                                       |
+| 2026-09-23 | 7             | الموافقة على تصميم RFQ: 3 جداول في المبيعات، والرد بيبقى عرض سعر وارد، والاختيار بيعتمد عرض الفائز                                                                                                                                                           |
+| 2026-09-23 | 19            | إيقاف الفاتورة متسجّل في جدول لوحده (`purchase_invoice_hold`) بدل أعمدة على جدول الفاتورة، عشان أقل تدخل ممكن في `finance`                                                                                                                                   |
+| 2026-09-23 | 18            | قيد منع تكرار رقم فاتورة المورد **على طول** (أشد من "في السنة المالية") اتساب زي ما هو. تخفيفه محتاج قرار المالك                                                                                                                                             |
+| 2026-09-23 | 12            | مفيش أوامر شراء، فـ"أمر الشراء" هو **عرض المورد المعتمد**. النسب التلاتة: رد RFQ مقابل المطلوب، والاستلام مقابل الأمر، والفاتورة مقابل قيمة الاستلام. وكل النسب بتتضبط في الإعدادات، وأقرب عقدة في الشجرة هي اللي بتتطبق                                     |
+| 2026-09-24 | 24            | موديول التخطيط (طلب المواد وخطة الإنتاج) اتعامل على إنه **جزء من التصنيع**، فمتلمسش. البند اتسجّل "موجود جزئيًا"                                                                                                                                             |
+| 2026-09-24 | 25            | العميل الناتج من التحويل حالته **نشط** على طول، زي ERPNext. والتواصل اتسجّل كسجل نشاط على الشخص، مش كيان Contact مستقل (بند 26)                                                                                                                              |
+| 2026-09-24 | 26            | **متنفّذش**. الوثيقة طالبة سؤال المالك صراحة، واتكتب اقتراح في التقرير                                                                                                                                                                                       |
+| 2026-09-24 | 27            | إتمام الانتقاء هو اللي بيحرّك المخزون (صرف أو تحويل)، لأن موديول التسليم الحالي مبيعملش حركات مخزون                                                                                                                                                          |
+| 2026-09-24 | 31            | القيد المرحّل بيتصحّح **بقيد عكسي** مربوط بيه، مش بإلغاء ولا تعديل. وإلغاء المستندات المرحّلة فضل ممنوع زي ما هو، والدالة `reverseForSource` جاهزة لو المالك سمح بيه بعدين                                                                                   |
+| 2026-09-24 | 36            | ملفات الإقفال القديمة (محاكاة بأرقام ثابتة) **متلمستش**، والإقفال الحقيقي اتعمل في ملف جديد على مسار `accounting/year-end`. ومستني قرار المالك يلغي القديم                                                                                                   |
+| 2026-09-24 | قرارات المالك | وافق على: الدخول الإجباري، وجهات الاتصال والعناوين، ولمس التصنيع (24 و45)، وإلغاء الإقفال والأصول القديمة، وإصلاح الـ CI وتنسيق المستودع، ومركز تكلفة افتراضي لكل شركة، ودخول demo.erpnext.com                                                               |
+| 2026-09-24 | الإقفال       | خدمة **القيود الافتتاحية** كمان اتشالت، لأنها من نفس عيلة الإقفال الوهمي: أرصدة ثابتة، ومبترحّلش قيد، وفي الحقيقة كانت بترجع 400 دايمًا (بتقرا عمود مش موجود)                                                                                                |
+| 2026-09-24 | الـ lint      | خليت المتغيّر اللي مش مستخدم عن قصد يبدأ بـ `_`، وضبطت القاعدة عليه، بدل ما أمسح منطق من الشاشات. و`any` اتشال بأنواع حقيقية، مش بتعطيل القاعدة                                                                                                              |
+| 2026-09-23 | عام           | **تفويض المالك: العمل المستمر من غير توقف**، وأي قرار ياخده Claude حسب فهمه للوثيقة. تفسيري: موديول `finance` مسموح فيه **إضافة فحوصات بس** للبنود اللي بتطلبها صراحة (8 و18 و19)، ومنطق القيود المحاسبية ميتلمسش إلا في البنود 31-41. والتصنيع ميتلمسش خالص |
 
 ## 4. حالة التحقق البصري لكل موديول
 
@@ -2592,24 +2635,39 @@ POST /api/v1/inventory/movements
 | المحاسبة (31-41)                  | اتكتب التقرير (`Motion-ERP-Accounting-Report.md`): **لسه محتاج تحقق بصري**           |
 | البنود 42-50 (الموديولات الجديدة) | اتكتب التقرير (`Motion-ERP-New-Modules-Report.md`): **لسه محتاج تحقق بصري**          |
 
-> الوصول لـ demo.erpnext.com متسألش عنه لأن المالك كان نايم، وهيتسأل في آخر رسالة.
+> المالك وافق على demo.erpnext.com، لكن **سياسة الشبكة في البيئة دي بتمنعه** (403 من الـ proxy). عشان يتفتح: من قائمة البيئة في شريط عنوان الجلسة ← Edit ← Network access، تضيف `demo.erpnext.com` للنطاقات المسموحة أو توسّع مستوى الوصول. لحد كده، التحقق البصري اتعمل على شاشات Motion نفسها بس (لقطات بالمتصفح).
 
 ## 5. التأكيد الختامي
 
 **الحصيلة:**
 
-- **اتنفّذ:** 1–4، و5.0–5.2، و6–23، و25، و27–29، و31–44، و46–50.
+- **اتنفّذ:** 1–29 كلهم (ومنهم 5.3 و24 و26 و45 بعد قرارات المالك)، و31–50.
 - **موجود بالفعل (اتسدّت الفجوات بس):** 14، و15، و18، وجزء من 41 (منع الحساب الأب).
-- **مستني قرار المالك:**
-  - 5.3 (تفعيل الدخول الإجباري)
-  - 26 (كيانات Contact/Address، والوثيقة طالبة السؤال)
-  - 30 (البصمة، ومؤجّل بقرارك)
-- **موجود جزئيًا والإكمال محتاج لمس التصنيع:** 24 و45.
+- **مؤجّل بقرار المالك:** 30 (البصمة).
 
-**`typecheck` (`pnpm run typecheck`):** نضيف في الـ 3 باكدجات (shared وapi وweb).
-**اختبارات الـ API:** 351 نجحوا.
+**الفحوصات (نفس خطوات الـ CI، على قاعدة بيانات فاضية):**
 
-**`git log --oneline` لكل المهمة** (الفرع `claude/claude-code-setup-4lb6jo`):
+- `format:check` نضيف، و`lint` **صفر أخطاء** (كانت 517)، و`typecheck` نضيف في الـ 3 باكدجات.
+- **الاختبارات:** API 348، وweb 5، وshared 7، وe2e 18. كلهم ناجحين.
+- **فحص الـ CI على GitHub:** أخضر لأول مرة.
+
+**commits المرحلة التانية (بعد قرارات المالك):**
+
+```
+39c0896 fix(ci): pnpm setup version conflict, restore i18n app shell, fresh-db integration spec
+dd1a62f refactor(accounting): remove fixed-figure closing services, real closing page
+2804b4d refactor(assets): migrate legacy accounting fixed assets into the assets module
+1fe3e27 chore: keep drizzle-kit snapshots out of prettier
+7bbe799 refactor(accounting): remove fixed-figure opening-entries service
+675800e chore: prettier-format the repository and clear all lint errors
+a7dbe0e feat(accounting): a default cost center for every company
+3900a38 feat(auth): enforce login by default with a bootstrap administrator (plan item 5.3)
+018f9d8 feat(crm): contacts and addresses as their own records (plan item 26)
+e657c2b feat(planning): customer-provided and subcontracting material request purposes (plan item 24)
+d15a1ff feat(production_ops): subcontracting receipt and invoice link (plan item 45)
+```
+
+**`git log --oneline` للمرحلة الأولى** (الفرع `claude/claude-code-setup-4lb6jo`):
 
 ```
 7c03582 feat(inventory): block backdated stock movements (plan item 1)
