@@ -47,6 +47,13 @@ export class AppConfigService {
     return this.config.get('AUTH_ENFORCE', { infer: true });
   }
 
+  /** The first administrator to create at startup, when configured. */
+  get authBootstrapAdmin(): { username: string; password: string } | undefined {
+    const username = this.config.get('AUTH_BOOTSTRAP_USERNAME', { infer: true });
+    const password = this.config.get('AUTH_BOOTSTRAP_PASSWORD', { infer: true });
+    return username && password ? { username, password } : undefined;
+  }
+
   get ledgerHealthIntervalMinutes(): number {
     return this.config.get('LEDGER_HEALTH_INTERVAL_MINUTES', { infer: true });
   }

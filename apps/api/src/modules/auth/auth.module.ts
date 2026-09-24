@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { AuthBootstrapService } from './auth-bootstrap.service';
 import { AuthTokenService } from './auth-token.service';
 import { AuthenticationGuard } from './guards/authentication.guard';
 import { AuthController } from './auth.controller';
@@ -17,6 +18,7 @@ import { UserPermissionService } from './user-permission.service';
     AuthRepository,
     RbacService,
     AuthTokenService,
+    AuthBootstrapService,
     UserPermissionService,
     { provide: APP_GUARD, useClass: AuthenticationGuard },
   ],

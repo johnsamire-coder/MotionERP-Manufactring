@@ -5,6 +5,7 @@ import { Pool } from 'pg';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { runMigrations } from '../src/core/database/migrator';
+import { canConnect, dropAllSchemas } from './db-helpers';
 
 /**
  * End-to-end proof of the full path for phase B-2-2:
@@ -15,27 +16,13 @@ import { runMigrations } from '../src/core/database/migrator';
 const DATABASE_URL = process.env.DATABASE_URL ?? '';
 const BOOKKEEPING_SCHEMA = 'org_b22_e2e_bookkeeping';
 
-async function canConnect(url: string): Promise<boolean> {
-  if (!url) return false;
-  const probe = new Pool({ connectionString: url, max: 1, connectionTimeoutMillis: 2500 });
-  try {
-    await probe.query('select 1');
-    return true;
-  } catch {
-    return false;
-  } finally {
-    await probe.end();
-  }
-}
-
 describe('Organization tree (e2e)', () => {
   let dbAvailable = false;
   let app: INestApplication;
   let pool: Pool;
 
   async function resetSchemas(): Promise<void> {
-    await pool.query('drop schema if exists "platform" cascade');
-    await pool.query(`drop schema if exists "${BOOKKEEPING_SCHEMA}" cascade`);
+    await dropAllSchemas(pool);
   }
 
   beforeAll(async () => {

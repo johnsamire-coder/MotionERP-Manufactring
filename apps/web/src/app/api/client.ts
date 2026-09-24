@@ -55,6 +55,37 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+/**
+ * Plan item 5.3: some older screens call `fetch` on the API directly. With login enforced they need
+ * the token too, so every browser request to the API's origin gets it (unless one is already set),
+ * and a 401 opens the login dialog the same way `request` does.
+ */
+export function installAuthFetch(target: typeof window = window): void {
+  const apiOrigin = new URL(API_BASE_URL).origin;
+  const original = target.fetch.bind(target);
+  target.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    let isApi = false;
+    try {
+      isApi = new URL(url, target.location.href).origin === apiOrigin;
+    } catch {
+      isApi = false;
+    }
+    if (!isApi) return original(input, init);
+    const headers = new Headers(
+      init?.headers ?? (input instanceof Request ? input.headers : undefined),
+    );
+    const token = getAccessToken();
+    if (token && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`);
+    const response = await original(input, { ...init, headers });
+    if (response.status === 401) {
+      setAccessToken(null);
+      target.dispatchEvent(new Event(AUTH_REQUIRED_EVENT));
+    }
+    return response;
+  };
+}
+
 export const api = {
   get: <T>(path: string): Promise<T> => request<T>(path),
   post: <T>(path: string, body: unknown): Promise<T> =>

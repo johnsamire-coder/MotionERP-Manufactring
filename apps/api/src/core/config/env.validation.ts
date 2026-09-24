@@ -19,12 +19,16 @@ export const envSchema = z
       .int()
       .positive()
       .default(8 * 60 * 60),
-    // When "true", every request without a valid token is rejected (401). Off by default so
-    // existing screens keep working until the owner switches it on.
+    // Plan item 5.3 (owner's decision): every request without a valid token is rejected (401).
+    // On by default; "false" only for local experiments and the tests that predate login.
     AUTH_ENFORCE: z
       .enum(['true', 'false'])
-      .default('false')
+      .default('true')
       .transform((v) => v === 'true'),
+    // First administrator, created at startup when that username does not exist yet (never
+    // overwritten afterwards). Needed once to log in on a fresh database while AUTH_ENFORCE is on.
+    AUTH_BOOTSTRAP_USERNAME: z.string().min(3).optional(),
+    AUTH_BOOTSTRAP_PASSWORD: z.string().min(8).optional(),
     /** Plan item 37: minutes between automatic ledger-health runs (0 = only on demand). */
     LEDGER_HEALTH_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(0),
     /** Plan item 43: minutes between helpdesk sweeps (missed SLAs, auto-close); 0 = on demand only. */
@@ -39,6 +43,10 @@ export const envSchema = z
     ETA_API_URL: z.string().url().optional(),
     ETA_CLIENT_ID: z.string().optional(),
     ETA_CLIENT_SECRET: z.string().optional(),
+  })
+  .refine((env) => !env.AUTH_BOOTSTRAP_USERNAME === !env.AUTH_BOOTSTRAP_PASSWORD, {
+    message: 'AUTH_BOOTSTRAP_USERNAME and AUTH_BOOTSTRAP_PASSWORD go together',
+    path: ['AUTH_BOOTSTRAP_PASSWORD'],
   })
   .refine((env) => env.NODE_ENV !== 'production' || !!env.AUTH_JWT_SECRET, {
     message: 'AUTH_JWT_SECRET is required in production',
