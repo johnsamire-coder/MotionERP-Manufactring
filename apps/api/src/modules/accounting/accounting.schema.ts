@@ -42,12 +42,17 @@ export const chartOfAccounts = accountingSchema.table('chart_of_accounts', {
   status: text('status').notNull().default('active'),
   /** Standard account role (plan item 32), see account-roles.ts. NULL = plain account, no special behaviour. */
   accountRole: text('account_role'),
+  /** Plan item 41: the side the balance must stay on (e.g. cash never goes credit); NULL = either. */
+  balanceMustBe: text('balance_must_be'),
+  /** Plan item 41: a frozen account refuses every new journal line. */
+  isFrozen: boolean('is_frozen').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   unique('chart_of_accounts_org_code_unique').on(t.orgNodeId, t.code),
   check('chart_of_accounts_is_leaf_valid', sql`${t.isLeaf} in ('yes', 'no')`),
   check('chart_of_accounts_status_valid', sql`${t.status} in ('active', 'inactive')`),
+  check('chart_of_accounts_balance_must_be_valid', sql`${t.balanceMustBe} is null or ${t.balanceMustBe} in ('debit', 'credit')`),
   check('chart_of_accounts_role_valid', sql`${t.accountRole} is null or ${t.accountRole} in ('accumulated_depreciation', 'asset_received_but_not_billed', 'bank', 'cash', 'chargeable', 'capital_work_in_progress', 'cost_of_goods_sold', 'current_asset', 'current_liability', 'depreciation', 'direct_expense', 'direct_income', 'equity', 'expense_account', 'expenses_included_in_asset_valuation', 'expenses_included_in_valuation', 'fixed_asset', 'income_account', 'indirect_expense', 'indirect_income', 'liability', 'payable', 'receivable', 'round_off', 'service_received_but_not_billed', 'stock', 'stock_adjustment', 'stock_received_but_not_billed', 'tax', 'temporary')`),
   index('idx_chart_of_accounts_parent').on(t.parentId),
   index('idx_chart_of_accounts_type').on(t.accountTypeId),
@@ -146,6 +151,8 @@ export const companyAccountingConfig = accountingSchema.table('company_accountin
   bookAdvancesSeparately: boolean('book_advances_separately').notNull().default(false),
   defaultAdvanceReceivedAccountId: uuid('default_advance_received_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
   defaultAdvancePaidAccountId: uuid('default_advance_paid_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
+  /** Plan item 41: filled into revenue / expense lines that come without a cost center. */
+  defaultCostCenterId: uuid('default_cost_center_id').references(() => costCenter.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
@@ -325,4 +332,34 @@ export const budget = accountingSchema.table('budget', {
   check('budget_amount_non_negative', sql`${t.amount} >= 0`),
   check('budget_action_valid', sql`${t.actionIfExceeded} in ('stop', 'warn', 'ignore')`),
   index('idx_budget_account').on(t.accountId),
+]);
+
+/** Plan item 41: user-defined accounting dimensions (e.g. project, region) carried on journal lines. */
+export const accountingDimension = accountingSchema.table('accounting_dimension', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgNodeId: uuid('org_node_id').notNull().references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  code: text('code').notNull(),
+  name: text('name').notNull(),
+  mandatoryForPnl: boolean('mandatory_for_pnl').notNull().default(false),
+  mandatoryForBalanceSheet: boolean('mandatory_for_balance_sheet').notNull().default(false),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [unique('accounting_dimension_org_code_unique').on(t.orgNodeId, t.code)]);
+
+export const accountingDimensionValue = accountingSchema.table('accounting_dimension_value', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  dimensionId: uuid('dimension_id').notNull().references(() => accountingDimension.id, { onDelete: 'cascade' }),
+  code: text('code').notNull(),
+  name: text('name').notNull(),
+  isActive: boolean('is_active').notNull().default(true),
+}, (t) => [unique('accounting_dimension_value_code_unique').on(t.dimensionId, t.code)]);
+
+export const journalLineDimension = accountingSchema.table('journal_line_dimension', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  journalLineId: uuid('journal_line_id').notNull().references(() => journalLine.id, { onDelete: 'cascade' }),
+  dimensionId: uuid('dimension_id').notNull().references(() => accountingDimension.id, { onDelete: 'restrict' }),
+  valueId: uuid('value_id').notNull().references(() => accountingDimensionValue.id, { onDelete: 'restrict' }),
+}, (t) => [
+  unique('journal_line_dimension_unique').on(t.journalLineId, t.dimensionId),
+  index('idx_journal_line_dimension_value').on(t.valueId),
 ]);

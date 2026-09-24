@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, Optional } from '@nestjs/common';
 import { AccountingNotFoundError, AccountingValidationError } from './accounting.errors';
 import { AccountingRepository } from './accounting.repository';
+import { AccountControlsService } from './account-controls.service';
 import { BudgetService } from './budget.service';
 import { isVoucherType, voucherTypeProblem, type VoucherLine } from './voucher-types';
 import { checkDefaultAccount, DEFAULT_ACCOUNTS, type DefaultAccountSpec, type DefaultAccountStatus } from './default-accounts';
@@ -45,6 +46,7 @@ export class AccountingService {
   constructor(
     private readonly repository: AccountingRepository,
     @Optional() private readonly budgets?: BudgetService,
+    @Optional() private readonly controls?: AccountControlsService,
   ) {}
 
   // --- Account Types ---
@@ -235,6 +237,8 @@ export class AccountingService {
     if (!input.description || input.description.trim().length === 0) {
       throw new AccountingValidationError('description is required');
     }
+    // Plan item 41: cost centers, frozen accounts, balance sides and dimensions — checked before anything is written.
+    if (this.controls) input = { ...input, lines: await this.controls.prepare(input) };
 
     const entryDate = input.entryDate ? new Date(input.entryDate) : new Date();
 
@@ -306,6 +310,7 @@ export class AccountingService {
       fiscalYearId: fyId,
       periodId: pId,
     });
+    if (this.controls) await this.controls.saveDimensions(inserted, input.lines);
     return budgetWarnings.length > 0 ? { ...inserted, budgetWarnings } : inserted;
   }
 
@@ -326,6 +331,7 @@ export class AccountingService {
       throw new AccountingValidationError(`journal entry does not balance: total debit ${totalDebit.toFixed(2)} != total credit ${totalCredit.toFixed(2)}`);
     }
 
+    if (this.controls) await this.controls.checkAtPosting(entry);
     // Plan item 40: re-checked at posting — other entries may have used the budget since the draft was written.
     const budgetWarnings = this.budgets && entry.orgNodeId
       ? await this.budgets.check(entry.orgNodeId, new Date(entry.entryDate), entry.lines, entry.id)

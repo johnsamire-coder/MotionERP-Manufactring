@@ -39,6 +39,11 @@ export class CreateAccountDeterminationDto {
   @IsUUID() accountId!: string;
 }
 
+export class LineDimensionDto {
+  @IsUUID() dimensionId!: string;
+  @IsUUID() valueId!: string;
+}
+
 export class CreateJournalLineDto {
   @IsUUID() accountId!: string;
   @IsOptional() @IsNumberString() debitAmount?: string;
@@ -48,6 +53,7 @@ export class CreateJournalLineDto {
   @IsOptional() @IsUUID() partyId?: string;
   @IsOptional() @IsUUID() costCenterId?: string;
   @IsOptional() @IsUUID() jobOrderId?: string;
+  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => LineDimensionDto) dimensions?: LineDimensionDto[];
 }
 
 export class CreateJournalEntryDto {
@@ -87,6 +93,7 @@ export class UpsertCompanyAccountingConfigDto {
   @IsOptional() @IsBoolean() bookAdvancesSeparately?: boolean;
   @IsOptional() @IsUUID() defaultAdvanceReceivedAccountId?: string;
   @IsOptional() @IsUUID() defaultAdvancePaidAccountId?: string;
+  @IsOptional() @IsUUID() defaultCostCenterId?: string;
 }
 
 export class FinancialReportQueryDto {

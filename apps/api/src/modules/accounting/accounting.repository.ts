@@ -83,6 +83,7 @@ const configColumns = {
   bookAdvancesSeparately: companyAccountingConfig.bookAdvancesSeparately,
   defaultAdvanceReceivedAccountId: companyAccountingConfig.defaultAdvanceReceivedAccountId,
   defaultAdvancePaidAccountId: companyAccountingConfig.defaultAdvancePaidAccountId,
+  defaultCostCenterId: companyAccountingConfig.defaultCostCenterId,
 };
 const detColumns = {
   id: accountDetermination.id, orgNodeId: accountDetermination.orgNodeId, determinationType: accountDetermination.determinationType,

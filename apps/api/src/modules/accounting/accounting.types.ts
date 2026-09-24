@@ -54,6 +54,7 @@ export interface CompanyAccountingConfigRecord {
   enforceDefaultAccounts?: boolean;
   accountsFrozenUntil?: Date | null;
   bookAdvancesSeparately?: boolean; defaultAdvanceReceivedAccountId?: string | null; defaultAdvancePaidAccountId?: string | null;
+  defaultCostCenterId?: string | null;
 }
 export interface UpsertCompanyAccountingConfigInput {
   orgNodeId: string; baseCurrency?: string; inventoryValuationMethod?: string;
@@ -67,6 +68,7 @@ export interface UpsertCompanyAccountingConfigInput {
   enforceDefaultAccounts?: boolean;
   accountsFrozenUntil?: string | null;
   bookAdvancesSeparately?: boolean; defaultAdvanceReceivedAccountId?: string; defaultAdvancePaidAccountId?: string;
+  defaultCostCenterId?: string;
 }
 
 // --- Account Determination ---
@@ -97,6 +99,8 @@ export interface JournalEntryRecord {
 export interface CreateJournalLineInput {
   accountId: string; debitAmount?: string; creditAmount?: string; description?: string;
   partyType?: 'customer' | 'supplier'; partyId?: string; costCenterId?: string; jobOrderId?: string;
+  /** Plan item 41: accounting dimension values carried by the line. */
+  dimensions?: Array<{ dimensionId: string; valueId: string }>;
 }
 export interface CreateJournalEntryInput {
   orgNodeId: string; description: string; reference?: string; entryDate?: string;
