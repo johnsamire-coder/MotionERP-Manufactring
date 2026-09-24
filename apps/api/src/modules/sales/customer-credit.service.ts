@@ -1,11 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { CrmService } from '../crm/crm.service';
+import { PartyGroupService } from '../crm/party-group.service';
 import { CustomerCreditRepository } from './customer-credit.repository';
 
 export interface CustomerCreditStatus {
   customerId: string;
   /** null = no credit limit set. */
   creditLimit: string | null;
+  /** Where the limit came from: the customer itself or its group tree (plan item 28). */
+  creditLimitSource?: 'customer' | 'group' | null;
   /** Source 1: posted general-ledger balance of the customer. */
   ledgerBalance: string;
   /** Source 2: approved / in-progress job orders not yet invoiced (quotation value − posted invoices). */
@@ -27,6 +30,7 @@ export class CustomerCreditService {
   constructor(
     private readonly repository: CustomerCreditRepository,
     private readonly crm: CrmService,
+    @Optional() private readonly groups?: PartyGroupService,
   ) {}
 
   async getStatus(customerId: string): Promise<CustomerCreditStatus> {
@@ -44,10 +48,15 @@ export class CustomerCreditService {
     const deliveredNotInvoicedCount = await this.repository.deliveredNotInvoicedCount(orders.map((o) => o.jobOrderNumber));
 
     const totalExposure = ledgerBalance + unbilledOrders;
-    const limit = customer.creditLimit === null ? null : Number(customer.creditLimit);
+    // Own limit first, else the nearest customer group that sets a default (plan item 28).
+    const effective = this.groups
+      ? await this.groups.effectiveCreditLimit(customer)
+      : { limit: customer.creditLimit, source: customer.creditLimit === null ? null : ('customer' as const) };
+    const limit = effective.limit === null ? null : Number(effective.limit);
     return {
       customerId,
-      creditLimit: customer.creditLimit,
+      creditLimit: effective.limit,
+      creditLimitSource: effective.source,
       ledgerBalance: ledgerBalance.toFixed(4),
       unbilledOrders: unbilledOrders.toFixed(4),
       deliveredNotInvoicedCount,

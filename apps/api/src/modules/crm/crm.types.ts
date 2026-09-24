@@ -6,6 +6,7 @@ export interface SupplierRecord {
   id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null;
   orgNodeId: string; status: SupplierStatus;
   holdType: SupplierHoldType | null; holdReason: string | null; holdReleaseDate: string | null;
+  supplierGroupId?: string | null;
   createdAt: string; updatedAt: string;
 }
 /** all = every purchasing document; invoices / payments = only that document type (plan item 8). */
@@ -19,6 +20,7 @@ export interface CreateSupplierInput {
 export interface CustomerRecord {
   id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null;
   orgNodeId: string; status: CustomerStatus; creditLimit: string | null; createdAt: string; updatedAt: string;
+  customerGroupId?: string | null;
 }
 export interface CreateCustomerInput {
   code: string; name: string; contactPhone?: string; contactEmail?: string;

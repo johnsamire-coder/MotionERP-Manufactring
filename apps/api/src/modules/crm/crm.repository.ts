@@ -12,12 +12,14 @@ const supplierColumns = {
   contactPhone: supplier.contactPhone, contactEmail: supplier.contactEmail,
   orgNodeId: supplier.orgNodeId, status: supplier.status,
   holdType: supplier.holdType, holdReason: supplier.holdReason, holdReleaseDate: supplier.holdReleaseDate,
+  supplierGroupId: supplier.supplierGroupId,
   createdAt: supplier.createdAt, updatedAt: supplier.updatedAt,
 };
 const customerColumns = {
   id: customer.id, code: customer.code, name: customer.name,
   contactPhone: customer.contactPhone, contactEmail: customer.contactEmail,
   orgNodeId: customer.orgNodeId, status: customer.status, creditLimit: customer.creditLimit,
+  customerGroupId: customer.customerGroupId,
   createdAt: customer.createdAt, updatedAt: customer.updatedAt,
 };
 const interactionColumns = {
@@ -26,20 +28,20 @@ const interactionColumns = {
   note: customerInteraction.note, createdAt: customerInteraction.createdAt,
 };
 
-interface SupplierRow { id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null; orgNodeId: string; status: string; holdType: string | null; holdReason: string | null; holdReleaseDate: Date | null; createdAt: Date; updatedAt: Date; }
-interface CustomerRow { id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null; orgNodeId: string; status: string; creditLimit: string | null; createdAt: Date; updatedAt: Date; }
+interface SupplierRow { id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null; orgNodeId: string; status: string; holdType: string | null; holdReason: string | null; holdReleaseDate: Date | null; supplierGroupId: string | null; createdAt: Date; updatedAt: Date; }
+interface CustomerRow { id: string; code: string; name: string; contactPhone: string | null; contactEmail: string | null; orgNodeId: string; status: string; creditLimit: string | null; customerGroupId: string | null; createdAt: Date; updatedAt: Date; }
 interface InteractionRow { id: string; customerId: string; interactionType: string; interactionDate: Date; note: string | null; createdAt: Date; }
 
 function toSupplierRecord(row: SupplierRow): SupplierRecord {
   return { id: row.id, code: row.code, name: row.name, contactPhone: row.contactPhone, contactEmail: row.contactEmail,
     orgNodeId: row.orgNodeId, status: row.status as SupplierStatus,
     holdType: row.holdType as SupplierHoldType | null, holdReason: row.holdReason,
-    holdReleaseDate: row.holdReleaseDate ? row.holdReleaseDate.toISOString() : null,
+    holdReleaseDate: row.holdReleaseDate ? row.holdReleaseDate.toISOString() : null, supplierGroupId: row.supplierGroupId,
     createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
 }
 function toCustomerRecord(row: CustomerRow): CustomerRecord {
   return { id: row.id, code: row.code, name: row.name, contactPhone: row.contactPhone, contactEmail: row.contactEmail,
-    orgNodeId: row.orgNodeId, status: row.status as CustomerStatus, creditLimit: row.creditLimit,
+    orgNodeId: row.orgNodeId, status: row.status as CustomerStatus, creditLimit: row.creditLimit, customerGroupId: row.customerGroupId,
     createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
 }
 function toInteractionRecord(row: InteractionRow): CustomerInteractionRecord {
@@ -98,6 +100,14 @@ export class CrmRepository {
   async setCustomerCreditLimit(id: string, creditLimit: string | null): Promise<CustomerRecord> {
     const rows = await this.database.db.update(customer).set({ creditLimit, updatedAt: new Date() }).where(eq(customer.id, id)).returning(customerColumns);
     return toCustomerRecord(rows[0]!);
+  }
+  async setCustomerGroup(id: string, customerGroupId: string | null): Promise<CustomerRecord> {
+    const rows = await this.database.db.update(customer).set({ customerGroupId, updatedAt: new Date() }).where(eq(customer.id, id)).returning(customerColumns);
+    return toCustomerRecord(rows[0]!);
+  }
+  async setSupplierGroup(id: string, supplierGroupId: string | null): Promise<SupplierRecord> {
+    const rows = await this.database.db.update(supplier).set({ supplierGroupId, updatedAt: new Date() }).where(eq(supplier.id, id)).returning(supplierColumns);
+    return toSupplierRecord(rows[0]!);
   }
   async setCustomerStatus(id: string, status: CustomerStatus): Promise<CustomerRecord> {
     const rows = await this.database.db.update(customer).set({ status }).where(eq(customer.id, id)).returning(customerColumns);

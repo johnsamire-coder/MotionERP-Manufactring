@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, index, integer, numeric, text, timestamp, pgSchema, uuid, unique } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, boolean, check, index, integer, numeric, text, timestamp, pgSchema, uuid, unique } from 'drizzle-orm/pg-core';
 import { orgNode } from '../organization/organization.schema';
 
 export const crmSchema = pgSchema('crm');
@@ -19,6 +19,8 @@ export const supplier = crmSchema.table('supplier', {
   holdType: text('hold_type'),
   holdReason: text('hold_reason'),
   holdReleaseDate: timestamp('hold_release_date', { withTimezone: true }),
+  /** Supplier group (plan item 28) — a leaf of the supplier group tree. */
+  supplierGroupId: uuid('supplier_group_id').references((): AnyPgColumn => partyGroup.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
@@ -28,6 +30,7 @@ export const supplier = crmSchema.table('supplier', {
   check('supplier_name_not_blank', sql`length(btrim(${t.name})) > 0`),
   check('supplier_status_valid', sql`${t.status} in ('active', 'inactive', 'archived')`),
   index('supplier_org_node_idx').on(t.orgNodeId),
+  index('supplier_group_idx').on(t.supplierGroupId),
 ]);
 
 /**
@@ -48,6 +51,8 @@ export const customer = crmSchema.table('customer', {
   status: text('status').notNull().default('lead'),
   /** Credit limit in the base currency (plan item 6). NULL = no limit. */
   creditLimit: numeric('credit_limit', { precision: 18, scale: 4 }),
+  /** Customer group (plan item 28) — a leaf of the customer group tree. */
+  customerGroupId: uuid('customer_group_id').references((): AnyPgColumn => partyGroup.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
@@ -57,6 +62,7 @@ export const customer = crmSchema.table('customer', {
   check('customer_name_not_blank', sql`length(btrim(${t.name})) > 0`),
   check('customer_status_valid', sql`${t.status} in ('lead', 'active', 'inactive', 'archived')`),
   index('customer_org_node_idx').on(t.orgNodeId),
+  index('customer_group_idx').on(t.customerGroupId),
 ]);
 
 /** Simple CRM log: every visit/call/email/note against a customer, in one place. */
@@ -181,4 +187,29 @@ export const leadActivity = crmSchema.table('lead_activity', {
 }, (t) => [
   check('lead_activity_type_valid', sql`${t.activityType} in ('call', 'visit', 'email', 'note')`),
   index('lead_activity_lead_idx').on(t.leadId),
+]);
+
+/**
+ * Customer / supplier groups as trees (plan item 28). Group nodes hold sub-groups; customers and
+ * suppliers attach to leaf groups only. A customer group may carry a default credit limit that
+ * its customers inherit (nearest ancestor wins) when they have no limit of their own (item 6).
+ */
+export const partyGroup = crmSchema.table('party_group', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  groupType: text('group_type').notNull(),
+  code: text('code').notNull(),
+  name: text('name').notNull(),
+  parentGroupId: uuid('parent_group_id').references((): AnyPgColumn => partyGroup.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  isGroup: boolean('is_group').notNull().default(false),
+  defaultCreditLimit: numeric('default_credit_limit', { precision: 18, scale: 4 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('party_group_type_code_unique').on(t.groupType, t.code),
+  check('party_group_type_valid', sql`${t.groupType} in ('customer', 'supplier')`),
+  check('party_group_not_own_parent', sql`${t.parentGroupId} is null or ${t.parentGroupId} <> ${t.id}`),
+  check('party_group_credit_non_negative', sql`${t.defaultCreditLimit} is null or ${t.defaultCreditLimit} >= 0`),
+  check('party_group_credit_customer_only', sql`${t.defaultCreditLimit} is null or ${t.groupType} = 'customer'`),
+  check('party_group_name_not_blank', sql`length(btrim(${t.name})) > 0`),
+  index('party_group_parent_idx').on(t.parentGroupId),
 ]);
