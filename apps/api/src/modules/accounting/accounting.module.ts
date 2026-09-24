@@ -24,6 +24,6 @@ import { PostingEngineService } from './posting-engine.service';
 @Module({
   controllers: [OpeningEntriesController, FiscalYearClosingController, PeriodClosingController, TaxAndCustomsController, AccountingController, JournalReversalController, AccountRolesController, YearEndClosingController, BudgetController, AccountControlsController],
   providers: [OpeningEntriesService, FiscalYearClosingService, PeriodClosingService, TaxAndCustomsService, AccountingService, AccountingRepository, PostingEngineService, JournalReversalService, YearEndClosingService, BudgetService, AccountControlsService],
-  exports: [AccountingService, PostingEngineService, JournalReversalService],
+  exports: [AccountingService, PostingEngineService, JournalReversalService, AccountControlsService],
 })
 export class AccountingModule {}

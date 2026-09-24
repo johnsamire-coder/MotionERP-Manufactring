@@ -54,4 +54,16 @@ export class AppConfigService {
   get supportSweepIntervalMinutes(): number {
     return this.config.get('SUPPORT_SWEEP_INTERVAL_MINUTES', { infer: true });
   }
+
+  get smtpUrl(): string | undefined {
+    return this.config.get('SMTP_URL', { infer: true });
+  }
+
+  get smtpFrom(): string {
+    return this.config.get('SMTP_FROM', { infer: true });
+  }
+
+  get projectReportIntervalMinutes(): number {
+    return this.config.get('PROJECT_REPORT_INTERVAL_MINUTES', { infer: true });
+  }
 }

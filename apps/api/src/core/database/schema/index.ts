@@ -48,3 +48,4 @@ export * from '../../../modules/inventory/purchase-batch-link.schema';
 export * from '../../../modules/sales/sales-serial-link.schema';
 export * from '../../../modules/workflow/workflow.schema';
 export * from '../../../modules/support/support.schema';
+export * from '../../../modules/projects/projects.schema';

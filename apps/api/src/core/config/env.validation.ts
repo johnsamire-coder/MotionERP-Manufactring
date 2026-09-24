@@ -21,6 +21,11 @@ export const envSchema = z.object({
   LEDGER_HEALTH_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(0),
   /** Plan item 43: minutes between helpdesk sweeps (missed SLAs, auto-close); 0 = on demand only. */
   SUPPORT_SWEEP_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(0),
+  /** Plan item 44: outgoing mail (smtp://… or smtps://user:pass@host:465). Unset = e-mails stay queued. */
+  SMTP_URL: z.string().url().optional(),
+  SMTP_FROM: z.string().default('erp@motion.local'),
+  /** Plan item 44: minutes between project status-report runs; 0 = on demand only. */
+  PROJECT_REPORT_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(0),
 }).refine((env) => env.NODE_ENV !== 'production' || !!env.AUTH_JWT_SECRET, {
   message: 'AUTH_JWT_SECRET is required in production',
   path: ['AUTH_JWT_SECRET'],
