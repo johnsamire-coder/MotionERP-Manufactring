@@ -1026,7 +1026,11 @@
       "quantity": "Quantity",
       "status": "Status",
       "submit": "Submit",
-      "noRequests": "No requests yet"
+      "noRequests": "No requests yet",
+      "customerProvided": "Customer Provided",
+      "subcontracting": "Subcontracting",
+      "customer": "Customer (provides the material)",
+      "subcontractor": "Subcontractor (optional)"
     },
     "item_lead_time": {
       "eyebrow": "Material Planning",

@@ -1,5 +1,6 @@
+import { CrmService } from '../crm/crm.service';
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { PlanningNotFoundError, PlanningValidationError } from './planning.errors';
 import { PlanningRepository } from './planning.repository';
 import { ProductionOpsService } from '../production_ops/production_ops.service';
@@ -25,6 +26,7 @@ export class PlanningService {
     private readonly repository: PlanningRepository,
     private readonly productionOpsService: ProductionOpsService,
     private readonly inventoryService: InventoryService,
+    @Optional() private readonly crm?: CrmService,
   ) {}
 
   async getSalesForecasts(): Promise<SalesForecastRecord[]> {
@@ -83,6 +85,22 @@ export class PlanningService {
       const qty = Number(line.quantity);
       if (!Number.isFinite(qty) || qty <= 0)
         throw new PlanningValidationError('every material request line quantity must be positive');
+    }
+    // Plan item 24: customer-provided material names its customer; subcontracting may name the
+    // subcontractor. Both are CRM UUIDs checked through the CRM service (D2).
+    if (input.purpose === 'customer_provided' && !input.customerId)
+      throw new PlanningValidationError('a customer-provided material request needs customerId');
+    if (input.customerId && input.purpose !== 'customer_provided')
+      throw new PlanningValidationError('customerId is only for purpose "customer_provided"');
+    if (input.supplierId && input.purpose !== 'subcontracting')
+      throw new PlanningValidationError('supplierId is only for purpose "subcontracting"');
+    if (this.crm) {
+      try {
+        if (input.customerId) await this.crm.getCustomer(input.customerId);
+        if (input.supplierId) await this.crm.getSupplier(input.supplierId);
+      } catch (err) {
+        throw new PlanningNotFoundError((err as Error).message);
+      }
     }
     const sequence = (await this.repository.countMaterialRequests()) + 1;
     const year = new Date().getFullYear();

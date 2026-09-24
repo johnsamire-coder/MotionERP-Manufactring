@@ -1,0 +1,5 @@
+ALTER TABLE "planning"."material_request" DROP CONSTRAINT "planning_material_request_purpose_valid";--> statement-breakpoint
+ALTER TABLE "planning"."material_request" ADD COLUMN "customer_id" uuid;--> statement-breakpoint
+ALTER TABLE "planning"."material_request" ADD COLUMN "supplier_id" uuid;--> statement-breakpoint
+ALTER TABLE "planning"."material_request" ADD CONSTRAINT "planning_material_request_customer_provided_needs_customer" CHECK ("planning"."material_request"."purpose" <> 'customer_provided' or "planning"."material_request"."customer_id" is not null);--> statement-breakpoint
+ALTER TABLE "planning"."material_request" ADD CONSTRAINT "planning_material_request_purpose_valid" CHECK ("planning"."material_request"."purpose" in ('purchase', 'material_transfer', 'material_issue', 'manufacture', 'customer_provided', 'subcontracting'));

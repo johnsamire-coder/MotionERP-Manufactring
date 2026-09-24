@@ -88,6 +88,8 @@ export class PlanningController {
       purpose: dto.purpose,
       requiredByDate: dto.requiredByDate,
       jobOrderReference: dto.jobOrderReference,
+      customerId: dto.customerId,
+      supplierId: dto.supplierId,
       lines: dto.lines.map((l) => ({
         itemId: l.itemId,
         warehouseId: l.warehouseId,

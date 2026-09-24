@@ -42,7 +42,12 @@ export interface CreateSalesForecastInput {
 }
 
 export type MaterialRequestPurpose =
-  'purchase' | 'material_transfer' | 'material_issue' | 'manufacture';
+  | 'purchase'
+  | 'material_transfer'
+  | 'material_issue'
+  | 'manufacture'
+  | 'customer_provided'
+  | 'subcontracting';
 export type MaterialRequestStatus = 'draft' | 'submitted' | 'cancelled';
 
 export interface MaterialRequestLineRecord {
@@ -69,6 +74,8 @@ export interface MaterialRequestRecord {
   transactionDate: string;
   requiredByDate: string | null;
   jobOrderReference: string | null;
+  customerId: string | null;
+  supplierId: string | null;
   status: MaterialRequestStatus;
   lines: MaterialRequestLineRecord[];
 }
@@ -77,6 +84,8 @@ export interface CreateMaterialRequestInput {
   purpose?: MaterialRequestPurpose;
   requiredByDate?: string;
   jobOrderReference?: string;
+  customerId?: string;
+  supplierId?: string;
   lines: MaterialRequestLineInput[];
 }
 

@@ -106,6 +106,8 @@ const mrColumns = {
   transactionDate: planningMaterialRequest.transactionDate,
   requiredByDate: planningMaterialRequest.requiredByDate,
   jobOrderReference: planningMaterialRequest.jobOrderReference,
+  customerId: planningMaterialRequest.customerId,
+  supplierId: planningMaterialRequest.supplierId,
   status: planningMaterialRequest.status,
 };
 const mrLineColumns = {
@@ -126,6 +128,8 @@ interface MrRow {
   transactionDate: Date;
   requiredByDate: Date | null;
   jobOrderReference: string | null;
+  customerId: string | null;
+  supplierId: string | null;
   status: string;
 }
 interface MrLineRow {
@@ -470,6 +474,8 @@ export class PlanningRepository {
       transactionDate: row.transactionDate.toISOString(),
       requiredByDate: row.requiredByDate ? row.requiredByDate.toISOString() : null,
       jobOrderReference: row.jobOrderReference,
+      customerId: row.customerId,
+      supplierId: row.supplierId,
       status: row.status as MaterialRequestStatus,
       lines,
     };
@@ -487,6 +493,8 @@ export class PlanningRepository {
         purpose: input.purpose ?? 'manufacture',
         requiredByDate: input.requiredByDate ? new Date(input.requiredByDate) : null,
         jobOrderReference: input.jobOrderReference ?? null,
+        customerId: input.customerId ?? null,
+        supplierId: input.supplierId ?? null,
       })
       .returning(mrColumns);
     const inserted = rows[0]!;

@@ -117,6 +117,10 @@ export const planningMaterialRequest = planningSchema.table(
     transactionDate: timestamp('transaction_date', { withTimezone: true }).notNull().defaultNow(),
     requiredByDate: timestamp('required_by_date', { withTimezone: true }),
     jobOrderReference: text('job_order_reference'),
+    /** Plan item 24: the customer who provides the material (purpose customer_provided; UUID, D2). */
+    customerId: uuid('customer_id'),
+    /** Plan item 24: the subcontractor (supplier UUID), optional for purpose subcontracting. */
+    supplierId: uuid('supplier_id'),
     status: text('status').notNull().default('draft'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -125,7 +129,11 @@ export const planningMaterialRequest = planningSchema.table(
     unique('planning_material_request_number_unique').on(t.requestNumber),
     check(
       'planning_material_request_purpose_valid',
-      sql`${t.purpose} in ('purchase', 'material_transfer', 'material_issue', 'manufacture')`,
+      sql`${t.purpose} in ('purchase', 'material_transfer', 'material_issue', 'manufacture', 'customer_provided', 'subcontracting')`,
+    ),
+    check(
+      'planning_material_request_customer_provided_needs_customer',
+      sql`${t.purpose} <> 'customer_provided' or ${t.customerId} is not null`,
     ),
     check(
       'planning_material_request_status_valid',

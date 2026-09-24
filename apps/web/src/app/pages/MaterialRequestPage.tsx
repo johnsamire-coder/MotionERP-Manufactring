@@ -56,6 +56,32 @@ export function MaterialRequestPage(): JSX.Element {
   const [orgNodeId, setOrgNodeId] = useState('');
   const [purpose, setPurpose] = useState('manufacture');
   const [jobOrderReference, setJobOrderReference] = useState('');
+  // Plan item 24: the customer for customer-provided material, the subcontractor for subcontracting.
+  const [partyId, setPartyId] = useState('');
+  const [partyOptions, setPartyOptions] = useState<Array<{ id: string; label: string }>>([]);
+
+  useEffect(() => {
+    setPartyId('');
+    if (purpose !== 'customer_provided' && purpose !== 'subcontracting') {
+      setPartyOptions([]);
+      return;
+    }
+    const path = purpose === 'customer_provided' ? '/crm/customers' : '/crm/suppliers';
+    void api
+      .get<{
+        customers?: Array<{ id: string; code: string; name: string }>;
+        suppliers?: Array<{ id: string; code: string; name: string }>;
+      }>(path)
+      .then((res) =>
+        setPartyOptions(
+          (res.customers ?? res.suppliers ?? []).map((p) => ({
+            id: p.id,
+            label: `${p.code} — ${p.name}`,
+          })),
+        ),
+      )
+      .catch(() => setPartyOptions([]));
+  }, [purpose]);
   const [lines, setLines] = useState<MrLineInput[]>([{ itemId: '', quantity: '1' }]);
 
   async function loadAll(): Promise<void> {
@@ -112,6 +138,8 @@ export function MaterialRequestPage(): JSX.Element {
         orgNodeId,
         purpose,
         jobOrderReference: jobOrderReference || undefined,
+        customerId: purpose === 'customer_provided' ? partyId || undefined : undefined,
+        supplierId: purpose === 'subcontracting' ? partyId || undefined : undefined,
         lines: lines.map((l) => ({ itemId: l.itemId, quantity: l.quantity })),
       });
       setShowForm(false);
@@ -143,7 +171,13 @@ export function MaterialRequestPage(): JSX.Element {
   const orgLabel = (id: string): string => orgNodes.find((o) => o.id === id)?.name ?? id;
   const purposeLabel = (p: string): string => {
     const key =
-      p === 'material_transfer' ? 'materialTransfer' : p === 'material_issue' ? 'materialIssue' : p;
+      (
+        {
+          material_transfer: 'materialTransfer',
+          material_issue: 'materialIssue',
+          customer_provided: 'customerProvided',
+        } as Record<string, string>
+      )[p] ?? p;
     return t(`pages.material_request.${key}`);
   };
   const inputStyle = { padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1' };
@@ -217,8 +251,39 @@ export function MaterialRequestPage(): JSX.Element {
                   <option value="material_issue">
                     {t('pages.material_request.materialIssue')}
                   </option>
+                  <option value="customer_provided">
+                    {t('pages.material_request.customerProvided')}
+                  </option>
+                  <option value="subcontracting">
+                    {t('pages.material_request.subcontracting')}
+                  </option>
                 </select>
               </div>
+              {(purpose === 'customer_provided' || purpose === 'subcontracting') && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={labelStyle} htmlFor="mr-party">
+                    {t(
+                      purpose === 'customer_provided'
+                        ? 'pages.material_request.customer'
+                        : 'pages.material_request.subcontractor',
+                    )}
+                  </label>
+                  <select
+                    id="mr-party"
+                    value={partyId}
+                    onChange={(e) => setPartyId(e.target.value)}
+                    required={purpose === 'customer_provided'}
+                    style={{ ...inputStyle, minWidth: 200 }}
+                  >
+                    <option value="">—</option>
+                    {partyOptions.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.material_request.jobOrderReference')}</label>
                 <input
