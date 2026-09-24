@@ -68,8 +68,7 @@ import MaterialVariancePage from './pages/MaterialVariancePage';
 import OrderProfitabilityPage from './pages/OrderProfitabilityPage';
 import TaxCustomsPage from './app/pages/TaxCustomsPage';
 import YearEndClosingPage from './app/pages/YearEndClosingPage';
-import AuditTrailPage from './pages/AuditTrailPage';
-import RbacPermissionsPage from './pages/RbacPermissionsPage';
+import AuditLogPage from './app/pages/AuditLogPage';
 import UserRestrictionsPage from './app/pages/UserRestrictionsPage';
 import RfqPage from './app/pages/RfqPage';
 import ContactsPage from './app/pages/ContactsPage';
@@ -278,9 +277,7 @@ export const App: React.FC = () => {
           id: 'audit-trail',
           label: 'سجل التدقيق الرقابي (Audit)',
           icon: ShieldAlert,
-          badge: 'تجريبي',
         },
-        { id: 'rbac-matrix', label: 'مصفوفة الصلاحيات (RBAC)', icon: Key, badge: 'تجريبي' },
       ],
     },
     {
@@ -498,8 +495,7 @@ export const App: React.FC = () => {
 
           {/* 7. الإقفال والرقابة */}
           {currentTab === 'closing-periods' && <YearEndClosingPage />}
-          {currentTab === 'audit-trail' && <AuditTrailPage />}
-          {currentTab === 'rbac-matrix' && <RbacPermissionsPage />}
+          {currentTab === 'audit-trail' && <AuditLogPage />}
           {currentTab === 'user-restrictions' && <UserRestrictionsPage />}
         </PageErrorBoundary>
       </main>
