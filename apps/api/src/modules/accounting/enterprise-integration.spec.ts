@@ -3,8 +3,6 @@
 // Step 98 | Complete 7-Phase Industrial Lifecycle Test | 100% PASS ✅
 // ============================================================
 import { Test, TestingModule } from '@nestjs/testing';
-import { PeriodClosingService } from './period-closing.service';
-import { FiscalYearClosingService } from './fiscal-year-closing.service';
 import { OpeningEntriesService } from './opening-entries.service';
 import { TaxAndCustomsService } from './tax-customs.service';
 import { AccrualsService } from './accruals.service';
@@ -20,8 +18,6 @@ import { AuditService } from '../audit/audit.service';
 import { accountingPeriod, fiscalYear } from './accounting.schema';
 
 describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
-  let periodClosingService: PeriodClosingService;
-  let fiscalYearClosingService: FiscalYearClosingService;
   let openingEntriesService: OpeningEntriesService;
   let taxService: TaxAndCustomsService;
   let costService: CostService;
@@ -29,13 +25,21 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
   let batchService: PurchaseBatchLinkService;
   let serialService: SalesSerialLinkService;
 
-  const mockCompanyId    = '11111111-1111-1111-1111-111111111111';
+  const mockCompanyId = '11111111-1111-1111-1111-111111111111';
   const mockFiscalYearId = '22222222-2222-2222-2222-222222222222';
-  const mockPeriodId     = '33333333-3333-3333-3333-333333333333';
-  const mockUserId       = '99999999-9999-9999-9999-999999999999';
+  const mockPeriodId = '33333333-3333-3333-3333-333333333333';
+  const mockUserId = '99999999-9999-9999-9999-999999999999';
 
-  let inMemoryDb: any = {
-    periods: [{ id: mockPeriodId, fiscalYearId: mockFiscalYearId, name: 'أغسطس 2026', status: 'open', isLocked: false }],
+  const inMemoryDb: any = {
+    periods: [
+      {
+        id: mockPeriodId,
+        fiscalYearId: mockFiscalYearId,
+        name: 'أغسطس 2026',
+        status: 'open',
+        isLocked: false,
+      },
+    ],
     years: [{ id: mockFiscalYearId, name: '2026', status: 'open' }],
     batches: [],
     serials: [],
@@ -54,10 +58,13 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
         }),
       })),
     })),
-    insert: jest.fn().mockImplementation((table) => ({
+    insert: jest.fn().mockImplementation((_table) => ({
       values: jest.fn().mockImplementation((data) => ({
         returning: jest.fn().mockImplementation(() => {
-          const record = { id: `id-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`, ...data };
+          const record = {
+            id: `id-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+            ...data,
+          };
           return [record];
         }),
       })),
@@ -98,8 +105,6 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        PeriodClosingService,
-        FiscalYearClosingService,
         OpeningEntriesService,
         TaxAndCustomsService,
         AccrualsService,
@@ -116,8 +121,6 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
       ],
     }).compile();
 
-    periodClosingService = module.get<PeriodClosingService>(PeriodClosingService);
-    fiscalYearClosingService = module.get<FiscalYearClosingService>(FiscalYearClosingService);
     openingEntriesService = module.get<OpeningEntriesService>(OpeningEntriesService);
     taxService = module.get<TaxAndCustomsService>(TaxAndCustomsService);
     costService = module.get<CostService>(CostService);
@@ -168,8 +171,20 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
         periodId: mockPeriodId,
         periodMonth: '2026-08',
         pools: [
-          { code: 'OH-ELEC-01', name: 'Electricity Pool', allocationBasis: 'machine_hours', periodActualCost: 85000, totalDriverUnits: 460 },
-          { code: 'OH-SUP-02', name: 'Supervision Pool', allocationBasis: 'labor_hours', periodActualCost: 110000, totalDriverUnits: 1150 },
+          {
+            code: 'OH-ELEC-01',
+            name: 'Electricity Pool',
+            allocationBasis: 'machine_hours',
+            periodActualCost: 85000,
+            totalDriverUnits: 460,
+          },
+          {
+            code: 'OH-SUP-02',
+            name: 'Supervision Pool',
+            allocationBasis: 'labor_hours',
+            periodActualCost: 110000,
+            totalDriverUnits: 1150,
+          },
         ],
       },
       mockUserId,
@@ -216,32 +231,8 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
     expect(vatSettlement.settlement.status).toBe('filed');
     expect(parseFloat(vatSettlement.settlement.netVatPayable)).toBe(102200);
 
-    // ── المرحلة 6: إقفال الفترة الشهرية وتجميد الحركات ──
-    const periodClose = await periodClosingService.closePeriod(
-      {
-        companyId: mockCompanyId,
-        fiscalYearId: mockFiscalYearId,
-        periodId: mockPeriodId,
-        periodName: 'أغسطس 2026',
-      },
-      mockUserId,
-    );
-    expect(periodClose.period.status).toBe('closed');
-    expect(periodClose.period.isLocked).toBe(true);
-
-    // ── المرحلة 7: الإقفال السنوي وتدوير الأرصدة الافتتاحية للعام الجديد ──
-    const yearClose = await fiscalYearClosingService.executeFiscalYearClosing(
-      {
-        companyId: mockCompanyId,
-        fiscalYearId: mockFiscalYearId,
-        closingDate: '2026-12-31',
-        retainedEarningsAccountId: '00000000-0000-0000-0000-000000003001',
-      },
-      mockUserId,
-    );
-    expect(yearClose.status).toBe('year_closed_and_locked');
-    expect(yearClose.netProfitTransferred).toBe(920000);
-
+    // ── المرحلة 6–7: الإقفال الشهري والسنوي بقى على accounting/year-end (year-end-closing.spec.ts)؛
+    // هنا بنكمّل من سنة مقفولة لتدوير الأرصدة الافتتاحية للعام الجديد ──
     inMemoryDb.years[0].status = 'closed';
     const rollForward = await openingEntriesService.rollForwardBalances(
       {

@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { directionOf } from './app/i18n/config';
-import { AUTH_REQUIRED_EVENT, authApi, getAccessToken, setAccessToken, type SessionUser } from './app/api/client';
+import {
+  AUTH_REQUIRED_EVENT,
+  authApi,
+  getAccessToken,
+  setAccessToken,
+  type SessionUser,
+} from './app/api/client';
 import { LoginDialog } from './app/components/LoginDialog';
 import {
   LayoutDashboard,
@@ -61,7 +67,7 @@ import MaterialVariancePage from './pages/MaterialVariancePage';
 import OrderProfitabilityPage from './pages/OrderProfitabilityPage';
 import OverheadDashboardPage from './pages/OverheadDashboardPage';
 import TaxAndCustomsPage from './pages/TaxAndCustomsPage';
-import PeriodAndYearClosingPage from './pages/PeriodAndYearClosingPage';
+import YearEndClosingPage from './app/pages/YearEndClosingPage';
 import AuditTrailPage from './pages/AuditTrailPage';
 import RbacPermissionsPage from './pages/RbacPermissionsPage';
 import UserRestrictionsPage from './app/pages/UserRestrictionsPage';
@@ -90,8 +96,17 @@ import { ReportConsumedMaterialsPage } from './app/pages/ReportConsumedMaterials
 import { ReportProductionPlanningPage } from './app/pages/ReportProductionPlanningPage';
 import { ReportForecastingPage } from './app/pages/ReportForecastingPage';
 
-interface MenuItem { id: string; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string; alert?: boolean; }
-interface MenuSection { title: string; items: MenuItem[]; }
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+  alert?: boolean;
+}
+interface MenuSection {
+  title: string;
+  items: MenuItem[];
+}
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('mfg-dashboard');
@@ -107,7 +122,10 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (getAccessToken()) {
-      authApi.me().then((res) => setSessionUser(res.user)).catch(() => setSessionUser(null));
+      authApi
+        .me()
+        .then((res) => setSessionUser(res.user))
+        .catch(() => setSessionUser(null));
     }
     const onAuthRequired = (): void => {
       setSessionUser(null);
@@ -151,7 +169,12 @@ export const App: React.FC = () => {
     {
       title: '4. التخطيط والتصنيع (Planning & Manufacturing)',
       items: [
-        { id: 'mfg-dashboard', label: 'نظرة عامة على التصنيع', icon: LayoutDashboard, badge: 'رئيسي' },
+        {
+          id: 'mfg-dashboard',
+          label: 'نظرة عامة على التصنيع',
+          icon: LayoutDashboard,
+          badge: 'رئيسي',
+        },
         { id: 'bom-main', label: 'قوائم المكونات BOM', icon: ListChecks },
         { id: 'bom-creator', label: 'منشئ الـ BOM والتكلفة', icon: ClipboardList },
         { id: 'bom-update-tool', label: 'أداة تحديث BOM', icon: Wrench },
@@ -225,10 +248,17 @@ export const App: React.FC = () => {
             {sidebarOpen ? (
               <div>
                 <h1 className="text-xl font-extrabold text-white tracking-wider flex items-center gap-2">
-                  <span aria-hidden="true" className="p-1.5 bg-teal-500 text-slate-900 rounded-lg text-sm">M</span>
+                  <span
+                    aria-hidden="true"
+                    className="p-1.5 bg-teal-500 text-slate-900 rounded-lg text-sm"
+                  >
+                    M
+                  </span>
                   {t('app.name')}
                 </h1>
-                <p className="text-[11px] text-teal-400 font-medium mt-0.5">Enterprise v5.0 (All Modules)</p>
+                <p className="text-[11px] text-teal-400 font-medium mt-0.5">
+                  Enterprise v5.0 (All Modules)
+                </p>
                 <label className="mt-2 flex items-center gap-2 text-[11px] text-slate-400">
                   {t('app.language')}
                   <select
@@ -240,7 +270,9 @@ export const App: React.FC = () => {
                     <option value="en">{t('app.languageName.en')}</option>
                   </select>
                 </label>
-                <span data-testid="direction" hidden>{direction}</span>
+                <span data-testid="direction" hidden>
+                  {direction}
+                </span>
               </div>
             ) : (
               <span className="p-2 bg-teal-500 text-slate-900 rounded-lg font-bold mx-auto">M</span>
@@ -275,7 +307,9 @@ export const App: React.FC = () => {
                           : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
                       }`}
                     >
-                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : item.alert ? 'text-rose-400' : 'text-slate-400'}`} />
+                      <Icon
+                        className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : item.alert ? 'text-rose-400' : 'text-slate-400'}`}
+                      />
                       {sidebarOpen && <span className="flex-1 truncate">{item.label}</span>}
                       {sidebarOpen && item.badge && (
                         <span className="text-[9px] bg-amber-400 text-slate-900 font-extrabold px-1.5 py-0.5 rounded">
@@ -297,8 +331,12 @@ export const App: React.FC = () => {
           </div>
           {sidebarOpen && (
             <div className="flex-1 truncate">
-              <p className="text-xs font-bold text-white">{sessionUser ? sessionUser.name : 'غير مسجّل الدخول'}</p>
-              <p className="text-[10px] text-teal-400">{sessionUser ? sessionUser.role || '—' : 'Guest'}</p>
+              <p className="text-xs font-bold text-white">
+                {sessionUser ? sessionUser.name : 'غير مسجّل الدخول'}
+              </p>
+              <p className="text-[10px] text-teal-400">
+                {sessionUser ? sessionUser.role || '—' : 'Guest'}
+              </p>
             </div>
           )}
           {sidebarOpen && (
@@ -375,7 +413,7 @@ export const App: React.FC = () => {
         {currentTab === 'tax-customs' && <TaxAndCustomsPage />}
 
         {/* 7. الإقفال والرقابة */}
-        {currentTab === 'closing-periods' && <PeriodAndYearClosingPage />}
+        {currentTab === 'closing-periods' && <YearEndClosingPage />}
         {currentTab === 'audit-trail' && <AuditTrailPage />}
         {currentTab === 'rbac-matrix' && <RbacPermissionsPage />}
         {currentTab === 'user-restrictions' && <UserRestrictionsPage />}
@@ -384,7 +422,11 @@ export const App: React.FC = () => {
       {loginOpen && (
         <LoginDialog
           required={loginRequired}
-          onLoggedIn={(user) => { setSessionUser(user); setLoginOpen(false); setLoginRequired(false); }}
+          onLoggedIn={(user) => {
+            setSessionUser(user);
+            setLoginOpen(false);
+            setLoginRequired(false);
+          }}
           onClose={() => setLoginOpen(false)}
         />
       )}
