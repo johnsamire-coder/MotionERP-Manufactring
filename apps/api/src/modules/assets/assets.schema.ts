@@ -44,11 +44,17 @@ export const asset = assetsSchema.table('asset', {
   manualAmounts: jsonb('manual_amounts').$type<number[]>(),
   availableForUseDate: date('available_for_use_date', { mode: 'string' }),
   costCenterId: uuid('cost_center_id'),
+  /** Plan item 49: where the asset is and who holds it (employee UUID, validated in the service). */
+  location: text('location'),
+  custodianEmployeeId: uuid('custodian_employee_id'),
+  /** Plan item 49: set when this asset was merged into a composite asset. */
+  parentAssetId: uuid('parent_asset_id'),
+  isComposite: text('is_composite').notNull().default('no'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   unique('asset_org_code_unique').on(t.orgNodeId, t.assetCode),
-  check('asset_status_valid', sql`${t.status} in ('draft', 'cwip', 'in_use', 'fully_depreciated', 'scrapped')`),
+  check('asset_status_valid', sql`${t.status} in ('draft', 'cwip', 'in_use', 'fully_depreciated', 'scrapped', 'merged')`),
   check('asset_is_cwip_valid', sql`${t.isCwip} in ('yes', 'no')`),
   check('asset_method_valid', sql`${t.method} in ('straight_line', 'double_declining_balance', 'written_down_value', 'manual')`),
   check('asset_frequency_valid', sql`${t.frequencyMonths} in (1, 3, 6, 12)`),
@@ -80,4 +86,36 @@ export const assetValueEvent = assetsSchema.table('asset_value_event', {
   journalEntryId: uuid('journal_entry_id'),
   note: text('note'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [check('asset_value_event_type_valid', sql`${t.eventType} in ('cwip_cost', 'capitalisation', 'value_adjustment')`)]);
+}, (t) => [check('asset_value_event_type_valid', sql`${t.eventType} in ('cwip_cost', 'capitalisation', 'value_adjustment', 'component_asset', 'component_stock')`)]);
+
+/** Plan item 49: every change of location / custodian. */
+export const assetMovement = assetsSchema.table('asset_movement', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  assetId: uuid('asset_id').notNull().references(() => asset.id, { onDelete: 'cascade' }),
+  movementDate: timestamp('movement_date', { withTimezone: true }).notNull().defaultNow(),
+  purpose: text('purpose').notNull(),
+  fromLocation: text('from_location'),
+  toLocation: text('to_location'),
+  fromCustodianId: uuid('from_custodian_id'),
+  toCustodianId: uuid('to_custodian_id'),
+  note: text('note'),
+}, (t) => [
+  check('asset_movement_purpose_valid', sql`${t.purpose} in ('transfer', 'issue', 'receipt')`),
+  index('asset_movement_asset_idx').on(t.assetId),
+]);
+
+/** Plan item 49: insurance policies on an asset. */
+export const assetInsurance = assetsSchema.table('asset_insurance', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  assetId: uuid('asset_id').notNull().references(() => asset.id, { onDelete: 'cascade' }),
+  insurer: text('insurer').notNull(),
+  policyNumber: text('policy_number').notNull(),
+  insuredValue: numeric('insured_value', { precision: 18, scale: 2 }).notNull(),
+  premium: numeric('premium', { precision: 18, scale: 2 }),
+  startDate: date('start_date', { mode: 'string' }).notNull(),
+  endDate: date('end_date', { mode: 'string' }).notNull(),
+}, (t) => [
+  unique('asset_insurance_policy_unique').on(t.insurer, t.policyNumber),
+  check('asset_insurance_dates_valid', sql`${t.endDate} > ${t.startDate}`),
+  check('asset_insurance_value_positive', sql`${t.insuredValue} > 0`),
+]);

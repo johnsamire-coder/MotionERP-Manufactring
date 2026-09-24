@@ -48,8 +48,11 @@ export class AssetsService {
   async create(input: {
     assetCode: string; name: string; categoryId: string; isCwip?: boolean; grossValue?: string; salvageValue?: string; openingAccumulated?: string;
     method?: DepreciationMethod; periods?: number; frequencyMonths?: number; annualRatePercent?: string; manualAmounts?: number[]; costCenterId?: string;
+    /** Plan item 49: a composite asset is built (under construction) from other assets and stock items. */
+    isComposite?: boolean; location?: string;
   }): Promise<AssetRow> {
     const cat = await this.category(input.categoryId);
+    if (input.isComposite && !input.isCwip) throw new AssetsValidationError('الأصل المركّب بيتبني كأصل تحت التنفيذ (isCwip)');
     if (input.isCwip && !cat.cwipAccountId) throw new AssetsValidationError(`الفئة ${cat.code} ملهاش حساب أصول تحت التنفيذ`);
     const gross = Number(input.grossValue ?? 0);
     if (!input.isCwip && !(gross > 0)) throw new AssetsValidationError('grossValue must be positive for an asset that is not under construction');
@@ -62,6 +65,7 @@ export class AssetsService {
       accumulatedDepreciation: n2(Number(input.openingAccumulated ?? 0)), method: input.method ?? (cat.defaultMethod as DepreciationMethod),
       periods: input.periods ?? cat.defaultPeriods, frequencyMonths: frequency, annualRatePercent: input.annualRatePercent ?? null,
       manualAmounts: input.manualAmounts ?? null, costCenterId: input.costCenterId ?? null,
+      isComposite: input.isComposite ? 'yes' : 'no', location: input.location ?? null,
     }).returning())[0]!;
   }
 

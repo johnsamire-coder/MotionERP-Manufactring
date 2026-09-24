@@ -687,6 +687,13 @@
       "when": 1790238641686,
       "tag": "0097_wise_ezekiel",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1790238872241,
+      "tag": "0098_swift_sunspot",
+      "breakpoints": true
     }
   ]
 }
