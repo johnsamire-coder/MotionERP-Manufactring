@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { directionOf } from './app/i18n/config';
 import { AUTH_REQUIRED_EVENT, authApi, getAccessToken, setAccessToken, type SessionUser } from './app/api/client';
 import { LoginDialog } from './app/components/LoginDialog';
 import {
@@ -94,6 +96,9 @@ interface MenuSection { title: string; items: MenuItem[]; }
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('mfg-dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Language + direction follow i18n (AppProviders keeps <html dir/lang> in sync).
+  const { t, i18n } = useTranslation();
+  const direction = directionOf(i18n.language);
 
   // جلسة الدخول (بند 5.0): استرجاع المستخدم من التذكرة المحفوظة، وفتح نافذة الدخول لما السيرفر يطلبها.
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null);
@@ -207,7 +212,7 @@ export const App: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-slate-100 font-sans text-slate-800" dir="rtl">
+    <div className="flex h-screen bg-slate-100 font-sans text-slate-800" dir={direction}>
       {/* ── Sidebar القائمة الجانبية الكبرى ── */}
       <aside
         className={`${
@@ -220,10 +225,22 @@ export const App: React.FC = () => {
             {sidebarOpen ? (
               <div>
                 <h1 className="text-xl font-extrabold text-white tracking-wider flex items-center gap-2">
-                  <span className="p-1.5 bg-teal-500 text-slate-900 rounded-lg text-sm">M</span>
-                  Motion ERP
+                  <span aria-hidden="true" className="p-1.5 bg-teal-500 text-slate-900 rounded-lg text-sm">M</span>
+                  {t('app.name')}
                 </h1>
                 <p className="text-[11px] text-teal-400 font-medium mt-0.5">Enterprise v5.0 (All Modules)</p>
+                <label className="mt-2 flex items-center gap-2 text-[11px] text-slate-400">
+                  {t('app.language')}
+                  <select
+                    className="bg-slate-800 text-slate-200 rounded px-1 py-0.5"
+                    value={i18n.language}
+                    onChange={(e) => void i18n.changeLanguage(e.target.value)}
+                  >
+                    <option value="ar">{t('app.languageName.ar')}</option>
+                    <option value="en">{t('app.languageName.en')}</option>
+                  </select>
+                </label>
+                <span data-testid="direction" hidden>{direction}</span>
               </div>
             ) : (
               <span className="p-2 bg-teal-500 text-slate-900 rounded-lg font-bold mx-auto">M</span>
