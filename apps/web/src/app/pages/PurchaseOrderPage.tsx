@@ -66,11 +66,7 @@ export function PurchaseOrderPage(): JSX.Element {
         setLines([{ itemId: itms[0].id, quantity: '1', unitCost: '0', taxRate: '14.00' }]);
       }
     } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : 'فشل تحميل بيانات فواتير المشتريات',
-      );
+      setError(err instanceof ApiError ? err.message : 'فشل تحميل بيانات فواتير المشتريات');
     } finally {
       setLoading(false);
     }
@@ -134,9 +130,7 @@ export function PurchaseOrderPage(): JSX.Element {
         })),
       });
 
-      setSuccess(
-        'تم تسجيل فاتورة المورد بنجاح (مسودة جاهزة للمطابقة والترحيل)',
-      );
+      setSuccess('تم تسجيل فاتورة المورد بنجاح (مسودة جاهزة للمطابقة والترحيل)');
       setShowForm(false);
       setInvoiceNumber('');
       await loadAll();
@@ -150,9 +144,7 @@ export function PurchaseOrderPage(): JSX.Element {
   async function handlePost(id: string): Promise<void> {
     try {
       await financeApi.postPurchaseInvoice(id);
-      setSuccess(
-        'تم ترحيل الفاتورة وقفل وسيط GRNI وإثبات مديونية المورد وضريبة المدخلات بنجاح!',
-      );
+      setSuccess('تم ترحيل الفاتورة وقفل وسيط GRNI وإثبات مديونية المورد وضريبة المدخلات بنجاح!');
       await loadAll();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'فشل ترحيل الفاتورة');
@@ -168,8 +160,7 @@ export function PurchaseOrderPage(): JSX.Element {
           <span className="eyebrow">المشتريات والموردين</span>
           <h1>فواتير المشتريات ومطابقة GRNI</h1>
           <p>
-            تسجيل فواتير الموردين الضريبية وتسوية وسيط
-            استلام البضاعة وإثبات ضريبة القيمة المضافة
+            تسجيل فواتير الموردين الضريبية وتسوية وسيط استلام البضاعة وإثبات ضريبة القيمة المضافة
           </p>
         </div>
         <button className="btn btn--primary" onClick={() => setShowForm(!showForm)}>
@@ -318,8 +309,7 @@ export function PurchaseOrderPage(): JSX.Element {
           >
             <div>
               <span>
-                الصافي:{' '}
-                <b>{netTotal.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج.م</b>
+                الصافي: <b>{netTotal.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج.م</b>
               </span>{' '}
               |
               <span style={{ margin: '0 12px' }}>

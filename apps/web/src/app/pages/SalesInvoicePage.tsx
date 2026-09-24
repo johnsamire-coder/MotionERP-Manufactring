@@ -66,11 +66,7 @@ export function SalesInvoicePage(): JSX.Element {
         setLines([{ itemId: itms[0].id, quantity: '1', unitPrice: '0', taxRate: '14.00' }]);
       }
     } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : 'فشل تحميل بيانات فواتير المبيعات',
-      );
+      setError(err instanceof ApiError ? err.message : 'فشل تحميل بيانات فواتير المبيعات');
     } finally {
       setLoading(false);
     }
@@ -135,9 +131,7 @@ export function SalesInvoicePage(): JSX.Element {
         })),
       });
 
-      setSuccess(
-        'تم إنشاء فاتورة المبيعات بنجاح (مسودة جاهزة للمراجعة والترحيل)',
-      );
+      setSuccess('تم إنشاء فاتورة المبيعات بنجاح (مسودة جاهزة للمراجعة والترحيل)');
       setShowForm(false);
       await loadAll();
     } catch (err) {
@@ -150,9 +144,7 @@ export function SalesInvoicePage(): JSX.Element {
   async function handlePost(id: string): Promise<void> {
     try {
       await financeApi.postSalesInvoice(id);
-      setSuccess(
-        'تم ترحيل الفاتورة وتوليد قيود الإيراد وضريبة المخرجات ومديونية العميل بنجاح!',
-      );
+      setSuccess('تم ترحيل الفاتورة وتوليد قيود الإيراد وضريبة المخرجات ومديونية العميل بنجاح!');
       await loadAll();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'فشل ترحيل الفاتورة');
@@ -167,10 +159,7 @@ export function SalesInvoicePage(): JSX.Element {
         <div>
           <span className="eyebrow">المبيعات والعملاء</span>
           <h1>فواتير المبيعات (Sales Invoices)</h1>
-          <p>
-            إصدار الفواتير الضريبية للعملاء وترحيل
-            الإيرادات وضريبة القيمة المضافة 14% تلقائياً
-          </p>
+          <p>إصدار الفواتير الضريبية للعملاء وترحيل الإيرادات وضريبة القيمة المضافة 14% تلقائياً</p>
         </div>
         <button className="btn btn--primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? 'إلغاء' : '+ فاتورة مبيعات جديدة'}
@@ -317,8 +306,7 @@ export function SalesInvoicePage(): JSX.Element {
           >
             <div>
               <span>
-                الصافي:{' '}
-                <b>{netTotal.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج.م</b>
+                الصافي: <b>{netTotal.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج.م</b>
               </span>{' '}
               |
               <span style={{ margin: '0 12px' }}>
