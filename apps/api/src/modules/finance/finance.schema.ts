@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, index, numeric, pgSchema, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { check, index, integer, numeric, pgSchema, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { orgNode } from '../organization/organization.schema';
 import { supplier, customer } from '../crm/crm.schema';
 import { item } from '../catalog/catalog.schema';
@@ -372,12 +372,34 @@ export const advanceAllocation = financeSchema.table('advance_allocation', {
   purchaseInvoiceId: uuid('purchase_invoice_id').references(() => purchaseInvoice.id, { onDelete: 'restrict' }),
   amount: numeric('amount', { precision: 12, scale: 4 }).notNull(),
   journalEntryId: uuid('journal_entry_id'),
+  /** Plan item 39: 'advance' = reclass of an advance (has an entry); 'matching' = payment matched to an invoice, no entry needed. */
+  kind: text('kind').notNull().default('advance'),
+  /** Plan item 39: the invoice installment this allocation pays, when the invoice has installments. */
+  installmentNumber: integer('installment_number'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
+  check('advance_allocation_kind_valid', sql`${t.kind} in ('advance', 'matching')`),
   check('advance_allocation_party_valid', sql`${t.partyType} in ('customer', 'supplier')`),
   check('advance_allocation_amount_positive', sql`${t.amount} > 0`),
   check('advance_allocation_customer_shape', sql`${t.partyType} <> 'customer' or (${t.collectionId} is not null and ${t.salesInvoiceId} is not null)`),
   check('advance_allocation_supplier_shape', sql`${t.partyType} <> 'supplier' or (${t.paymentId} is not null and ${t.purchaseInvoiceId} is not null)`),
   index('advance_allocation_collection_idx').on(t.collectionId),
   index('advance_allocation_payment_idx').on(t.paymentId),
+]);
+
+/** Plan item 39: an invoice split into installments (due dates); their amounts add up to the invoice total. */
+export const invoiceInstallment = financeSchema.table('invoice_installment', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  invoiceType: text('invoice_type').notNull(),
+  salesInvoiceId: uuid('sales_invoice_id').references(() => salesInvoice.id, { onDelete: 'cascade' }),
+  purchaseInvoiceId: uuid('purchase_invoice_id').references(() => purchaseInvoice.id, { onDelete: 'cascade' }),
+  installmentNumber: integer('installment_number').notNull(),
+  dueDate: timestamp('due_date', { withTimezone: true }).notNull(),
+  amount: numeric('amount', { precision: 14, scale: 4 }).notNull(),
+}, (t) => [
+  check('invoice_installment_type_valid', sql`${t.invoiceType} in ('sales', 'purchase')`),
+  check('invoice_installment_shape', sql`(${t.invoiceType} = 'sales' and ${t.salesInvoiceId} is not null and ${t.purchaseInvoiceId} is null) or (${t.invoiceType} = 'purchase' and ${t.purchaseInvoiceId} is not null and ${t.salesInvoiceId} is null)`),
+  check('invoice_installment_amount_positive', sql`${t.amount} > 0`),
+  unique('invoice_installment_sales_number_unique').on(t.salesInvoiceId, t.installmentNumber),
+  unique('invoice_installment_purchase_number_unique').on(t.purchaseInvoiceId, t.installmentNumber),
 ]);

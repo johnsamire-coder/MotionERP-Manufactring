@@ -1,3 +1,5 @@
+import { AllocationController } from './allocation.controller';
+import { AllocationService } from './allocation.service';
 import { AdvanceController } from './advance.controller';
 import { AdvanceService } from './advance.service';
 import { LedgerHealthController } from './ledger-health.controller';
@@ -17,8 +19,8 @@ import { AccountingRepository } from '../accounting/accounting.repository';
 
 @Module({
   imports: [SalesModule, AccountingModule, CrmModule, InventoryModule, SettingsModule],
-  controllers: [FinanceController, PurchaseInvoiceHoldController, LedgerHealthController, AdvanceController],
-  providers: [FinanceService, FinanceRepository, AccountingRepository, PurchaseInvoiceHoldService, LedgerHealthService, AdvanceService],
+  controllers: [FinanceController, PurchaseInvoiceHoldController, LedgerHealthController, AdvanceController, AllocationController],
+  providers: [FinanceService, FinanceRepository, AccountingRepository, PurchaseInvoiceHoldService, LedgerHealthService, AdvanceService, AllocationService],
   exports: [FinanceService],
 })
 export class FinanceModule {}

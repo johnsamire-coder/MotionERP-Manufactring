@@ -70,13 +70,13 @@ export class AdvanceService {
     if (partyType === 'customer') {
       const rows = await db.select().from(collection).where(and(ne(collection.status, 'cancelled'), sql`${collection.advanceAmount} > 0`));
       for (const r of rows) {
-        const allocated = sum(await db.select({ v: advanceAllocation.amount }).from(advanceAllocation).where(eq(advanceAllocation.collectionId, r.id)));
+        const allocated = sum(await db.select({ v: advanceAllocation.amount }).from(advanceAllocation).where(and(eq(advanceAllocation.collectionId, r.id), eq(advanceAllocation.kind, 'advance'))));
         out.push(this.open('customer', r.id, r.collectionNumber, r.jobOrderReference, Number(r.advanceAmount), allocated));
       }
     } else {
       const rows = await db.select().from(payment).where(and(eq(payment.status, 'posted'), sql`${payment.advanceAmount} > 0`));
       for (const r of rows) {
-        const allocated = sum(await db.select({ v: advanceAllocation.amount }).from(advanceAllocation).where(eq(advanceAllocation.paymentId, r.id)));
+        const allocated = sum(await db.select({ v: advanceAllocation.amount }).from(advanceAllocation).where(and(eq(advanceAllocation.paymentId, r.id), eq(advanceAllocation.kind, 'advance'))));
         out.push(this.open('supplier', r.id, r.paymentNumber, r.supplierId, Number(r.advanceAmount), allocated));
       }
     }
@@ -84,7 +84,7 @@ export class AdvanceService {
   }
 
   /** Customer advance → sales invoice: Dr advances received / Cr receivable. */
-  async allocateCollection(collectionId: string, salesInvoiceId: string, amountRaw: string): Promise<{ allocationId: string; journalEntryId: string | null }> {
+  async allocateCollection(collectionId: string, salesInvoiceId: string, amountRaw: string, installmentNumber: number | null = null): Promise<{ allocationId: string; journalEntryId: string | null }> {
     const db = this.database.db;
     const amount = this.positive(amountRaw);
     const col = (await db.select().from(collection).where(eq(collection.id, collectionId)).limit(1))[0];
@@ -93,7 +93,7 @@ export class AdvanceService {
     if (!inv) throw new FinanceNotFoundError(`sales invoice ${salesInvoiceId} does not exist`);
     if (inv.status !== 'posted') throw new FinanceValidationError(`sales invoice ${inv.invoiceNumber} is "${inv.status}" — only a posted invoice takes an advance`);
     await this.sameCustomer(col.jobOrderReference, inv.customerId, inv.jobOrderReference);
-    const remaining = Number(col.advanceAmount) - sum(await db.select({ v: advanceAllocation.amount }).from(advanceAllocation).where(eq(advanceAllocation.collectionId, col.id)));
+    const remaining = Number(col.advanceAmount) - sum(await db.select({ v: advanceAllocation.amount }).from(advanceAllocation).where(and(eq(advanceAllocation.collectionId, col.id), eq(advanceAllocation.kind, 'advance'))));
     if (amount > remaining + 0.0001) throw new FinanceValidationError(`المتبقي من دفعة ${col.collectionNumber} المقدمة ${remaining.toFixed(4)} بس`);
     const covered = sum(await db.select({ v: advanceAllocation.amount }).from(advanceAllocation).where(eq(advanceAllocation.salesInvoiceId, inv.id)));
     if (amount > Number(inv.grandTotal) - covered + 0.0001) throw new FinanceValidationError(`الفاتورة ${inv.invoiceNumber} متبقي منها ${(Number(inv.grandTotal) - covered).toFixed(4)} بس`);
@@ -113,12 +113,12 @@ export class AdvanceService {
       });
       journalEntryId = (await this.accounting.postEntry(e.id)).id;
     }
-    const row = await db.insert(advanceAllocation).values({ partyType: 'customer', collectionId: col.id, salesInvoiceId: inv.id, amount: amount.toFixed(4), journalEntryId }).returning({ id: advanceAllocation.id });
+    const row = await db.insert(advanceAllocation).values({ partyType: 'customer', collectionId: col.id, salesInvoiceId: inv.id, amount: amount.toFixed(4), journalEntryId, installmentNumber }).returning({ id: advanceAllocation.id });
     return { allocationId: row[0]!.id, journalEntryId };
   }
 
   /** Supplier advance → purchase invoice: Dr payable / Cr advances paid. */
-  async allocatePayment(paymentId: string, purchaseInvoiceId: string, amountRaw: string): Promise<{ allocationId: string; journalEntryId: string | null }> {
+  async allocatePayment(paymentId: string, purchaseInvoiceId: string, amountRaw: string, installmentNumber: number | null = null): Promise<{ allocationId: string; journalEntryId: string | null }> {
     const db = this.database.db;
     const amount = this.positive(amountRaw);
     const p = (await db.select().from(payment).where(eq(payment.id, paymentId)).limit(1))[0];
@@ -127,7 +127,7 @@ export class AdvanceService {
     if (!inv) throw new FinanceNotFoundError(`purchase invoice ${purchaseInvoiceId} does not exist`);
     if (inv.status !== 'posted') throw new FinanceValidationError(`purchase invoice ${inv.systemNumber} is "${inv.status}" — only a posted invoice takes an advance`);
     if (p.supplierId !== inv.supplierId) throw new FinanceValidationError('الدفعة والفاتورة لموردين مختلفين');
-    const remaining = Number(p.advanceAmount) - sum(await db.select({ v: advanceAllocation.amount }).from(advanceAllocation).where(eq(advanceAllocation.paymentId, p.id)));
+    const remaining = Number(p.advanceAmount) - sum(await db.select({ v: advanceAllocation.amount }).from(advanceAllocation).where(and(eq(advanceAllocation.paymentId, p.id), eq(advanceAllocation.kind, 'advance'))));
     if (amount > remaining + 0.0001) throw new FinanceValidationError(`المتبقي من دفعة ${p.paymentNumber} المقدمة ${remaining.toFixed(4)} بس`);
     const paidDirect = sum(await db.select({ v: payment.amount }).from(payment).where(and(eq(payment.purchaseInvoiceId, inv.id), eq(payment.status, 'posted'))));
     const covered = paidDirect + sum(await db.select({ v: advanceAllocation.amount }).from(advanceAllocation).where(eq(advanceAllocation.purchaseInvoiceId, inv.id)));
@@ -148,7 +148,7 @@ export class AdvanceService {
       });
       journalEntryId = (await this.accounting.postEntry(e.id)).id;
     }
-    const row = await db.insert(advanceAllocation).values({ partyType: 'supplier', paymentId: p.id, purchaseInvoiceId: inv.id, amount: amount.toFixed(4), journalEntryId }).returning({ id: advanceAllocation.id });
+    const row = await db.insert(advanceAllocation).values({ partyType: 'supplier', paymentId: p.id, purchaseInvoiceId: inv.id, amount: amount.toFixed(4), journalEntryId, installmentNumber }).returning({ id: advanceAllocation.id });
     return { allocationId: row[0]!.id, journalEntryId };
   }
 
