@@ -3,7 +3,6 @@
 // Step 89 | Resolved NestJS Mock Dependencies | 100% PASS ✅
 // ============================================================
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
 import { CostService } from './cost.service';
 import { CostRepository } from './cost.repository';
 
@@ -14,10 +13,6 @@ import { InventoryRepository } from '../inventory/inventory.repository';
 describe('Manufacturing Costing, Variance & Overhead Allocation Engine', () => {
   let costService: CostService;
 
-  const mockCompanyId = '11111111-1111-1111-1111-111111111111';
-  const mockFiscalYearId = '22222222-2222-2222-2222-222222222222';
-  const mockPeriodId = '33333333-3333-3333-3333-333333333333';
-  const mockUserId = '99999999-9999-9999-9999-999999999999';
   const mockWorkOrderId = 'WO-2026-08112';
 
   const mockDb = {
