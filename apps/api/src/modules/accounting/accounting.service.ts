@@ -808,6 +808,8 @@ export class AccountingService {
     let totalOutputTax = 0;
 
     for (const l of lines) {
+      // A settlement entry closes the VAT accounts; it is not sales or purchases of the period.
+      if (l.sourceEventType === 'vat_settlement') continue;
       if (inputTaxAccountId && l.accountId === inputTaxAccountId) {
         totalInputTax += Number(l.debit) - Number(l.credit);
       }

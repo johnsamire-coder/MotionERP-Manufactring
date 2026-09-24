@@ -66,7 +66,7 @@ import JobCostSheetPage from './pages/JobCostSheetPage';
 import StandardVsActualPage from './pages/StandardVsActualPage';
 import MaterialVariancePage from './pages/MaterialVariancePage';
 import OrderProfitabilityPage from './pages/OrderProfitabilityPage';
-import TaxAndCustomsPage from './pages/TaxAndCustomsPage';
+import TaxCustomsPage from './app/pages/TaxCustomsPage';
 import YearEndClosingPage from './app/pages/YearEndClosingPage';
 import AuditTrailPage from './pages/AuditTrailPage';
 import RbacPermissionsPage from './pages/RbacPermissionsPage';
@@ -265,7 +265,7 @@ export const App: React.FC = () => {
         { id: 'balance-sheet', label: 'الميزانية والأصول الثابتة', icon: Scale },
         { id: 'profit-loss', label: 'قائمة الدخل', icon: TrendingUp },
         { id: 'expenses', label: 'المصروفات على أوامر الشغل', icon: CreditCard },
-        { id: 'tax-customs', label: 'الضرائب والجمارك نموذج 41', icon: Landmark, badge: 'تجريبي' },
+        { id: 'tax-customs', label: 'الضرائب والجمارك نموذج 41', icon: Landmark },
       ],
     },
     {
@@ -494,7 +494,7 @@ export const App: React.FC = () => {
           {currentTab === 'accounting-main' && <AccountingPage />}
           {currentTab === 'payments' && <PaymentEntryPage />}
           {currentTab === 'balance-sheet' && <BalanceSheetPage />}
-          {currentTab === 'tax-customs' && <TaxAndCustomsPage />}
+          {currentTab === 'tax-customs' && <TaxCustomsPage />}
 
           {/* 7. الإقفال والرقابة */}
           {currentTab === 'closing-periods' && <YearEndClosingPage />}

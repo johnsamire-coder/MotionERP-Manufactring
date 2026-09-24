@@ -997,6 +997,7 @@ export class AccountingRepository {
       journalEntryId: string;
       entryNumber: string;
       description: string | null;
+      sourceEventType: string | null;
     }>
   > {
     const rows = await this.database.db
@@ -1014,6 +1015,7 @@ export class AccountingRepository {
         journalEntryId: journalEntry.id,
         entryNumber: journalEntry.entryNumber,
         description: journalLine.description,
+        sourceEventType: journalEntry.sourceEventType,
       })
       .from(journalLine)
       .innerJoin(chartOfAccounts, eq(journalLine.accountId, chartOfAccounts.id))
