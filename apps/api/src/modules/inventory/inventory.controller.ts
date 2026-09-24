@@ -199,6 +199,13 @@ export class InventoryController {
     return { batches: await this.service.getBatches(itemId, orgNodeId) };
   }
 
+  @Get('batches/:id/trace')
+  async traceBatch(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<Awaited<ReturnType<InventoryService['traceBatch']>>> {
+    return this.service.traceBatch(id);
+  }
+
   @Get('batches/:id')
   async batch(@Param('id', ParseUUIDPipe) id: string): Promise<{ batch: ItemBatchRecord }> {
     return { batch: await this.service.getBatch(id) };

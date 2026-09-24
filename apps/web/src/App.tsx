@@ -60,8 +60,7 @@ import { QualityPage } from './app/pages/QualityPage';
 import { StockEntryPage } from './app/pages/StockEntryPage';
 import { ProductionOpsPage } from './app/pages/ProductionOpsPage';
 import { BomCreatorPage } from './app/pages/BomCreatorPage';
-import MedicalTraceabilityPage from './pages/MedicalTraceabilityPage';
-import MedicalRecallPage from './pages/MedicalRecallPage';
+import { BatchTracePage } from './app/pages/BatchTracePage';
 import JobCostSheetPage from './pages/JobCostSheetPage';
 import StandardVsActualPage from './pages/StandardVsActualPage';
 import MaterialVariancePage from './pages/MaterialVariancePage';
@@ -186,12 +185,11 @@ export const App: React.FC = () => {
         { id: 'stock-entries', label: 'أذون وحركات التحويل', icon: PackageCheck },
         { id: 'stock-ledger', label: 'السجل المالي للمخزون', icon: FileSpreadsheet },
         { id: 'stock-reconcile', label: 'الجرد الفعلي والتسويات', icon: Scale },
-        { id: 'medical-trace', label: 'تتبع اللوطات والسيريال', icon: Activity, badge: 'تجريبي' },
+        { id: 'medical-trace', label: 'تتبع اللوطات والسيريال', icon: Activity },
         {
           id: 'medical-recall',
           label: 'غرفة الاستدعاء الطبي',
           icon: AlertOctagon,
-          badge: 'تجريبي',
         },
         { id: 'material-issues', label: 'صرف الخامات للإنتاج', icon: PackageSearch },
       ],
@@ -449,8 +447,8 @@ export const App: React.FC = () => {
           {currentTab === 'stock-entries' && <StockEntryPage />}
           {currentTab === 'stock-ledger' && <StockLedgerPage />}
           {currentTab === 'stock-reconcile' && <StockReconciliationPage />}
-          {currentTab === 'medical-trace' && <MedicalTraceabilityPage />}
-          {currentTab === 'medical-recall' && <MedicalRecallPage />}
+          {currentTab === 'medical-trace' && <BatchTracePage mode="trace" />}
+          {currentTab === 'medical-recall' && <BatchTracePage mode="recall" />}
 
           {/* 3. التخطيط والتصنيع */}
           {currentTab === 'mfg-dashboard' && <ManufacturingPage />}

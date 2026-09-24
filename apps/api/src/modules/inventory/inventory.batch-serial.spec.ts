@@ -108,6 +108,15 @@ describe('InventoryService — Medical Batch, Lot & Serial Tracking', () => {
           }
           return s;
         }),
+      listMovementsByBatch: jest.fn().mockImplementation(async (batchId: string) => [
+        { id: 'mv-1', batchId, movementType: 'receipt', quantity: '10.000000' },
+        { id: 'mv-2', batchId, movementType: 'issue', quantity: '4.000000' },
+      ]),
+      listBatchBalances: jest
+        .fn()
+        .mockImplementation(async (_i?: string, _w?: string, batchId?: string) => [
+          { id: 'bb-1', batchId, warehouseId: mockWarehouseId, quantity: '6.000000' },
+        ]),
     } as unknown as InventoryRepository;
 
     inventoryService = new InventoryService(inventoryRepo);
@@ -201,5 +210,27 @@ describe('InventoryService — Medical Batch, Lot & Serial Tracking', () => {
 
     expect(delivered.status).toBe('delivered');
     expect(delivered.deliveryOrderId).toBe('dn-hospital-001');
+  });
+
+  it('6. Batch Trace: returns the batch with its movements, balances and serials (recall scope)', async () => {
+    const batch = await inventoryService.createBatch({
+      batchNumber: 'LOT-TRACE-1',
+      itemId: mockFgItemId,
+      orgNodeId: mockOrgNodeId,
+    });
+    await inventoryService.createSerialNumber({
+      serialNo: 'SN-TRACE-1',
+      itemId: mockFgItemId,
+      orgNodeId: mockOrgNodeId,
+      batchId: batch.id,
+    });
+
+    const trace = await inventoryService.traceBatch(batch.id);
+
+    expect(trace.batch.batchNumber).toBe('LOT-TRACE-1');
+    expect(trace.movements.map((m) => m.id)).toEqual(['mv-1', 'mv-2']);
+    expect(trace.balances[0]?.quantity).toBe('6.000000');
+    expect(trace.serials.map((s) => s.serialNo)).toEqual(['SN-TRACE-1']);
+    expect(inventoryRepo.listMovementsByBatch).toHaveBeenCalledWith(batch.id);
   });
 });

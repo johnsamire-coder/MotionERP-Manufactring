@@ -814,6 +814,25 @@ export class InventoryService {
     return this.repository.listBatches(itemId, orgNodeId);
   }
 
+  /**
+   * Traceability of one batch: where it came from, where every unit went (movements with their
+   * source document), what is left per warehouse, and its serial numbers. Used for recalls.
+   */
+  async traceBatch(id: string): Promise<{
+    batch: ItemBatchRecord;
+    movements: StockMovementRecord[];
+    balances: BatchBalanceRecord[];
+    serials: SerialNumberRecord[];
+  }> {
+    const batch = await this.getBatch(id);
+    const [movements, balances, serials] = await Promise.all([
+      this.repository.listMovementsByBatch(id),
+      this.getBatchBalances(undefined, undefined, id),
+      this.getSerials(undefined, undefined, id),
+    ]);
+    return { batch, movements, balances, serials };
+  }
+
   async getBatch(id: string): Promise<ItemBatchRecord> {
     const batch = await this.repository.findBatchById(id);
     if (!batch) throw new InventoryNotFoundError(`item batch ${id} does not exist`);

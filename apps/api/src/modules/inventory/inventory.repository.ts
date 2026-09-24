@@ -475,6 +475,31 @@ export class InventoryRepository {
     };
   }
 
+  /** Every movement of one batch, oldest first (plan item 2a traceability / recall). */
+  async listMovementsByBatch(batchId: string): Promise<StockMovementRecord[]> {
+    const rows = await this.database.db
+      .select(movementColumns)
+      .from(stockMovement)
+      .where(eq(stockMovement.batchId, batchId))
+      .orderBy(asc(stockMovement.movementDate), asc(stockMovement.createdAt));
+    return rows.map((r) => ({
+      id: r.id,
+      itemId: r.itemId,
+      warehouseId: r.warehouseId,
+      movementType: r.movementType as MovementType,
+      purpose: r.purpose as MovementPurpose,
+      quantity: r.quantity,
+      movementDate: r.movementDate.toISOString(),
+      note: r.note,
+      createdAt: r.createdAt.toISOString(),
+      unitCost: r.unitCost,
+      totalValue: r.totalValue,
+      sourceModule: r.sourceModule,
+      sourceId: r.sourceId,
+      batchId: r.batchId,
+    }));
+  }
+
   async listMovements(): Promise<StockMovementRecord[]> {
     const rows = await this.database.db
       .select(movementColumns)
