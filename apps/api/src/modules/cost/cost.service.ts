@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, Optional } from '@nestjs/common';
 import { SalesService } from '../sales/sales.service';
 import { InventoryRepository } from '../inventory/inventory.repository';
+import { AccountingService } from '../accounting/accounting.service';
+import { postManualJournal } from '../accounting/manual-journal';
 import type { JobOrderRecord } from '../sales/sales.types';
 import { CostNotFoundError, CostValidationError } from './cost.errors';
 import { CostRepository } from './cost.repository';
@@ -28,6 +30,7 @@ export class CostService {
     private readonly repo: CostRepository,
     private readonly salesService: SalesService,
     @Optional() private readonly inventoryRepo?: InventoryRepository,
+    @Optional() private readonly accounting?: AccountingService,
   ) {}
 
   /* --- Component Types --- */
@@ -261,6 +264,26 @@ export class CostService {
 
     await this.repo.deleteResultsByPolicy(policyId);
 
+    // Posting (when the policy names its applied-overhead account): Dr WIP / Cr applied overhead,
+    // checked before anything is written so a failed run leaves the pool as it was.
+    let posting: { orgNodeId: string; wipAccountId: string; appliedAccountId: string } | null =
+      null;
+    if (policy.appliedAccountId) {
+      const orgNodeId = pool.orgNodeId ?? policy.orgNodeId;
+      if (!orgNodeId || !this.accounting)
+        throw new CostValidationError('the pool has no company to post the allocation to');
+      const config = await this.accounting.getCompanyConfig(orgNodeId);
+      if (!config?.defaultWipAccountId)
+        throw new CostValidationError(
+          'حدّد حساب "إنتاج تحت التشغيل" في إعدادات الشركة المحاسبية عشان توزيع الأعباء يترحّل',
+        );
+      posting = {
+        orgNodeId,
+        wipAccountId: config.defaultWipAccountId,
+        appliedAccountId: policy.appliedAccountId,
+      };
+    }
+
     const results: AllocationResultRecord[] = [];
     for (const wo of baseData) {
       const allocated = wo.quantity * rate;
@@ -278,6 +301,24 @@ export class CostService {
       results.push(r);
     }
 
+    let journalEntryId: string | null = null;
+    if (posting) {
+      const journal = await postManualJournal(this.accounting!, {
+        orgNodeId: posting.orgNodeId,
+        entryDate: new Date(pool.periodEnd).toISOString(),
+        description: `تحميل أعباء صناعية: ${pool.name} (${policy.name})`,
+        reference: policy.code,
+        sourceEventType: 'overhead_allocation',
+        idempotencyKey: `overhead-${policy.id}-${pool.id}`,
+        lines: [
+          { accountId: posting.wipAccountId, debit: amountToAllocate, credit: 0 },
+          { accountId: posting.appliedAccountId, debit: 0, credit: amountToAllocate },
+        ],
+      });
+      journalEntryId = journal.id;
+      await this.repo.setPolicyJournal(policy.id, journal.id);
+    }
+
     await this.repo.setPoolStatus(pool.id, 'allocated');
 
     return {
@@ -292,6 +333,7 @@ export class CostService {
       baseRate: rate.toFixed(6),
       workOrdersAffected: results.length,
       results,
+      journalEntryId,
     };
   }
 

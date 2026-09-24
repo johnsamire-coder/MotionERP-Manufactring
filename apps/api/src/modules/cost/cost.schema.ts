@@ -159,6 +159,10 @@ export const allocationPolicy = costSchema.table(
       onUpdate: 'cascade',
       onDelete: 'restrict',
     }),
+    /** Applied-overhead account credited when the allocation is posted (Dr WIP). Accounting UUID. */
+    appliedAccountId: uuid('applied_account_id'),
+    /** The journal entry of the last posted run. */
+    journalEntryId: uuid('journal_entry_id'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

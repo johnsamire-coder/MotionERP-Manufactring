@@ -161,6 +161,7 @@ export class CostController {
         allocationBase: dto.allocationBase as AllocationBase,
         percentage: dto.percentage,
         orgNodeId: dto.orgNodeId,
+        appliedAccountId: dto.appliedAccountId,
       }),
     };
   }

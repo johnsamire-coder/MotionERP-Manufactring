@@ -84,6 +84,8 @@ const policyCols = {
   percentage: allocationPolicy.percentage,
   isActive: allocationPolicy.isActive,
   orgNodeId: allocationPolicy.orgNodeId,
+  appliedAccountId: allocationPolicy.appliedAccountId,
+  journalEntryId: allocationPolicy.journalEntryId,
 };
 const resultCols = {
   id: allocationResult.id,
@@ -164,6 +166,8 @@ const toPolicy = (
   percentage: String(r.percentage),
   isActive: r.isActive,
   orgNodeId: r.orgNodeId,
+  appliedAccountId: r.appliedAccountId,
+  journalEntryId: r.journalEntryId,
 });
 const toResult = (
   r: Pick<typeof allocationResult.$inferSelect, keyof typeof resultCols>,
@@ -344,6 +348,12 @@ export class CostRepository {
       .where(eq(overheadPoolEntry.poolId, poolId));
     return rows.map(toPoolEntry);
   }
+  async setPolicyJournal(policyId: string, journalEntryId: string): Promise<void> {
+    await this.db.db
+      .update(allocationPolicy)
+      .set({ journalEntryId, updatedAt: new Date() })
+      .where(eq(allocationPolicy.id, policyId));
+  }
   async getPoolTotal(poolId: string): Promise<number> {
     const r = await this.db.db.execute(
       sql`SELECT COALESCE(SUM(amount::numeric), 0) as total FROM cost.overhead_pool_entry WHERE pool_id = ${poolId}`,
@@ -383,6 +393,7 @@ export class CostRepository {
         allocationBase: input.allocationBase,
         percentage: input.percentage ?? '100',
         orgNodeId: input.orgNodeId,
+        appliedAccountId: input.appliedAccountId ?? null,
       })
       .returning(policyCols);
     return toPolicy(rows[0]!);

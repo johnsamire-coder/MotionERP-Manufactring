@@ -118,6 +118,8 @@ export interface AllocationPolicyRecord {
   percentage: string;
   isActive: string;
   orgNodeId: string | null;
+  appliedAccountId: string | null;
+  journalEntryId: string | null;
 }
 export interface CreateAllocationPolicyInput {
   code: string;
@@ -126,6 +128,7 @@ export interface CreateAllocationPolicyInput {
   allocationBase: AllocationBase;
   percentage?: string;
   orgNodeId: string;
+  appliedAccountId?: string;
 }
 
 export interface AllocationResultRecord {
@@ -153,4 +156,6 @@ export interface AllocationExecutionSummary {
   baseRate: string;
   workOrdersAffected: number;
   results: AllocationResultRecord[];
+  /** Posted journal (Dr WIP / Cr applied overhead) when the policy has an applied account. */
+  journalEntryId: string | null;
 }

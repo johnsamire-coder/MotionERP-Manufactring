@@ -69,6 +69,8 @@ export class CreateAllocationPolicyDto {
   allocationBase!: string;
   @IsOptional() @IsNumberString() percentage?: string;
   @IsUUID() orgNodeId!: string;
+  /** Applied-overhead account credited when the allocation is posted against WIP. */
+  @IsOptional() @IsUUID() appliedAccountId?: string;
 }
 
 export class ExecuteAllocationDto {

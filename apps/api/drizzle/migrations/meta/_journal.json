@@ -743,6 +743,13 @@
       "when": 1790287688171,
       "tag": "0105_tax_customs_posting_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1790288073547,
+      "tag": "0106_overhead_allocation_posting",
+      "breakpoints": true
     }
   ]
 }
