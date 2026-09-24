@@ -7,17 +7,26 @@ import { AuthenticationGuard } from './guards/authentication.guard';
 import type { UserRecord } from './auth.types';
 
 describe('Authentication (plan item 5.0)', () => {
-  const activeUser: UserRecord = { id: 'u-1', username: 'ahmed', roleId: 'r-1', employeeReference: null, status: 'active' };
+  const activeUser: UserRecord = {
+    id: 'u-1',
+    username: 'ahmed',
+    roleId: 'r-1',
+    employeeReference: null,
+    status: 'active',
+  };
   let users: Map<string, UserRecord>;
   let enforce: boolean;
   let tokens: AuthTokenService;
   let guard: AuthenticationGuard;
 
-  const config = () => ({
-    authJwtSecret: 'x'.repeat(40),
-    authTokenTtlSeconds: 3600,
-    get authEnforce() { return enforce; },
-  }) as unknown as AppConfigService;
+  const config = () =>
+    ({
+      authJwtSecret: 'x'.repeat(40),
+      authTokenTtlSeconds: 3600,
+      get authEnforce() {
+        return enforce;
+      },
+    }) as unknown as AppConfigService;
 
   const context = (headers: Record<string, string>, isPublic = false) => {
     const request: { headers: Record<string, string>; user?: unknown } = { headers };
@@ -37,7 +46,12 @@ describe('Authentication (plan item 5.0)', () => {
     users = new Map([[activeUser.id, { ...activeUser }]]);
     const repo = {
       findUserById: jest.fn().mockImplementation(async (id: string) => users.get(id) ?? null),
-      findRoleById: jest.fn().mockResolvedValue({ id: 'r-1', code: 'STORE_KEEPER', name: 'Store keeper', status: 'active' }),
+      findRoleById: jest.fn().mockResolvedValue({
+        id: 'r-1',
+        code: 'STORE_KEEPER',
+        name: 'Store keeper',
+        status: 'active',
+      }),
     } as unknown as AuthRepository;
     const cfg = config();
     tokens = new AuthTokenService(cfg, repo);
@@ -48,7 +62,12 @@ describe('Authentication (plan item 5.0)', () => {
     const token = await tokens.issue(activeUser);
     const { ctx, request } = context({ authorization: `Bearer ${token}` });
     await expect(guard.canActivate(ctx)).resolves.toBe(true);
-    expect(request.user).toMatchObject({ id: 'u-1', name: 'ahmed', role: 'STORE_KEEPER', roles: ['STORE_KEEPER'] });
+    expect(request.user).toMatchObject({
+      id: 'u-1',
+      name: 'ahmed',
+      role: 'STORE_KEEPER',
+      roles: ['STORE_KEEPER'],
+    });
   });
 
   it('2. no token passes while AUTH_ENFORCE is off (current behaviour) and is rejected once it is on', async () => {
@@ -71,13 +90,23 @@ describe('Authentication (plan item 5.0)', () => {
   it('5. a deactivated user is locked out immediately, even with an unexpired token', async () => {
     const token = await tokens.issue(activeUser);
     users.get('u-1')!.status = 'inactive';
-    await expect(guard.canActivate(context({ authorization: `Bearer ${token}` }).ctx)).rejects.toThrow(/غير نشط/);
+    await expect(
+      guard.canActivate(context({ authorization: `Bearer ${token}` }).ctx),
+    ).rejects.toThrow(/غير نشط/);
   });
 
   it('6. a token signed with another secret is rejected', async () => {
-    const otherRepo = { findUserById: jest.fn(), findRoleById: jest.fn() } as unknown as AuthRepository;
-    const other = new AuthTokenService({ ...config(), authJwtSecret: 'y'.repeat(40) } as unknown as AppConfigService, otherRepo);
+    const otherRepo = {
+      findUserById: jest.fn(),
+      findRoleById: jest.fn(),
+    } as unknown as AuthRepository;
+    const other = new AuthTokenService(
+      { ...config(), authJwtSecret: 'y'.repeat(40) } as unknown as AppConfigService,
+      otherRepo,
+    );
     const forged = await other.issue(activeUser);
-    await expect(guard.canActivate(context({ authorization: `Bearer ${forged}` }).ctx)).rejects.toThrow(UnauthorizedException);
+    await expect(
+      guard.canActivate(context({ authorization: `Bearer ${forged}` }).ctx),
+    ).rejects.toThrow(UnauthorizedException);
   });
 });

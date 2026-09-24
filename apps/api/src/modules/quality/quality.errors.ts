@@ -1,6 +1,12 @@
 export class QualityNotFoundError extends Error {
-  constructor(message: string) { super(message); this.name = "QualityNotFoundError"; }
+  constructor(message: string) {
+    super(message);
+    this.name = 'QualityNotFoundError';
+  }
 }
 export class QualityValidationError extends Error {
-  constructor(message: string) { super(message); this.name = "QualityValidationError"; }
+  constructor(message: string) {
+    super(message);
+    this.name = 'QualityValidationError';
+  }
 }

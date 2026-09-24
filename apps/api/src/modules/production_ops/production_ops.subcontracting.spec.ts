@@ -64,14 +64,16 @@ describe('ProductionOpsService — Subcontracting & Outsourced Operations Engine
       findSubcontractingOrderById: jest.fn().mockImplementation(async (id: string) => {
         return mockOrders.get(id) ?? null;
       }),
-      setSubcontractingOrderStatus: jest.fn().mockImplementation(async (id: string, status: any) => {
-        const o = mockOrders.get(id);
-        if (o) {
-          o.status = status;
-          o.updatedAt = new Date().toISOString();
-        }
-        return o;
-      }),
+      setSubcontractingOrderStatus: jest
+        .fn()
+        .mockImplementation(async (id: string, status: any) => {
+          const o = mockOrders.get(id);
+          if (o) {
+            o.status = status;
+            o.updatedAt = new Date().toISOString();
+          }
+          return o;
+        }),
     } as unknown as ProductionOpsRepository;
 
     salesService = {} as unknown as SalesService;

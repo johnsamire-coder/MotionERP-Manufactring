@@ -12,9 +12,13 @@ describe('Company default accounts (plan item 33)', () => {
   it('2. missing, wrong company, parent, inactive, wrong role are all reported', () => {
     expect(checkDefaultAccount(ar, 'co', null, null, null)).toBe('مش متحدد');
     expect(checkDefaultAccount(ar, 'co', null, null, 'x')).toMatch(/مش موجود/);
-    expect(checkDefaultAccount(ar, 'co', { ...acc, orgNodeId: 'other' }, null, 'x')).toMatch(/شركة تانية/);
+    expect(checkDefaultAccount(ar, 'co', { ...acc, orgNodeId: 'other' }, null, 'x')).toMatch(
+      /شركة تانية/,
+    );
     expect(checkDefaultAccount(ar, 'co', { ...acc, isLeaf: false }, null, 'x')).toMatch(/حساب أب/);
-    expect(checkDefaultAccount(ar, 'co', { ...acc, status: 'inactive' }, null, 'x')).toMatch(/موقوف/);
+    expect(checkDefaultAccount(ar, 'co', { ...acc, status: 'inactive' }, null, 'x')).toMatch(
+      /موقوف/,
+    );
     expect(checkDefaultAccount(ar, 'co', acc, 'payable', 'x')).toMatch(/المتوقع receivable/);
   });
 

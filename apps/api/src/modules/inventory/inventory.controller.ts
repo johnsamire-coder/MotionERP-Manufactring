@@ -115,7 +115,9 @@ export class InventoryController {
 
   @Post('reservations')
   @HttpCode(201)
-  async createReservation(@Body() dto: CreateReservationDto): Promise<{ reservation: StockReservationRecord }> {
+  async createReservation(
+    @Body() dto: CreateReservationDto,
+  ): Promise<{ reservation: StockReservationRecord }> {
     const created = await this.service.reserveStock({
       itemId: dto.itemId,
       warehouseId: dto.warehouseId,
@@ -128,13 +130,18 @@ export class InventoryController {
 
   /** Per item/warehouse Bin: actual, the seven reservation / request types, available and projected (plan item 13). */
   @Get('bins')
-  async bins(@Query('itemId') itemId?: string, @Query('warehouseId') warehouseId?: string): Promise<{ bins: StockBinRecord[] }> {
+  async bins(
+    @Query('itemId') itemId?: string,
+    @Query('warehouseId') warehouseId?: string,
+  ): Promise<{ bins: StockBinRecord[] }> {
     return { bins: await this.service.getBins(itemId, warehouseId) };
   }
 
   @Post('reservations/:id/release')
   @HttpCode(200)
-  async releaseReservation(@Param('id') id: string): Promise<{ reservation: StockReservationRecord }> {
+  async releaseReservation(
+    @Param('id') id: string,
+  ): Promise<{ reservation: StockReservationRecord }> {
     return { reservation: await this.service.releaseReservation(id) };
   }
 
@@ -169,7 +176,9 @@ export class InventoryController {
   }
 
   @Get('serials/:id/movements')
-  async serialMovements(@Param('id', ParseUUIDPipe) id: string): Promise<{ movements: StockMovementRecord[] }> {
+  async serialMovements(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ movements: StockMovementRecord[] }> {
     return { movements: await this.service.getSerialMovements(id) };
   }
 
@@ -233,7 +242,9 @@ export class InventoryController {
 
   @Post('serials/bulk')
   @HttpCode(201)
-  async createSerialsBulk(@Body() dto: CreateBulkSerialsDto): Promise<{ serials: SerialNumberRecord[] }> {
+  async createSerialsBulk(
+    @Body() dto: CreateBulkSerialsDto,
+  ): Promise<{ serials: SerialNumberRecord[] }> {
     return {
       serials: await this.service.createSerialNumbersBulk(
         dto.itemId,
@@ -251,7 +262,14 @@ export class InventoryController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateSerialStatusDto,
   ): Promise<{ serial: SerialNumberRecord }> {
-    return { serial: await this.service.setSerialStatus(id, dto.status, dto.warehouseId, dto.deliveryOrderId) };
+    return {
+      serial: await this.service.setSerialStatus(
+        id,
+        dto.status,
+        dto.warehouseId,
+        dto.deliveryOrderId,
+      ),
+    };
   }
 
   // --- Stock Reconciliation Endpoint ---
@@ -263,31 +281,41 @@ export class InventoryController {
 
   // --- Landed Cost Voucher Endpoints ---
   @Get('landed-cost-vouchers')
-  async landedCostVouchers(@Query('orgNodeId') orgNodeId?: string): Promise<{ landedCostVouchers: LandedCostVoucherRecord[] }> {
+  async landedCostVouchers(
+    @Query('orgNodeId') orgNodeId?: string,
+  ): Promise<{ landedCostVouchers: LandedCostVoucherRecord[] }> {
     return { landedCostVouchers: await this.service.getLandedCostVouchers(orgNodeId) };
   }
 
   @Get('landed-cost-vouchers/:id')
-  async landedCostVoucher(@Param('id', ParseUUIDPipe) id: string): Promise<{ landedCostVoucher: LandedCostVoucherRecord }> {
+  async landedCostVoucher(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ landedCostVoucher: LandedCostVoucherRecord }> {
     return { landedCostVoucher: await this.service.getLandedCostVoucher(id) };
   }
 
   @Post('landed-cost-vouchers')
   @HttpCode(201)
-  async createLandedCostVoucher(@Body() dto: CreateLandedCostVoucherDto): Promise<{ landedCostVoucher: LandedCostVoucherRecord }> {
+  async createLandedCostVoucher(
+    @Body() dto: CreateLandedCostVoucherDto,
+  ): Promise<{ landedCostVoucher: LandedCostVoucherRecord }> {
     const created = await this.service.createLandedCostVoucher(dto);
     return { landedCostVoucher: created };
   }
 
   @Post('landed-cost-vouchers/:id/post')
   @HttpCode(200)
-  async postLandedCostVoucher(@Param('id', ParseUUIDPipe) id: string): Promise<{ landedCostVoucher: LandedCostVoucherRecord }> {
+  async postLandedCostVoucher(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ landedCostVoucher: LandedCostVoucherRecord }> {
     return { landedCostVoucher: await this.service.postLandedCostVoucher(id) };
   }
 
   @Post('landed-cost-vouchers/:id/cancel')
   @HttpCode(200)
-  async cancelLandedCostVoucher(@Param('id', ParseUUIDPipe) id: string): Promise<{ landedCostVoucher: LandedCostVoucherRecord }> {
+  async cancelLandedCostVoucher(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ landedCostVoucher: LandedCostVoucherRecord }> {
     return { landedCostVoucher: await this.service.cancelLandedCostVoucher(id) };
   }
 }

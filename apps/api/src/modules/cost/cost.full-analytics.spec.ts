@@ -16,11 +16,11 @@ describe('Manufacturing Costing, Variance & Overhead Allocation Engine', () => {
   let costService: CostService;
   let overheadService: OverheadService;
 
-  const mockCompanyId    = '11111111-1111-1111-1111-111111111111';
+  const mockCompanyId = '11111111-1111-1111-1111-111111111111';
   const mockFiscalYearId = '22222222-2222-2222-2222-222222222222';
-  const mockPeriodId     = '33333333-3333-3333-3333-333333333333';
-  const mockUserId       = '99999999-9999-9999-9999-999999999999';
-  const mockWorkOrderId  = 'WO-2026-08112';
+  const mockPeriodId = '33333333-3333-3333-3333-333333333333';
+  const mockUserId = '99999999-9999-9999-9999-999999999999';
+  const mockWorkOrderId = 'WO-2026-08112';
 
   const mockDb = {
     select: jest.fn().mockReturnValue({
@@ -97,7 +97,7 @@ describe('Manufacturing Costing, Variance & Overhead Allocation Engine', () => {
     expect(varianceResult).toBeDefined();
     expect(varianceResult.totalStandardCost).toBe(311802.5);
     expect(varianceResult.totalActualCost).toBe(326720);
-    
+
     expect(varianceResult.netVariance).toBeCloseTo(311802.5 - 326720, 2);
     expect(varianceResult.isUnfavorable).toBe(true);
   });
@@ -161,8 +161,8 @@ describe('Manufacturing Costing, Variance & Overhead Allocation Engine', () => {
     expect(parseFloat(elecPool!.calculatedRate)).toBeCloseTo(85000 / 460, 2);
 
     expect(allocationRun.journalEntry.lines).toHaveLength(2);
-    expect(allocationRun.journalEntry.lines[0].debit).toBe(195000);
-    expect(allocationRun.journalEntry.lines[1].credit).toBe(195000);
+    expect(allocationRun.journalEntry.lines![0]!.debit).toBe(195000);
+    expect(allocationRun.journalEntry.lines![1]!.credit).toBe(195000);
   });
 
   // ────────────────────────────────────────────
@@ -182,8 +182,8 @@ describe('Manufacturing Costing, Variance & Overhead Allocation Engine', () => {
 
     expect(deprResult.status).toBe('integrated_to_overhead');
     expect(deprResult.integratedAmount).toBe(65000);
-    expect(deprResult.journalEntry.lines[0].debit).toBe(65000);
-    expect(deprResult.journalEntry.lines[1].credit).toBe(65000);
+    expect(deprResult.journalEntry.lines![0]!.debit).toBe(65000);
+    expect(deprResult.journalEntry.lines![1]!.credit).toBe(65000);
 
     await expect(
       overheadService.integrateMachineryDepreciation(

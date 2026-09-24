@@ -10,11 +10,7 @@ import {
   Printer,
   Download,
   Search,
-  Filter,
-  BarChart3,
-  PieChart,
   ArrowUpRight,
-  ArrowDownRight,
   Package,
 } from 'lucide-react';
 
@@ -166,7 +162,9 @@ export const OrderProfitabilityPage: React.FC = () => {
             <TrendingUp className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">لوحة ربحية أوامر الشغل وهوامش المبيعات (Order Profitability)</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              لوحة ربحية أوامر الشغل وهوامش المبيعات (Order Profitability)
+            </h1>
             <p className="text-sm text-slate-500">
               تحليل الربح الفعلي لكل أمر شغل بعد استبعاد تكلفة الصاج والعمالة والـ Overhead
             </p>
@@ -190,34 +188,46 @@ export const OrderProfitabilityPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500 uppercase">إجمالي إيرادات المبيعات</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase">
+              إجمالي إيرادات المبيعات
+            </p>
             <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mt-2">{totalRevenue.toLocaleString()} ج.م</h3>
+          <h3 className="text-2xl font-bold text-slate-900 mt-2">
+            {totalRevenue.toLocaleString()} ج.م
+          </h3>
           <span className="text-xs text-blue-600 font-medium">صافي الفواتير الصادرة للعملاء</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500 uppercase">إجمالي التكلفة الصناعية الفعلية</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase">
+              إجمالي التكلفة الصناعية الفعلية
+            </p>
             <div className="p-2.5 bg-slate-100 text-slate-600 rounded-xl">
               <Package className="w-5 h-5" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mt-2">{totalActualCost.toLocaleString()} ج.م</h3>
+          <h3 className="text-2xl font-bold text-slate-900 mt-2">
+            {totalActualCost.toLocaleString()} ج.م
+          </h3>
           <span className="text-xs text-slate-500 font-medium">خامات + تشغيل ماكينات + OH</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500 uppercase">إجمالي الأرباح الصناعية المحققة</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase">
+              إجمالي الأرباح الصناعية المحققة
+            </p>
             <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-emerald-700 mt-2">+{totalNetProfit.toLocaleString()} ج.م</h3>
+          <h3 className="text-2xl font-bold text-emerald-700 mt-2">
+            +{totalNetProfit.toLocaleString()} ج.م
+          </h3>
           <span className="text-xs text-emerald-600 font-medium">صافي العائد بعد كل المصروفات</span>
         </div>
 
@@ -228,7 +238,9 @@ export const OrderProfitabilityPage: React.FC = () => {
               <Percent className="w-5 h-5" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-purple-700 mt-2">{overallMarginPct.toFixed(1)}%</h3>
+          <h3 className="text-2xl font-bold text-purple-700 mt-2">
+            {overallMarginPct.toFixed(1)}%
+          </h3>
           <span className="text-xs text-purple-600 font-medium">المستهدف المعياري: 25.0%</span>
         </div>
       </div>
@@ -248,7 +260,9 @@ export const OrderProfitabilityPage: React.FC = () => {
             <button
               onClick={() => setStatusFilter('high_profit')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                statusFilter === 'high_profit' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'
+                statusFilter === 'high_profit'
+                  ? 'bg-white text-emerald-700 shadow-sm'
+                  : 'text-slate-600'
               }`}
             >
               ربحية عالية ({orders.filter((o) => o.status === 'high_profit').length})
@@ -256,7 +270,9 @@ export const OrderProfitabilityPage: React.FC = () => {
             <button
               onClick={() => setStatusFilter('low_margin')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                statusFilter === 'low_margin' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600'
+                statusFilter === 'low_margin'
+                  ? 'bg-white text-amber-700 shadow-sm'
+                  : 'text-slate-600'
               }`}
             >
               هوامش منخفضة ({orders.filter((o) => o.status === 'low_margin').length})
@@ -295,7 +311,9 @@ export const OrderProfitabilityPage: React.FC = () => {
                 <tr key={o.id} className="hover:bg-slate-50/80 transition">
                   <td className="p-4">
                     <p className="font-mono font-bold text-slate-900">{o.workOrderNumber}</p>
-                    <p className="font-mono text-xs text-slate-400 mt-0.5">{o.salesInvoiceNumber}</p>
+                    <p className="font-mono text-xs text-slate-400 mt-0.5">
+                      {o.salesInvoiceNumber}
+                    </p>
                   </td>
                   <td className="p-4 font-semibold text-slate-800">
                     <div className="flex items-center gap-1.5">
@@ -305,14 +323,26 @@ export const OrderProfitabilityPage: React.FC = () => {
                   </td>
                   <td className="p-4">
                     <p className="font-medium text-slate-900">{o.productName}</p>
-                    <span className="text-xs text-slate-500 font-mono font-bold">{o.quantity} وحدة</span>
+                    <span className="text-xs text-slate-500 font-mono font-bold">
+                      {o.quantity} وحدة
+                    </span>
                   </td>
-                  <td className="p-4 font-mono font-bold text-slate-900">{o.revenueEgp.toLocaleString()} ج.م</td>
-                  <td className="p-4 font-mono text-slate-600">{o.totalActualCost.toLocaleString()} ج.م</td>
-                  <td className="p-4 font-mono font-bold text-emerald-700">+{o.netProfitEgp.toLocaleString()} ج.م</td>
+                  <td className="p-4 font-mono font-bold text-slate-900">
+                    {o.revenueEgp.toLocaleString()} ج.م
+                  </td>
+                  <td className="p-4 font-mono text-slate-600">
+                    {o.totalActualCost.toLocaleString()} ج.م
+                  </td>
+                  <td className="p-4 font-mono font-bold text-emerald-700">
+                    +{o.netProfitEgp.toLocaleString()} ج.م
+                  </td>
                   <td className="p-4 text-center">
-                    <div className="font-bold text-slate-900 font-mono">{o.netMarginPct.toFixed(1)}%</div>
-                    <div className="text-[11px] text-slate-400 font-mono">مستهدف: {o.targetMarginPct.toFixed(1)}%</div>
+                    <div className="font-bold text-slate-900 font-mono">
+                      {o.netMarginPct.toFixed(1)}%
+                    </div>
+                    <div className="text-[11px] text-slate-400 font-mono">
+                      مستهدف: {o.targetMarginPct.toFixed(1)}%
+                    </div>
                   </td>
                   <td className="p-4">{getStatusBadge(o.status, o.netMarginPct)}</td>
                 </tr>

@@ -1,15 +1,33 @@
 export type RfqStatus = 'draft' | 'sent' | 'closed' | 'cancelled';
 export type RfqSupplierStatus = 'pending' | 'received' | 'declined';
 
-export interface RfqLineRecord { id: string; itemId: string; quantity: string; lineNumber: number; }
+export interface RfqLineRecord {
+  id: string;
+  itemId: string;
+  quantity: string;
+  lineNumber: number;
+}
 export interface RfqSupplierRecord {
-  id: string; supplierId: string; status: RfqSupplierStatus; quotationId: string | null; respondedAt: string | null;
+  id: string;
+  supplierId: string;
+  status: RfqSupplierStatus;
+  quotationId: string | null;
+  respondedAt: string | null;
 }
 export interface RfqRecord {
-  id: string; rfqNumber: string; orgNodeId: string | null; rfqDate: string; respondBy: string | null;
-  status: RfqStatus; materialRequestReference: string | null; awardedSupplierId: string | null; note: string | null;
-  createdAt: string; updatedAt: string;
-  lines: RfqLineRecord[]; suppliers: RfqSupplierRecord[];
+  id: string;
+  rfqNumber: string;
+  orgNodeId: string | null;
+  rfqDate: string;
+  respondBy: string | null;
+  status: RfqStatus;
+  materialRequestReference: string | null;
+  awardedSupplierId: string | null;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+  lines: RfqLineRecord[];
+  suppliers: RfqSupplierRecord[];
 }
 
 export interface CreateRfqInput {
@@ -30,7 +48,12 @@ export interface RecordRfqResponseInput {
 
 export interface RfqComparison {
   rfqId: string;
-  suppliers: Array<{ supplierId: string; status: RfqSupplierStatus; quotationId: string | null; total: string | null }>;
+  suppliers: Array<{
+    supplierId: string;
+    status: RfqSupplierStatus;
+    quotationId: string | null;
+    total: string | null;
+  }>;
   lines: Array<{
     itemId: string;
     quantity: string;

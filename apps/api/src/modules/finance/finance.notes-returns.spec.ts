@@ -4,14 +4,10 @@ import { SalesService } from '../sales/sales.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { AccountingRepository } from '../accounting/accounting.repository';
 import { FinanceValidationError } from './finance.errors';
-import type {
-  CreditDebitNoteRecord,
-  CreateCreditDebitNoteInput,
-} from './finance.types';
+import type { CreditDebitNoteRecord, CreateCreditDebitNoteInput } from './finance.types';
 import type {
   CompanyAccountingConfigRecord,
   AccountDeterminationRecord,
-  JournalEntryRecord,
 } from '../accounting/accounting.types';
 
 describe('FinanceService — Credit Notes, Debit Notes & Returns Accounting Engine', () => {
@@ -95,12 +91,36 @@ describe('FinanceService — Credit Notes, Debit Notes & Returns Accounting Engi
         defaultInputTaxAccountId: mockInputTaxAccountId,
       } as CompanyAccountingConfigRecord),
       listAccountDeterminations: jest.fn().mockResolvedValue([
-        { orgNodeId: mockOrgNodeId, accountPurpose: 'receivable', accountId: mockArAccountId } as AccountDeterminationRecord,
-        { orgNodeId: mockOrgNodeId, accountPurpose: 'revenue', accountId: mockRevenueAccountId } as AccountDeterminationRecord,
-        { orgNodeId: mockOrgNodeId, accountPurpose: 'output_tax', accountId: mockOutputTaxAccountId } as AccountDeterminationRecord,
-        { orgNodeId: mockOrgNodeId, accountPurpose: 'payable', accountId: mockApAccountId } as AccountDeterminationRecord,
-        { orgNodeId: mockOrgNodeId, accountPurpose: 'inventory', accountId: mockRawInvAccountId } as AccountDeterminationRecord,
-        { orgNodeId: mockOrgNodeId, accountPurpose: 'input_tax', accountId: mockInputTaxAccountId } as AccountDeterminationRecord,
+        {
+          orgNodeId: mockOrgNodeId,
+          accountPurpose: 'receivable',
+          accountId: mockArAccountId,
+        } as AccountDeterminationRecord,
+        {
+          orgNodeId: mockOrgNodeId,
+          accountPurpose: 'revenue',
+          accountId: mockRevenueAccountId,
+        } as AccountDeterminationRecord,
+        {
+          orgNodeId: mockOrgNodeId,
+          accountPurpose: 'output_tax',
+          accountId: mockOutputTaxAccountId,
+        } as AccountDeterminationRecord,
+        {
+          orgNodeId: mockOrgNodeId,
+          accountPurpose: 'payable',
+          accountId: mockApAccountId,
+        } as AccountDeterminationRecord,
+        {
+          orgNodeId: mockOrgNodeId,
+          accountPurpose: 'inventory',
+          accountId: mockRawInvAccountId,
+        } as AccountDeterminationRecord,
+        {
+          orgNodeId: mockOrgNodeId,
+          accountPurpose: 'input_tax',
+          accountId: mockInputTaxAccountId,
+        } as AccountDeterminationRecord,
       ]),
     } as unknown as AccountingRepository;
 
@@ -278,9 +298,13 @@ describe('FinanceService — Credit Notes, Debit Notes & Returns Accounting Engi
     await financeService.postCreditDebitNote(note.id);
 
     // Try re-posting
-    await expect(financeService.postCreditDebitNote(note.id)).rejects.toThrow(FinanceValidationError);
+    await expect(financeService.postCreditDebitNote(note.id)).rejects.toThrow(
+      FinanceValidationError,
+    );
 
     // Try cancelling
-    await expect(financeService.cancelCreditDebitNote(note.id)).rejects.toThrow(FinanceValidationError);
+    await expect(financeService.cancelCreditDebitNote(note.id)).rejects.toThrow(
+      FinanceValidationError,
+    );
   });
 });

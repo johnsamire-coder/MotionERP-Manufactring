@@ -72,20 +72,22 @@ describe('CostService — Job Order Costing, Profitability & Variance Engine', (
       findComponentTypeByCode: jest.fn().mockImplementation(async (code: string) => {
         return Array.from(mockComponentTypes.values()).find((ct) => ct.code === code) ?? null;
       }),
-      insertCostEntry: jest.fn().mockImplementation(async (input: CreateCostEntryInput & { id: string }) => {
-        const entry: CostEntryRecord = {
-          id: input.id,
-          costSheetId: input.costSheetId,
-          componentTypeId: input.componentTypeId,
-          entryType: input.entryType,
-          amount: input.amount,
-          currencyCode: input.currencyCode,
-          description: input.description ?? null,
-          sourceReference: input.sourceReference ?? null,
-        };
-        mockEntries.push(entry);
-        return entry;
-      }),
+      insertCostEntry: jest
+        .fn()
+        .mockImplementation(async (input: CreateCostEntryInput & { id: string }) => {
+          const entry: CostEntryRecord = {
+            id: input.id,
+            costSheetId: input.costSheetId,
+            componentTypeId: input.componentTypeId,
+            entryType: input.entryType,
+            amount: input.amount,
+            currencyCode: input.currencyCode,
+            description: input.description ?? null,
+            sourceReference: input.sourceReference ?? null,
+          };
+          mockEntries.push(entry);
+          return entry;
+        }),
       getCostSummary: jest.fn().mockImplementation(async (costSheetId: string) => {
         const summaryMap = new Map<string, { estimated: number; actual: number }>();
 

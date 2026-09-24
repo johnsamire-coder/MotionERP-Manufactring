@@ -1,7 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { TechnicalNotFoundError, TechnicalValidationError } from './technical.errors';
 
-interface HttpResponse { status(code: number): HttpResponse; json(body: unknown): void; }
+interface HttpResponse {
+  status(code: number): HttpResponse;
+  json(body: unknown): void;
+}
 
 @Catch(TechnicalNotFoundError, TechnicalValidationError)
 export class TechnicalExceptionFilter implements ExceptionFilter {

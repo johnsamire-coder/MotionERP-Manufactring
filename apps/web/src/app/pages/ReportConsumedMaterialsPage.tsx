@@ -3,10 +3,27 @@ import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 import { ReportLayout } from '../components/ReportLayout';
 
-interface ItemRecord { id: string; code: string; name: string; }
-interface MaterialRequestRecord { id: string; jobOrderReference: string; itemId: string; plannedQuantity: string; actualUsedQuantity: string | null; }
-interface OrgNodeTreeItem { id: string; nodeType: string; children: OrgNodeTreeItem[]; }
-interface CompanyProfileRecord { displayName: string | null; logoUrl: string | null; }
+interface ItemRecord {
+  id: string;
+  code: string;
+  name: string;
+}
+interface MaterialRequestRecord {
+  id: string;
+  jobOrderReference: string;
+  itemId: string;
+  plannedQuantity: string;
+  actualUsedQuantity: string | null;
+}
+interface OrgNodeTreeItem {
+  id: string;
+  nodeType: string;
+  children: OrgNodeTreeItem[];
+}
+interface CompanyProfileRecord {
+  displayName: string | null;
+  logoUrl: string | null;
+}
 
 function findFirstLegalCompany(nodes: OrgNodeTreeItem[]): OrgNodeTreeItem | null {
   for (const node of nodes) {
@@ -42,10 +59,14 @@ export function ReportConsumedMaterialsPage(): JSX.Element {
       const company = findFirstLegalCompany(orgRes.tree);
       if (company) {
         try {
-          const profileRes = await api.get<{ companyProfile: CompanyProfileRecord }>(`/settings/company-profile/${company.id}`);
+          const profileRes = await api.get<{ companyProfile: CompanyProfileRecord }>(
+            `/settings/company-profile/${company.id}`,
+          );
           setCompanyName(profileRes.companyProfile.displayName);
           setLogoUrl(profileRes.companyProfile.logoUrl);
-        } catch { setCompanyName(null); }
+        } catch {
+          setCompanyName(null);
+        }
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to load consumed materials data');
@@ -54,17 +75,29 @@ export function ReportConsumedMaterialsPage(): JSX.Element {
     }
   }
 
-  useEffect(() => { void loadAll(); }, [i18n.language]);
+  useEffect(() => {
+    void loadAll();
+  }, [i18n.language]);
 
   const itemLabel = (id: string): string => items.find((it) => it.id === id)?.name ?? id;
   const withDeviation = useMemo(
-    () => requests.map((r) => ({ ...r, deviation: (Number(r.actualUsedQuantity ?? '0') - Number(r.plannedQuantity)) })),
-    [requests]
+    () =>
+      requests.map((r) => ({
+        ...r,
+        deviation: Number(r.actualUsedQuantity ?? '0') - Number(r.plannedQuantity),
+      })),
+    [requests],
   );
-  const filtered = useMemo(() => (excessOnly ? withDeviation.filter((r) => r.deviation > 0) : withDeviation), [withDeviation, excessOnly]);
+  const filtered = useMemo(
+    () => (excessOnly ? withDeviation.filter((r) => r.deviation > 0) : withDeviation),
+    [withDeviation, excessOnly],
+  );
   const labelStyle = { fontSize: 12, color: '#64748b' };
 
-  if (loading) return <p style={{ padding: 40, textAlign: 'center' }}>{t('pages.production_ops.form.loading')}</p>;
+  if (loading)
+    return (
+      <p style={{ padding: 40, textAlign: 'center' }}>{t('pages.production_ops.form.loading')}</p>
+    );
 
   return (
     <section className="module-page">
@@ -82,11 +115,29 @@ export function ReportConsumedMaterialsPage(): JSX.Element {
         companyName={companyName}
         logoUrl={logoUrl}
         filename="work-order-consumed-materials"
-        exportHeaders={[t('pages.reports.jobOrder'), t('pages.reports.item'), t('pages.reports.plannedQty'), t('pages.reports.actualUsedQty'), t('pages.reports.deviation')]}
-        exportRows={filtered.map((r) => [r.jobOrderReference, itemLabel(r.itemId), r.plannedQuantity, r.actualUsedQuantity ?? '—', r.deviation.toFixed(2)])}
+        exportHeaders={[
+          t('pages.reports.jobOrder'),
+          t('pages.reports.item'),
+          t('pages.reports.plannedQty'),
+          t('pages.reports.actualUsedQty'),
+          t('pages.reports.deviation'),
+        ]}
+        exportRows={filtered.map((r) => [
+          r.jobOrderReference,
+          itemLabel(r.itemId),
+          r.plannedQuantity,
+          r.actualUsedQuantity ?? '—',
+          r.deviation.toFixed(2),
+        ])}
       >
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, ...labelStyle }}>
-          <input type="checkbox" checked={excessOnly} onChange={(e) => setExcessOnly(e.target.checked)} />
+        <label
+          style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, ...labelStyle }}
+        >
+          <input
+            type="checkbox"
+            checked={excessOnly}
+            onChange={(e) => setExcessOnly(e.target.checked)}
+          />
           {t('pages.reports.excessOnly')}
         </label>
 
@@ -98,14 +149,22 @@ export function ReportConsumedMaterialsPage(): JSX.Element {
             <span>{t('pages.reports.actualUsedQty')}</span>
             <span>{t('pages.reports.deviation')}</span>
           </div>
-          {filtered.length === 0 && <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.reports.noResults')}</p>}
+          {filtered.length === 0 && (
+            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>
+              {t('pages.reports.noResults')}
+            </p>
+          )}
           {filtered.map((r) => (
             <div className="placeholder-table__row" key={r.id}>
-              <span><b>{r.jobOrderReference}</b></span>
+              <span>
+                <b>{r.jobOrderReference}</b>
+              </span>
               <span>{itemLabel(r.itemId)}</span>
               <span>{r.plannedQuantity}</span>
               <span>{r.actualUsedQuantity ?? '—'}</span>
-              <span style={{ color: r.deviation > 0 ? '#b91c1c' : '#166534', fontWeight: 'bold' }}>{r.deviation.toFixed(2)}</span>
+              <span style={{ color: r.deviation > 0 ? '#b91c1c' : '#166534', fontWeight: 'bold' }}>
+                {r.deviation.toFixed(2)}
+              </span>
             </div>
           ))}
         </div>

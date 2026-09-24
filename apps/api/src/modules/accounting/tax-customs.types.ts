@@ -14,7 +14,7 @@ export interface Form41QuarterSummary {
   totalSuppliersCount: number;
   totalTaxableBase: string;
   totalWhtDeducted: string;
-  goodsDeductionsTotal: string;    // 1%
+  goodsDeductionsTotal: string; // 1%
   servicesDeductionsTotal: string; // 3%
 }
 
@@ -32,11 +32,11 @@ export interface VatReturnReport {
 
 // ── Accounting Journal Templates ─────────────
 export const VAT_SETTLEMENT_POSTING = {
-  debit:  'output_vat_account',
+  debit: 'output_vat_account',
   credit: ['input_vat_account', 'tax_authority_payable_account'],
 } as const;
 
 export const CUSTOMS_CLEARANCE_POSTING = {
-  debit:  ['customs_expense_or_wip', 'input_vat_customs_account'],
+  debit: ['customs_expense_or_wip', 'input_vat_customs_account'],
   credit: 'bank_or_customs_authority',
 } as const;

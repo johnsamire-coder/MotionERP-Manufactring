@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 
-interface JobOrderRecord { id: string; jobOrderNumber: string; }
+interface JobOrderRecord {
+  id: string;
+  jobOrderNumber: string;
+}
 interface DeliveryOrderRecord {
   id: string;
   jobOrderReference: string;
@@ -28,8 +31,8 @@ export function DeliveryPage(): JSX.Element {
   const [jobOrders, setJobOrders] = useState<JobOrderRecord[]>([]);
   const [orders, setOrders] = useState<DeliveryOrderRecord[]>([]);
   const [receipts, setReceipts] = useState<DeliveryReceiptRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState<string | null>(null);
 
   const [selectedJO, setSelectedJO] = useState('');
   const [showOrderForm, setShowOrderForm] = useState(false);
@@ -68,8 +71,12 @@ export function DeliveryPage(): JSX.Element {
   async function loadJoOrders(joNumber: string): Promise<void> {
     try {
       const [ordersRes, recRes] = await Promise.all([
-        api.get<any>(`/delivery/orders/job/${joNumber}`),
-        api.get<any>('/delivery/receipts'),
+        api.get<DeliveryOrderRecord[] | { deliveryOrders?: DeliveryOrderRecord[] }>(
+          `/delivery/orders/job/${joNumber}`,
+        ),
+        api.get<DeliveryReceiptRecord[] | { deliveryReceipts?: DeliveryReceiptRecord[] }>(
+          '/delivery/receipts',
+        ),
       ]);
       const listOrders = Array.isArray(ordersRes) ? ordersRes : (ordersRes?.deliveryOrders ?? []);
       const listRecs = Array.isArray(recRes) ? recRes : (recRes?.deliveryReceipts ?? []);
@@ -82,7 +89,9 @@ export function DeliveryPage(): JSX.Element {
     }
   }
 
-  useEffect(() => { void loadAll(); }, [i18n.language]);
+  useEffect(() => {
+    void loadAll();
+  }, [i18n.language]);
 
   async function handleJoChange(joNumber: string): Promise<void> {
     setSelectedJO(joNumber);
@@ -91,7 +100,9 @@ export function DeliveryPage(): JSX.Element {
 
   async function handleCreateOrder(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
+    setFormError(null);
+    setFormSuccess(null);
+    setSubmitting(true);
     try {
       await api.post('/delivery/orders', {
         jobOrderReference: selectedJO,
@@ -102,12 +113,18 @@ export function DeliveryPage(): JSX.Element {
       setShowOrderForm(false);
       setFormSuccess(t('pages.delivery.form.success'));
       await loadJoOrders(selectedJO);
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleCreateReceipt(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
+    setFormError(null);
+    setFormSuccess(null);
+    setSubmitting(true);
     try {
       await api.post('/delivery/receipts', {
         deliveryOrderId: selectedOrderId,
@@ -116,7 +133,11 @@ export function DeliveryPage(): JSX.Element {
       setShowReceiptForm(false);
       setFormSuccess(t('pages.delivery.form.success'));
       await loadJoOrders(selectedJO);
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const getOrderNoById = (orderId: string): string => {
@@ -141,10 +162,33 @@ export function DeliveryPage(): JSX.Element {
       {formSuccess && <p style={{ color: '#166534', padding: '8px 0' }}>{formSuccess}</p>}
 
       {/* JO Selector */}
-      <div style={{ background: '#fff', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-        <label style={{ ...labelStyle, fontSize: 14, fontWeight: 'bold' }}>أمر التشغيل (Job Order):</label>
-        <select value={selectedJO} onChange={(e) => { void handleJoChange(e.target.value); }} style={{ ...inputStyle, minWidth: 220, fontSize: 14, fontWeight: 'bold' }}>
-          {jobOrders.map((jo) => <option key={jo.id} value={jo.jobOrderNumber}>{jo.jobOrderNumber}</option>)}
+      <div
+        style={{
+          background: '#fff',
+          padding: 16,
+          borderRadius: 8,
+          border: '1px solid #e2e8f0',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+        }}
+      >
+        <label style={{ ...labelStyle, fontSize: 14, fontWeight: 'bold' }}>
+          أمر التشغيل (Job Order):
+        </label>
+        <select
+          value={selectedJO}
+          onChange={(e) => {
+            void handleJoChange(e.target.value);
+          }}
+          style={{ ...inputStyle, minWidth: 220, fontSize: 14, fontWeight: 'bold' }}
+        >
+          {jobOrders.map((jo) => (
+            <option key={jo.id} value={jo.jobOrderNumber}>
+              {jo.jobOrderNumber}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -155,20 +199,50 @@ export function DeliveryPage(): JSX.Element {
             <span className="panel__eyebrow">Logistics Dispatch</span>
             <h2>{t('pages.delivery.orders.title')}</h2>
           </div>
-          <button className="primary-button" onClick={() => setShowOrderForm((v) => !v)}><b>+</b> {t('pages.delivery.orders.createOrder')}</button>
+          <button className="primary-button" onClick={() => setShowOrderForm((v) => !v)}>
+            <b>+</b> {t('pages.delivery.orders.createOrder')}
+          </button>
         </div>
 
         {showOrderForm && (
-          <form onSubmit={(e) => { void handleCreateOrder(e); }} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end', padding: '0 0 20px' }}>
+          <form
+            onSubmit={(e) => {
+              void handleCreateOrder(e);
+            }}
+            style={{
+              display: 'flex',
+              gap: 12,
+              flexWrap: 'wrap',
+              alignItems: 'end',
+              padding: '0 0 20px',
+            }}
+          >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <label style={labelStyle}>اسم السائق</label>
-              <input value={driverNameInput} onChange={(e) => setDriverNameInput(e.target.value)} required style={{ ...inputStyle, minWidth: 200 }} />
+              <input
+                value={driverNameInput}
+                onChange={(e) => setDriverNameInput(e.target.value)}
+                required
+                style={{ ...inputStyle, minWidth: 200 }}
+              />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <label style={labelStyle}>رقم الشاحنة / اللوحة</label>
-              <input value={vehiclePlateInput} onChange={(e) => setVehiclePlateInput(e.target.value)} required style={{ ...inputStyle, minWidth: 160 }} />
+              <input
+                value={vehiclePlateInput}
+                onChange={(e) => setVehiclePlateInput(e.target.value)}
+                required
+                style={{ ...inputStyle, minWidth: 160 }}
+              />
             </div>
-            <button type="submit" disabled={submitting} className="primary-button" style={{ height: 38 }}>{t('pages.delivery.form.save')}</button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="primary-button"
+              style={{ height: 38 }}
+            >
+              {t('pages.delivery.form.save')}
+            </button>
           </form>
         )}
 
@@ -181,17 +255,28 @@ export function DeliveryPage(): JSX.Element {
           </div>
 
           {orders.length === 0 && (
-            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.delivery.form.empty')}</p>
+            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>
+              {t('pages.delivery.form.empty')}
+            </p>
           )}
 
           {orders.map((ord) => {
             const doNum = ord.deliveryNumber ?? ord.deliveryOrderNumber ?? 'DO-2026-0001';
             return (
               <div className="placeholder-table__row" key={ord.id}>
-                <span><b>{doNum}</b></span>
+                <span>
+                  <b>{doNum}</b>
+                </span>
                 <span>{ord.driverName ?? 'السائق: محمد سعيد'}</span>
-                <span><code>{ord.vehiclePlate ?? 'أ ب ج 456'}</code></span>
-                <span><span className="status status--success"><i />{ord.status}</span></span>
+                <span>
+                  <code>{ord.vehiclePlate ?? 'أ ب ج 456'}</code>
+                </span>
+                <span>
+                  <span className="status status--success">
+                    <i />
+                    {ord.status}
+                  </span>
+                </span>
               </div>
             );
           })}
@@ -205,22 +290,55 @@ export function DeliveryPage(): JSX.Element {
             <span className="panel__eyebrow">Client Protocols</span>
             <h2>{t('pages.delivery.handover.title')}</h2>
           </div>
-          <button className="filter-button" onClick={() => setShowReceiptForm((v) => !v)}><b>+</b> {t('pages.delivery.handover.addReceipt')}</button>
+          <button className="filter-button" onClick={() => setShowReceiptForm((v) => !v)}>
+            <b>+</b> {t('pages.delivery.handover.addReceipt')}
+          </button>
         </div>
 
         {showReceiptForm && (
-          <form onSubmit={(e) => { void handleCreateReceipt(e); }} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end', padding: '0 0 20px' }}>
+          <form
+            onSubmit={(e) => {
+              void handleCreateReceipt(e);
+            }}
+            style={{
+              display: 'flex',
+              gap: 12,
+              flexWrap: 'wrap',
+              alignItems: 'end',
+              padding: '0 0 20px',
+            }}
+          >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <label style={labelStyle}>إذن التسليم الشاحن</label>
-              <select value={selectedOrderId} onChange={(e) => setSelectedOrderId(e.target.value)} style={{ ...inputStyle, minWidth: 220 }}>
-                {orders.map((o) => <option key={o.id} value={o.id}>{o.deliveryNumber ?? o.deliveryOrderNumber}</option>)}
+              <select
+                value={selectedOrderId}
+                onChange={(e) => setSelectedOrderId(e.target.value)}
+                style={{ ...inputStyle, minWidth: 220 }}
+              >
+                {orders.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.deliveryNumber ?? o.deliveryOrderNumber}
+                  </option>
+                ))}
               </select>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <label style={labelStyle}>المستلم في الموقع (توقيع العميل)</label>
-              <input value={signedByInput} onChange={(e) => setSignedByInput(e.target.value)} required style={{ ...inputStyle, minWidth: 240 }} />
+              <input
+                value={signedByInput}
+                onChange={(e) => setSignedByInput(e.target.value)}
+                required
+                style={{ ...inputStyle, minWidth: 240 }}
+              />
             </div>
-            <button type="submit" disabled={submitting} className="primary-button" style={{ height: 38 }}>{t('pages.delivery.form.save')}</button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="primary-button"
+              style={{ height: 38 }}
+            >
+              {t('pages.delivery.form.save')}
+            </button>
           </form>
         )}
 
@@ -233,15 +351,26 @@ export function DeliveryPage(): JSX.Element {
           </div>
 
           {receipts.length === 0 && (
-            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>لا توجد محاضر استلام مسجلة بعد</p>
+            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>
+              لا توجد محاضر استلام مسجلة بعد
+            </p>
           )}
 
           {receipts.map((rec) => (
             <div className="placeholder-table__row" key={rec.id}>
-              <span><b>{rec.receiptNumber}</b></span>
-              <span><code>{getOrderNoById(rec.deliveryOrderId)}</code></span>
+              <span>
+                <b>{rec.receiptNumber}</b>
+              </span>
+              <span>
+                <code>{getOrderNoById(rec.deliveryOrderId)}</code>
+              </span>
               <span>{rec.signedBy}</span>
-              <span><span className="status status--success"><i />{new Date(rec.createdAt).toLocaleDateString()} ✓</span></span>
+              <span>
+                <span className="status status--success">
+                  <i />
+                  {new Date(rec.createdAt).toLocaleDateString()} ✓
+                </span>
+              </span>
             </div>
           ))}
         </div>

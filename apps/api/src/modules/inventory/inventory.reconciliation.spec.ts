@@ -21,7 +21,12 @@ describe('InventoryService — Stock Reconciliation & Inventory Adjustment Engin
   const mockItemId = 'item-steel-sheet-60';
 
   // Mock In-Memory State
-  let mockBalance: { onHand: number; averageCost: number; totalValue: number; reserved: number } | null = null;
+  let mockBalance: {
+    onHand: number;
+    averageCost: number;
+    totalValue: number;
+    reserved: number;
+  } | null = null;
   const mockMovements: StockMovementRecord[] = [];
   const mockLedger: StockLedgerEntryRecord[] = [];
   const postedMovements: any[] = [];
@@ -35,7 +40,12 @@ describe('InventoryService — Stock Reconciliation & Inventory Adjustment Engin
     inventoryRepo = {
       findWarehouseById: jest.fn().mockImplementation(async (id: string) => {
         if (id === mockWarehouseId) {
-          return { id: mockWarehouseId, code: 'WH-RAW', name: 'مخزن الخامات', orgNodeId: mockOrgNodeId } as WarehouseRecord;
+          return {
+            id: mockWarehouseId,
+            code: 'WH-RAW',
+            name: 'مخزن الخامات',
+            orgNodeId: mockOrgNodeId,
+          } as WarehouseRecord;
         }
         return null;
       }),
@@ -229,7 +239,12 @@ describe('InventoryService — Stock Reconciliation & Inventory Adjustment Engin
   describe('5. Batch/serial-tracked items (plan item 4)', () => {
     const withTracking = (flags: { hasBatchNo: boolean; hasSerialNo: boolean }) => {
       const catalog = {
-        getItem: jest.fn().mockResolvedValue({ id: mockItemId, ...flags, hasExpiryDate: false, shelfLifeInDays: null }),
+        getItem: jest.fn().mockResolvedValue({
+          id: mockItemId,
+          ...flags,
+          hasExpiryDate: false,
+          shelfLifeInDays: null,
+        }),
       } as unknown as CatalogService;
       return new InventoryService(inventoryRepo, postingEngine, catalog);
     };
@@ -241,7 +256,11 @@ describe('InventoryService — Stock Reconciliation & Inventory Adjustment Engin
     ])('rejects reconciliation for %o and points to a stock movement', async (flags, label) => {
       const service = withTracking(flags);
       await expect(
-        service.reconcileStock({ itemId: mockItemId, warehouseId: mockWarehouseId, physicalQty: '40' }),
+        service.reconcileStock({
+          itemId: mockItemId,
+          warehouseId: mockWarehouseId,
+          physicalQty: '40',
+        }),
       ).rejects.toThrow(new RegExp(`متتبّع بـ${label}.*حركة مخزون`));
       expect(mockMovements.length).toBe(0);
       expect(mockLedger.length).toBe(0);
@@ -250,7 +269,11 @@ describe('InventoryService — Stock Reconciliation & Inventory Adjustment Engin
 
     it('still reconciles an untracked item when the catalog is available', async () => {
       const service = withTracking({ hasBatchNo: false, hasSerialNo: false });
-      const result = await service.reconcileStock({ itemId: mockItemId, warehouseId: mockWarehouseId, physicalQty: '45' });
+      const result = await service.reconcileStock({
+        itemId: mockItemId,
+        warehouseId: mockWarehouseId,
+        physicalQty: '45',
+      });
       expect(result.adjustmentType).toBe('shortage');
     });
   });

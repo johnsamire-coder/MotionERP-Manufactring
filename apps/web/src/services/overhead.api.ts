@@ -20,7 +20,7 @@ export const overheadApi = {
   },
 
   // ── 2. تشغيل دورة التوزيع والتحميل الشهري ─────────
-  async runAllocation(payload: any) {
+  async runAllocation(payload: Record<string, unknown>) {
     const res = await fetch(`${API_BASE}/v1/overhead/allocate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -37,7 +37,7 @@ export const overheadApi = {
     periodId: string;
     periodMonth: string;
     totalMachineryDepreciation: number;
-    machinesBreakdown?: any[];
+    machinesBreakdown?: Array<Record<string, unknown>>;
   }) {
     const res = await fetch(`${API_BASE}/v1/overhead/integrate-depreciation`, {
       method: 'POST',

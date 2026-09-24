@@ -4,10 +4,7 @@ import { SalesService } from '../sales/sales.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { AccountingRepository } from '../accounting/accounting.repository';
 import { FinanceValidationError } from './finance.errors';
-import type {
-  SalesInvoiceRecord,
-  CreateSalesInvoiceInput,
-} from './finance.types';
+import type { SalesInvoiceRecord, CreateSalesInvoiceInput } from './finance.types';
 import type {
   CompanyAccountingConfigRecord,
   AccountDeterminationRecord,
@@ -75,7 +72,9 @@ describe('FinanceService — Sales Invoices & AR / Revenue Accounting Posting', 
         }
         return inv;
       }),
-      listSalesInvoices: jest.fn().mockImplementation(async () => Array.from(mockInvoices.values())),
+      listSalesInvoices: jest
+        .fn()
+        .mockImplementation(async () => Array.from(mockInvoices.values())),
     } as unknown as FinanceRepository;
 
     salesService = {} as unknown as SalesService;

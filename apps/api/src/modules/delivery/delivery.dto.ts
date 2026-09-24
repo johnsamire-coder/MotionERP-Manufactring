@@ -1,4 +1,13 @@
-import { IsDateString, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import {
+  IsDateString,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
+import type { DeliveryStatus, InstallationStatus } from './delivery.types';
 
 export class CreateDeliveryOrderDto {
   @IsString() @IsNotEmpty() jobOrderReference!: string;
@@ -10,7 +19,9 @@ export class CreateDeliveryOrderDto {
 
 export class UpdateDeliveryOrderDto {
   @IsOptional() @IsDateString() actualDate?: string;
-  @IsOptional() @IsString() status?: string;
+  @IsOptional()
+  @IsIn(['scheduled', 'in_transit', 'delivered', 'cancelled'])
+  status?: DeliveryStatus;
   @IsOptional() @IsString() @MaxLength(20) vehiclePlate?: string;
   @IsOptional() @IsString() @MaxLength(100) driverName?: string;
   @IsOptional() @IsString() @MaxLength(500) notes?: string;
@@ -27,7 +38,9 @@ export class CreateInstallationDto {
 export class UpdateInstallationDto {
   @IsOptional() @IsDateString() actualStartDate?: string;
   @IsOptional() @IsDateString() actualEndDate?: string;
-  @IsOptional() @IsString() status?: string;
+  @IsOptional()
+  @IsIn(['scheduled', 'in_progress', 'completed', 'cancelled'])
+  status?: InstallationStatus;
   @IsOptional() @IsString() @MaxLength(200) technicianNames?: string;
   @IsOptional() @IsString() @MaxLength(200) location?: string;
   @IsOptional() @IsString() @MaxLength(500) notes?: string;

@@ -28,7 +28,9 @@ export class AuthTokenService {
     let secret = config.authJwtSecret;
     if (!secret) {
       secret = randomBytes(48).toString('hex');
-      this.logger.warn('AUTH_JWT_SECRET is not set: using a random per-process secret (tokens end on restart)');
+      this.logger.warn(
+        'AUTH_JWT_SECRET is not set: using a random per-process secret (tokens end on restart)',
+      );
     }
     this.jwt = new JwtService({ secret, signOptions: { expiresIn: config.authTokenTtlSeconds } });
   }

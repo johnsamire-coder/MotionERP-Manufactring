@@ -1,4 +1,5 @@
-﻿export type PostingMovementType = 'receipt' | 'issue' | 'transfer_in' | 'transfer_out' | 'adjustment';
+﻿export type PostingMovementType =
+  'receipt' | 'issue' | 'transfer_in' | 'transfer_out' | 'adjustment';
 
 export interface StockMovementPostingPayload {
   movementId: string;

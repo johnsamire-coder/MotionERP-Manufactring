@@ -1,6 +1,19 @@
 import { Type } from 'class-transformer';
 import {
-  ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsNumberString, IsOptional, IsString, IsUUID, Max, MaxLength, Min, ValidateNested,
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+  ValidateNested,
 } from 'class-validator';
 
 export class TemplateParameterDto {
@@ -16,14 +29,19 @@ export class CreateInspectionTemplateDto {
   @IsString() @MaxLength(64) code!: string;
   @IsString() @MaxLength(200) name!: string;
   @IsOptional() @IsUUID() itemId?: string;
-  @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true }) @Type(() => TemplateParameterDto) parameters!: TemplateParameterDto[];
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => TemplateParameterDto)
+  parameters!: TemplateParameterDto[];
 }
 
 export class CreateInspectionFromTemplateDto {
   @IsUUID() templateId!: string;
   @IsUUID() orgNodeId!: string;
   @IsOptional() @IsUUID() itemId?: string;
-  @IsIn(['purchase_receipt', 'production_step', 'delivery_order']) referenceType!: 'purchase_receipt' | 'production_step' | 'delivery_order';
+  @IsIn(['purchase_receipt', 'production_step', 'delivery_order']) referenceType!:
+    'purchase_receipt' | 'production_step' | 'delivery_order';
   @IsUUID() referenceId!: string;
   @IsOptional() @IsString() notes?: string;
 }
@@ -34,6 +52,9 @@ export class ParameterReadingsDto {
 }
 
 export class RecordReadingsDto {
-  @IsArray() @ValidateNested({ each: true }) @Type(() => ParameterReadingsDto) readings!: ParameterReadingsDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ParameterReadingsDto)
+  readings!: ParameterReadingsDto[];
   @IsOptional() @IsString() notes?: string;
 }

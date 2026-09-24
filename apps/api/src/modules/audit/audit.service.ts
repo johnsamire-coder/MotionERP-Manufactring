@@ -6,10 +6,11 @@ import { Injectable, Inject } from '@nestjs/common';
 import { eq, and, desc } from 'drizzle-orm';
 import { auditLog, AuditLogRecord, NewAuditLogRecord } from './audit.schema';
 import { RecordAuditLogDto, QueryAuditLogsDto } from './audit.dto';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 @Injectable()
 export class AuditService {
-  constructor(@Inject('DRIZZLE') private readonly db: any) {}
+  constructor(@Inject('DRIZZLE') private readonly db: NodePgDatabase) {}
 
   // ── تسجيل حركة رقابية جديدة ──────────────────
   async logAction(dto: RecordAuditLogDto): Promise<AuditLogRecord> {
@@ -27,12 +28,9 @@ export class AuditService {
       details: dto.details || null,
     };
 
-    const [inserted] = await this.db
-      .insert(auditLog)
-      .values(record)
-      .returning();
+    const [inserted] = await this.db.insert(auditLog).values(record).returning();
 
-    return inserted;
+    return inserted!;
   }
 
   // ── الاستعلام عن سجلات التدقيق ──────────────
@@ -56,12 +54,7 @@ export class AuditService {
     return this.db
       .select()
       .from(auditLog)
-      .where(
-        and(
-          eq(auditLog.entityName, entityName),
-          eq(auditLog.entityId, entityId),
-        ),
-      )
+      .where(and(eq(auditLog.entityName, entityName), eq(auditLog.entityId, entityId)))
       .orderBy(desc(auditLog.createdAt));
   }
 }

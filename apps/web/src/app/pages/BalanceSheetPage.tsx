@@ -6,7 +6,16 @@ import {
   ApiError,
   type AssetCategoryRecord,
   type FixedAssetRecord,
+  type BalanceSheetReport,
+  type TrialBalanceReport,
+  type PartnerLedgerReport,
 } from '../api/client';
+
+interface PartnerOption {
+  id: string;
+  name: string;
+  code?: string;
+}
 
 type ReportTab = 'balance_sheet' | 'trial_balance' | 'partner_ledger' | 'fixed_assets';
 
@@ -21,14 +30,14 @@ export function BalanceSheetPage(): JSX.Element {
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().split('T')[0] ?? '');
 
   // Reports State
-  const [bsData, setBsData] = useState<any>(null);
-  const [tbData, setTbData] = useState<any>(null);
+  const [bsData, setBsData] = useState<BalanceSheetReport | null>(null);
+  const [tbData, setTbData] = useState<TrialBalanceReport | null>(null);
 
   // Partner Ledger State
   const [partyType, setPartyType] = useState<'customer' | 'supplier'>('customer');
-  const [partners, setPartners] = useState<any[]>([]);
+  const [partners, setPartners] = useState<PartnerOption[]>([]);
   const [selectedPartnerId, setSelectedPartnerId] = useState('');
-  const [partnerLedgerData, setPartnerLedgerData] = useState<any>(null);
+  const [partnerLedgerData, setPartnerLedgerData] = useState<PartnerLedgerReport | null>(null);
 
   // Fixed Assets State (assets module)
   const [assets, setAssets] = useState<FixedAssetRecord[]>([]);
@@ -75,13 +84,13 @@ export function BalanceSheetPage(): JSX.Element {
     try {
       if (partyType === 'customer') {
         const res = await api
-          .get<{ customers: any[] }>('/crm/customers')
+          .get<{ customers: PartnerOption[] }>('/crm/customers')
           .catch(() => ({ customers: [] }));
         setPartners(res.customers ?? []);
         if (res.customers?.[0]) setSelectedPartnerId(res.customers[0].id);
       } else {
         const res = await api
-          .get<{ suppliers: any[] }>('/crm/suppliers')
+          .get<{ suppliers: PartnerOption[] }>('/crm/suppliers')
           .catch(() => ({ suppliers: [] }));
         setPartners(res.suppliers ?? []);
         if (res.suppliers?.[0]) setSelectedPartnerId(res.suppliers[0].id);
@@ -340,7 +349,7 @@ export function BalanceSheetPage(): JSX.Element {
                       </tr>
                     </thead>
                     <tbody>
-                      {(bsData.assets ?? []).map((a: any, i: number) => (
+                      {(bsData.assets ?? []).map((a, i) => (
                         <tr key={i}>
                           <td>{a.accountName}</td>
                           <td>{Number(a.balance).toLocaleString('ar-EG')} ج.م</td>
@@ -375,13 +384,13 @@ export function BalanceSheetPage(): JSX.Element {
                       </tr>
                     </thead>
                     <tbody>
-                      {(bsData.liabilities ?? []).map((l: any, i: number) => (
+                      {(bsData.liabilities ?? []).map((l, i) => (
                         <tr key={i}>
                           <td>{l.accountName}</td>
                           <td>{Number(l.balance).toLocaleString('ar-EG')} ج.م</td>
                         </tr>
                       ))}
-                      {(bsData.equity ?? []).map((e: any, i: number) => (
+                      {(bsData.equity ?? []).map((e, i) => (
                         <tr key={i}>
                           <td>{e.accountName}</td>
                           <td>{Number(e.balance).toLocaleString('ar-EG')} ج.م</td>
@@ -428,7 +437,7 @@ export function BalanceSheetPage(): JSX.Element {
                   </tr>
                 </thead>
                 <tbody>
-                  {(tbData.rows ?? []).map((r: any) => (
+                  {(tbData.rows ?? []).map((r) => (
                     <tr key={r.accountId}>
                       <td>
                         <b>{r.accountCode}</b>
@@ -467,7 +476,7 @@ export function BalanceSheetPage(): JSX.Element {
               نوع الشريك:
               <select
                 value={partyType}
-                onChange={(e) => setPartyType(e.target.value as any)}
+                onChange={(e) => setPartyType(e.target.value as typeof partyType)}
                 style={{ padding: '6px 12px', borderRadius: 6 }}
               >
                 <option value="customer">عميل (Customer)</option>
@@ -537,7 +546,7 @@ export function BalanceSheetPage(): JSX.Element {
                         <td colSpan={6}>لا توجد حركات مسجلة لهذا الشريك</td>
                       </tr>
                     ) : (
-                      (partnerLedgerData.rows ?? []).map((row: any, idx: number) => (
+                      (partnerLedgerData.rows ?? []).map((row, idx) => (
                         <tr key={idx}>
                           <td>
                             <b>{row.entryNumber}</b>

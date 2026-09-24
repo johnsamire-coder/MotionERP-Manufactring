@@ -1,19 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ArrowLeftRight,
-  TrendingDown,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle2,
-  Printer,
-  Download,
-  Percent,
-  Layers,
-  Clock,
-  Zap,
-  Activity,
-  Package,
-} from 'lucide-react';
+import { ArrowLeftRight, TrendingDown, TrendingUp, AlertTriangle, Printer } from 'lucide-react';
 
 interface VarianceRow {
   id: string;
@@ -29,7 +15,7 @@ interface VarianceRow {
 }
 
 export const StandardVsActualPage: React.FC = () => {
-  const [selectedWO, setSelectedOrder] = useState('WO-2026-08112');
+  const [_selectedWO, _setSelectedOrder] = useState('WO-2026-08112');
   const [showOnlyAlerts, setShowOnlyAlerts] = useState(false);
 
   // ── بيانات مقارنة فعلية لأمر تشغيل (20 وحدة درج وضلفة) ──
@@ -40,7 +26,7 @@ export const StandardVsActualPage: React.FC = () => {
       type: 'material',
       unit: 'كجم',
       standardQty: 702, // المعياري شامل 8% هالك
-      actualQty: 745,   // الفعلي (حصل هدر صاج زيادة في ورشة الليزر)
+      actualQty: 745, // الفعلي (حصل هدر صاج زيادة في ورشة الليزر)
       qtyVariance: -43, // عجز (هدر زيادة)
       standardCost: 129870,
       actualCost: 137825,
@@ -53,7 +39,7 @@ export const StandardVsActualPage: React.FC = () => {
       unit: 'متر',
       standardQty: 126,
       actualQty: 120, // الفنيين وفروا في تقطيع المواسير
-      qtyVariance: 6,  // وفر (Favorable)
+      qtyVariance: 6, // وفر (Favorable)
       standardCost: 17640,
       actualCost: 16800,
       costVariance: 840, // وفر مالي
@@ -153,8 +139,8 @@ export const StandardVsActualPage: React.FC = () => {
     return 'text-slate-500';
   };
 
-  const filteredVariances = showOnlyAlerts 
-    ? variances.filter(v => v.costVariance < 0) 
+  const filteredVariances = showOnlyAlerts
+    ? variances.filter((v) => v.costVariance < 0)
     : variances;
 
   return (
@@ -166,9 +152,12 @@ export const StandardVsActualPage: React.FC = () => {
             <ArrowLeftRight className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">مقارنة التكلفة المعيارية بالفعلية (Standard vs Actual)</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              مقارنة التكلفة المعيارية بالفعلية (Standard vs Actual)
+            </h1>
             <p className="text-sm text-slate-500">
-              تحليل الانحرافات اللحظي للمواد الخام، الأجور المباشرة، وساعات الماكينات لكشف مواطن الهدر بالمصنع
+              تحليل الانحرافات اللحظي للمواد الخام، الأجور المباشرة، وساعات الماكينات لكشف مواطن
+              الهدر بالمصنع
             </p>
           </div>
         </div>
@@ -186,7 +175,9 @@ export const StandardVsActualPage: React.FC = () => {
       {/* ── كروت تحليل الانحراف المالي الإجمالي ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">التكلفة المعيارية المقدرة</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            التكلفة المعيارية المقدرة
+          </p>
           <h3 className="text-2xl font-bold text-slate-900 mt-2">
             {totalStandard.toLocaleString()} ج.م
           </h3>
@@ -194,26 +185,35 @@ export const StandardVsActualPage: React.FC = () => {
         </div>
 
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">التكلفة الفعلية المنصرفة</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            التكلفة الفعلية المنصرفة
+          </p>
           <h3 className="text-2xl font-bold text-slate-900 mt-2">
             {totalActual.toLocaleString()} ج.م
           </h3>
-          <p className="text-xs text-rose-600 font-medium mt-1">بزيادة قدرها {(((totalActual - totalStandard) / totalStandard) * 100).toFixed(1)}% عن المخطط</p>
+          <p className="text-xs text-rose-600 font-medium mt-1">
+            بزيادة قدرها {(((totalActual - totalStandard) / totalStandard) * 100).toFixed(1)}% عن
+            المخطط
+          </p>
         </div>
 
-        <div className={`p-6 rounded-2xl border shadow-sm ${
-          netCostVariance >= 0 
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-900' 
-            : 'bg-rose-50 border-rose-200 text-rose-900'
-        }`}>
-          <p className="text-xs font-semibold uppercase tracking-wider">صافي الانحراف الكلي للتشغيلة</p>
+        <div
+          className={`p-6 rounded-2xl border shadow-sm ${
+            netCostVariance >= 0
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              : 'bg-rose-50 border-rose-200 text-rose-900'
+          }`}
+        >
+          <p className="text-xs font-semibold uppercase tracking-wider">
+            صافي الانحراف الكلي للتشغيلة
+          </p>
           <h3 className="text-3xl font-extrabold mt-2">
-            {Math.abs(netCostVariance).toLocaleString()} ج.م 
+            {Math.abs(netCostVariance).toLocaleString()} ج.م
             {netCostVariance >= 0 ? ' (وفر)' : ' (عجز)'}
           </h3>
           <p className="text-xs mt-1 font-medium">
-            {netCostVariance >= 0 
-              ? 'أداء ممتاز! تم توفير تكاليف مقارنة بالمستهدف' 
+            {netCostVariance >= 0
+              ? 'أداء ممتاز! تم توفير تكاليف مقارنة بالمستهدف'
               : 'تحذير: توجد زيادة في الهدر بالصاج أو أزمنة الماكينات'}
           </p>
         </div>
@@ -223,8 +223,12 @@ export const StandardVsActualPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
           <div>
-            <h3 className="font-bold text-slate-900 text-lg">جدول مقارنة بنود التكلفة وتحليل الانحراف</h3>
-            <p className="text-xs text-slate-500 mt-1">مقارنة تفصيلية لكل بند منصرف مخزني أو مركز عمل صناعي</p>
+            <h3 className="font-bold text-slate-900 text-lg">
+              جدول مقارنة بنود التكلفة وتحليل الانحراف
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              مقارنة تفصيلية لكل بند منصرف مخزني أو مركز عمل صناعي
+            </p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -262,20 +266,36 @@ export const StandardVsActualPage: React.FC = () => {
                   <td className="p-4 font-semibold text-slate-800">{r.item}</td>
                   <td className="p-4">
                     {r.type === 'material' ? (
-                      <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">خامات صاج وإكسسوار</span>
+                      <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+                        خامات صاج وإكسسوار
+                      </span>
                     ) : r.type === 'labor' ? (
-                      <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">أزمنة ماكينات وعمالة</span>
+                      <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
+                        أزمنة ماكينات وعمالة
+                      </span>
                     ) : (
-                      <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">مصاريف غير مباشرة</span>
+                      <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">
+                        مصاريف غير مباشرة
+                      </span>
                     )}
                   </td>
                   <td className="p-4 text-center font-medium text-slate-500">{r.unit}</td>
-                  <td className="p-4 text-center font-mono font-bold text-slate-700">{r.standardQty.toLocaleString()}</td>
-                  <td className="p-4 text-center font-mono font-bold text-slate-900">{r.actualQty.toLocaleString()}</td>
-                  <td className={`p-4 text-center font-mono ${getQtyVarianceStyle(r.qtyVariance)}`}>
-                    {r.qtyVariance > 0 ? `+${r.qtyVariance}` : r.qtyVariance < 0 ? r.qtyVariance : '0'}
+                  <td className="p-4 text-center font-mono font-bold text-slate-700">
+                    {r.standardQty.toLocaleString()}
                   </td>
-                  <td className="p-4 font-mono font-medium">{r.standardCost.toLocaleString()} ج.م</td>
+                  <td className="p-4 text-center font-mono font-bold text-slate-900">
+                    {r.actualQty.toLocaleString()}
+                  </td>
+                  <td className={`p-4 text-center font-mono ${getQtyVarianceStyle(r.qtyVariance)}`}>
+                    {r.qtyVariance > 0
+                      ? `+${r.qtyVariance}`
+                      : r.qtyVariance < 0
+                        ? r.qtyVariance
+                        : '0'}
+                  </td>
+                  <td className="p-4 font-mono font-medium">
+                    {r.standardCost.toLocaleString()} ج.م
+                  </td>
                   <td className="p-4 font-mono font-medium">{r.actualCost.toLocaleString()} ج.م</td>
                   <td className="p-4">{getCostVarianceBadge(r.costVariance)}</td>
                 </tr>

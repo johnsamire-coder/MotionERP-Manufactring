@@ -1,22 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ShieldAlert,
-  Search,
-  Filter,
-  UserCheck,
-  Calendar,
-  Clock,
-  Laptop,
-  CheckCircle2,
-  FileText,
-  Lock,
-  RotateCcw,
-  ArrowRightLeft,
-  AlertCircle,
-  Eye,
-  Printer,
-  Download,
-} from 'lucide-react';
+import { ShieldAlert, Search, UserCheck, Clock, Laptop, Eye, Printer } from 'lucide-react';
 
 interface AuditRow {
   id: string;
@@ -90,17 +73,41 @@ export const AuditTrailPage: React.FC = () => {
   const getActionBadge = (action: AuditRow['action']) => {
     switch (action) {
       case 'CLOSE':
-        return <span className="bg-slate-900 text-white text-xs px-2.5 py-1 rounded-full font-bold">إقفال فترة</span>;
+        return (
+          <span className="bg-slate-900 text-white text-xs px-2.5 py-1 rounded-full font-bold">
+            إقفال فترة
+          </span>
+        );
       case 'POST':
-        return <span className="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full font-bold">ترحيل قيد</span>;
+        return (
+          <span className="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full font-bold">
+            ترحيل قيد
+          </span>
+        );
       case 'UPDATE':
-        return <span className="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-bold">تعديل بيانات</span>;
+        return (
+          <span className="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-bold">
+            تعديل بيانات
+          </span>
+        );
       case 'REVERSE':
-        return <span className="bg-rose-100 text-rose-800 text-xs px-2.5 py-1 rounded-full font-bold">استبعاد / عكس</span>;
+        return (
+          <span className="bg-rose-100 text-rose-800 text-xs px-2.5 py-1 rounded-full font-bold">
+            استبعاد / عكس
+          </span>
+        );
       case 'CREATE':
-        return <span className="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">إنشاء سجل</span>;
+        return (
+          <span className="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">
+            إنشاء سجل
+          </span>
+        );
       default:
-        return <span className="bg-slate-100 text-slate-800 text-xs px-2.5 py-1 rounded-full font-bold">{action}</span>;
+        return (
+          <span className="bg-slate-100 text-slate-800 text-xs px-2.5 py-1 rounded-full font-bold">
+            {action}
+          </span>
+        );
     }
   };
 
@@ -124,9 +131,12 @@ export const AuditTrailPage: React.FC = () => {
             <ShieldAlert className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">سجل التدقيق الرقابي الشامل (Audit Trail & Change Log)</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              سجل التدقيق الرقابي الشامل (Audit Trail & Change Log)
+            </h1>
             <p className="text-sm text-slate-500">
-              تتبع غير قابل للتعديل لكافة العمليات المالية، حركات المخازن، والقرارات الإدارية الحساسة
+              تتبع غير قابل للتعديل لكافة العمليات المالية، حركات المخازن، والقرارات الإدارية
+              الحساسة
             </p>
           </div>
         </div>
@@ -257,7 +267,9 @@ export const AuditTrailPage: React.FC = () => {
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
                 <ShieldAlert className="w-6 h-6 text-slate-900" />
-                <h3 className="font-bold text-lg text-slate-900">سجل التغييرات التفصيلي ({selectedLog.entityId})</h3>
+                <h3 className="font-bold text-lg text-slate-900">
+                  سجل التغييرات التفصيلي ({selectedLog.entityId})
+                </h3>
               </div>
               <button
                 onClick={() => setSelectedLog(null)}
@@ -270,7 +282,9 @@ export const AuditTrailPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* البيانات السابقة */}
               <div className="space-y-1.5">
-                <span className="text-xs font-bold text-rose-700">القيم السابقة قبل التعديل (Old Values):</span>
+                <span className="text-xs font-bold text-rose-700">
+                  القيم السابقة قبل التعديل (Old Values):
+                </span>
                 <pre className="bg-rose-50/60 border border-rose-200 text-rose-950 p-3 rounded-xl text-xs font-mono overflow-auto max-h-60">
                   {selectedLog.oldValues || '— لا توجد قيم سابقة (سجل جديد) —'}
                 </pre>
@@ -278,7 +292,9 @@ export const AuditTrailPage: React.FC = () => {
 
               {/* البيانات الجديدة */}
               <div className="space-y-1.5">
-                <span className="text-xs font-bold text-emerald-700">القيم الجديدة المعتمدة (New Values):</span>
+                <span className="text-xs font-bold text-emerald-700">
+                  القيم الجديدة المعتمدة (New Values):
+                </span>
                 <pre className="bg-emerald-50/60 border border-emerald-200 text-emerald-950 p-3 rounded-xl text-xs font-mono overflow-auto max-h-60">
                   {selectedLog.newValues || '— تم الحذف —'}
                 </pre>

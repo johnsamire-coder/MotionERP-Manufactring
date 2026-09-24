@@ -7,12 +7,10 @@ import {
   XCircle,
   AlertTriangle,
   Building2,
-  Calendar,
   Layers,
   Activity,
   FileText,
   Clock,
-  Filter,
 } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────
@@ -42,13 +40,14 @@ interface SerialDeviceRecord {
   warrantyStartDate: string | null;
   warrantyEndDate: string | null;
   installedBy: string | null;
-  status: 'allocated' | 'delivered' | 'installed' | 'warranty_active' | 'warranty_expired' | 'returned';
+  status:
+    'allocated' | 'delivered' | 'installed' | 'warranty_active' | 'warranty_expired' | 'returned';
 }
 
 export const MedicalTraceabilityPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'batches' | 'serials' | 'warranty'>('batches');
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [_statusFilter, _setStatusFilter] = useState('ALL');
 
   // ── Mock Data للتجربة الفورية ────────────────
   const [batches] = useState<BatchRecord[]>([
@@ -203,7 +202,7 @@ export const MedicalTraceabilityPage: React.FC = () => {
     (b) =>
       b.batchNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.supplierName.toLowerCase().includes(searchTerm.toLowerCase())
+      b.supplierName.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const filteredSerials = serials.filter(
@@ -211,7 +210,8 @@ export const MedicalTraceabilityPage: React.FC = () => {
       s.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.hospitalDepartment && s.hospitalDepartment.toLowerCase().includes(searchTerm.toLowerCase()))
+      (s.hospitalDepartment &&
+        s.hospitalDepartment.toLowerCase().includes(searchTerm.toLowerCase())),
   );
 
   return (
@@ -223,7 +223,9 @@ export const MedicalTraceabilityPage: React.FC = () => {
             <Activity className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">منظومة التتبع الطبي واللوطات (ISO 13485)</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              منظومة التتبع الطبي واللوطات (ISO 13485)
+            </h1>
             <p className="text-sm text-slate-500">
               تتبع دورة حياة الصاج والمكونات الواردة حتى الأجهزة الطبية المشحونة للمستشفيات والضمان
             </p>
@@ -241,9 +243,13 @@ export const MedicalTraceabilityPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">لوطات واردة نشطة</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              لوطات واردة نشطة
+            </p>
             <h3 className="text-2xl font-bold text-slate-900 mt-1">{batches.length} لوط</h3>
-            <span className="text-xs text-emerald-600 font-medium">100% مطابقة للمواصفات الفنية</span>
+            <span className="text-xs text-emerald-600 font-medium">
+              100% مطابقة للمواصفات الفنية
+            </span>
           </div>
           <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
             <Layers className="w-6 h-6" />
@@ -252,7 +258,9 @@ export const MedicalTraceabilityPage: React.FC = () => {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">أجهزة تحت الضمان</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              أجهزة تحت الضمان
+            </p>
             <h3 className="text-2xl font-bold text-blue-700 mt-1">
               {serials.filter((s) => s.status === 'warranty_active').length} جهاز طبي
             </h3>
@@ -265,7 +273,9 @@ export const MedicalTraceabilityPage: React.FC = () => {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">قيد الفحص المخبري</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              قيد الفحص المخبري
+            </p>
             <h3 className="text-2xl font-bold text-amber-600 mt-1">
               {batches.filter((b) => b.quarantineStatus === 'pending_inspection').length} شحنة
             </h3>
@@ -278,7 +288,9 @@ export const MedicalTraceabilityPage: React.FC = () => {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">مستشفيات ومراكز طبية</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              مستشفيات ومراكز طبية
+            </p>
             <h3 className="text-2xl font-bold text-purple-700 mt-1">12 مستشفى</h3>
             <span className="text-xs text-purple-600 font-medium">شبكة التوزيع المباشر</span>
           </div>
@@ -356,9 +368,7 @@ export const MedicalTraceabilityPage: React.FC = () => {
                       <p className="text-xs text-slate-400 font-mono">{b.itemCode}</p>
                     </td>
                     <td className="p-4 text-slate-700">{b.supplierName}</td>
-                    <td className="p-4 font-semibold text-slate-900">
-                      {b.receivedQty} وحدة
-                    </td>
+                    <td className="p-4 font-semibold text-slate-900">{b.receivedQty} وحدة</td>
                     <td className="p-4">{getBatchBadge(b.quarantineStatus)}</td>
                     <td className="p-4">
                       <span className="inline-flex items-center gap-1 text-xs font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
@@ -406,15 +416,17 @@ export const MedicalTraceabilityPage: React.FC = () => {
                     <td className="p-4 text-xs text-slate-600">
                       {s.hospitalDepartment || '— لم يحدد بعد —'}
                     </td>
-                    <td className="p-4 font-mono text-xs text-teal-700">
-                      {s.batchNumber}
-                    </td>
+                    <td className="p-4 font-mono text-xs text-teal-700">{s.batchNumber}</td>
                     <td className="p-4">{getSerialBadge(s.status)}</td>
                     <td className="p-4 text-xs">
                       {s.warrantyStartDate ? (
                         <div>
-                          <span className="text-emerald-700 font-medium">من: {s.warrantyStartDate}</span>
-                          <div className="text-slate-500">إلى: {s.warrantyEndDate} ({s.warrantyMonths} شهر)</div>
+                          <span className="text-emerald-700 font-medium">
+                            من: {s.warrantyStartDate}
+                          </span>
+                          <div className="text-slate-500">
+                            إلى: {s.warrantyEndDate} ({s.warrantyMonths} شهر)
+                          </div>
                         </div>
                       ) : (
                         <span className="text-slate-400">يبدأ عند إتمام التركيب</span>

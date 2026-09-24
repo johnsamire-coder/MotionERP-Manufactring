@@ -2,8 +2,10 @@
 // Motion ERP — Overhead Cost Pools & Allocation Engine
 // Step 86 | Applied Overhead Accounting & Absorption
 // ============================================================
-import { Injectable, BadRequestException, NotFoundException, Inject, Optional } from '@nestjs/common';
+import { Injectable, BadRequestException, Inject, Optional } from '@nestjs/common';
 import { PostingEngineService } from '../accounting/posting-engine.service';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { manualJournalPoster, type PostedJournal } from '../accounting/manual-journal';
 
 export interface OverheadPoolDto {
   code: string;
@@ -24,12 +26,12 @@ export interface RunAllocationDto {
 @Injectable()
 export class OverheadService {
   constructor(
-    @Inject('DRIZZLE') private readonly db: any,
+    @Inject('DRIZZLE') private readonly db: NodePgDatabase,
     @Optional() @Inject(PostingEngineService) private readonly postingEngine?: PostingEngineService,
   ) {}
 
   // ── 1. جلب ملخص مجمعات التكاليف وفروق التحميل ──
-  async getOverheadPoolsSummary(periodMonth?: string) {
+  async getOverheadPoolsSummary(_periodMonth?: string) {
     return [
       {
         id: 'pool-1',
@@ -92,7 +94,8 @@ export class OverheadService {
     const allocationResults = [];
 
     for (const pool of dto.pools) {
-      const calculatedRate = pool.totalDriverUnits > 0 ? pool.periodActualCost / pool.totalDriverUnits : 0;
+      const calculatedRate =
+        pool.totalDriverUnits > 0 ? pool.periodActualCost / pool.totalDriverUnits : 0;
       totalAppliedAmount += pool.periodActualCost;
 
       allocationResults.push({
@@ -131,12 +134,10 @@ export class OverheadService {
       ],
     };
 
-    let journalResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      journalResult = await (this.postingEngine as any).createManualJournalEntry(journalPayload);
-    } else {
-      journalResult = { id: `mock-oh-journal-${Date.now()}`, ...journalPayload };
-    }
+    const poster = manualJournalPoster(this.postingEngine);
+    const journalResult: PostedJournal = poster
+      ? await poster.createManualJournalEntry(journalPayload)
+      : { id: `mock-oh-journal-${Date.now()}`, ...journalPayload };
 
     return {
       periodMonth: dto.periodMonth,
@@ -151,14 +152,21 @@ export class OverheadService {
   // ═════════════════════════════════════════════
   // ── دمج إهلاك ماكينات تشكيل الصاج مع الـ Overhead ──
   // ═════════════════════════════════════════════
-  async integrateMachineryDepreciation(dto: {
-    companyId: string;
-    fiscalYearId: string;
-    periodId: string;
-    periodMonth: string;
-    totalMachineryDepreciation: number;
-    machinesBreakdown?: Array<{ machineName: string; depreciationAmount: number; operatingHours: number }>;
-  }, userId: string) {
+  async integrateMachineryDepreciation(
+    dto: {
+      companyId: string;
+      fiscalYearId: string;
+      periodId: string;
+      periodMonth: string;
+      totalMachineryDepreciation: number;
+      machinesBreakdown?: Array<{
+        machineName: string;
+        depreciationAmount: number;
+        operatingHours: number;
+      }>;
+    },
+    userId: string,
+  ) {
     if (dto.totalMachineryDepreciation <= 0) {
       throw new BadRequestException('Machinery depreciation amount must be greater than zero');
     }
@@ -190,12 +198,10 @@ export class OverheadService {
       ],
     };
 
-    let journalResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      journalResult = await (this.postingEngine as any).createManualJournalEntry(journalPayload);
-    } else {
-      journalResult = { id: `mock-depr-journal-${Date.now()}`, ...journalPayload };
-    }
+    const poster = manualJournalPoster(this.postingEngine);
+    const journalResult: PostedJournal = poster
+      ? await poster.createManualJournalEntry(journalPayload)
+      : { id: `mock-depr-journal-${Date.now()}`, ...journalPayload };
 
     return {
       periodMonth: dto.periodMonth,

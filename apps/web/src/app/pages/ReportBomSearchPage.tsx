@@ -3,11 +3,30 @@ import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 import { ReportLayout } from '../components/ReportLayout';
 
-interface ItemRecord { id: string; code: string; name: string; }
-interface BomLineRecord { componentItemId: string; }
-interface BomRecord { id: string; productItemId: string; version: number; status: string; lines: BomLineRecord[]; }
-interface OrgNodeTreeItem { id: string; nodeType: string; children: OrgNodeTreeItem[]; }
-interface CompanyProfileRecord { displayName: string | null; logoUrl: string | null; }
+interface ItemRecord {
+  id: string;
+  code: string;
+  name: string;
+}
+interface BomLineRecord {
+  componentItemId: string;
+}
+interface BomRecord {
+  id: string;
+  productItemId: string;
+  version: number;
+  status: string;
+  lines: BomLineRecord[];
+}
+interface OrgNodeTreeItem {
+  id: string;
+  nodeType: string;
+  children: OrgNodeTreeItem[];
+}
+interface CompanyProfileRecord {
+  displayName: string | null;
+  logoUrl: string | null;
+}
 
 function findFirstLegalCompany(nodes: OrgNodeTreeItem[]): OrgNodeTreeItem | null {
   for (const node of nodes) {
@@ -43,7 +62,9 @@ export function ReportBomSearchPage(): JSX.Element {
       const company = findFirstLegalCompany(orgRes.tree);
       if (company) {
         try {
-          const profileRes = await api.get<{ companyProfile: CompanyProfileRecord }>(`/settings/company-profile/${company.id}`);
+          const profileRes = await api.get<{ companyProfile: CompanyProfileRecord }>(
+            `/settings/company-profile/${company.id}`,
+          );
           setCompanyName(profileRes.companyProfile.displayName);
           setLogoUrl(profileRes.companyProfile.logoUrl);
         } catch {
@@ -57,19 +78,39 @@ export function ReportBomSearchPage(): JSX.Element {
     }
   }
 
-  useEffect(() => { void loadAll(); }, [i18n.language]);
+  useEffect(() => {
+    void loadAll();
+  }, [i18n.language]);
 
   const itemLabel = (id: string): string => items.find((it) => it.id === id)?.name ?? id;
 
   const rows = useMemo(() => {
-    const results: { bomNumber: string; productItem: string; role: string; version: number; status: string }[] = [];
+    const results: {
+      bomNumber: string;
+      productItem: string;
+      role: string;
+      version: number;
+      status: string;
+    }[] = [];
     for (const bom of boms) {
       if (!filterItemId) continue;
       if (bom.productItemId === filterItemId) {
-        results.push({ bomNumber: `BOM-${bom.version}`, productItem: itemLabel(bom.productItemId), role: t('pages.reports.asProduct'), version: bom.version, status: bom.status });
+        results.push({
+          bomNumber: `BOM-${bom.version}`,
+          productItem: itemLabel(bom.productItemId),
+          role: t('pages.reports.asProduct'),
+          version: bom.version,
+          status: bom.status,
+        });
       }
       if (bom.lines.some((l) => l.componentItemId === filterItemId)) {
-        results.push({ bomNumber: `BOM-${bom.version}`, productItem: itemLabel(bom.productItemId), role: t('pages.reports.asComponent'), version: bom.version, status: bom.status });
+        results.push({
+          bomNumber: `BOM-${bom.version}`,
+          productItem: itemLabel(bom.productItemId),
+          role: t('pages.reports.asComponent'),
+          version: bom.version,
+          status: bom.status,
+        });
       }
     }
     return results;
@@ -78,7 +119,10 @@ export function ReportBomSearchPage(): JSX.Element {
   const inputStyle = { padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1' };
   const labelStyle = { fontSize: 12, color: '#64748b' };
 
-  if (loading) return <p style={{ padding: 40, textAlign: 'center' }}>{t('pages.production_ops.form.loading')}</p>;
+  if (loading)
+    return (
+      <p style={{ padding: 40, textAlign: 'center' }}>{t('pages.production_ops.form.loading')}</p>
+    );
 
   return (
     <section className="module-page">
@@ -96,15 +140,29 @@ export function ReportBomSearchPage(): JSX.Element {
         companyName={companyName}
         logoUrl={logoUrl}
         filename="bom-search"
-        exportHeaders={[t('pages.reports.bomNumber'), t('pages.reports.productItem'), t('pages.reports.role'), t('pages.reports.version'), t('pages.reports.status')]}
+        exportHeaders={[
+          t('pages.reports.bomNumber'),
+          t('pages.reports.productItem'),
+          t('pages.reports.role'),
+          t('pages.reports.version'),
+          t('pages.reports.status'),
+        ]}
         exportRows={rows.map((r) => [r.bomNumber, r.productItem, r.role, r.version, r.status])}
       >
         <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={labelStyle}>{t('pages.reports.filterByItem')}</label>
-            <select value={filterItemId} onChange={(e) => setFilterItemId(e.target.value)} style={{ ...inputStyle, minWidth: 220 }}>
+            <select
+              value={filterItemId}
+              onChange={(e) => setFilterItemId(e.target.value)}
+              style={{ ...inputStyle, minWidth: 220 }}
+            >
               <option value="">—</option>
-              {items.map((it) => <option key={it.id} value={it.id}>{it.name} ({it.code})</option>)}
+              {items.map((it) => (
+                <option key={it.id} value={it.id}>
+                  {it.name} ({it.code})
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -117,10 +175,16 @@ export function ReportBomSearchPage(): JSX.Element {
             <span>{t('pages.reports.version')}</span>
             <span>{t('pages.reports.status')}</span>
           </div>
-          {rows.length === 0 && <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.reports.noResults')}</p>}
+          {rows.length === 0 && (
+            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>
+              {t('pages.reports.noResults')}
+            </p>
+          )}
           {rows.map((r, idx) => (
             <div className="placeholder-table__row" key={idx}>
-              <span><b>{r.bomNumber}</b></span>
+              <span>
+                <b>{r.bomNumber}</b>
+              </span>
               <span>{r.productItem}</span>
               <span>{r.role}</span>
               <span>v{r.version}</span>

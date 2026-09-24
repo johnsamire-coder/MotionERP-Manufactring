@@ -18,20 +18,23 @@ describe('Medical Traceability & Warranty Engine (ISO 13485)', () => {
 
   const mockDb = {
     select: jest.fn().mockReturnValue({
-      from: jest.fn().mockImplementation((table) => {
+      from: jest.fn().mockImplementation((_table) => {
         return {
-          where: jest.fn().mockImplementation((condition) => {
+          where: jest.fn().mockImplementation((_condition) => {
             return [];
           }),
         };
       }),
     }),
-    insert: jest.fn().mockImplementation((table) => {
+    insert: jest.fn().mockImplementation((_table) => {
       return {
         values: jest.fn().mockImplementation((data) => {
           return {
             returning: jest.fn().mockImplementation(() => {
-              const record = { id: `id-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`, ...data };
+              const record = {
+                id: `id-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+                ...data,
+              };
               if (data.batchNumber && !data.serialNumber) {
                 batchesDb.push(record);
               } else if (data.serialNumber) {
@@ -43,11 +46,11 @@ describe('Medical Traceability & Warranty Engine (ISO 13485)', () => {
         }),
       };
     }),
-    update: jest.fn().mockImplementation((table) => {
+    update: jest.fn().mockImplementation((_table) => {
       return {
         set: jest.fn().mockImplementation((updateData) => {
           return {
-            where: jest.fn().mockImplementation((condition) => {
+            where: jest.fn().mockImplementation((_condition) => {
               return {
                 returning: jest.fn().mockImplementation(() => {
                   return [{ ...updateData }];
@@ -114,7 +117,7 @@ describe('Medical Traceability & Warranty Engine (ISO 13485)', () => {
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
-    
+
     const firstResult = result[0];
     if (!firstResult) throw new Error('Result list is empty');
 
@@ -142,7 +145,9 @@ describe('Medical Traceability & Warranty Engine (ISO 13485)', () => {
     mockDb.update.mockReturnValueOnce({
       set: () => ({
         where: () => ({
-          returning: () => [{ ...existingBatch, quarantineStatus: 'accepted', acceptedQty: '500.0000' }],
+          returning: () => [
+            { ...existingBatch, quarantineStatus: 'accepted', acceptedQty: '500.0000' },
+          ],
         }),
       }),
     });

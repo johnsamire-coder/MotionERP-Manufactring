@@ -13,7 +13,15 @@ import { OpportunityService } from './opportunity.service';
 
 @Module({
   controllers: [CrmController, OpportunityController, LeadController, PartyGroupController],
-  providers: [CrmService, CrmRepository, OpportunityService, OpportunityRepository, LeadService, LeadRepository, PartyGroupService],
+  providers: [
+    CrmService,
+    CrmRepository,
+    OpportunityService,
+    OpportunityRepository,
+    LeadService,
+    LeadRepository,
+    PartyGroupService,
+  ],
   exports: [CrmService, OpportunityService, PartyGroupService],
 })
 export class CrmModule {}

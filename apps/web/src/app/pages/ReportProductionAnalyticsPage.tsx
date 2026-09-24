@@ -3,9 +3,20 @@ import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 import { ReportLayout } from '../components/ReportLayout';
 
-interface WorkOrderRecord { id: string; status: string; createdAt: string; }
-interface OrgNodeTreeItem { id: string; nodeType: string; children: OrgNodeTreeItem[]; }
-interface CompanyProfileRecord { displayName: string | null; logoUrl: string | null; }
+interface WorkOrderRecord {
+  id: string;
+  status: string;
+  createdAt: string;
+}
+interface OrgNodeTreeItem {
+  id: string;
+  nodeType: string;
+  children: OrgNodeTreeItem[];
+}
+interface CompanyProfileRecord {
+  displayName: string | null;
+  logoUrl: string | null;
+}
 
 function findFirstLegalCompany(nodes: OrgNodeTreeItem[]): OrgNodeTreeItem | null {
   for (const node of nodes) {
@@ -18,7 +29,11 @@ function findFirstLegalCompany(nodes: OrgNodeTreeItem[]): OrgNodeTreeItem | null
 
 const STATUSES = ['not_started', 'in_progress', 'completed', 'closed', 'stopped'];
 const STATUS_COLORS: Record<string, string> = {
-  not_started: '#94a3b8', in_progress: '#f59e0b', completed: '#22c55e', closed: '#64748b', stopped: '#ef4444',
+  not_started: '#94a3b8',
+  in_progress: '#f59e0b',
+  completed: '#22c55e',
+  closed: '#64748b',
+  stopped: '#ef4444',
 };
 
 export function ReportProductionAnalyticsPage(): JSX.Element {
@@ -41,10 +56,14 @@ export function ReportProductionAnalyticsPage(): JSX.Element {
       const company = findFirstLegalCompany(orgRes.tree);
       if (company) {
         try {
-          const profileRes = await api.get<{ companyProfile: CompanyProfileRecord }>(`/settings/company-profile/${company.id}`);
+          const profileRes = await api.get<{ companyProfile: CompanyProfileRecord }>(
+            `/settings/company-profile/${company.id}`,
+          );
           setCompanyName(profileRes.companyProfile.displayName);
           setLogoUrl(profileRes.companyProfile.logoUrl);
-        } catch { setCompanyName(null); }
+        } catch {
+          setCompanyName(null);
+        }
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to load production analytics data');
@@ -53,7 +72,9 @@ export function ReportProductionAnalyticsPage(): JSX.Element {
     }
   }
 
-  useEffect(() => { void loadAll(); }, [i18n.language]);
+  useEffect(() => {
+    void loadAll();
+  }, [i18n.language]);
 
   const monthlyData = useMemo(() => {
     const byMonth: Record<string, Record<string, number>> = {};
@@ -62,14 +83,22 @@ export function ReportProductionAnalyticsPage(): JSX.Element {
       if (!byMonth[month]) byMonth[month] = {};
       byMonth[month][wo.status] = (byMonth[month][wo.status] ?? 0) + 1;
     }
-    return Object.entries(byMonth).sort(([a], [b]) => a.localeCompare(b)).map(([month, counts]) => ({ month, counts }));
+    return Object.entries(byMonth)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, counts]) => ({ month, counts }));
   }, [workOrders]);
 
-  const maxMonthlyTotal = Math.max(...monthlyData.map((m) => Object.values(m.counts).reduce((s, v) => s + v, 0)), 1);
+  const maxMonthlyTotal = Math.max(
+    ...monthlyData.map((m) => Object.values(m.counts).reduce((s, v) => s + v, 0)),
+    1,
+  );
   const exportHeaders = [t('pages.reports.month'), ...STATUSES];
   const exportRows = monthlyData.map((m) => [m.month, ...STATUSES.map((s) => m.counts[s] ?? 0)]);
 
-  if (loading) return <p style={{ padding: 40, textAlign: 'center' }}>{t('pages.production_ops.form.loading')}</p>;
+  if (loading)
+    return (
+      <p style={{ padding: 40, textAlign: 'center' }}>{t('pages.production_ops.form.loading')}</p>
+    );
 
   return (
     <section className="module-page">
@@ -90,16 +119,47 @@ export function ReportProductionAnalyticsPage(): JSX.Element {
         exportHeaders={exportHeaders}
         exportRows={exportRows}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, height: 200, marginBottom: 20 }}>
-          {monthlyData.length === 0 && <p style={{ color: '#94a3b8' }}>{t('pages.reports.noResults')}</p>}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            gap: 16,
+            height: 200,
+            marginBottom: 20,
+          }}
+        >
+          {monthlyData.length === 0 && (
+            <p style={{ color: '#94a3b8' }}>{t('pages.reports.noResults')}</p>
+          )}
           {monthlyData.map((m) => {
             const total = Object.values(m.counts).reduce((s, v) => s + v, 0);
             return (
-              <div key={m.month} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                <div style={{ display: 'flex', flexDirection: 'column-reverse', width: '100%', maxWidth: 50, height: `${(total / maxMonthlyTotal) * 160}px` }}>
-                  {STATUSES.map((s) => (m.counts[s] ? (
-                    <div key={s} style={{ height: `${(m.counts[s] / total) * 100}%`, background: STATUS_COLORS[s], width: '100%' }} title={`${s}: ${m.counts[s]}`} />
-                  ) : null))}
+              <div
+                key={m.month}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column-reverse',
+                    width: '100%',
+                    maxWidth: 50,
+                    height: `${(total / maxMonthlyTotal) * 160}px`,
+                  }}
+                >
+                  {STATUSES.map((s) =>
+                    m.counts[s] ? (
+                      <div
+                        key={s}
+                        style={{
+                          height: `${(m.counts[s] / total) * 100}%`,
+                          background: STATUS_COLORS[s],
+                          width: '100%',
+                        }}
+                        title={`${s}: ${m.counts[s]}`}
+                      />
+                    ) : null,
+                  )}
                 </div>
                 <span style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>{m.month}</span>
               </div>
@@ -110,12 +170,18 @@ export function ReportProductionAnalyticsPage(): JSX.Element {
         <div className="placeholder-table">
           <div className="placeholder-table__head">
             <span>{t('pages.reports.month')}</span>
-            {STATUSES.map((s) => <span key={s}>{s}</span>)}
+            {STATUSES.map((s) => (
+              <span key={s}>{s}</span>
+            ))}
           </div>
           {monthlyData.map((m) => (
             <div className="placeholder-table__row" key={m.month}>
-              <span><b>{m.month}</b></span>
-              {STATUSES.map((s) => <span key={s}>{m.counts[s] ?? 0}</span>)}
+              <span>
+                <b>{m.month}</b>
+              </span>
+              {STATUSES.map((s) => (
+                <span key={s}>{m.counts[s] ?? 0}</span>
+              ))}
             </div>
           ))}
         </div>

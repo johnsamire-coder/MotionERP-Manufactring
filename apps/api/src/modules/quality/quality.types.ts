@@ -1,6 +1,7 @@
 export type QualityCheckPointType = 'production_step' | 'material_request';
 export type QualityWorkflowStatus = 'pending' | 'approved' | 'rejected';
-export type QualityInspectionReferenceType = 'purchase_receipt' | 'production_step' | 'delivery_order';
+export type QualityInspectionReferenceType =
+  'purchase_receipt' | 'production_step' | 'delivery_order';
 export type QualityInspectionStatus = 'pending' | 'passed' | 'failed';
 export type QualityParameterStatus = 'pending' | 'pass' | 'fail';
 

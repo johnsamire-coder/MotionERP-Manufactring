@@ -1,5 +1,14 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsIn, IsNumberString, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 
 const PERIODICITIES = ['monthly', 'quarterly', 'half_yearly', 'yearly'] as const;
 

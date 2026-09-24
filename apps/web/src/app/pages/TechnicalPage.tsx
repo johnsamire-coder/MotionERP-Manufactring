@@ -2,15 +2,50 @@
 import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 
-interface JobOrderRecord { id: string; jobOrderNumber: string; customerId?: string; status: string; }
-interface ItemRecord { id: string; code: string; name: string; }
-interface TechDocRecord { id: string; jobOrderReference: string; docType: string; fileRef: string; version: string; createdAt: string; }
-interface OrgNodeTreeItem { id: string; name: string; nodeType: string; children: OrgNodeTreeItem[]; }
-interface BomLineInput { itemId: string; quantity: string; }
-interface BomLineRecord { id: string; componentItemId: string; quantity: string; lineNumber: number; }
+interface JobOrderRecord {
+  id: string;
+  jobOrderNumber: string;
+  customerId?: string;
+  status: string;
+}
+interface ItemRecord {
+  id: string;
+  code: string;
+  name: string;
+}
+interface TechDocRecord {
+  id: string;
+  jobOrderReference: string;
+  docType: string;
+  fileRef: string;
+  version: string;
+  createdAt: string;
+}
+interface OrgNodeTreeItem {
+  id: string;
+  name: string;
+  nodeType: string;
+  children: OrgNodeTreeItem[];
+}
+interface BomLineInput {
+  itemId: string;
+  quantity: string;
+}
+interface BomLineRecord {
+  id: string;
+  componentItemId: string;
+  quantity: string;
+  lineNumber: number;
+}
 interface BomRecord {
-  id: string; productItemId: string; orgNodeId: string; version: number; outputQuantity: string;
-  isDefault: boolean; status: string; lines: BomLineRecord[];
+  id: string;
+  productItemId: string;
+  orgNodeId: string;
+  version: number;
+  outputQuantity: string;
+  isDefault: boolean;
+  status: string;
+  lines: BomLineRecord[];
 }
 
 function flattenOrgNodes(nodes: OrgNodeTreeItem[]): OrgNodeTreeItem[] {
@@ -29,8 +64,8 @@ export function TechnicalPage(): JSX.Element {
   const [techDocs, setTechDocs] = useState<TechDocRecord[]>([]);
   const [boms, setBoms] = useState<BomRecord[]>([]);
   const [orgNodes, setOrgNodes] = useState<OrgNodeTreeItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState<string | null>(null);
 
   const [selectedJO, setSelectedJO] = useState('');
   const [showDocForm, setShowDocForm] = useState(false);
@@ -81,17 +116,31 @@ export function TechnicalPage(): JSX.Element {
     }
   }
 
-  useEffect(() => { void loadAll(); }, [i18n.language]);
+  useEffect(() => {
+    void loadAll();
+  }, [i18n.language]);
 
   async function handleCreateDoc(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
+    setFormError(null);
+    setFormSuccess(null);
+    setSubmitting(true);
     try {
-      await api.post('/technical/documents', { jobOrderReference: selectedJO, documentType: docType, fileReference: fileRef, note: docVersion });
-      setFileRef(''); setShowDocForm(false);
+      await api.post('/technical/documents', {
+        jobOrderReference: selectedJO,
+        documentType: docType,
+        fileReference: fileRef,
+        note: docVersion,
+      });
+      setFileRef('');
+      setShowDocForm(false);
       setFormSuccess(t('pages.technical.form.success'));
       await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function addBomLine(): void {
@@ -110,7 +159,9 @@ export function TechnicalPage(): JSX.Element {
 
   async function handleCreateBom(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
+    setFormError(null);
+    setFormSuccess(null);
+    setSubmitting(true);
     try {
       await api.post('/technical/boms', {
         productItemId: bomProductItemId,
@@ -122,16 +173,26 @@ export function TechnicalPage(): JSX.Element {
       setShowBomForm(false);
       setFormSuccess(t('pages.technical.form.success'));
       await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleApproveBom(bomId: string): Promise<void> {
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
+    setFormError(null);
+    setFormSuccess(null);
+    setSubmitting(true);
     try {
       await api.post(`/technical/boms/${bomId}/approve`, {});
       setFormSuccess(t('pages.technical.form.success'));
       await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const itemLabel = (id: string): string => items.find((it) => it.id === id)?.name ?? id;
@@ -152,10 +213,29 @@ export function TechnicalPage(): JSX.Element {
       {formError && <p style={{ color: '#b91c1c', padding: '8px 0' }}>{formError}</p>}
       {formSuccess && <p style={{ color: '#166534', padding: '8px 0' }}>{formSuccess}</p>}
 
-      <div style={{ background: '#fff', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div
+        style={{
+          background: '#fff',
+          padding: 16,
+          borderRadius: 8,
+          border: '1px solid #e2e8f0',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+        }}
+      >
         <label style={{ ...labelStyle, fontSize: 14, fontWeight: 'bold' }}>Job Order:</label>
-        <select value={selectedJO} onChange={(e) => setSelectedJO(e.target.value)} style={{ ...inputStyle, minWidth: 220, fontSize: 14, fontWeight: 'bold' }}>
-          {jobOrders.map((jo) => <option key={jo.id} value={jo.jobOrderNumber}>{jo.jobOrderNumber}</option>)}
+        <select
+          value={selectedJO}
+          onChange={(e) => setSelectedJO(e.target.value)}
+          style={{ ...inputStyle, minWidth: 220, fontSize: 14, fontWeight: 'bold' }}
+        >
+          {jobOrders.map((jo) => (
+            <option key={jo.id} value={jo.jobOrderNumber}>
+              {jo.jobOrderNumber}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -165,14 +245,32 @@ export function TechnicalPage(): JSX.Element {
             <span className="panel__eyebrow">Engineering Drawings</span>
             <h2>{t('pages.technical.docs.title')}</h2>
           </div>
-          <button className="primary-button" onClick={() => setShowDocForm((v) => !v)}><b>+</b>{t('pages.technical.docs.addDoc')}</button>
+          <button className="primary-button" onClick={() => setShowDocForm((v) => !v)}>
+            <b>+</b>
+            {t('pages.technical.docs.addDoc')}
+          </button>
         </div>
 
         {showDocForm && (
-          <form onSubmit={(e) => { void handleCreateDoc(e); }} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end', padding: '0 0 20px' }}>
+          <form
+            onSubmit={(e) => {
+              void handleCreateDoc(e);
+            }}
+            style={{
+              display: 'flex',
+              gap: 12,
+              flexWrap: 'wrap',
+              alignItems: 'end',
+              padding: '0 0 20px',
+            }}
+          >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <label style={labelStyle}>{t('pages.technical.docs.docType')}</label>
-              <select value={docType} onChange={(e) => setDocType(e.target.value)} style={inputStyle}>
+              <select
+                value={docType}
+                onChange={(e) => setDocType(e.target.value)}
+                style={inputStyle}
+              >
                 <option value="shop_drawing">{t('pages.technical.docs.shopDrawing')}</option>
                 <option value="cutting_list">{t('pages.technical.docs.cuttingList')}</option>
                 <option value="other">{t('pages.technical.docs.spec')}</option>
@@ -180,13 +278,31 @@ export function TechnicalPage(): JSX.Element {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <label style={labelStyle}>{t('pages.technical.docs.fileRef')}</label>
-              <input value={fileRef} onChange={(e) => setFileRef(e.target.value)} required placeholder="e.g. //drawings/DWG-JO-001.pdf" style={{ ...inputStyle, minWidth: 240 }} />
+              <input
+                value={fileRef}
+                onChange={(e) => setFileRef(e.target.value)}
+                required
+                placeholder="e.g. //drawings/DWG-JO-001.pdf"
+                style={{ ...inputStyle, minWidth: 240 }}
+              />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <label style={labelStyle}>{t('pages.technical.docs.version')}</label>
-              <input value={docVersion} onChange={(e) => setDocVersion(e.target.value)} required style={{ ...inputStyle, width: 80 }} />
+              <input
+                value={docVersion}
+                onChange={(e) => setDocVersion(e.target.value)}
+                required
+                style={{ ...inputStyle, width: 80 }}
+              />
             </div>
-            <button type="submit" disabled={submitting} className="primary-button" style={{ height: 38 }}>{t('pages.technical.form.save')}</button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="primary-button"
+              style={{ height: 38 }}
+            >
+              {t('pages.technical.form.save')}
+            </button>
           </form>
         )}
 
@@ -197,15 +313,27 @@ export function TechnicalPage(): JSX.Element {
             <span>{t('pages.technical.docs.version')}</span>
           </div>
           {techDocs.filter((d) => d.jobOrderReference === selectedJO).length === 0 && (
-            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.technical.form.empty')}</p>
+            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>
+              {t('pages.technical.form.empty')}
+            </p>
           )}
-          {techDocs.filter((d) => d.jobOrderReference === selectedJO).map((doc) => (
-            <div className="placeholder-table__row" key={doc.id}>
-              <span><b>{t(`pages.technical.docs.${doc.docType === 'shop_drawing' ? 'shopDrawing' : doc.docType === 'cutting_list' ? 'cuttingList' : 'spec'}`)}</b></span>
-              <span><code>{doc.fileRef}</code></span>
-              <span>{doc.version}</span>
-            </div>
-          ))}
+          {techDocs
+            .filter((d) => d.jobOrderReference === selectedJO)
+            .map((doc) => (
+              <div className="placeholder-table__row" key={doc.id}>
+                <span>
+                  <b>
+                    {t(
+                      `pages.technical.docs.${doc.docType === 'shop_drawing' ? 'shopDrawing' : doc.docType === 'cutting_list' ? 'cuttingList' : 'spec'}`,
+                    )}
+                  </b>
+                </span>
+                <span>
+                  <code>{doc.fileRef}</code>
+                </span>
+                <span>{doc.version}</span>
+              </div>
+            ))}
         </div>
       </article>
 
@@ -215,55 +343,144 @@ export function TechnicalPage(): JSX.Element {
             <span className="panel__eyebrow">Bill of Materials</span>
             <h2>{t('pages.technical.bom.title')}</h2>
           </div>
-          <button className="primary-button" onClick={() => setShowBomForm((v) => !v)}><b>+</b>{t('pages.technical.bom.createBom')}</button>
+          <button className="primary-button" onClick={() => setShowBomForm((v) => !v)}>
+            <b>+</b>
+            {t('pages.technical.bom.createBom')}
+          </button>
         </div>
 
         {showBomForm && (
-          <form onSubmit={(e) => { void handleCreateBom(e); }} style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '0 0 20px' }}>
+          <form
+            onSubmit={(e) => {
+              void handleCreateBom(e);
+            }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '0 0 20px' }}
+          >
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.technical.bom.productItem')}</label>
-                <select value={bomProductItemId} onChange={(e) => setBomProductItemId(e.target.value)} style={{ ...inputStyle, minWidth: 220 }}>
-                  {items.map((it) => <option key={it.id} value={it.id}>{it.name} ({it.code})</option>)}
+                <select
+                  value={bomProductItemId}
+                  onChange={(e) => setBomProductItemId(e.target.value)}
+                  style={{ ...inputStyle, minWidth: 220 }}
+                >
+                  {items.map((it) => (
+                    <option key={it.id} value={it.id}>
+                      {it.name} ({it.code})
+                    </option>
+                  ))}
                 </select>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.technical.bom.activity')}</label>
-                <select value={bomOrgNodeId} onChange={(e) => setBomOrgNodeId(e.target.value)} style={{ ...inputStyle, minWidth: 200 }}>
-                  {orgNodes.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                <select
+                  value={bomOrgNodeId}
+                  onChange={(e) => setBomOrgNodeId(e.target.value)}
+                  style={{ ...inputStyle, minWidth: 200 }}
+                >
+                  {orgNodes.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.technical.bom.outputQty')}</label>
-                <input type="number" min="0.01" step="any" value={bomOutputQty} onChange={(e) => setBomOutputQty(e.target.value)} required style={{ ...inputStyle, width: 100 }} />
+                <input
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  value={bomOutputQty}
+                  onChange={(e) => setBomOutputQty(e.target.value)}
+                  required
+                  style={{ ...inputStyle, width: 100 }}
+                />
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-                <input type="checkbox" checked={bomIsDefault} onChange={(e) => setBomIsDefault(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={bomIsDefault}
+                  onChange={(e) => setBomIsDefault(e.target.checked)}
+                />
                 {t('pages.technical.bom.isDefault')}
               </label>
             </div>
 
-            <div style={{ background: '#f8fafc', padding: 16, borderRadius: 6, border: '1px solid #e2e8f0' }}>
-              <label style={{ ...labelStyle, fontWeight: 'bold', marginBottom: 10, display: 'block' }}>{t('pages.technical.bom.addItem')}</label>
+            <div
+              style={{
+                background: '#f8fafc',
+                padding: 16,
+                borderRadius: 6,
+                border: '1px solid #e2e8f0',
+              }}
+            >
+              <label
+                style={{ ...labelStyle, fontWeight: 'bold', marginBottom: 10, display: 'block' }}
+              >
+                {t('pages.technical.bom.addItem')}
+              </label>
 
-              <div style={{ display: 'flex', gap: 12, marginBottom: 6, fontSize: 12, color: '#64748b', fontWeight: 'bold' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 12,
+                  marginBottom: 6,
+                  fontSize: 12,
+                  color: '#64748b',
+                  fontWeight: 'bold',
+                }}
+              >
                 <span style={{ flex: 2 }}>{t('pages.technical.bom.item')}</span>
                 <span style={{ width: 140 }}>{t('pages.technical.bom.plannedQty')}</span>
               </div>
 
               {bomLines.map((line, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: 12, marginTop: 8, alignItems: 'center' }}>
-                  <select value={line.itemId} onChange={(e) => updateBomLine(idx, 'itemId', e.target.value)} style={{ ...inputStyle, flex: 2, minWidth: 200 }}>
-                    {items.map((it) => <option key={it.id} value={it.id}>{it.name} ({it.code})</option>)}
+                <div
+                  key={idx}
+                  style={{ display: 'flex', gap: 12, marginTop: 8, alignItems: 'center' }}
+                >
+                  <select
+                    value={line.itemId}
+                    onChange={(e) => updateBomLine(idx, 'itemId', e.target.value)}
+                    style={{ ...inputStyle, flex: 2, minWidth: 200 }}
+                  >
+                    {items.map((it) => (
+                      <option key={it.id} value={it.id}>
+                        {it.name} ({it.code})
+                      </option>
+                    ))}
                   </select>
-                  <input type="number" min="0.01" step="any" value={line.quantity} onChange={(e) => updateBomLine(idx, 'quantity', e.target.value)} required style={{ ...inputStyle, width: 140 }} />
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="any"
+                    value={line.quantity}
+                    onChange={(e) => updateBomLine(idx, 'quantity', e.target.value)}
+                    required
+                    style={{ ...inputStyle, width: 140 }}
+                  />
                 </div>
               ))}
 
-              <button type="button" onClick={addBomLine} className="filter-button" style={{ marginTop: 12 }}>+ {t('pages.technical.bom.addItem')}</button>
+              <button
+                type="button"
+                onClick={addBomLine}
+                className="filter-button"
+                style={{ marginTop: 12 }}
+              >
+                + {t('pages.technical.bom.addItem')}
+              </button>
             </div>
 
-            <button type="submit" disabled={submitting} className="primary-button" style={{ alignSelf: 'flex-start' }}>{t('pages.technical.form.save')}</button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="primary-button"
+              style={{ alignSelf: 'flex-start' }}
+            >
+              {t('pages.technical.form.save')}
+            </button>
           </form>
         )}
 
@@ -277,18 +494,35 @@ export function TechnicalPage(): JSX.Element {
             <span>{t('common.filter')}</span>
           </div>
           {boms.length === 0 && (
-            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.technical.bom.noBom')}</p>
+            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>
+              {t('pages.technical.bom.noBom')}
+            </p>
           )}
           {boms.map((bomItem) => (
             <div className="placeholder-table__row" key={bomItem.id}>
-              <span><b>{itemLabel(bomItem.productItemId)}</b></span>
+              <span>
+                <b>{itemLabel(bomItem.productItemId)}</b>
+              </span>
               <span>v{bomItem.version}</span>
               <span>{orgLabel(bomItem.orgNodeId)}</span>
-              <span><span className={`status status--${bomItem.status === 'approved' ? 'success' : 'neutral'}`}><i />{bomItem.status}</span></span>
+              <span>
+                <span
+                  className={`status status--${bomItem.status === 'approved' ? 'success' : 'neutral'}`}
+                >
+                  <i />
+                  {bomItem.status}
+                </span>
+              </span>
               <span>{bomItem.isDefault ? '✓' : '—'}</span>
               <span>
                 {bomItem.status === 'draft' && (
-                  <button className="primary-button" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => { void handleApproveBom(bomItem.id); }}>
+                  <button
+                    className="primary-button"
+                    style={{ fontSize: 12, padding: '4px 10px' }}
+                    onClick={() => {
+                      void handleApproveBom(bomItem.id);
+                    }}
+                  >
                     {t('pages.technical.bom.approve')}
                   </button>
                 )}
@@ -300,4 +534,3 @@ export function TechnicalPage(): JSX.Element {
     </section>
   );
 }
-

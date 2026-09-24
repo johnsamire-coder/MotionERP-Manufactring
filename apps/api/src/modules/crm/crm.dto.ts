@@ -1,4 +1,14 @@
-import { IsEmail, IsIn, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength, ValidateIf } from 'class-validator';
+import {
+  IsEmail,
+  IsIn,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
 
 const CUSTOMER_STATUSES = ['lead', 'active', 'inactive', 'archived'] as const;
 const INTERACTION_TYPES = ['visit', 'call', 'email', 'note'] as const;
@@ -35,7 +45,8 @@ export class CreateInteractionDto {
 
 /** holdType null lifts the hold (plan item 8). */
 export class SetSupplierHoldDto {
-  @ValidateIf((_o, v) => v !== null) @IsIn(['all', 'invoices', 'payments']) holdType!: 'all' | 'invoices' | 'payments' | null;
+  @ValidateIf((_o, v) => v !== null) @IsIn(['all', 'invoices', 'payments']) holdType!:
+    'all' | 'invoices' | 'payments' | null;
   @IsOptional() @IsString() @MaxLength(500) reason?: string;
   @IsOptional() @IsString() releaseDate?: string;
 }

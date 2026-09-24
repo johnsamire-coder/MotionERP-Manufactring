@@ -13,7 +13,11 @@ import { UserPermissionService } from './user-permission.service';
 @Module({
   controllers: [AuthController, RbacController, UserPermissionController],
   providers: [
-    AuthService, AuthRepository, RbacService, AuthTokenService, UserPermissionService,
+    AuthService,
+    AuthRepository,
+    RbacService,
+    AuthTokenService,
+    UserPermissionService,
     { provide: APP_GUARD, useClass: AuthenticationGuard },
   ],
   exports: [AuthService, AuthTokenService, UserPermissionService],

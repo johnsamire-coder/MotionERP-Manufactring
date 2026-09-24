@@ -1,7 +1,20 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Put, UseFilters } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Put,
+  UseFilters,
+} from '@nestjs/common';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { FinanceExceptionFilter } from './finance.exception-filter';
-import { PurchaseInvoiceHoldService, type PurchaseInvoiceHoldRecord } from './purchase-invoice-hold.service';
+import {
+  PurchaseInvoiceHoldService,
+  type PurchaseInvoiceHoldRecord,
+} from './purchase-invoice-hold.service';
 
 export class HoldPurchaseInvoiceDto {
   @IsString() @MaxLength(500) reason!: string;
@@ -15,16 +28,22 @@ export class PurchaseInvoiceHoldController {
   constructor(private readonly service: PurchaseInvoiceHoldService) {}
 
   @Get()
-  async get(@Param('id', ParseUUIDPipe) id: string): Promise<{ hold: PurchaseInvoiceHoldRecord | null }> {
+  async get(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ hold: PurchaseInvoiceHoldRecord | null }> {
     return { hold: await this.service.get(id) };
   }
 
   @Put()
-  async hold(@Param('id', ParseUUIDPipe) id: string, @Body() dto: HoldPurchaseInvoiceDto): Promise<{ hold: PurchaseInvoiceHoldRecord }> {
+  async hold(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: HoldPurchaseInvoiceDto,
+  ): Promise<{ hold: PurchaseInvoiceHoldRecord }> {
     return { hold: await this.service.hold(id, dto.reason, dto.releaseDate) };
   }
 
-  @Delete() @HttpCode(204)
+  @Delete()
+  @HttpCode(204)
   async release(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.service.release(id);
   }

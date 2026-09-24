@@ -1,6 +1,13 @@
 /** Depreciation schedules (plan item 46), pure. Four methods as in ERPNext. */
-export type DepreciationMethod = 'straight_line' | 'double_declining_balance' | 'written_down_value' | 'manual';
-export interface ScheduleRow { rowNumber: number; date: string; amount: number; accumulated: number; bookValueAfter: number; }
+export type DepreciationMethod =
+  'straight_line' | 'double_declining_balance' | 'written_down_value' | 'manual';
+export interface ScheduleRow {
+  rowNumber: number;
+  date: string;
+  amount: number;
+  accumulated: number;
+  bookValueAfter: number;
+}
 export interface ScheduleInput {
   method: DepreciationMethod;
   /** Book value the schedule starts from (cost − depreciation already booked). */
@@ -30,8 +37,10 @@ export function periodDate(firstDate: string, k: number, frequencyMonths: number
 }
 
 export function buildSchedule(i: ScheduleInput): ScheduleRow[] {
-  if (!(i.periods > 0) || !Number.isInteger(i.periods)) throw new Error('number of depreciations must be a positive whole number');
-  if (i.salvage < 0 || i.salvage > i.startValue) throw new Error('salvage value must be between 0 and the asset value');
+  if (!(i.periods > 0) || !Number.isInteger(i.periods))
+    throw new Error('number of depreciations must be a positive whole number');
+  if (i.salvage < 0 || i.salvage > i.startValue)
+    throw new Error('salvage value must be between 0 and the asset value');
   const depreciable = r2(i.startValue - i.salvage);
   const amounts: number[] = [];
   let book = i.startValue;
@@ -39,10 +48,12 @@ export function buildSchedule(i: ScheduleInput): ScheduleRow[] {
     const each = r2(depreciable / i.periods);
     for (let k = 0; k < i.periods; k++) amounts.push(each);
   } else if (i.method === 'double_declining_balance' || i.method === 'written_down_value') {
-    const rate = i.method === 'double_declining_balance'
-      ? 2 / i.periods
-      : ((i.annualRatePercent ?? 0) / 100) * (i.frequencyMonths / 12);
-    if (!(rate > 0) || rate >= 1) throw new Error('the depreciation rate must be between 0 and 100%');
+    const rate =
+      i.method === 'double_declining_balance'
+        ? 2 / i.periods
+        : ((i.annualRatePercent ?? 0) / 100) * (i.frequencyMonths / 12);
+    if (!(rate > 0) || rate >= 1)
+      throw new Error('the depreciation rate must be between 0 and 100%');
     for (let k = 0; k < i.periods; k++) {
       const a = r2(Math.min(book * rate, book - i.salvage));
       amounts.push(Math.max(0, a));
@@ -50,9 +61,11 @@ export function buildSchedule(i: ScheduleInput): ScheduleRow[] {
     }
   } else {
     const list = i.manualAmounts ?? [];
-    if (list.length !== i.periods) throw new Error(`manual schedule needs exactly ${i.periods} amounts`);
+    if (list.length !== i.periods)
+      throw new Error(`manual schedule needs exactly ${i.periods} amounts`);
     if (list.some((a) => a < 0)) throw new Error('manual amounts cannot be negative');
-    if (Math.abs(r2(list.reduce((s, a) => s + a, 0)) - depreciable) > 0.01) throw new Error(`manual amounts must add up to ${depreciable.toFixed(2)}`);
+    if (Math.abs(r2(list.reduce((s, a) => s + a, 0)) - depreciable) > 0.01)
+      throw new Error(`manual amounts must add up to ${depreciable.toFixed(2)}`);
     amounts.push(...list.map(r2));
   }
   // the last row absorbs rounding so the asset ends exactly at its salvage value
@@ -63,6 +76,12 @@ export function buildSchedule(i: ScheduleInput): ScheduleRow[] {
   return amounts.map((amount, k) => {
     acc = r2(acc + amount);
     book = r2(book - amount);
-    return { rowNumber: (i.firstRowNumber ?? 1) + k, date: periodDate(i.firstDate, k, i.frequencyMonths), amount, accumulated: acc, bookValueAfter: book };
+    return {
+      rowNumber: (i.firstRowNumber ?? 1) + k,
+      date: periodDate(i.firstDate, k, i.frequencyMonths),
+      amount,
+      accumulated: acc,
+      bookValueAfter: book,
+    };
   });
 }

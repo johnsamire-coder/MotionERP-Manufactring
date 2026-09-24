@@ -5,14 +5,25 @@ export type MovementType = 'receipt' | 'issue' | 'transfer_in' | 'transfer_out' 
  * - material_transfer_for_manufacture: raw material moved to a production (WIP) warehouse (transfer_out / transfer_in)
  * - manufacture_consumption: material actually consumed by production (issue)
  */
-export type MovementPurpose = 'general' | 'material_transfer_for_manufacture' | 'manufacture_consumption';
+export type MovementPurpose =
+  'general' | 'material_transfer_for_manufacture' | 'manufacture_consumption';
 export type ReservationStatus = 'active' | 'released';
 /** Plan item 13: seven separate reservation / request types (see stock_reservation.reservation_type). */
 export type ReservationType =
-  | 'sales_order' | 'production' | 'subcontract' | 'production_plan'
-  | 'purchase_order' | 'material_request' | 'work_order';
+  | 'sales_order'
+  | 'production'
+  | 'subcontract'
+  | 'production_plan'
+  | 'purchase_order'
+  | 'material_request'
+  | 'work_order';
 /** Types that hold existing stock (reduce availability); the rest are expected incoming quantities. */
-export const RESERVING_TYPES: readonly ReservationType[] = ['sales_order', 'production', 'subcontract', 'production_plan'];
+export const RESERVING_TYPES: readonly ReservationType[] = [
+  'sales_order',
+  'production',
+  'subcontract',
+  'production_plan',
+];
 
 /** Per item/warehouse quantities, like ERPNext's Bin (plan item 13). */
 export interface StockBinRecord {

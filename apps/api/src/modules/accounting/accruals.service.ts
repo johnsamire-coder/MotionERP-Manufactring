@@ -2,15 +2,18 @@
 // Motion ERP — Accrual, Prepaid & Provision Service (Updated)
 // Step 77
 // ============================================================
-import { Injectable, BadRequestException, NotFoundException, Inject, Optional } from '@nestjs/common';
-import { AccrualsRepository } from './accruals.repository';
 import {
-  CreateAccrualDto,
-  CreatePrepaidDto,
-  CreateWarrantyProvisionDto,
-} from './accruals.dto';
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  Inject,
+  Optional,
+} from '@nestjs/common';
+import { AccrualsRepository } from './accruals.repository';
+import { CreateAccrualDto, CreatePrepaidDto, CreateWarrantyProvisionDto } from './accruals.dto';
 import { AccruedExpense, PrepaidExpense, WarrantyProvision } from './accrual.schema';
 import { PostingEngineService } from './posting-engine.service';
+import { manualJournalPoster, type PostedJournal } from './manual-journal';
 
 @Injectable()
 export class AccrualsService {
@@ -20,7 +23,7 @@ export class AccrualsService {
   ) {}
 
   // ── 1. Accrued Expenses ─────────────────────
-  async createAccrual(dto: CreateAccrualDto, userId: string): Promise<AccruedExpense> {
+  async createAccrual(dto: CreateAccrualDto, _userId: string): Promise<AccruedExpense> {
     const voucherNumber = `ACC-${Date.now().toString().slice(-6)}`;
 
     return this.repo.createAccrual({
@@ -36,7 +39,10 @@ export class AccrualsService {
     });
   }
 
-  async postAccrual(id: string, userId: string): Promise<{ accrual: AccruedExpense; journalEntry: any }> {
+  async postAccrual(
+    id: string,
+    userId: string,
+  ): Promise<{ accrual: AccruedExpense; journalEntry: PostedJournal }> {
     const accrual = await this.repo.findAccrualById(id);
     if (!accrual) throw new NotFoundException(`Accrual entry ${id} not found`);
     if (accrual.status !== 'accrued') {
@@ -68,18 +74,22 @@ export class AccrualsService {
       ],
     };
 
-    let journalResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      journalResult = await (this.postingEngine as any).createManualJournalEntry(journalPayload);
-    } else {
-      journalResult = { id: `mock-journal-${Date.now()}`, ...journalPayload };
-    }
+    const poster = manualJournalPoster(this.postingEngine);
+    const journalResult: PostedJournal = poster
+      ? await poster.createManualJournalEntry(journalPayload)
+      : { id: `mock-journal-${Date.now()}`, ...journalPayload };
 
-    const updated = await this.repo.updateAccrualStatus(id, 'accrued', { journalEntryId: journalResult.id });
+    const updated = await this.repo.updateAccrualStatus(id, 'accrued', {
+      journalEntryId: journalResult.id,
+    });
     return { accrual: updated, journalEntry: journalResult };
   }
 
-  async reverseAccrual(id: string, reversalDate: string, userId: string): Promise<{ accrual: AccruedExpense; reversalJournal: any }> {
+  async reverseAccrual(
+    id: string,
+    reversalDate: string,
+    userId: string,
+  ): Promise<{ accrual: AccruedExpense; reversalJournal: PostedJournal }> {
     const accrual = await this.repo.findAccrualById(id);
     if (!accrual) throw new NotFoundException(`Accrual entry ${id} not found`);
 
@@ -108,12 +118,10 @@ export class AccrualsService {
       ],
     };
 
-    let journalResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      journalResult = await (this.postingEngine as any).createManualJournalEntry(reversalPayload);
-    } else {
-      journalResult = { id: `mock-rev-journal-${Date.now()}`, ...reversalPayload };
-    }
+    const poster = manualJournalPoster(this.postingEngine);
+    const journalResult: PostedJournal = poster
+      ? await poster.createManualJournalEntry(reversalPayload)
+      : { id: `mock-rev-journal-${Date.now()}`, ...reversalPayload };
 
     const updated = await this.repo.updateAccrualStatus(id, 'reversed', {
       reversalJournalEntryId: journalResult.id,
@@ -123,7 +131,7 @@ export class AccrualsService {
   }
 
   // ── 2. Prepaid Expenses ─────────────────────
-  async createPrepaid(dto: CreatePrepaidDto, userId: string): Promise<PrepaidExpense> {
+  async createPrepaid(dto: CreatePrepaidDto, _userId: string): Promise<PrepaidExpense> {
     const voucherNumber = `PRE-${Date.now().toString().slice(-6)}`;
 
     return this.repo.createPrepaid({
@@ -144,7 +152,11 @@ export class AccrualsService {
     });
   }
 
-  async amortizeMonth(id: string, amount: number, userId: string): Promise<{ prepaid: PrepaidExpense; journalEntry: any }> {
+  async amortizeMonth(
+    id: string,
+    amount: number,
+    userId: string,
+  ): Promise<{ prepaid: PrepaidExpense; journalEntry: PostedJournal }> {
     const prepaid = await this.repo.findPrepaidById(id);
     if (!prepaid) throw new NotFoundException(`Prepaid expense ${id} not found`);
 
@@ -178,19 +190,25 @@ export class AccrualsService {
       ],
     };
 
-    let journalResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      journalResult = await (this.postingEngine as any).createManualJournalEntry(journalPayload);
-    } else {
-      journalResult = { id: `mock-amort-journal-${Date.now()}`, ...journalPayload };
-    }
+    const poster = manualJournalPoster(this.postingEngine);
+    const journalResult: PostedJournal = poster
+      ? await poster.createManualJournalEntry(journalPayload)
+      : { id: `mock-amort-journal-${Date.now()}`, ...journalPayload };
 
-    const updated = await this.repo.updatePrepaidAmortization(id, newConsumed.toFixed(4), newRemaining.toFixed(4), newStatus);
+    const updated = await this.repo.updatePrepaidAmortization(
+      id,
+      newConsumed.toFixed(4),
+      newRemaining.toFixed(4),
+      newStatus,
+    );
     return { prepaid: updated, journalEntry: journalResult };
   }
 
   // ── 3. Warranty Provisions ──────────────────
-  async createProvision(dto: CreateWarrantyProvisionDto, userId: string): Promise<WarrantyProvision> {
+  async createProvision(
+    dto: CreateWarrantyProvisionDto,
+    _userId: string,
+  ): Promise<WarrantyProvision> {
     const calculatedAmount = (dto.baseAmount * dto.provisionRate) / 100;
     const provisionNumber = `PRV-${Date.now().toString().slice(-6)}`;
 
@@ -213,7 +231,11 @@ export class AccrualsService {
     });
   }
 
-  async utilizeProvision(id: string, amount: number, userId: string): Promise<{ provision: WarrantyProvision; utilizationJournal: any }> {
+  async utilizeProvision(
+    id: string,
+    amount: number,
+    userId: string,
+  ): Promise<{ provision: WarrantyProvision; utilizationJournal: PostedJournal }> {
     const prv = await this.repo.findProvisionById(id);
     if (!prv) throw new NotFoundException(`Provision ${id} not found`);
 
@@ -247,12 +269,10 @@ export class AccrualsService {
       ],
     };
 
-    let journalResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      journalResult = await (this.postingEngine as any).createManualJournalEntry(journalPayload);
-    } else {
-      journalResult = { id: `mock-prv-util-${Date.now()}`, ...journalPayload };
-    }
+    const poster = manualJournalPoster(this.postingEngine);
+    const journalResult: PostedJournal = poster
+      ? await poster.createManualJournalEntry(journalPayload)
+      : { id: `mock-prv-util-${Date.now()}`, ...journalPayload };
 
     const updated = await this.repo.updateProvisionStatus(id, newStatus, {
       utilizedAmount: newUtilized.toFixed(4),

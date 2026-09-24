@@ -11,7 +11,7 @@ import {
   type DefaultAccountSpec,
   type DefaultAccountStatus,
 } from './default-accounts';
-import { ACCOUNT_ROLES, isAccountRole, manualLineProblem, type AccountRole } from './account-roles';
+import { isAccountRole, manualLineProblem } from './account-roles';
 import type {
   AccountBalance,
   AccountDeterminationRecord,

@@ -19,8 +19,22 @@ import { AccountingRepository } from '../accounting/accounting.repository';
 
 @Module({
   imports: [SalesModule, AccountingModule, CrmModule, InventoryModule, SettingsModule],
-  controllers: [FinanceController, PurchaseInvoiceHoldController, LedgerHealthController, AdvanceController, AllocationController],
-  providers: [FinanceService, FinanceRepository, AccountingRepository, PurchaseInvoiceHoldService, LedgerHealthService, AdvanceService, AllocationService],
+  controllers: [
+    FinanceController,
+    PurchaseInvoiceHoldController,
+    LedgerHealthController,
+    AdvanceController,
+    AllocationController,
+  ],
+  providers: [
+    FinanceService,
+    FinanceRepository,
+    AccountingRepository,
+    PurchaseInvoiceHoldService,
+    LedgerHealthService,
+    AdvanceService,
+    AllocationService,
+  ],
   exports: [FinanceService],
 })
 export class FinanceModule {}

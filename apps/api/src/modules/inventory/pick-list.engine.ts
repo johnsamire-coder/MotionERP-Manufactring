@@ -1,13 +1,36 @@
 /** Pure pick-planning engine for pick lists (plan item 27). */
 
-export interface PickBin { itemId: string; warehouseId: string; available: number; }
-export interface PickBatchRow {
-  itemId: string; warehouseId: string; batchId: string; quantity: number;
-  expiryDate: string | null; manufacturingDate: string | null; createdAt: string; status: string;
+export interface PickBin {
+  itemId: string;
+  warehouseId: string;
+  available: number;
 }
-export interface PlannedPick { itemId: string; warehouseId: string; batchId: string | null; quantity: number; }
-export interface PickShortfall { itemId: string; requested: number; picked: number; missing: number; }
-export interface PickPlan { lines: PlannedPick[]; shortfalls: PickShortfall[]; }
+export interface PickBatchRow {
+  itemId: string;
+  warehouseId: string;
+  batchId: string;
+  quantity: number;
+  expiryDate: string | null;
+  manufacturingDate: string | null;
+  createdAt: string;
+  status: string;
+}
+export interface PlannedPick {
+  itemId: string;
+  warehouseId: string;
+  batchId: string | null;
+  quantity: number;
+}
+export interface PickShortfall {
+  itemId: string;
+  requested: number;
+  picked: number;
+  missing: number;
+}
+export interface PickPlan {
+  lines: PlannedPick[];
+  shortfalls: PickShortfall[];
+}
 
 const time = (d: string | null): number => (d ? new Date(d).getTime() : Number.POSITIVE_INFINITY);
 const round = (n: number): number => Number(n.toFixed(6));
@@ -44,17 +67,40 @@ export function planPicks(
     };
     if (batchTracked(itemId)) {
       const usable = batches
-        .filter((b) => b.itemId === itemId && b.quantity > 0 && b.status === 'active' && time(b.expiryDate) >= startOfDay.getTime())
-        .sort((a, b) => time(a.expiryDate) - time(b.expiryDate)
-          || time(a.manufacturingDate) - time(b.manufacturingDate)
-          || time(a.createdAt) - time(b.createdAt)
-          || a.batchId.localeCompare(b.batchId));
-      for (const b of usable) { if (remaining <= 0) break; take(b.warehouseId, b.batchId, b.quantity); }
+        .filter(
+          (b) =>
+            b.itemId === itemId &&
+            b.quantity > 0 &&
+            b.status === 'active' &&
+            time(b.expiryDate) >= startOfDay.getTime(),
+        )
+        .sort(
+          (a, b) =>
+            time(a.expiryDate) - time(b.expiryDate) ||
+            time(a.manufacturingDate) - time(b.manufacturingDate) ||
+            time(a.createdAt) - time(b.createdAt) ||
+            a.batchId.localeCompare(b.batchId),
+        );
+      for (const b of usable) {
+        if (remaining <= 0) break;
+        take(b.warehouseId, b.batchId, b.quantity);
+      }
     } else {
-      const byStock = bins.filter((b) => b.itemId === itemId).sort((a, b) => b.available - a.available || a.warehouseId.localeCompare(b.warehouseId));
-      for (const b of byStock) { if (remaining <= 0) break; take(b.warehouseId, null, Number.POSITIVE_INFINITY); }
+      const byStock = bins
+        .filter((b) => b.itemId === itemId)
+        .sort((a, b) => b.available - a.available || a.warehouseId.localeCompare(b.warehouseId));
+      for (const b of byStock) {
+        if (remaining <= 0) break;
+        take(b.warehouseId, null, Number.POSITIVE_INFINITY);
+      }
     }
-    if (remaining > 0) shortfalls.push({ itemId, requested, picked: round(requested - remaining), missing: remaining });
+    if (remaining > 0)
+      shortfalls.push({
+        itemId,
+        requested,
+        picked: round(requested - remaining),
+        missing: remaining,
+      });
   }
   return { lines, shortfalls };
 }

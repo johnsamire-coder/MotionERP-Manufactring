@@ -8,14 +8,28 @@ describe('Supplier hold (plan item 8)', () => {
 
   beforeEach(() => {
     supplier = {
-      id: 's-1', code: 'S1', name: 'المصرية للصلب', contactPhone: null, contactEmail: null, orgNodeId: 'o',
-      status: 'active', holdType: null, holdReason: null, holdReleaseDate: null, createdAt: '', updatedAt: '',
+      id: 's-1',
+      code: 'S1',
+      name: 'المصرية للصلب',
+      contactPhone: null,
+      contactEmail: null,
+      orgNodeId: 'o',
+      status: 'active',
+      holdType: null,
+      holdReason: null,
+      holdReleaseDate: null,
+      createdAt: '',
+      updatedAt: '',
     };
     const repo = {
       findSupplierById: jest.fn().mockImplementation(async () => supplier),
       setSupplierHold: jest.fn().mockImplementation(async (_id: string, h) => {
-        supplier = { ...supplier, holdType: h.holdType, holdReason: h.holdReason,
-          holdReleaseDate: h.holdReleaseDate ? h.holdReleaseDate.toISOString() : null };
+        supplier = {
+          ...supplier,
+          holdType: h.holdType,
+          holdReason: h.holdReason,
+          holdReleaseDate: h.holdReleaseDate ? h.holdReleaseDate.toISOString() : null,
+        };
         return supplier;
       }),
     } as unknown as CrmRepository;
@@ -30,7 +44,12 @@ describe('Supplier hold (plan item 8)', () => {
   });
 
   it('1. no hold blocks nothing', async () => {
-    expect(await blocked()).toEqual({ rfq: false, quotation: false, invoice: false, payment: false });
+    expect(await blocked()).toEqual({
+      rfq: false,
+      quotation: false,
+      invoice: false,
+      payment: false,
+    });
   });
 
   it('2. the three levels block exactly their documents', async () => {
@@ -38,22 +57,47 @@ describe('Supplier hold (plan item 8)', () => {
     expect(await blocked()).toEqual({ rfq: true, quotation: true, invoice: true, payment: true });
     expect(await service.supplierBlockReason('s-1', 'payment')).toMatch(/إيقاف كامل.*نزاع جودة/);
     await service.setSupplierHold('s-1', { holdType: 'invoices' });
-    expect(await blocked()).toEqual({ rfq: false, quotation: false, invoice: true, payment: false });
+    expect(await blocked()).toEqual({
+      rfq: false,
+      quotation: false,
+      invoice: true,
+      payment: false,
+    });
     await service.setSupplierHold('s-1', { holdType: 'payments' });
-    expect(await blocked()).toEqual({ rfq: false, quotation: false, invoice: false, payment: true });
+    expect(await blocked()).toEqual({
+      rfq: false,
+      quotation: false,
+      invoice: false,
+      payment: true,
+    });
     await service.setSupplierHold('s-1', { holdType: null });
-    expect(await blocked()).toEqual({ rfq: false, quotation: false, invoice: false, payment: false });
+    expect(await blocked()).toEqual({
+      rfq: false,
+      quotation: false,
+      invoice: false,
+      payment: false,
+    });
   });
 
   it('3. the release date lifts the hold automatically once reached', async () => {
-    await service.setSupplierHold('s-1', { holdType: 'all', releaseDate: new Date(Date.now() + 86_400_000).toISOString() });
+    await service.setSupplierHold('s-1', {
+      holdType: 'all',
+      releaseDate: new Date(Date.now() + 86_400_000).toISOString(),
+    });
     expect((await blocked()).invoice).toBe(true);
     supplier.holdReleaseDate = new Date(Date.now() - 1000).toISOString(); // time passes
-    expect(await blocked()).toEqual({ rfq: false, quotation: false, invoice: false, payment: false });
+    expect(await blocked()).toEqual({
+      rfq: false,
+      quotation: false,
+      invoice: false,
+      payment: false,
+    });
     expect(service.effectiveHold(supplier)).toBeNull();
   });
 
   it('4. rejects a release date in the past', async () => {
-    await expect(service.setSupplierHold('s-1', { holdType: 'all', releaseDate: '2020-01-01' })).rejects.toThrow(/future/);
+    await expect(
+      service.setSupplierHold('s-1', { holdType: 'all', releaseDate: '2020-01-01' }),
+    ).rejects.toThrow(/future/);
   });
 });

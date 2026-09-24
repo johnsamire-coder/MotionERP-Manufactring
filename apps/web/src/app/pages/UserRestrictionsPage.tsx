@@ -1,12 +1,33 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api, ApiError } from '../api/client';
 
-interface UserRecord { id: string; username: string; status: string; }
-interface WarehouseRecord { id: string; code: string; name: string; }
-interface OrgTreeNode { id: string; name: string; nodeType: string; children: OrgTreeNode[]; }
-interface UserPermissionRecord { id: string; userId: string; allowType: 'org_node' | 'warehouse'; allowValue: string; }
+interface UserRecord {
+  id: string;
+  username: string;
+  status: string;
+}
+interface WarehouseRecord {
+  id: string;
+  code: string;
+  name: string;
+}
+interface OrgTreeNode {
+  id: string;
+  name: string;
+  nodeType: string;
+  children: OrgTreeNode[];
+}
+interface UserPermissionRecord {
+  id: string;
+  userId: string;
+  allowType: 'org_node' | 'warehouse';
+  allowValue: string;
+}
 
-interface Option { id: string; label: string; }
+interface Option {
+  id: string;
+  label: string;
+}
 
 function flattenTree(nodes: OrgTreeNode[], depth = 0): Option[] {
   return nodes.flatMap((n) => [
@@ -35,7 +56,9 @@ export function UserRestrictionsPage(): JSX.Element {
       try {
         const [u, w, o] = await Promise.all([
           api.get<{ users: UserRecord[] }>('/auth/users'),
-          api.get<{ warehouses: WarehouseRecord[] }>('/inventory/warehouses').catch(() => ({ warehouses: [] })),
+          api
+            .get<{ warehouses: WarehouseRecord[] }>('/inventory/warehouses')
+            .catch(() => ({ warehouses: [] })),
           api.get<{ tree: OrgTreeNode[] }>('/organization/tree').catch(() => ({ tree: [] })),
         ]);
         setUsers(u.users);
@@ -49,16 +72,23 @@ export function UserRestrictionsPage(): JSX.Element {
   }, []);
 
   async function loadRows(id: string): Promise<void> {
-    if (!id) { setRows([]); return; }
+    if (!id) {
+      setRows([]);
+      return;
+    }
     try {
-      const res = await api.get<{ userPermissions: UserPermissionRecord[] }>(`/auth/user-permissions?userId=${id}`);
+      const res = await api.get<{ userPermissions: UserPermissionRecord[] }>(
+        `/auth/user-permissions?userId=${id}`,
+      );
       setRows(res.userPermissions);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'فشل تحميل القيود');
     }
   }
 
-  useEffect(() => { void loadRows(userId); }, [userId]);
+  useEffect(() => {
+    void loadRows(userId);
+  }, [userId]);
 
   const labelOf = useMemo(() => {
     const map = new Map<string, string>();
@@ -96,24 +126,39 @@ export function UserRestrictionsPage(): JSX.Element {
     }
   }
 
-  const byType = (t: 'org_node' | 'warehouse'): UserPermissionRecord[] => rows.filter((r) => r.allowType === t);
+  const byType = (t: 'org_node' | 'warehouse'): UserPermissionRecord[] =>
+    rows.filter((r) => r.allowType === t);
 
   return (
     <div className="p-6 space-y-6 bg-slate-50 min-h-screen text-slate-800" dir="rtl">
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
         <h1 className="text-2xl font-bold text-slate-900">تقييد المستخدمين بفرع أو مخزن</h1>
         <p className="text-sm text-slate-500 mt-1">
-          المستخدم اللي مالوش قيود من نوع معيّن مش متقيّد فيه. التقييد بفرع بيشمل كل اللي تحته في الشجرة.
+          المستخدم اللي مالوش قيود من نوع معيّن مش متقيّد فيه. التقييد بفرع بيشمل كل اللي تحته في
+          الشجرة.
         </p>
       </div>
 
-      {error && <div className="text-sm bg-rose-50 text-rose-700 border border-rose-200 rounded-xl p-3">{error}</div>}
+      {error && (
+        <div className="text-sm bg-rose-50 text-rose-700 border border-rose-200 rounded-xl p-3">
+          {error}
+        </div>
+      )}
 
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
         <label className="block text-xs font-bold text-slate-600">
           المستخدم
-          <select className="mt-1 w-full md:w-80 border border-slate-300 rounded-lg px-3 py-2 text-sm" value={userId} onChange={(e) => setUserId(e.target.value)}>
-            {users.map((u) => <option key={u.id} value={u.id}>{u.username}{u.status !== 'active' ? ` (${u.status})` : ''}</option>)}
+          <select
+            className="mt-1 w-full md:w-80 border border-slate-300 rounded-lg px-3 py-2 text-sm"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+          >
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.username}
+                {u.status !== 'active' ? ` (${u.status})` : ''}
+              </option>
+            ))}
           </select>
         </label>
 
@@ -123,7 +168,10 @@ export function UserRestrictionsPage(): JSX.Element {
             <select
               className="mt-1 w-full md:w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm"
               value={allowType}
-              onChange={(e) => { setAllowType(e.target.value as 'org_node' | 'warehouse'); setAllowValue(''); }}
+              onChange={(e) => {
+                setAllowType(e.target.value as 'org_node' | 'warehouse');
+                setAllowValue('');
+              }}
             >
               <option value="warehouse">مخزن</option>
               <option value="org_node">فرع / شركة</option>
@@ -131,9 +179,17 @@ export function UserRestrictionsPage(): JSX.Element {
           </label>
           <label className="block text-xs font-bold text-slate-600 flex-1">
             القيمة
-            <select className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" value={allowValue} onChange={(e) => setAllowValue(e.target.value)}>
+            <select
+              className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+              value={allowValue}
+              onChange={(e) => setAllowValue(e.target.value)}
+            >
               <option value="">— اختر —</option>
-              {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+              {options.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
             </select>
           </label>
           <button
@@ -149,15 +205,24 @@ export function UserRestrictionsPage(): JSX.Element {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {(['warehouse', 'org_node'] as const).map((t) => (
           <div key={t} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-            <h3 className="font-bold text-slate-900 mb-3">{t === 'warehouse' ? 'المخازن المسموحة' : 'الفروع المسموحة'}</h3>
+            <h3 className="font-bold text-slate-900 mb-3">
+              {t === 'warehouse' ? 'المخازن المسموحة' : 'الفروع المسموحة'}
+            </h3>
             {byType(t).length === 0 ? (
               <p className="text-sm text-slate-400">غير متقيّد — مسموح بالكل</p>
             ) : (
               <ul className="space-y-2">
                 {byType(t).map((r) => (
-                  <li key={r.id} className="flex items-center justify-between text-sm bg-slate-50 rounded-lg px-3 py-2">
+                  <li
+                    key={r.id}
+                    className="flex items-center justify-between text-sm bg-slate-50 rounded-lg px-3 py-2"
+                  >
                     <span>{labelOf(r.allowValue)}</span>
-                    <button onClick={() => void remove(r.id)} disabled={busy} className="text-xs font-bold text-rose-600 hover:text-rose-800 cursor-pointer">
+                    <button
+                      onClick={() => void remove(r.id)}
+                      disabled={busy}
+                      className="text-xs font-bold text-rose-600 hover:text-rose-800 cursor-pointer"
+                    >
                       حذف
                     </button>
                   </li>

@@ -23,9 +23,34 @@ import { InventoryRepository } from './inventory.repository';
 import { InventoryService } from './inventory.service';
 
 @Module({
-  imports: [AccountingModule, CatalogModule, AuthModule, OrganizationModule, SalesModule, SettingsModule],
-  controllers: [PurchaseBatchLinkController, InventoryController, ReorderController, WarehouseTreeController, PickListController, StockGlReconciliationController],
-  providers: [PurchaseBatchLinkService, InventoryService, InventoryRepository, InventoryAccessService, GrniReportService, GrniReportRepository, ReorderService, WarehouseTreeService, PickListService, StockGlReconciliationService],
+  imports: [
+    AccountingModule,
+    CatalogModule,
+    AuthModule,
+    OrganizationModule,
+    SalesModule,
+    SettingsModule,
+  ],
+  controllers: [
+    PurchaseBatchLinkController,
+    InventoryController,
+    ReorderController,
+    WarehouseTreeController,
+    PickListController,
+    StockGlReconciliationController,
+  ],
+  providers: [
+    PurchaseBatchLinkService,
+    InventoryService,
+    InventoryRepository,
+    InventoryAccessService,
+    GrniReportService,
+    GrniReportRepository,
+    ReorderService,
+    WarehouseTreeService,
+    PickListService,
+    StockGlReconciliationService,
+  ],
   exports: [InventoryService],
 })
 export class InventoryModule {}

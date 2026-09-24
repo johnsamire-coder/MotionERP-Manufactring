@@ -5,62 +5,62 @@
 
 ## 1. جدول حالة البنود
 
-| # | البند | الحالة | الـ Commit | ملاحظات |
-|---|---|---|---|---|
-| 1 | تجميد فترات المخزون + منع الحركة بأثر رجعي | ✅ تم | `feat(inventory): block backdated stock movements` | راجع التفاصيل تحت |
-| 2أ | الدفعات: أعلام الصنف + تكلفة لكل دفعة | ✅ تم | `feat(inventory): per-batch costing + item batch/serial/expiry flags` | راجع التفاصيل تحت |
-| 2ب | ربط السيريال بحركة المخزون | ✅ تم | `feat(inventory): serial numbers on stock movements` | راجع التفاصيل تحت. **بند 2 كله خلص** |
-| 3 | فصل "نقل خامة لمخزن الإنتاج" عن "استهلاك فعلي في التصنيع" | ✅ تم (جانب المخزون) | `feat(inventory): movement purpose + transfers for manufacture` | ربط التصنيع بيه مستني موافقة المالك |
-| 4 | الجرد الفعلي يرفض الأصناف المتتبّعة بالدفعة أو السيريال | ✅ تم | `feat(inventory): block plain reconciliation for batch/serial items` | راجع التفاصيل تحت |
-| 5.0 | أساس الدخول: تذكرة دخول + حارس عام + شاشة دخول | ✅ تم | `feat(auth): login tokens, global authentication guard and login dialog` | ده شرط لازم قبل بند 5 |
-| 5.1 | جدول تقييد المستخدم (فرع / مخزن) + API + شاشة | ✅ تم | `feat(auth): per-user restrictions by org node / warehouse` | التطبيق الفعلي على المخزون في 5.2 |
-| 5.2 | تطبيق تقييد المستخدم على المخزون | ✅ تم | `feat(inventory): enforce per-user warehouse / org-node restrictions` | |
-| 5.3 | التفعيل (`AUTH_ENFORCE=true`) | ⏳ قرار المالك | — | راجع ملاحظات 5.0 |
-| 6 | حد الائتمان المركّب | ✅ تم (تحذير بس) | `feat(sales): composite customer credit limit with approval warning` | الرصيد من دفتر الأستاذ، والتحذير عند اعتماد أمر الشغل |
-| 7 | طلب عرض أسعار لعدة موردين (RFQ) + مقارنة | ✅ تم | `feat(sales): request for quotation to several suppliers with comparison` | الخطوة الأخيرة هي اعتماد عرض الفائز (مفيش أمر شراء في النظام) |
-| 8 | إيقاف المورد (3 مستويات + إفراج تلقائي) | ✅ تم | `feat(crm): supplier hold with three levels and automatic release` | |
-| 9 | فحص جودة بقراءات فعلية ونتيجة محسوبة | ✅ تم | `feat(quality): inspection templates with real readings and computed result` | |
-| 10 | منع إنهاء خدمة مدير ليه موظفين نشطين | ✅ تم | `feat(hr): manager hierarchy and leaving guard for managers` | |
-| 11 | تعطيل حساب الموظف تلقائيًا عند إنهاء خدمته | ✅ تم | `feat(hr): disable the employee's login when their service ends` | |
-| 12 | 3 نسب سماح منفصلة في المشتريات (الطلب/الاستلام/الفاتورة) | ✅ تم | `feat(purchasing): three over-allowances for order, receipt and billing` | "الطلب" = عرض المورد المعتمد (مفيش أوامر شراء) |
-| 13 | 7 أنواع حجز وطلب منفصلة في رصيد المخزون (Bin) | ✅ تم | `feat(inventory): seven reservation types, bin view, and restore reservation id` | + إصلاح bug قديم: الحجز كان معطّل |
-| 14 | حساب "بضاعة اتسلّمت ولسه ما اتفوترتش" (GRNI) | ✅ القيود **موجودة بالفعل**، واتضاف التقرير | `feat(inventory): received-not-billed report reconciled with GRNI ledger` | |
-| 15 | تكلفة الاستيراد (Landed Cost) | ✅ **موجودة بالفعل**، واتسدّت فجوة الدفعات | `fix(inventory): landed cost now reaches per-batch cost` | |
-| 16 | قواعد التسعير: خصم سعر + خصم منتج (اشتري X خد Y) | ✅ تم | `feat(sales): pricing rules with price and product discounts` | |
-| 17 | فرصة البيع (Opportunity) كمرحلة منفصلة | ✅ تم | `feat(crm): opportunity stage between lead and quotation` | |
-| 18 | منع تكرار رقم فاتورة المورد | ✅ **موجود بالفعل (وأشد)**، واتصلّح رد الخطأ | `fix(finance): clear 400 for a repeated supplier invoice number` | القيد على طول، مش في السنة بس |
-| 19 | إيقاف فاتورة شراء واحدة عن الدفع | ✅ تم | `feat(finance): hold a single purchase invoice for payment` | منفصل عن إيقاف المورد (بند 8) |
-| 20 | تخصيص إجازات بالجملة بفلاتر | ✅ تم | `feat(hr): leave types, allocations and bulk allocation by filters` | اتبنى أساس الإجازات من الصفر |
-| 21 | تسوية نهائية رسمية عند ترك الخدمة | ✅ تم | `feat(hr): full and final settlement on leaving` | |
-| 22 | حد إعادة الطلب (Reorder Level) لكل صنف في كل مخزن | ✅ تم | `feat(inventory): reorder level per item and warehouse` | |
-| 23 | مخازن شجرية (مخزن مجموعة) | ✅ تم | `feat(inventory): tree warehouses with group warehouses and rolled-up stock` | |
-| 24 | 6 أغراض لطلب المواد | ⏸️ **موجود جزئيًا (4 أغراض)**، والإكمال مؤجّل | — | طلب المواد في موديول التخطيط (جزء من التصنيع). راجع التفاصيل |
-| 25 | دورة Lead ← Contact ← Prospect ← Customer | ✅ تم | `feat(crm): lead, contact activity, prospect and conversion to customer` | من غير كيان Contact مستقل (ده بند 26) |
-| 26 | Contact/Address ككيانات مستقلة | ⏸️ **قرار المالك** | — | الوثيقة بتقول صراحة "اسألني قبل التنفيذ" |
-| 27 | انتقاء تلقائي ذكي (Pick List) بـ FIFO للدفعات | ✅ تم | `feat(inventory): pick list with automatic FIFO / earliest-expiry batch picking` | |
-| 28 | مجموعات عملاء/موردين شجرية | ✅ تم | `feat(crm): customer and supplier group trees with inherited credit limit` | |
-| 29 | فترة اختبار رسمية بتاريخ تثبيت | ✅ تم | `feat(hr): formal probation with confirmation date` | |
-| 30 | حضور بصمة GPS | ⏸️ مؤجّل | — | الجدول والـ DTOs المذكورين في البرومبت مش موجودين في المستودع (غالبًا على جهاز المالك ومترفعوش). اتأجّل بقرار المالك |
-| 31 | تجميد قيد الأستاذ ضد الإلغاء الفردي | ✅ تم | `feat(accounting): frozen journal entries — reversal only, document entries only via their document` | + إصلاح bug قديم: شاشات إنشاء الحسابات والقيود كانت بترجع 500 |
-| 32 | أنواع حسابات معيارية بسلوك مختلف | ✅ تم (30 نوع) | `feat(accounting): standard account roles with per-role behaviour` | الوثيقة قالت 28، وقائمة ERPNext الحالية 30، فاتنفّذت كاملة |
-| 33 | 19 حساب افتراضي إجباري لكل شركة | ✅ تم | `feat(accounting): 19 company default accounts with validation, readiness and optional enforcement` | + إصلاح bug: حفظ الإعدادات كان بيغيّر رقم السجل |
-| 34 | 17 نوع قيد يومي | ✅ تم | `feat(accounting): 17 journal entry types with per-type rules` | |
-| 35 | التسوية الدورية: رصيد المخزون المحاسبي مقابل الفعلي + قيد تصحيح | ✅ تم | `feat(inventory): stock vs ledger reconciliation with a correction entry` | |
-| 36 | إقفال الفترة: تصفير الأرباح والخسائر + منع القيود الرجعية في الكود | ✅ تم | `feat(accounting): real year-end closing into retained earnings and hard backdating guards` | الإقفال القديم كان **محاكاة بأرقام ثابتة**، واتساب زي ما هو |
-| 37 | أداة "صحة الأستاذ": مهمة دورية تقارن دفترين وتسجّل أي تعارض | ✅ تم | `feat(finance): periodic ledger health check between document books and the general ledger` | |
-| 38 | حجز السلف (الدفعات المقدمة) في حساب منفصل | ✅ تم | `feat(finance): book customer / supplier advances in their own accounts with allocation` | + إصلاح bug: فاتورة عليها ضريبة من غير حساب ضريبة كانت بترجع 500 |
-| 39 | تخصيص الدفعة على فواتير/أقساط متعددة + فحص "أحدث بيانات" | ✅ تم | `feat(finance): allocate a payment over several invoices and installments with a latest-data check` | |
-| 40 | محرك تحقق ميزانية مدمج في كل قيد | ✅ تم | `feat(accounting): budget control on every journal entry` | |
-| 41 | مركز تكلفة إجباري + اتجاه الرصيد + منع الحساب الأب + تجميد حساب + أبعاد محاسبية | ✅ تم (منع الحساب الأب **كان موجود بالفعل**) | `feat(accounting): cost center rule, balance side, frozen accounts and accounting dimensions` | |
-| 42 | محرك سير عمل عام (حالات + انتقالات + أدوار + شروط ديناميكية) | ✅ تم (أساس للاعتمادات الجديدة بس) | `feat(workflow): generic workflow engine with roles and dynamic conditions` | الاعتمادات الشغالة **متلمستش** |
-| 43 | دعم فني: تذاكر بـ SLA على ساعات العمل والإجازات + تقسيم + إغلاق تلقائي | ✅ تم | `feat(support): helpdesk with working-hours SLA, holidays, split and auto-close` | موديول جديد |
-| 44 | إدارة مشاريع: إنجاز بـ 4 طرق + تقرير دوري بالإيميل + ربحية مشروع | ✅ تم | `feat(projects): projects with four progress methods, profitability and e-mailed status reports` | الإيميل محتاج `SMTP_URL` من المالك |
-| 45 | دورة تصنيع بالباطن كاملة | ⏸️ **موجود جزئيًا** في `production_ops` (تصنيع)، والإكمال ممنوع | — | راجع التفاصيل |
-| 46 | أصول ثابتة: أصل تحت التنفيذ (CWIP) + 4 طرق إهلاك + جدول إهلاك بإعادة حساب تلقائية | ✅ تم (موديول جديد) | `feat(assets): fixed assets with CWIP, four depreciation methods and a self-rebuilding schedule` | الأصول القديمة البسيطة في المحاسبة متلمستش |
-| 47 | نظام طباعة عام: ترويسة منفصلة + قوالب متعددة + منع طباعة المسودات والملغي | ✅ تم | `feat(printing): letterheads, multiple print formats and no printing of drafts or cancelled documents` | موديول جديد |
-| 48 | طبقة إقليمية منفصلة للفوترة الإلكترونية المصرية | ✅ تم (البنية + التجهيز + الإرسال) | `feat(regional-eg): separate regional layer for Egyptian e-invoicing (ETA)` | الإرسال الحقيقي محتاج بيانات ربط وتوقيع من المالك |
-| 49 | تتبّع حركة الأصل + تأمين الأصل + أصل مركّب | ✅ تم | `feat(assets): asset movements, insurance and composite assets` | |
-| 50 | طباعة بالجملة في الخلفية + طابعة شبكية + مهام تلقائية مع انتقالات سير العمل | ✅ تم | `feat(printing,workflow): background bulk printing, network printers and transition tasks` | الطابعة بتستقبل نص (مفيش محرك PDF) |
+| #   | البند                                                                             | الحالة                                                          | الـ Commit                                                                                             | ملاحظات                                                                                                              |
+| --- | --------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| 1   | تجميد فترات المخزون + منع الحركة بأثر رجعي                                        | ✅ تم                                                           | `feat(inventory): block backdated stock movements`                                                     | راجع التفاصيل تحت                                                                                                    |
+| 2أ  | الدفعات: أعلام الصنف + تكلفة لكل دفعة                                             | ✅ تم                                                           | `feat(inventory): per-batch costing + item batch/serial/expiry flags`                                  | راجع التفاصيل تحت                                                                                                    |
+| 2ب  | ربط السيريال بحركة المخزون                                                        | ✅ تم                                                           | `feat(inventory): serial numbers on stock movements`                                                   | راجع التفاصيل تحت. **بند 2 كله خلص**                                                                                 |
+| 3   | فصل "نقل خامة لمخزن الإنتاج" عن "استهلاك فعلي في التصنيع"                         | ✅ تم (جانب المخزون)                                            | `feat(inventory): movement purpose + transfers for manufacture`                                        | ربط التصنيع بيه مستني موافقة المالك                                                                                  |
+| 4   | الجرد الفعلي يرفض الأصناف المتتبّعة بالدفعة أو السيريال                           | ✅ تم                                                           | `feat(inventory): block plain reconciliation for batch/serial items`                                   | راجع التفاصيل تحت                                                                                                    |
+| 5.0 | أساس الدخول: تذكرة دخول + حارس عام + شاشة دخول                                    | ✅ تم                                                           | `feat(auth): login tokens, global authentication guard and login dialog`                               | ده شرط لازم قبل بند 5                                                                                                |
+| 5.1 | جدول تقييد المستخدم (فرع / مخزن) + API + شاشة                                     | ✅ تم                                                           | `feat(auth): per-user restrictions by org node / warehouse`                                            | التطبيق الفعلي على المخزون في 5.2                                                                                    |
+| 5.2 | تطبيق تقييد المستخدم على المخزون                                                  | ✅ تم                                                           | `feat(inventory): enforce per-user warehouse / org-node restrictions`                                  |                                                                                                                      |
+| 5.3 | التفعيل (`AUTH_ENFORCE=true`)                                                     | ⏳ قرار المالك                                                  | —                                                                                                      | راجع ملاحظات 5.0                                                                                                     |
+| 6   | حد الائتمان المركّب                                                               | ✅ تم (تحذير بس)                                                | `feat(sales): composite customer credit limit with approval warning`                                   | الرصيد من دفتر الأستاذ، والتحذير عند اعتماد أمر الشغل                                                                |
+| 7   | طلب عرض أسعار لعدة موردين (RFQ) + مقارنة                                          | ✅ تم                                                           | `feat(sales): request for quotation to several suppliers with comparison`                              | الخطوة الأخيرة هي اعتماد عرض الفائز (مفيش أمر شراء في النظام)                                                        |
+| 8   | إيقاف المورد (3 مستويات + إفراج تلقائي)                                           | ✅ تم                                                           | `feat(crm): supplier hold with three levels and automatic release`                                     |                                                                                                                      |
+| 9   | فحص جودة بقراءات فعلية ونتيجة محسوبة                                              | ✅ تم                                                           | `feat(quality): inspection templates with real readings and computed result`                           |                                                                                                                      |
+| 10  | منع إنهاء خدمة مدير ليه موظفين نشطين                                              | ✅ تم                                                           | `feat(hr): manager hierarchy and leaving guard for managers`                                           |                                                                                                                      |
+| 11  | تعطيل حساب الموظف تلقائيًا عند إنهاء خدمته                                        | ✅ تم                                                           | `feat(hr): disable the employee's login when their service ends`                                       |                                                                                                                      |
+| 12  | 3 نسب سماح منفصلة في المشتريات (الطلب/الاستلام/الفاتورة)                          | ✅ تم                                                           | `feat(purchasing): three over-allowances for order, receipt and billing`                               | "الطلب" = عرض المورد المعتمد (مفيش أوامر شراء)                                                                       |
+| 13  | 7 أنواع حجز وطلب منفصلة في رصيد المخزون (Bin)                                     | ✅ تم                                                           | `feat(inventory): seven reservation types, bin view, and restore reservation id`                       | + إصلاح bug قديم: الحجز كان معطّل                                                                                    |
+| 14  | حساب "بضاعة اتسلّمت ولسه ما اتفوترتش" (GRNI)                                      | ✅ القيود **موجودة بالفعل**، واتضاف التقرير                     | `feat(inventory): received-not-billed report reconciled with GRNI ledger`                              |                                                                                                                      |
+| 15  | تكلفة الاستيراد (Landed Cost)                                                     | ✅ **موجودة بالفعل**، واتسدّت فجوة الدفعات                      | `fix(inventory): landed cost now reaches per-batch cost`                                               |                                                                                                                      |
+| 16  | قواعد التسعير: خصم سعر + خصم منتج (اشتري X خد Y)                                  | ✅ تم                                                           | `feat(sales): pricing rules with price and product discounts`                                          |                                                                                                                      |
+| 17  | فرصة البيع (Opportunity) كمرحلة منفصلة                                            | ✅ تم                                                           | `feat(crm): opportunity stage between lead and quotation`                                              |                                                                                                                      |
+| 18  | منع تكرار رقم فاتورة المورد                                                       | ✅ **موجود بالفعل (وأشد)**، واتصلّح رد الخطأ                    | `fix(finance): clear 400 for a repeated supplier invoice number`                                       | القيد على طول، مش في السنة بس                                                                                        |
+| 19  | إيقاف فاتورة شراء واحدة عن الدفع                                                  | ✅ تم                                                           | `feat(finance): hold a single purchase invoice for payment`                                            | منفصل عن إيقاف المورد (بند 8)                                                                                        |
+| 20  | تخصيص إجازات بالجملة بفلاتر                                                       | ✅ تم                                                           | `feat(hr): leave types, allocations and bulk allocation by filters`                                    | اتبنى أساس الإجازات من الصفر                                                                                         |
+| 21  | تسوية نهائية رسمية عند ترك الخدمة                                                 | ✅ تم                                                           | `feat(hr): full and final settlement on leaving`                                                       |                                                                                                                      |
+| 22  | حد إعادة الطلب (Reorder Level) لكل صنف في كل مخزن                                 | ✅ تم                                                           | `feat(inventory): reorder level per item and warehouse`                                                |                                                                                                                      |
+| 23  | مخازن شجرية (مخزن مجموعة)                                                         | ✅ تم                                                           | `feat(inventory): tree warehouses with group warehouses and rolled-up stock`                           |                                                                                                                      |
+| 24  | 6 أغراض لطلب المواد                                                               | ⏸️ **موجود جزئيًا (4 أغراض)**، والإكمال مؤجّل                   | —                                                                                                      | طلب المواد في موديول التخطيط (جزء من التصنيع). راجع التفاصيل                                                         |
+| 25  | دورة Lead ← Contact ← Prospect ← Customer                                         | ✅ تم                                                           | `feat(crm): lead, contact activity, prospect and conversion to customer`                               | من غير كيان Contact مستقل (ده بند 26)                                                                                |
+| 26  | Contact/Address ككيانات مستقلة                                                    | ⏸️ **قرار المالك**                                              | —                                                                                                      | الوثيقة بتقول صراحة "اسألني قبل التنفيذ"                                                                             |
+| 27  | انتقاء تلقائي ذكي (Pick List) بـ FIFO للدفعات                                     | ✅ تم                                                           | `feat(inventory): pick list with automatic FIFO / earliest-expiry batch picking`                       |                                                                                                                      |
+| 28  | مجموعات عملاء/موردين شجرية                                                        | ✅ تم                                                           | `feat(crm): customer and supplier group trees with inherited credit limit`                             |                                                                                                                      |
+| 29  | فترة اختبار رسمية بتاريخ تثبيت                                                    | ✅ تم                                                           | `feat(hr): formal probation with confirmation date`                                                    |                                                                                                                      |
+| 30  | حضور بصمة GPS                                                                     | ⏸️ مؤجّل                                                        | —                                                                                                      | الجدول والـ DTOs المذكورين في البرومبت مش موجودين في المستودع (غالبًا على جهاز المالك ومترفعوش). اتأجّل بقرار المالك |
+| 31  | تجميد قيد الأستاذ ضد الإلغاء الفردي                                               | ✅ تم                                                           | `feat(accounting): frozen journal entries — reversal only, document entries only via their document`   | + إصلاح bug قديم: شاشات إنشاء الحسابات والقيود كانت بترجع 500                                                        |
+| 32  | أنواع حسابات معيارية بسلوك مختلف                                                  | ✅ تم (30 نوع)                                                  | `feat(accounting): standard account roles with per-role behaviour`                                     | الوثيقة قالت 28، وقائمة ERPNext الحالية 30، فاتنفّذت كاملة                                                           |
+| 33  | 19 حساب افتراضي إجباري لكل شركة                                                   | ✅ تم                                                           | `feat(accounting): 19 company default accounts with validation, readiness and optional enforcement`    | + إصلاح bug: حفظ الإعدادات كان بيغيّر رقم السجل                                                                      |
+| 34  | 17 نوع قيد يومي                                                                   | ✅ تم                                                           | `feat(accounting): 17 journal entry types with per-type rules`                                         |                                                                                                                      |
+| 35  | التسوية الدورية: رصيد المخزون المحاسبي مقابل الفعلي + قيد تصحيح                   | ✅ تم                                                           | `feat(inventory): stock vs ledger reconciliation with a correction entry`                              |                                                                                                                      |
+| 36  | إقفال الفترة: تصفير الأرباح والخسائر + منع القيود الرجعية في الكود                | ✅ تم                                                           | `feat(accounting): real year-end closing into retained earnings and hard backdating guards`            | الإقفال القديم كان **محاكاة بأرقام ثابتة**، واتساب زي ما هو                                                          |
+| 37  | أداة "صحة الأستاذ": مهمة دورية تقارن دفترين وتسجّل أي تعارض                       | ✅ تم                                                           | `feat(finance): periodic ledger health check between document books and the general ledger`            |                                                                                                                      |
+| 38  | حجز السلف (الدفعات المقدمة) في حساب منفصل                                         | ✅ تم                                                           | `feat(finance): book customer / supplier advances in their own accounts with allocation`               | + إصلاح bug: فاتورة عليها ضريبة من غير حساب ضريبة كانت بترجع 500                                                     |
+| 39  | تخصيص الدفعة على فواتير/أقساط متعددة + فحص "أحدث بيانات"                          | ✅ تم                                                           | `feat(finance): allocate a payment over several invoices and installments with a latest-data check`    |                                                                                                                      |
+| 40  | محرك تحقق ميزانية مدمج في كل قيد                                                  | ✅ تم                                                           | `feat(accounting): budget control on every journal entry`                                              |                                                                                                                      |
+| 41  | مركز تكلفة إجباري + اتجاه الرصيد + منع الحساب الأب + تجميد حساب + أبعاد محاسبية   | ✅ تم (منع الحساب الأب **كان موجود بالفعل**)                    | `feat(accounting): cost center rule, balance side, frozen accounts and accounting dimensions`          |                                                                                                                      |
+| 42  | محرك سير عمل عام (حالات + انتقالات + أدوار + شروط ديناميكية)                      | ✅ تم (أساس للاعتمادات الجديدة بس)                              | `feat(workflow): generic workflow engine with roles and dynamic conditions`                            | الاعتمادات الشغالة **متلمستش**                                                                                       |
+| 43  | دعم فني: تذاكر بـ SLA على ساعات العمل والإجازات + تقسيم + إغلاق تلقائي            | ✅ تم                                                           | `feat(support): helpdesk with working-hours SLA, holidays, split and auto-close`                       | موديول جديد                                                                                                          |
+| 44  | إدارة مشاريع: إنجاز بـ 4 طرق + تقرير دوري بالإيميل + ربحية مشروع                  | ✅ تم                                                           | `feat(projects): projects with four progress methods, profitability and e-mailed status reports`       | الإيميل محتاج `SMTP_URL` من المالك                                                                                   |
+| 45  | دورة تصنيع بالباطن كاملة                                                          | ⏸️ **موجود جزئيًا** في `production_ops` (تصنيع)، والإكمال ممنوع | —                                                                                                      | راجع التفاصيل                                                                                                        |
+| 46  | أصول ثابتة: أصل تحت التنفيذ (CWIP) + 4 طرق إهلاك + جدول إهلاك بإعادة حساب تلقائية | ✅ تم (موديول جديد)                                             | `feat(assets): fixed assets with CWIP, four depreciation methods and a self-rebuilding schedule`       | الأصول القديمة البسيطة في المحاسبة متلمستش                                                                           |
+| 47  | نظام طباعة عام: ترويسة منفصلة + قوالب متعددة + منع طباعة المسودات والملغي         | ✅ تم                                                           | `feat(printing): letterheads, multiple print formats and no printing of drafts or cancelled documents` | موديول جديد                                                                                                          |
+| 48  | طبقة إقليمية منفصلة للفوترة الإلكترونية المصرية                                   | ✅ تم (البنية + التجهيز + الإرسال)                              | `feat(regional-eg): separate regional layer for Egyptian e-invoicing (ETA)`                            | الإرسال الحقيقي محتاج بيانات ربط وتوقيع من المالك                                                                    |
+| 49  | تتبّع حركة الأصل + تأمين الأصل + أصل مركّب                                        | ✅ تم                                                           | `feat(assets): asset movements, insurance and composite assets`                                        |                                                                                                                      |
+| 50  | طباعة بالجملة في الخلفية + طابعة شبكية + مهام تلقائية مع انتقالات سير العمل       | ✅ تم                                                           | `feat(printing,workflow): background bulk printing, network printers and transition tasks`             | الطابعة بتستقبل نص (مفيش محرك PDF)                                                                                   |
 
 ## 2. تفاصيل البنود المنفّذة
 
@@ -71,6 +71,7 @@
 **مكان الحماية:** في `InventoryService.createMovement`، ودي الدالة الوحيدة اللي كل حركات المخزون بتعدّي منها: الشاشة، وصرف طلب المواد، والتصنيع بالباطن. عشان كده الحماية شغالة على الكل من غير ما نلمس ملفات التصنيع. التصنيع مش بيبعت تاريخ، فالحركة بتاخد وقت التسجيل، وده عمره ما بيبقى أقدم من آخر حركة.
 
 **الملفات المتأثرة:**
+
 - `apps/api/src/modules/inventory/inventory.repository.ts`: دالة جديدة `findLatestMovementDate`.
 - `apps/api/src/modules/inventory/inventory.service.ts`: الحماية نفسها، والتحقق من إن التاريخ صالح، وتسجيل السبب في الملاحظة.
 - `apps/api/src/modules/inventory/inventory.dto.ts` و`inventory.types.ts`: خانتين اختياريتين `allowBackdate` و`backdateReason`.
@@ -80,19 +81,21 @@
 **قاعدة البيانات:** مفيش جداول ولا أعمدة جديدة، فمفيش migration.
 
 **الاختبار:**
+
 - `pnpm run typecheck`: نضيف.
 - الاختبارات: 189 من 189 نجحوا (كانوا 185، واتضاف 4 جداد).
 - اختبار حي على Postgres 16 عن طريق `POST /api/v1/inventory/movements`:
 
-| الحالة | النتيجة |
-|---|---|
-| استلام بتاريخ 2026-09-20 | 201 ✅ |
-| استلام بتاريخ 2026-09-15 من غير تجاوز | 400 `backdated movement rejected` ✅ |
-| تجاوز من غير سبب | 400 `backdateReason is required` ✅ |
-| تجاوز مع سبب | 201، والملاحظة `[BACKDATED: late supplier invoice]` ✅ |
-| صرف من غير تاريخ (يعني دلوقتي) | 201 ✅ |
+| الحالة                                | النتيجة                                                |
+| ------------------------------------- | ------------------------------------------------------ |
+| استلام بتاريخ 2026-09-20              | 201 ✅                                                 |
+| استلام بتاريخ 2026-09-15 من غير تجاوز | 400 `backdated movement rejected` ✅                   |
+| تجاوز من غير سبب                      | 400 `backdateReason is required` ✅                    |
+| تجاوز مع سبب                          | 201، والملاحظة `[BACKDATED: late supplier invoice]` ✅ |
+| صرف من غير تاريخ (يعني دلوقتي)        | 201 ✅                                                 |
 
 **مثال طلب تجاوز:**
+
 ```json
 POST /api/v1/inventory/movements
 {
@@ -108,6 +111,7 @@ POST /api/v1/inventory/movements
 ### بند 2أ — أعلام التتبع على الصنف + تكلفة لكل دفعة
 
 **الفكرة:** الصنف بقى فيه 4 إعدادات جديدة:
+
 - `hasBatchNo`: الصنف بيتتبّع بالدفعة.
 - `hasSerialNo`: الصنف بيتتبّع بالسيريال.
 - `hasExpiryDate`: الدفعة لازم يكون ليها تاريخ صلاحية. الإعداد ده مينفعش يتفعّل إلا لو `hasBatchNo` متفعّل.
@@ -116,6 +120,7 @@ POST /api/v1/inventory/movements
 كل الإعدادات دي قيمتها الافتراضية "لأ"، فالأصناف اللي موجودة قبل كده مش هتتأثر.
 
 **لو الصنف متتبّع بالدفعة:**
+
 - أي حركة من غير `batchId` بتترفض، سواء استلام أو صرف أو غيره (قرار المالك: ب).
 - كل دفعة ليها رصيد وتكلفة منفصلة في كل مخزن، ودول متسجّلين في جدول جديد اسمه `inventory.batch_balance`.
 - **الاستلام:** بيحدّث تكلفة الدفعة نفسها بس.
@@ -125,6 +130,7 @@ POST /api/v1/inventory/movements
 - **صرف الدفعة كلها** بيشيل قيمتها بالظبط، من غير فروق تقريب.
 
 **إنشاء الدفعة:**
+
 - لو الصنف ليه مدة صلاحية وأنت دخلت تاريخ الإنتاج بس، تاريخ الانتهاء بيتحسب تلقائي.
 - لو الصنف `hasExpiryDate`، تاريخ الانتهاء إجباري.
 - تاريخ الانتهاء مينفعش يكون قبل تاريخ الإنتاج.
@@ -136,6 +142,7 @@ POST /api/v1/inventory/movements
 **التصنيع:** مفيش أي ملف اتعدّل. بس خلي بالك: لو خامة اتعلّم عليها `hasBatchNo`، صرفها من التصنيع هيترفض لحد ما التصنيع يتعدّل ويبعت رقم الدفعة.
 
 **الملفات المتأثرة:**
+
 - الكتالوج: `catalog.schema.ts`، `catalog.types.ts`، `catalog.dto.ts`، `catalog.repository.ts`، `catalog.service.ts`، `catalog.controller.ts`، وملف الاختبار `catalog.uom-conversion.spec.ts` (تحديث بيانات تجريبية بس).
 - المخزون: `inventory.schema.ts`، `inventory.types.ts`، `inventory.dto.ts`، `inventory.repository.ts`، `inventory.service.ts`، `inventory.controller.ts`، `inventory.module.ts` (ضفت فيه `CatalogModule`).
 - ملف اختبار جديد: `inventory.batch-costing.spec.ts` فيه 7 اختبارات.
@@ -143,41 +150,43 @@ POST /api/v1/inventory/movements
 
 **قاعدة البيانات:**
 
-| الجدول | التغيير |
-|---|---|
-| `catalog.item` | 4 أعمدة جديدة: `has_batch_no`، `has_serial_no`، `has_expiry_date`، `shelf_life_in_days`، ومعاهم قيدين للتحقق |
-| `inventory.batch_balance` | جدول جديد: رصيد وتكلفة كل دفعة في كل مخزن |
-| `inventory.stock_movement` | عمود `batch_id` |
-| `inventory.stock_ledger_entry` | عمود `batch_id` |
+| الجدول                         | التغيير                                                                                                      |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `catalog.item`                 | 4 أعمدة جديدة: `has_batch_no`، `has_serial_no`، `has_expiry_date`، `shelf_life_in_days`، ومعاهم قيدين للتحقق |
+| `inventory.batch_balance`      | جدول جديد: رصيد وتكلفة كل دفعة في كل مخزن                                                                    |
+| `inventory.stock_movement`     | عمود `batch_id`                                                                                              |
+| `inventory.stock_ledger_entry` | عمود `batch_id`                                                                                              |
 
 الربط بالـ Foreign Key معمول بس بين جداول جوه موديول المخزون نفسه. `batch_balance.item_id` مربوط بالـ UUID بس من غير FK، التزامًا بقاعدة D2.
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| POST/PATCH | `/api/v1/catalog/items` | بتقبل `hasBatchNo`، `hasSerialNo`، `hasExpiryDate`، `shelfLifeInDays` |
-| POST | `/api/v1/inventory/movements` | بتقبل `batchId` |
-| GET | `/api/v1/inventory/batch-balances?itemId=&warehouseId=&batchId=` | أرصدة الدفعات وتكلفتها |
+| الطريقة    | المسار                                                           | الوصف                                                                 |
+| ---------- | ---------------------------------------------------------------- | --------------------------------------------------------------------- |
+| POST/PATCH | `/api/v1/catalog/items`                                          | بتقبل `hasBatchNo`، `hasSerialNo`، `hasExpiryDate`، `shelfLifeInDays` |
+| POST       | `/api/v1/inventory/movements`                                    | بتقبل `batchId`                                                       |
+| GET        | `/api/v1/inventory/batch-balances?itemId=&warehouseId=&batchId=` | أرصدة الدفعات وتكلفتها                                                |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 196 من 196 نجحوا (زادوا 7).
 - الـ lint: نفس عدد الأخطاء القديمة قبل التعديل وبعده.
 - اختبار حي على Postgres:
 
-| الحالة | النتيجة |
-|---|---|
-| صنف فيه `hasExpiryDate` من غير `hasBatchNo` | 400 ✅ |
-| دفعة بتاريخ إنتاج بس (2026-09-01) ومدة صلاحية 365 يوم | تاريخ الانتهاء اتحسب 2027-09-01 ✅ |
-| استلام أو صرف من غير رقم دفعة | 400 ✅ |
-| استلام LOT-A: 10 وحدات بسعر 100، وLOT-B: 10 وحدات بسعر 200 | 201 ✅ |
-| صرف 4 وحدات من LOT-B | التكلفة 200 والقيمة 800، مش متوسط الصنف (150) ✅ |
-| صرف 11 وحدة من LOT-A (رصيدها 10) | 400 ✅ |
-| صرف من دفعة محجوزة للفحص | 400 ✅ |
-| رصيد الصنف بعد العمليات | 16 وحدة بقيمة 2200 = 1000 (LOT-A) + 1200 (LOT-B) ✅ |
+| الحالة                                                     | النتيجة                                             |
+| ---------------------------------------------------------- | --------------------------------------------------- |
+| صنف فيه `hasExpiryDate` من غير `hasBatchNo`                | 400 ✅                                              |
+| دفعة بتاريخ إنتاج بس (2026-09-01) ومدة صلاحية 365 يوم      | تاريخ الانتهاء اتحسب 2027-09-01 ✅                  |
+| استلام أو صرف من غير رقم دفعة                              | 400 ✅                                              |
+| استلام LOT-A: 10 وحدات بسعر 100، وLOT-B: 10 وحدات بسعر 200 | 201 ✅                                              |
+| صرف 4 وحدات من LOT-B                                       | التكلفة 200 والقيمة 800، مش متوسط الصنف (150) ✅    |
+| صرف 11 وحدة من LOT-A (رصيدها 10)                           | 400 ✅                                              |
+| صرف من دفعة محجوزة للفحص                                   | 400 ✅                                              |
+| رصيد الصنف بعد العمليات                                    | 16 وحدة بقيمة 2200 = 1000 (LOT-A) + 1200 (LOT-B) ✅ |
 
 **قيود معروفة ومؤجّلة:**
+
 - **تغيير `hasBatchNo` على صنف ليه رصيد قديم:** النظام مش بيمنعه، لأن الكتالوج مش بيقدر يقرا المخزون حسب قاعدة D2. الرصيد القديم اللي مالوش دفعة مش هيقدر يتصرف. محتاج أداة ترحيل أو منع لاحقًا.
 - ~~**تكلفة الاستيراد (Landed Cost):** بتحدّث متوسط الصنف بس، مش تكلفة الدفعة نفسها.~~ ← **اتعالج في بند 15.**
 - **الجرد (`reconcile`):** لصنف متتبّع بالدفعة هيترفض، لأنه مش بيبعت رقم دفعة. ده متوافق مع بند 4.
@@ -185,6 +194,7 @@ POST /api/v1/inventory/movements
 ### بند 2ب — ربط السيريال بحركة المخزون
 
 **الفكرة:** لو الصنف متتبّع بالسيريال (`hasSerialNo`)، كل حركة لازم تتبعت معاها `serialNos`، وده بيمشي بالقواعد دي:
+
 - **عدد السيريالات:** لازم يساوي الكمية بالظبط، والكمية لازم تكون عدد صحيح، ومينفعش سيريال يتكرر في نفس الحركة.
 - **الاستلام أو التحويل الداخل أو التسوية بالزيادة:** لو السيريال جديد، بيتعمل وبيتسجّل في المخزن. لو كان موجود قبل كده (مثلًا اتسلّم لعميل وبعدين رجع)، بيرجع للمخزن تاني. بيترفض في حالتين: لو السيريال موجود فعلًا في أي مخزن، أو لو كان متشطّب (خارج الخدمة).
 - **الصرف:** لازم السيريال يكون موجود ونشط في نفس المخزن. ولو الصنف متتبّع بالدفعة كمان، لازم السيريال يكون تبع نفس الدفعة. بعد الصرف حالته بتبقى "اتسلّم" (`delivered`) ومبيبقاش في أي مخزن.
@@ -195,42 +205,45 @@ POST /api/v1/inventory/movements
 **التكلفة:** مفيش تغيير. السيريال بياخد تكلفة الدفعة لو الصنف متتبّع بالدفعة، وإلا بياخد متوسط تكلفة الصنف.
 
 **الملفات المتأثرة:**
+
 - `inventory.schema.ts`، `inventory.types.ts`، `inventory.dto.ts`، `inventory.repository.ts`، `inventory.service.ts`، `inventory.controller.ts`.
 - ملف اختبار جديد: `inventory.serial-movement.spec.ts` فيه 7 اختبارات.
 - migration: `apps/api/drizzle/migrations/0059_long_hawkeye.sql`.
 
 **قاعدة البيانات:**
 
-| الجدول | التغيير |
-|---|---|
+| الجدول                            | التغيير                                                                                  |
+| --------------------------------- | ---------------------------------------------------------------------------------------- |
 | `inventory.stock_movement_serial` | جدول جديد بيربط كل حركة بالسيريالات اللي فيها. الـ FK معمول بس لجداول جوه موديول المخزون |
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| POST | `/api/v1/inventory/movements` | بتقبل `serialNos: string[]`، والرد بيرجع فيه `serialNos` |
-| GET | `/api/v1/inventory/movements/:id/serials` | السيريالات اللي في حركة معيّنة |
-| GET | `/api/v1/inventory/serials/:id/movements` | تاريخ حركة سيريال معيّن |
+| الطريقة | المسار                                    | الوصف                                                    |
+| ------- | ----------------------------------------- | -------------------------------------------------------- |
+| POST    | `/api/v1/inventory/movements`             | بتقبل `serialNos: string[]`، والرد بيرجع فيه `serialNos` |
+| GET     | `/api/v1/inventory/movements/:id/serials` | السيريالات اللي في حركة معيّنة                           |
+| GET     | `/api/v1/inventory/serials/:id/movements` | تاريخ حركة سيريال معيّن                                  |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 203 من 203 نجحوا (زادوا 7).
 - الـ lint: نفس عدد الأخطاء القديمة قبل التعديل وبعده.
 - اختبار حي:
 
-| الحالة | النتيجة |
-|---|---|
-| استلام كمية 2 ومعاها سيريال واحد | 400 ✅ |
-| استلام DV-001 وDV-002 وDV-003 | 201، والسيريالات اتسجّلت في المخزن ✅ |
-| استلام DV-001 تاني | 400 `already in stock` ✅ |
-| صرف DV-002 | 201، والحالة بقت `delivered` ✅ |
-| صرف DV-002 تاني | 400 ✅ |
-| تحويل DV-003 من WH-T لـ WH-T2 | 201 + 201، والسيريال بقى في WH-T2 ✅ |
-| صرف DV-003 من WH-T | 400، لأنه بقى في WH-T2 ✅ |
-| تاريخ حركة DV-003 | استلام، تحويل خارج، تحويل داخل ✅ |
+| الحالة                           | النتيجة                               |
+| -------------------------------- | ------------------------------------- |
+| استلام كمية 2 ومعاها سيريال واحد | 400 ✅                                |
+| استلام DV-001 وDV-002 وDV-003    | 201، والسيريالات اتسجّلت في المخزن ✅ |
+| استلام DV-001 تاني               | 400 `already in stock` ✅             |
+| صرف DV-002                       | 201، والحالة بقت `delivered` ✅       |
+| صرف DV-002 تاني                  | 400 ✅                                |
+| تحويل DV-003 من WH-T لـ WH-T2    | 201 + 201، والسيريال بقى في WH-T2 ✅  |
+| صرف DV-003 من WH-T               | 400، لأنه بقى في WH-T2 ✅             |
+| تاريخ حركة DV-003                | استلام، تحويل خارج، تحويل داخل ✅     |
 
 **قيود معروفة:**
+
 - **السيريال المتسجّل مسبقًا في مخزن:** لو سيريال اتسجّل بشاشة `POST /inventory/serials` وليه مخزن قبل ما يتعمل استلام فعلي، النظام هيعتبره "موجود فعلًا في المخزن" وهيرفض استلامه. الحل إن السيريالات تتسجّل من غير مخزن، أو تتسجّل عن طريق حركة الاستلام نفسها.
 - **حركات التصنيع:** لصنف متتبّع بالسيريال هتترفض، لأن التصنيع مش بيبعت أرقام السيريال. ده نفس الموقف بتاع الدفعات.
 
@@ -238,13 +251,14 @@ POST /api/v1/inventory/movements
 
 **القرار التقني:** مضفتش أنواع حركة جديدة. السبب إن محرك القيود المحاسبية (`posting-engine.service.ts`) بيتعرف بس على الأنواع الخمسة الحالية، وأي نوع جديد كان هيعدّي **من غير قيد محاسبي ومن غير أي خطأ**، وتعديل المحرك ده ممنوع. الحل كان عمود جديد اسمه `purpose` على الحركة، وده نفس فكرة `purpose` في ERPNext. "نوع الحركة" بيفضل يحدد اتجاه القيد، و"الغرض" بيحدد المعنى في الشغل:
 
-| الغرض | أنواع الحركة المسموحة | المعنى |
-|---|---|---|
-| `general` (الافتراضي) | كل الأنواع | زي ما كان قبل كده |
+| الغرض                               | أنواع الحركة المسموحة          | المعنى                               |
+| ----------------------------------- | ------------------------------ | ------------------------------------ |
+| `general` (الافتراضي)               | كل الأنواع                     | زي ما كان قبل كده                    |
 | `material_transfer_for_manufacture` | `transfer_out` / `transfer_in` | نقل خامة لمخزن الإنتاج (تحت التشغيل) |
-| `manufacture_consumption` | `issue` بس | استهلاك فعلي في التصنيع |
+| `manufacture_consumption`           | `issue` بس                     | استهلاك فعلي في التصنيع              |
 
 **أداة تحويل جديدة:** `POST /inventory/transfers` بتنقل الكمية من مخزن لمخزن في خطوة واحدة، وده بيتعمل كحركتين:
+
 - الحركتين بنفس الغرض ونفس التاريخ، والنقل بيتم بتكلفة المصدر. يعني لو الصنف متتبّع بالدفعة، التكلفة هي تكلفة الدفعة نفسها.
 - الأداة بتشتغل مع الدفعة والسيريال.
 - قبل ما تطلّع أي كمية، بتتأكد إن المخزن الهدف موجود، وإن التاريخ مش أقدم من آخر حركة فيه. ده عشان متحصلش حالة الكمية فيها تطلع من المصدر وتترفض في الهدف.
@@ -252,6 +266,7 @@ POST /api/v1/inventory/movements
 **أثرها على المحاسبة:** مفيش أي تغيير. التحويل بيطلع قيود التحويل العادية زي ما هي.
 
 **الملفات المتأثرة:**
+
 - `inventory.schema.ts`، `inventory.types.ts`، `inventory.dto.ts`، `inventory.repository.ts`، `inventory.service.ts`، `inventory.controller.ts`.
 - `inventory.reconciliation.spec.ts`: تحديث بيانات تجريبية بس.
 - ملف اختبار جديد: `inventory.movement-purpose.spec.ts` فيه 5 اختبارات.
@@ -261,27 +276,29 @@ POST /api/v1/inventory/movements
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| POST | `/api/v1/inventory/movements` | بتقبل `purpose` |
-| POST | `/api/v1/inventory/transfers` | تحويل بين مخزنين. بتاخد `itemId`، `fromWarehouseId`، `toWarehouseId`، `quantity`، و`purpose` و`batchId` و`serialNos` و`movementDate` اختياري |
+| الطريقة | المسار                        | الوصف                                                                                                                                        |
+| ------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST    | `/api/v1/inventory/movements` | بتقبل `purpose`                                                                                                                              |
+| POST    | `/api/v1/inventory/transfers` | تحويل بين مخزنين. بتاخد `itemId`، `fromWarehouseId`، `toWarehouseId`، `quantity`، و`purpose` و`batchId` و`serialNos` و`movementDate` اختياري |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 208 من 208 نجحوا (زادوا 5).
 - الـ lint: نفس عدد الأخطاء القديمة قبل التعديل وبعده.
 - اختبار حي:
 
-| الحالة | النتيجة |
-|---|---|
+| الحالة                                            | النتيجة                               |
+| ------------------------------------------------- | ------------------------------------- |
 | تحويل 5 وحدات من صنف عادي من المخزن لمخزن الإنتاج | خروج ودخول بسعر 100، والغرض متسجّل ✅ |
-| استهلاك 3 وحدات من مخزن الإنتاج | 201 ✅ |
-| استلام بغرض استهلاك | 400 ✅ |
-| تحويل وحدتين من دفعة LOT-B | التكلفة فضلت 200 في المخزنين ✅ |
-| تحويل السيريال DV-001 | بقى في مخزن الإنتاج ✅ |
-| تحويل من مخزن لنفس المخزن | 400 ✅ |
+| استهلاك 3 وحدات من مخزن الإنتاج                   | 201 ✅                                |
+| استلام بغرض استهلاك                               | 400 ✅                                |
+| تحويل وحدتين من دفعة LOT-B                        | التكلفة فضلت 200 في المخزنين ✅       |
+| تحويل السيريال DV-001                             | بقى في مخزن الإنتاج ✅                |
+| تحويل من مخزن لنفس المخزن                         | 400 ✅                                |
 
 **مؤجّل (محتاج موافقة المالك لأنه تعديل في ملفات التصنيع):**
+
 - `production.service.ts`: `issueRequest` بيسجّل الصرف دلوقتي بغرض `general`.
 - `production_ops.service.ts`: تسوية التصنيع بالباطن بتسجّل الصرف دلوقتي بغرض `general`.
 
@@ -292,6 +309,7 @@ POST /api/v1/inventory/movements
 **الثغرة اللي اتقفلت:** الجرد (`reconcileStock`) كان بيكتب حركة التسوية ورصيد الصنف في قاعدة البيانات مباشرة، من غير ما يعدّي على `createMovement`. ده معناه إن أي جرد لصنف متتبّع بالدفعة كان هيغيّر رصيد الصنف من غير ما يغيّر أرصدة الدفعات (فالرصيدين يبقوا مش متطابقين)، ولصنف متتبّع بالسيريال كان هيغيّر الكمية من غير ما يغيّر حالة السيريالات.
 
 **الحل:** لو الصنف متتبّع بالدفعة أو بالسيريال، الجرد العادي بيترفض قبل ما يكتب أي حاجة. الرسالة بتقول الصنف متتبّع بإيه، وبتوجّه المستخدم لحركة مخزون بدل الجرد:
+
 - **للعجز:** صرف (`issue`).
 - **للزيادة:** تسوية (`adjustment`).
 - **في الحالتين:** مع تحديد رقم الدفعة (`batchId`) و/أو أرقام السيريال (`serialNos`).
@@ -301,33 +319,37 @@ POST /api/v1/inventory/movements
 **الشاشة:** صفحة الجرد (`StockReconciliationPage.tsx`) أصلًا بتعرض رسالة الخطأ اللي راجعة من الـ API، فمحتاجتش أي تعديل.
 
 **الملفات المتأثرة:**
+
 - `inventory.service.ts`: الرفض نفسه.
 - `inventory.reconciliation.spec.ts`: 4 اختبارات جديدة.
 
 **قاعدة البيانات:** مفيش تغيير.
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 212 من 212 نجحوا (زادوا 4).
 - الـ lint: نفس عدد الأخطاء القديمة قبل التعديل وبعده.
 - اختبار حي:
 
-| الحالة | النتيجة |
-|---|---|
-| جرد MED-1 (متتبّع بالدفعة) | 400، ومعاه الرسالة التوجيهية ✅ |
-| جرد DEV-1 (متتبّع بالسيريال) | 400 ✅ |
-| جرد ITM-1 (صنف عادي) | 200، والنتيجة `shortage` ✅ |
-| رصيد دفعة LOT-B بعد محاولة الجرد | فضل زي ما هو ✅ |
+| الحالة                           | النتيجة                         |
+| -------------------------------- | ------------------------------- |
+| جرد MED-1 (متتبّع بالدفعة)       | 400، ومعاه الرسالة التوجيهية ✅ |
+| جرد DEV-1 (متتبّع بالسيريال)     | 400 ✅                          |
+| جرد ITM-1 (صنف عادي)             | 200، والنتيجة `shortage` ✅     |
+| رصيد دفعة LOT-B بعد محاولة الجرد | فضل زي ما هو ✅                 |
 
 ### بند 5.0 — أساس تسجيل الدخول (شرط لازم قبل بند 5)
 
 **اللي البحث كشفه قبل التنفيذ:**
+
 - النظام مكانش فيه أي تسجيل دخول حقيقي. الـ `login` كان بيتأكد من الباسورد بس، ومش بيطلّع أي تذكرة دخول.
 - مفيش أي حاجة كانت بتحدد `request.user`.
 - الحراسات الموجودة كانت بتعدّي أي طلب مالوش مستخدم، و`CurrentUser` كان بيفترض إن الطالب مدير النظام.
 - ولا شاشة واحدة كانت محمية. **يعني أي حد يوصل للسيرفر كان يقدر يعمل أي حاجة.**
 
 **اللي اتعمل:**
+
 - **تذكرة الدخول:** `POST /auth/login` بقى بيرجّع كمان `accessToken` (JWT) و`expiresInSeconds`. التذكرة جواها رقم المستخدم بس، وأي حد بيقدم تذكرة، النظام بيقرا المستخدم ودوره من قاعدة البيانات من جديد. فلو المستخدم اتوقّف، بيتقفل فورًا حتى لو تذكرته لسه صالحة. ده كمان هيخدم بند 11.
 - **الحارس العام (`AuthenticationGuard`):** متسجّل كـ `APP_GUARD`، وبيشتغل كده:
   - لو الطلب معاه تذكرة صالحة، `request.user` بيتحدد.
@@ -346,6 +368,7 @@ POST /api/v1/inventory/movements
   - `App.tsx` (تعديل جزئي بس): ذيل القائمة الجانبية بقى بيعرض المستخدم الحقيقي ودوره مع زرار دخول/خروج، ونافذة الدخول بتفتح تلقائي لما السيرفر يطلب تسجيل دخول.
 
 **الملفات المتأثرة:**
+
 - **API:** `env.validation.ts`، `app-config.service.ts`، `.env.example`، `health.controller.ts`، `auth.controller.ts`، `auth.module.ts`، `package.json`.
 - **API ملفات جديدة:** `auth-token.service.ts`، `guards/authentication.guard.ts`، `decorators/public.decorator.ts`، `authentication.guard.spec.ts`.
 - **Web:** `App.tsx`، `app/api/client.ts`.
@@ -355,29 +378,31 @@ POST /api/v1/inventory/movements
 **قاعدة البيانات:** مفيش تغيير.
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف في الحزم الثلاثة.
 - اختبارات الـ API: 218 من 218 نجحوا (زادوا 6).
 - الـ lint: مفيش أخطاء جديدة، والملفات الجديدة نضيفة.
 - اختبارات الواجهة (`App.test.tsx`): اختبارين **كانوا فاشلين قبل التعديل كمان**، لأنهم بيدوّروا على عناوين مبقتش موجودة في `App.tsx`. فشل قديم ومالوش علاقة بالتعديل.
 - اختبار حي: 12 حالة، كلهم نجحوا ✅
 
-| الحالة | النتيجة |
-|---|---|
-| `AUTH_ENFORCE` مقفول، طلب من غير تذكرة | 200، زي النهارده ✅ |
-| دخول بباسورد غلط | 400 ✅ |
-| دخول صح | 200، ومعاه `accessToken` ✅ |
-| `/auth/me` بتذكرة | اسم المستخدم ودوره (STORE_KEEPER) ✅ |
-| `/auth/me` من غير تذكرة / بتذكرة مزوّرة | 401 ✅ |
-| `AUTH_ENFORCE` مفتوح، طلب من غير تذكرة | 401 ✅ |
-| `AUTH_ENFORCE` مفتوح، طلب بتذكرة | 200 ✅ |
-| `health` من غير تذكرة | 200 ✅ |
-| دخول والطلب معاه تذكرة قديمة | 200 ✅ |
-| إعدادات CORS بتسمح بـ `Authorization` | ✅ |
-| مستخدم اتوقّف وتذكرته لسه صالحة | 401 فورًا ✅ |
+| الحالة                                  | النتيجة                              |
+| --------------------------------------- | ------------------------------------ |
+| `AUTH_ENFORCE` مقفول، طلب من غير تذكرة  | 200، زي النهارده ✅                  |
+| دخول بباسورد غلط                        | 400 ✅                               |
+| دخول صح                                 | 200، ومعاه `accessToken` ✅          |
+| `/auth/me` بتذكرة                       | اسم المستخدم ودوره (STORE_KEEPER) ✅ |
+| `/auth/me` من غير تذكرة / بتذكرة مزوّرة | 401 ✅                               |
+| `AUTH_ENFORCE` مفتوح، طلب من غير تذكرة  | 401 ✅                               |
+| `AUTH_ENFORCE` مفتوح، طلب بتذكرة        | 200 ✅                               |
+| `health` من غير تذكرة                   | 200 ✅                               |
+| دخول والطلب معاه تذكرة قديمة            | 200 ✅                               |
+| إعدادات CORS بتسمح بـ `Authorization`   | ✅                                   |
+| مستخدم اتوقّف وتذكرته لسه صالحة         | 401 فورًا ✅                         |
 
 - **تأكيد بصري:** بالمتصفح. نافذة الدخول، ورسالة الخطأ، والذيل بعد الدخول بيعرض `ahmed / STORE_KEEPER` وزرار "خروج".
 
 **ملاحظات مهمة للتفعيل (5.3):**
+
 - **أول مستخدم مدير:** لازم يتعمل **قبل** ما `AUTH_ENFORCE` يتفتح. بعد ما يتفتح، إنشاء المستخدمين نفسه هيحتاج تسجيل دخول.
 - **الثغرة لسه قايمة لحد التفعيل:** طول ما `AUTH_ENFORCE=false`، أي حد لسه يقدر يعمل أي حاجة من غير تسجيل دخول، زي قبل كده بالظبط.
 - **`CurrentUser`:** لسه بيفترض "مدير النظام" لو مفيش مستخدم. ده مقصود عشان التوافق وهو مقفول، وهيتراجع وقت التفعيل.
@@ -386,10 +411,12 @@ POST /api/v1/inventory/movements
 ### بند 5.1 — جدول تقييد المستخدم (User Permission)
 
 **الفكرة (زي ERPNext):** كل مستخدم ممكن يتقيد بقيم معيّنة في نوع معيّن:
+
 - `org_node`: فرع أو شركة أو أي عقدة في الشجرة، والتقييد بيشمل كل اللي تحتها.
 - `warehouse`: مخزن.
 
 **القاعدة:**
+
 - لو المستخدم **مالوش أي صف** من نوع معيّن، يبقى **مش متقيّد** في النوع ده.
 - لو ليه صفوف، يبقى مسموحله بيها بس.
 
@@ -398,6 +425,7 @@ POST /api/v1/inventory/movements
 **قاعدة D2:** `allow_value` مربوط بالـ UUID بس، من غير FK، لأنه بيشاور على جدول في موديول تاني. وجوده بيتفحص في الـ service بقراءة بس من جدول الفروع أو المخازن. الـ FK الوحيد هو لجدول المستخدمين نفسه، وده جوه نفس موديول auth، ومعاه `on delete cascade`.
 
 **الملفات المتأثرة:**
+
 - **API:** `auth.schema.ts`، `auth.types.ts`، `auth.dto.ts`، `auth.repository.ts`، `auth.module.ts`.
 - **API ملفات جديدة:** `user-permission.service.ts`، `user-permission.controller.ts`، `user-permission.service.spec.ts` (4 اختبارات).
 - **Web:** `app/api/client.ts` (ضفت `api.delete`)، و`App.tsx` (تعديل جزئي: عنصر قائمة جديد ومسار).
@@ -406,37 +434,38 @@ POST /api/v1/inventory/movements
 
 **قاعدة البيانات:**
 
-| الجدول | التغيير |
-|---|---|
+| الجدول                 | التغيير                                                                                                         |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
 | `auth.user_permission` | جدول جديد: `user_id`، `allow_type` (`org_node`/`warehouse`)، `allow_value`. مفيش تكرار لنفس القيد لنفس المستخدم |
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| GET | `/api/v1/auth/user-permissions?userId=` | قيود مستخدم معيّن |
-| POST | `/api/v1/auth/user-permissions` | إضافة قيد، وبتاخد `userId`، `allowType`، `allowValue` |
-| DELETE | `/api/v1/auth/user-permissions/:id` | حذف قيد |
+| الطريقة | المسار                                  | الوصف                                                 |
+| ------- | --------------------------------------- | ----------------------------------------------------- |
+| GET     | `/api/v1/auth/user-permissions?userId=` | قيود مستخدم معيّن                                     |
+| POST    | `/api/v1/auth/user-permissions`         | إضافة قيد، وبتاخد `userId`، `allowType`، `allowValue` |
+| DELETE  | `/api/v1/auth/user-permissions/:id`     | حذف قيد                                               |
 
 **الشاشات:**
 
-| الشاشة | المسار في القائمة | الوصف |
-|---|---|---|
+| الشاشة                        | المسار في القائمة   | الوصف                                                            |
+| ----------------------------- | ------------------- | ---------------------------------------------------------------- |
 | تقييد المستخدمين (فرع / مخزن) | 8. الإقفال والرقابة | تختار مستخدم، وتضيف أو تحذف قيود، وتشوف المخازن والفروع المسموحة |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - اختبارات الـ API: 222 من 222 نجحوا (زادوا 4).
 - الـ lint: مفيش أخطاء جديدة، والملفات الجديدة نضيفة.
 - اختبار حي على الـ API:
 
-| الحالة | النتيجة |
-|---|---|
-| إضافة قيد مخزن | 201 ✅ |
-| إضافة نفس القيد تاني | 400 ✅ |
-| قيد بمخزن مش موجود | 404 ✅ |
-| نوع قيد غلط | 400 ✅ |
-| عرض القيود | 200 ✅ |
+| الحالة               | النتيجة |
+| -------------------- | ------- |
+| إضافة قيد مخزن       | 201 ✅  |
+| إضافة نفس القيد تاني | 400 ✅  |
+| قيد بمخزن مش موجود   | 404 ✅  |
+| نوع قيد غلط          | 400 ✅  |
+| عرض القيود           | 200 ✅  |
 
 - تأكيد بصري بالمتصفح: إضافة قيد "فرع القاهرة" من الشاشة، وحذف قيد المخزن، والنتيجة ظهرت صح في قاعدة البيانات ✅
 - خطأ `tailwind is not defined` في الكونسول: موجود من قبل في `index.html`، ومالوش علاقة بالتعديل.
@@ -444,12 +473,14 @@ POST /api/v1/inventory/movements
 ### بند 5.2 — تطبيق تقييد المستخدم على المخزون
 
 **الفكرة:** لو المستخدم داخل بتذكرة دخول وعليه قيود، شاشات وعمليات المخزون بتتعامل مع المخازن المسموحله بيها بس:
+
 - **قيد المخزن:** المخازن دي بس.
 - **قيد الفرع:** كل مخزن فرعه هو الفرع ده أو أي حاجة تحته في الشجرة.
 - **القيدين مع بعض:** المخزن لازم يطابق الاتنين، زي ما ERPNext بيجمع القيود المختلفة.
 - **مستخدم مش داخل بتذكرة، أو مالوش قيود، أو استدعاء داخلي من موديول تاني:** مفيش أي تقييد، زي قبل كده.
 
 **إزاي الـ service بتعرف المستخدم:** عملت "سياق طلب" (`core/request-context`، مبني على `AsyncLocalStorage`):
+
 - middleware عام بيفتح سياق جديد لكل طلب.
 - حارس الدخول بيسجّل رقم المستخدم في السياق ده.
 - `InventoryAccessService` بيقرا الرقم من السياق.
@@ -458,14 +489,15 @@ POST /api/v1/inventory/movements
 
 **العمليات اللي عليها التقييد:**
 
-| العملية | السلوك مع المستخدم المتقيّد |
-|---|---|
+| العملية                                                                         | السلوك مع المستخدم المتقيّد                                             |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | عرض المخازن، والأرصدة، والحركات، والحجوزات، والسجل، وأرصدة الدفعات، والسيريالات | بيشوف بتاع المسموحله بيه بس. ولو طلب مخزن مش مسموح بالاسم بيترفض بـ 403 |
-| حركة مخزون، وجرد، وحجز، وفك حجز | 403 لو المخزن مش مسموح |
-| تحويل بين مخزنين | الطرفين لازم يكونوا مسموحين، والفحص بيحصل قبل ما أي حاجة تطلع |
-| إنشاء مخزن | لازم يكون تحت فرع مسموح. والمتقيّد بمخازن محددة مينفعش ينشئ مخازن |
+| حركة مخزون، وجرد، وحجز، وفك حجز                                                 | 403 لو المخزن مش مسموح                                                  |
+| تحويل بين مخزنين                                                                | الطرفين لازم يكونوا مسموحين، والفحص بيحصل قبل ما أي حاجة تطلع           |
+| إنشاء مخزن                                                                      | لازم يكون تحت فرع مسموح. والمتقيّد بمخازن محددة مينفعش ينشئ مخازن       |
 
 **الملفات المتأثرة:**
+
 - **ملفات جديدة:**
   - `core/request-context/request-context.ts` و`request-context.middleware.ts`.
   - `inventory/inventory-access.service.ts`.
@@ -480,24 +512,26 @@ POST /api/v1/inventory/movements
 **قاعدة البيانات:** مفيش تغيير.
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 228 من 228 نجحوا (زادوا 6).
 - الـ lint: كل الملفات المتعدّلة والجديدة نضيفة.
 - اختبار حي على سيرفر حقيقي. ahmed متقيّد بـ"فرع القاهرة"، والشجرة: الشركة ← فرع القاهرة وفرع إسكندرية:
 
-| الحالة | النتيجة |
-|---|---|
-| زائر من غير تذكرة بيعرض المخازن | الـ 3 مخازن ✅ |
-| ahmed بيعرض المخازن | مخزن فرع القاهرة بس ✅ |
-| ahmed بيعرض الأرصدة | صف واحد، مخزن القاهرة ✅ |
-| ahmed بيصرف من إسكندرية | 403 ✅ |
-| ahmed بيصرف من فرع القاهرة | 201 ✅ |
-| ahmed بيحوّل من القاهرة لإسكندرية | 403، ومفيش حاجة خرجت ✅ |
-| ahmed بينشئ مخزن تحت إسكندرية | 403 ✅ |
-| ahmed بيعرض سجل مخزن إسكندرية | 403 ✅ |
+| الحالة                              | النتيجة                          |
+| ----------------------------------- | -------------------------------- |
+| زائر من غير تذكرة بيعرض المخازن     | الـ 3 مخازن ✅                   |
+| ahmed بيعرض المخازن                 | مخزن فرع القاهرة بس ✅           |
+| ahmed بيعرض الأرصدة                 | صف واحد، مخزن القاهرة ✅         |
+| ahmed بيصرف من إسكندرية             | 403 ✅                           |
+| ahmed بيصرف من فرع القاهرة          | 201 ✅                           |
+| ahmed بيحوّل من القاهرة لإسكندرية   | 403، ومفيش حاجة خرجت ✅          |
+| ahmed بينشئ مخزن تحت إسكندرية       | 403 ✅                           |
+| ahmed بيعرض سجل مخزن إسكندرية       | 403 ✅                           |
 | زائر من غير تذكرة بيصرف من إسكندرية | 201، لأن `AUTH_ENFORCE` مقفول ✅ |
 
 **قيود معروفة ومؤجّلة:**
+
 - **لسه مش متقيّدين:** الدفعات (`batches`)، وتكلفة الاستيراد (Landed Cost)، وربط دفعات المشتريات. الحاجات دي مربوطة بالفرع مش بالمخزن، ومحتاجة خطوة لوحدها.
 - **السيريالات اللي اتسلّمت** (ومالهاش مخزن) مش بتظهر للمستخدم المتقيّد.
 - **باقي الموديولات** (المبيعات والمحاسبة وغيرهم) لسه مش متقيّدة.
@@ -506,12 +540,14 @@ POST /api/v1/inventory/movements
 ### بند 6 — حد الائتمان المركّب
 
 **اللي البحث كشفه قبل التنفيذ:**
+
 - مكانش فيه حد ائتمان خالص.
 - أمر الشغل (`job_order`) والتسليم (`delivery_order`) **مالهمش أي قيمة مالية**.
 - كل تسليم تابع لأمر شغل.
 - الرصيد الفعلي موجود في دفتر الأستاذ، لأن سطور القيود فيها العميل (`partyId`).
 
 **المعادلة:**
+
 - **المصدر 1، رصيد الأستاذ (قرار المالك: ب):** مجموع المدين ناقص مجموع الدائن لسطور القيود **المرحّلة** المتعلّمة بالعميل. القيود اللي لسه مسودة بتتجاهل.
 - **المصدر 2، أوامر لسه ما اتفوترتش:** أوامر الشغل المعتمدة أو اللي شغالة. لكل أمر: قيمة عرض السعر المعتمد (الكمية × السعر، من غير ضريبة) ناقص صافي الفواتير **المرحّلة** على نفس الأمر، والنتيجة مبتنزلش تحت الصفر. الأوامر الداخلية، أو اللي مالهاش عرض سعر، قيمتها صفر.
 - **المصدر 3، تسليمات من غير فاتورة:** **للمعلومة بس** (عددها)، لأن قيمتها محسوبة أصلًا جوه المصدر 2. حسابها لوحدها كان هيعدّها مرتين.
@@ -519,6 +555,7 @@ POST /api/v1/inventory/movements
 - **المتاح** = الحد − الإجمالي.
 
 **السلوك (قرار المالك: ب، تحذير بس):**
+
 - اعتماد أمر الشغل بيتم دايمًا.
 - لو العميل بعد الاعتماد بقى متخطّي الحد، الرد بيرجع معاه `creditWarning` بالأرقام.
 - مفيش أي منع.
@@ -528,6 +565,7 @@ POST /api/v1/inventory/movements
 **قاعدة D2:** جداول القيود والفواتير والتسليمات بتتقرا **قراءة بس** من `customer-credit.repository.ts` في المبيعات. مفيش أي ملف محاسبة أو finance أو delivery اتعدّل.
 
 **الملفات المتأثرة:**
+
 - **CRM:** `crm.schema.ts`، `crm.types.ts`، `crm.dto.ts`، `crm.repository.ts`، `crm.service.ts`، `crm.controller.ts`.
 - **المبيعات (ملفات جديدة):** `customer-credit.repository.ts`، `customer-credit.service.ts`، `customer-credit.service.spec.ts` (4 اختبارات).
 - **المبيعات (ملفات اتعدّلت):** `sales.controller.ts`، `sales.module.ts`.
@@ -535,37 +573,39 @@ POST /api/v1/inventory/movements
 
 **قاعدة البيانات:**
 
-| الجدول | التغيير |
-|---|---|
+| الجدول         | التغيير                                                                 |
+| -------------- | ----------------------------------------------------------------------- |
 | `crm.customer` | عمود `credit_limit` (فاضي يعني من غير حد)، ومعاه قيد إنه ميكونش بالسالب |
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| POST | `/api/v1/crm/customers` | بتقبل `creditLimit` |
-| PATCH | `/api/v1/crm/customers/:id/credit-limit` | بتضبط الحد، و`null` بتلغيه |
-| GET | `/api/v1/sales/customers/:id/credit-status` | الحد، ورصيد الأستاذ، والأوامر اللي ما اتفوترتش، وعدد التسليمات من غير فاتورة، والإجمالي، والمتاح، و`exceeded` |
-| POST | `/api/v1/sales/job-orders/:id/approve` | الرد بقى فيه `creditWarning` لو العميل اتخطّى الحد |
+| الطريقة | المسار                                      | الوصف                                                                                                         |
+| ------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| POST    | `/api/v1/crm/customers`                     | بتقبل `creditLimit`                                                                                           |
+| PATCH   | `/api/v1/crm/customers/:id/credit-limit`    | بتضبط الحد، و`null` بتلغيه                                                                                    |
+| GET     | `/api/v1/sales/customers/:id/credit-status` | الحد، ورصيد الأستاذ، والأوامر اللي ما اتفوترتش، وعدد التسليمات من غير فاتورة، والإجمالي، والمتاح، و`exceeded` |
+| POST    | `/api/v1/sales/job-orders/:id/approve`      | الرد بقى فيه `creditWarning` لو العميل اتخطّى الحد                                                            |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 232 من 232 نجحوا (زادوا 4).
 - الـ lint: كل الملفات نضيفة.
 - اختبار حي بالحد 20,000:
 
-| الحالة | النتيجة |
-|---|---|
-| قيد مرحّل 8,000 على العميل + قيد مسودة 99,999 | رصيد الأستاذ 8,000، والمسودة اتجاهلت ✅ |
-| أمر شغل لسه مسودة | مش محسوب ✅ |
-| اعتماد أمر بقيمة 10,000 (الإجمالي 18,000) | اتعتمد، ومفيش تحذير ✅ |
-| اعتماد أمر تاني بقيمة 5,000 (الإجمالي 23,000) | **اتعتمد** ورجع معاه تحذير بالأرقام، والمتاح بقى −3,000 ✅ |
-| فاتورة مرحّلة بصافي 4,000 على الأمر الأول + فاتورة مسودة | الأوامر اللي ما اتفوترتش بقت 11,000، والمسودة اتجاهلت ✅ |
-| تسليم خرج من غير فاتورة | اتعدّ 1، ومش داخل في الإجمالي ✅ |
-| إلغاء الحد (`null`) | المتاح بقى فاضي، ومفيش تخطّي ✅ |
-| حد بالسالب | 400 ✅ |
+| الحالة                                                   | النتيجة                                                    |
+| -------------------------------------------------------- | ---------------------------------------------------------- |
+| قيد مرحّل 8,000 على العميل + قيد مسودة 99,999            | رصيد الأستاذ 8,000، والمسودة اتجاهلت ✅                    |
+| أمر شغل لسه مسودة                                        | مش محسوب ✅                                                |
+| اعتماد أمر بقيمة 10,000 (الإجمالي 18,000)                | اتعتمد، ومفيش تحذير ✅                                     |
+| اعتماد أمر تاني بقيمة 5,000 (الإجمالي 23,000)            | **اتعتمد** ورجع معاه تحذير بالأرقام، والمتاح بقى −3,000 ✅ |
+| فاتورة مرحّلة بصافي 4,000 على الأمر الأول + فاتورة مسودة | الأوامر اللي ما اتفوترتش بقت 11,000، والمسودة اتجاهلت ✅   |
+| تسليم خرج من غير فاتورة                                  | اتعدّ 1، ومش داخل في الإجمالي ✅                           |
+| إلغاء الحد (`null`)                                      | المتاح بقى فاضي، ومفيش تخطّي ✅                            |
+| حد بالسالب                                               | 400 ✅                                                     |
 
 **قيود معروفة:**
+
 - **رصيد الأستاذ بيعتمد على إن الحسابات متضبطة.** لو محرك الترحيل مش لاقي حساب العملاء، الفاتورة بتترحّل من غير قيد، ورصيد العميل بيطلع أقل من الحقيقي. ده الثمن المعروف لاختيار (ب).
 - **العملة:** كل المبالغ بتتجمع زي ما هي، من غير تحويل عملات.
 - **مفيش شاشة واجهة لسه:** الحد بيتضبط من الـ API بس، والتحذير بيرجع في رد الـ API. عرضه في شاشة أوامر الشغل محتاج خطوة منفصلة.
@@ -573,11 +613,13 @@ POST /api/v1/inventory/movements
 ### بند 7 — طلب عرض أسعار لعدة موردين (RFQ)
 
 **اللي البحث كشفه:**
+
 - عروض أسعار الموردين موجودة فعلًا (`quotation` بـ `direction = incoming`)، بس كل عرض لمورد واحد، ومفيش حاجة تجمّع العروض على طلب واحد.
 - **مفيش أمر شراء في النظام.**
 - طلبات المواد موجودة في التخطيط والتصنيع، ومتلمستش.
 
 **خطوات الشغل:**
+
 1. **إنشاء الطلب:** أصناف وكميات، وموردين اتنين أو أكتر.
 2. **الإرسال.**
 3. **تسجيل رد كل مورد:** بيتعمل تلقائيًا **عرض سعر وارد عادي** مربوط بالطلب. ولو المورد اعتذر، بيتسجّل ده.
@@ -585,6 +627,7 @@ POST /api/v1/inventory/movements
 5. **الاختيار:** عرض المورد الفائز بيتعتمد، وباقي الردود بتترفض، والطلب بيتقفل.
 
 **قواعد الفحص:**
+
 - الطلب لازم يكون فيه صنف واحد على الأقل، ومفيش صنف يتكرر، ومورّدين اتنين مختلفين على الأقل.
 - الصنف والمورد لازم يكونوا موجودين.
 - الرد بيتسجّل بس بعد الإرسال، ومن مورد اتبعتله الطلب، ومرة واحدة بس، ولازم يسعّر **أصناف الطلب نفسها بالظبط**، من غير ناقص أو زيادة.
@@ -594,6 +637,7 @@ POST /api/v1/inventory/movements
 **قاعدة D2:** الصنف، والمورد، ومرجع طلب المواد مربوطين بالـ UUID أو بالنص بس، ووجودهم بيتفحص في الـ service عن طريق `CatalogService` و`CrmService`. الـ FKs كلها جوه موديول المبيعات بس، بين `rfq_line` و`rfq_supplier` وجدول `rfq` نفسه وجدول `quotation`.
 
 **الملفات المتأثرة:**
+
 - **المبيعات (ملفات جديدة):** `rfq.types.ts`، `rfq.repository.ts`، `rfq.service.ts`، `rfq.dto.ts`، `rfq.controller.ts`، `rfq.service.spec.ts` (4 اختبارات).
 - **المبيعات (ملفات اتعدّلت):** `sales.schema.ts` (إضافة 3 جداول)، `sales.module.ts` (استيراد `CatalogModule`).
 - **CRM:** `crm.repository.ts` و`crm.service.ts` (إضافة `getSupplier` بالرقم).
@@ -602,32 +646,33 @@ POST /api/v1/inventory/movements
 
 **قاعدة البيانات:**
 
-| الجدول | المحتوى |
-|---|---|
-| `sales.rfq` | رقم الطلب، والفرع، والتاريخ، وآخر ميعاد للرد، والحالة (مسودة / اتبعت / اتقفل / اتلغى)، ومرجع طلب المواد، والمورد الفائز |
-| `sales.rfq_line` | الأصناف والكميات (الصنف ميتكررش في نفس الطلب) |
-| `sales.rfq_supplier` | الموردين، وحالة كل واحد (مستني / رد / اعتذر)، وعرض السعر اللي رجع منه، ووقت الرد |
+| الجدول               | المحتوى                                                                                                                 |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `sales.rfq`          | رقم الطلب، والفرع، والتاريخ، وآخر ميعاد للرد، والحالة (مسودة / اتبعت / اتقفل / اتلغى)، ومرجع طلب المواد، والمورد الفائز |
+| `sales.rfq_line`     | الأصناف والكميات (الصنف ميتكررش في نفس الطلب)                                                                           |
+| `sales.rfq_supplier` | الموردين، وحالة كل واحد (مستني / رد / اعتذر)، وعرض السعر اللي رجع منه، ووقت الرد                                        |
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| GET/POST | `/api/v1/sales/rfqs` | عرض الطلبات / إنشاء طلب |
-| GET | `/api/v1/sales/rfqs/:id` | تفاصيل طلب |
-| POST | `/api/v1/sales/rfqs/:id/send` | إرسال |
-| POST | `/api/v1/sales/rfqs/:id/suppliers/:supplierId/response` | تسجيل رد مورد، وبتاخد سعر الوحدة لكل صنف |
-| POST | `/api/v1/sales/rfqs/:id/suppliers/:supplierId/decline` | تسجيل اعتذار مورد |
-| GET | `/api/v1/sales/rfqs/:id/comparison` | المقارنة: لكل صنف سعر كل مورد، والأقل متعلّم عليه، والإجماليات، وأرخص مورد |
-| POST | `/api/v1/sales/rfqs/:id/award` | اختيار المورد |
-| POST | `/api/v1/sales/rfqs/:id/cancel` | إلغاء الطلب |
+| الطريقة  | المسار                                                  | الوصف                                                                      |
+| -------- | ------------------------------------------------------- | -------------------------------------------------------------------------- |
+| GET/POST | `/api/v1/sales/rfqs`                                    | عرض الطلبات / إنشاء طلب                                                    |
+| GET      | `/api/v1/sales/rfqs/:id`                                | تفاصيل طلب                                                                 |
+| POST     | `/api/v1/sales/rfqs/:id/send`                           | إرسال                                                                      |
+| POST     | `/api/v1/sales/rfqs/:id/suppliers/:supplierId/response` | تسجيل رد مورد، وبتاخد سعر الوحدة لكل صنف                                   |
+| POST     | `/api/v1/sales/rfqs/:id/suppliers/:supplierId/decline`  | تسجيل اعتذار مورد                                                          |
+| GET      | `/api/v1/sales/rfqs/:id/comparison`                     | المقارنة: لكل صنف سعر كل مورد، والأقل متعلّم عليه، والإجماليات، وأرخص مورد |
+| POST     | `/api/v1/sales/rfqs/:id/award`                          | اختيار المورد                                                              |
+| POST     | `/api/v1/sales/rfqs/:id/cancel`                         | إلغاء الطلب                                                                |
 
 **الشاشات:**
 
-| الشاشة | مكانها في القائمة | الوصف |
-|---|---|---|
+| الشاشة                   | مكانها في القائمة      | الوصف                                                                                |
+| ------------------------ | ---------------------- | ------------------------------------------------------------------------------------ |
 | طلبات عروض الأسعار (RFQ) | 2. المشتريات والموردين | إنشاء، وإرسال، وتسجيل الردود أو الاعتذار، وجدول مقارنة (الأقل بالأخضر)، وزرار اختيار |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 236 من 236 نجحوا (زادوا 4).
 - الـ lint: كل الملفات نضيفة.
@@ -639,6 +684,7 @@ POST /api/v1/inventory/movements
   - مفيش أخطاء في الصفحة (غير خطأ `tailwind` القديم).
 
 **قيود معروفة:**
+
 - **مفيش أمر شراء بعد الاختيار:** النظام أصلًا مفيهوش أوامر شراء، فآخر خطوة هي اعتماد عرض المورد الفائز.
 - **العملة واحدة:** الأسعار بتتقارن بعملة واحدة، من غير تحويل عملات.
 - **اختيار مورد واحد للطلب كله:** مفيش توزيع لكل صنف على مورد مختلف.
@@ -648,11 +694,11 @@ POST /api/v1/inventory/movements
 
 **الفكرة (زي `on_hold` و`hold_type` و`release_date` في ERPNext):** المورد ممكن يتوقف على 3 مستويات:
 
-| المستوى | اللي بيتمنع |
-|---|---|
+| المستوى            | اللي بيتمنع                                                                     |
+| ------------------ | ------------------------------------------------------------------------------- |
 | `all` (إيقاف كامل) | طلب عرض أسعار، وعرض سعر وارد، وفاتورة شراء (إنشاء وترحيل)، ودفعة (إنشاء وترحيل) |
-| `invoices` | فواتير الشراء بس (إنشاء وترحيل) |
-| `payments` | الدفعات بس (إنشاء وترحيل) |
+| `invoices`         | فواتير الشراء بس (إنشاء وترحيل)                                                 |
+| `payments`         | الدفعات بس (إنشاء وترحيل)                                                       |
 
 - **تاريخ الإفراج (اختياري):** لما التاريخ ييجي، الإيقاف بيتفك **تلقائي**. النظام بيقارن التاريخ مع كل عملية، فمش محتاج مهمة مجدولة.
 - **تاريخ إفراج في الماضي:** بيترفض.
@@ -662,6 +708,7 @@ POST /api/v1/inventory/movements
 **قرار مسجّل (تفويض المالك بالعمل المستمر):** ضفت **فحوصات بس** في `finance.service.ts`: قبل إنشاء أو ترحيل فاتورة شراء، وقبل إنشاء أو ترحيل دفعة. منطق القيود المحاسبية متلمسش. ده لأن البند نفسه بيطلب منع الفواتير والمدفوعات صراحة. `CrmService` اتحقن بشكل اختياري (`@Optional`).
 
 **الملفات المتأثرة:**
+
 - **CRM:** `crm.schema.ts`، `crm.types.ts`، `crm.repository.ts`، `crm.service.ts`، `crm.dto.ts`، `crm.controller.ts`.
 - **CRM ملف جديد:** `crm.supplier-hold.spec.ts` (4 اختبارات).
 - **المبيعات:** `sales.service.ts` (فحص عرض السعر الوارد)، و`rfq.service.ts` (فحص الموردين في الطلب)، و`rfq.service.spec.ts` (حالة مورد موقوف).
@@ -673,31 +720,34 @@ POST /api/v1/inventory/movements
 **الـ API:** `PATCH /api/v1/crm/suppliers/:id/hold`، وبتاخد `holdType` و`reason` و`releaseDate`، وبترجع المورد و`holdActive`.
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 240 من 240 نجحوا (زادوا 4).
 - الـ lint: نفس عدد الأخطاء القديمة، والملفات الجديدة نضيفة.
 - اختبار حي، 11 حالة كلهم ✅:
 
-| الحالة | النتيجة |
-|---|---|
-| إيقاف `invoices`: فاتورة جديدة، وترحيل فاتورة مسودة قديمة | الاتنين اترفضوا (400) ومعاهم السبب |
-| إيقاف `invoices`: دفعة | اتعملت (201) |
-| إيقاف `payments`: دفعة | اترفضت (400) |
-| إيقاف `all` لحد 2027-01-01: طلب عرض أسعار، وعرض سعر وارد | الاتنين اترفضوا (400)، والرسالة فيها "حتى 2027-01-01" |
-| تاريخ الإفراج عدّى: فاتورة جديدة | اتعملت (201)، الإيقاف اتفك تلقائي |
-| تاريخ إفراج في الماضي | اترفض (400) |
-| فك الإيقاف | اتفك (200) |
+| الحالة                                                    | النتيجة                                               |
+| --------------------------------------------------------- | ----------------------------------------------------- |
+| إيقاف `invoices`: فاتورة جديدة، وترحيل فاتورة مسودة قديمة | الاتنين اترفضوا (400) ومعاهم السبب                    |
+| إيقاف `invoices`: دفعة                                    | اتعملت (201)                                          |
+| إيقاف `payments`: دفعة                                    | اترفضت (400)                                          |
+| إيقاف `all` لحد 2027-01-01: طلب عرض أسعار، وعرض سعر وارد  | الاتنين اترفضوا (400)، والرسالة فيها "حتى 2027-01-01" |
+| تاريخ الإفراج عدّى: فاتورة جديدة                          | اتعملت (201)، الإيقاف اتفك تلقائي                     |
+| تاريخ إفراج في الماضي                                     | اترفض (400)                                           |
+| فك الإيقاف                                                | اتفك (200)                                            |
 
 **مؤجّل:** مفيش شاشة واجهة للإيقاف. الإيقاف بيتعمل من الـ API بس.
 
 ### بند 9 — فحص جودة حقيقي بقراءات فعلية
 
 **اللي كان موجود:**
+
 - فحص جودة فيه معايير نصية (قيمة مستهدفة وقيمة فعلية)، بس **"مقبول/مرفوض" المستخدم كان بيكتبها بإيده**.
 - مفيش قوالب معايير قياسية، ومفيش أكتر من قراءة للمعيار.
 - **مفيش أي مسار API للفحوصات أصلًا.** الفحوصات كانت موجودة في الـ service بس.
 
 **اللي اتعمل (زي Quality Inspection Template في ERPNext):**
+
 - **قالب معايير قياسي،** وممكن يبقى مربوط بصنف. كل معيار:
   - **رقمي:** بحد أدنى و/أو أقصى.
   - **نصي:** بقيمة مقبولة، والمقارنة مش بتفرّق بين الحروف الكبيرة والصغيرة.
@@ -715,6 +765,7 @@ POST /api/v1/inventory/movements
   - قالب ناقص الحدود، أو الحد الأدنى فيه أكبر من الأقصى، أو كوده متكرر.
 
 **الملفات المتأثرة:**
+
 - **ملفات اتعدّلت:** `quality.schema.ts` (أعمدة المعايير على `inspection_parameter`، و3 جداول جديدة)، و`quality.module.ts` (استيراد `CatalogModule`).
 - **ملفات جديدة:** `quality-readings.types.ts`، `quality-readings.repository.ts`، `quality-readings.service.ts`، `quality-readings.dto.ts`، `quality-readings.controller.ts`، `quality-readings.spec.ts` (5 اختبارات).
 - **الـ service القديم** (`QualityService`) **متعدّلش**، وتقييمه اليدوي القديم لسه موجود زي ما هو.
@@ -722,39 +773,41 @@ POST /api/v1/inventory/movements
 
 **قاعدة البيانات:**
 
-| الجدول | التغيير |
-|---|---|
-| `quality.inspection_template` | جدول جديد: الكود (مبيتكررش)، والاسم، والصنف (UUID من غير FK) |
+| الجدول                                  | التغيير                                                                                                       |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `quality.inspection_template`           | جدول جديد: الكود (مبيتكررش)، والاسم، والصنف (UUID من غير FK)                                                  |
 | `quality.inspection_template_parameter` | جدول جديد: اسم المعيار، ورقمي ولا نصي، والحد الأدنى والأقصى، والقيمة المقبولة، وعدد القراءات، ومعاه قيود تحقق |
-| `quality.inspection_reading` | جدول جديد: كل قراءة، ورقمها، وقيمتها، وهل هي جوه المواصفة |
-| `quality.inspection_parameter` | اتضاف: `is_numeric`، `min_value`، `max_value`، `accepted_value`، `readings_required` |
+| `quality.inspection_reading`            | جدول جديد: كل قراءة، ورقمها، وقيمتها، وهل هي جوه المواصفة                                                     |
+| `quality.inspection_parameter`          | اتضاف: `is_numeric`، `min_value`، `max_value`، `accepted_value`، `readings_required`                          |
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| GET/POST | `/api/v1/quality/inspection-templates` | عرض القوالب / إنشاء قالب |
-| GET | `/api/v1/quality/inspection-templates/:id` | تفاصيل قالب |
-| POST | `/api/v1/quality/inspections` | إنشاء فحص من قالب |
-| GET | `/api/v1/quality/inspections/:id` | الفحص ومعاييره وقراءاته |
-| POST | `/api/v1/quality/inspections/:id/readings` | تسجيل القراءات، والنتيجة بتتحسب |
+| الطريقة  | المسار                                     | الوصف                           |
+| -------- | ------------------------------------------ | ------------------------------- |
+| GET/POST | `/api/v1/quality/inspection-templates`     | عرض القوالب / إنشاء قالب        |
+| GET      | `/api/v1/quality/inspection-templates/:id` | تفاصيل قالب                     |
+| POST     | `/api/v1/quality/inspections`              | إنشاء فحص من قالب               |
+| GET      | `/api/v1/quality/inspections/:id`          | الفحص ومعاييره وقراءاته         |
+| POST     | `/api/v1/quality/inspections/:id/readings` | تسجيل القراءات، والنتيجة بتتحسب |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 245 من 245 نجحوا (زادوا 5).
 - الـ lint: كل الملفات نضيفة.
 - اختبار حي ✅:
 
-| الحالة | النتيجة |
-|---|---|
-| قالب "فحص الصاج الوارد": السُمك 1.15–1.25 (3 قراءات)، والسطح = سليم | اتعمل |
-| قراءة واحدة بس من 3 | 400 |
-| قراءات 1.18 و1.20 و1.22 وسطح "سليم" | **passed**، والقيمة الفعلية "1.18, 1.20, 1.22 (متوسط 1.2000)" |
-| قراءة 1.31 من التلاتة | **failed**، والقراءات اتعلّمت [داخل، **خارج**، داخل] |
-| إعادة تقييم فحص خلص | 400 |
-| عدد القراءات المحفوظة في قاعدة البيانات | 8 |
+| الحالة                                                              | النتيجة                                                       |
+| ------------------------------------------------------------------- | ------------------------------------------------------------- |
+| قالب "فحص الصاج الوارد": السُمك 1.15–1.25 (3 قراءات)، والسطح = سليم | اتعمل                                                         |
+| قراءة واحدة بس من 3                                                 | 400                                                           |
+| قراءات 1.18 و1.20 و1.22 وسطح "سليم"                                 | **passed**، والقيمة الفعلية "1.18, 1.20, 1.22 (متوسط 1.2000)" |
+| قراءة 1.31 من التلاتة                                               | **failed**، والقراءات اتعلّمت [داخل، **خارج**، داخل]          |
+| إعادة تقييم فحص خلص                                                 | 400                                                           |
+| عدد القراءات المحفوظة في قاعدة البيانات                             | 8                                                             |
 
 **مؤجّل:**
+
 - مفيش شاشة واجهة لسه.
 - مفيش معادلات حسابية للمعايير (Formula-based) زي ERPNext.
 - الفحص لسه مش مربوط تلقائي باستلام المشتريات.
@@ -764,16 +817,18 @@ POST /api/v1/inventory/movements
 **اللي كان موجود:** موظف بسيط، مفيهوش مدير مباشر، ومفيش أي طريقة لإنهاء الخدمة.
 
 **اللي اتعمل:**
+
 - **المدير المباشر (`reports_to`):** بقى على الموظف، ومربوط بجدول الموظفين نفسه جوه نفس الموديول.
   - مينفعش الموظف يبقى مدير نفسه (فحص في الكود وقيد في قاعدة البيانات).
   - مينفعش تعمل **حلقة** (أ ← ب ← أ)، والفحص بيمشي على السلسلة كلها لفوق.
   - المدير لازم يكون نشط.
 - **إنهاء الخدمة:** بيسجّل الحالة `terminated` وتاريخ آخر يوم عمل (`relieving_date`).
   - **لو فيه موظفين نشطين تابعين للمدير، الإنهاء بيترفض**، والرسالة بتذكرهم بالاسم والكود. مثال:
-    *"لا يمكن إنهاء خدمة أحمد المدير: يوجد 2 موظف نشط تابع له — E-OMAR (عمر)، E-SARA (سارة). انقلهم لمدير آخر أولاً."*
+    _"لا يمكن إنهاء خدمة أحمد المدير: يوجد 2 موظف نشط تابع له — E-OMAR (عمر)، E-SARA (سارة). انقلهم لمدير آخر أولاً."_
   - الموظفين اللي خدمتهم انتهت قبل كده مش بيمنعوا الإنهاء.
 
 **الملفات المتأثرة:**
+
 - `hr.schema.ts`، `hr.types.ts`، `hr.repository.ts`، `hr.service.ts`، `hr.dto.ts`، `hr.controller.ts`.
 - ملف جديد: `hr.reports-to.spec.ts` (3 اختبارات).
 - migration: `apps/api/drizzle/migrations/0066_legal_speedball.sql`.
@@ -782,21 +837,22 @@ POST /api/v1/inventory/movements
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| PATCH | `/api/v1/hr/employees/:id/reports-to` | بتاخد `managerId`، و`null` بتشيل المدير |
-| POST | `/api/v1/hr/employees/:id/terminate` | بتاخد `relievingDate` (اختياري) |
+| الطريقة | المسار                                | الوصف                                   |
+| ------- | ------------------------------------- | --------------------------------------- |
+| PATCH   | `/api/v1/hr/employees/:id/reports-to` | بتاخد `managerId`، و`null` بتشيل المدير |
+| POST    | `/api/v1/hr/employees/:id/terminate`  | بتاخد `relievingDate` (اختياري)         |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 248 من 248 نجحوا.
 - الـ lint: كل الملفات نضيفة.
 - اختبار حي ✅:
 
-| الحالة | النتيجة |
-|---|---|
-| إنهاء خدمة مدير ليه اتنين تابعين | 400، والرسالة فيها الاسمين |
-| حلقة: المدير يتبع مرؤوسه | 400 |
+| الحالة                                          | النتيجة                                       |
+| ----------------------------------------------- | --------------------------------------------- |
+| إنهاء خدمة مدير ليه اتنين تابعين                | 400، والرسالة فيها الاسمين                    |
+| حلقة: المدير يتبع مرؤوسه                        | 400                                           |
 | بعد نقل سارة وإنهاء خدمة عمر، إنهاء خدمة المدير | 200، والحالة `terminated` والتاريخ 2026-09-30 |
 
 ### بند 11 — تعطيل صلاحيات الموظف تلقائيًا عند إنهاء خدمته
@@ -804,30 +860,33 @@ POST /api/v1/inventory/movements
 **الربط بين الموظف والمستخدم:** جدول المستخدمين (`auth.user`) كان فيه أصلًا خانة `employee_reference`، فاستخدمتها هي بدل ما أعمل عمود جديد. الربط بيتعرف لو قيمتها **كود الموظف** أو **رقمه (id)**.
 
 **السلوك:** إنهاء الخدمة (`POST /hr/employees/:id/terminate`) بقى في نفس الخطوة بيعمل كده:
+
 - بيعطّل كل حساب نشط مربوط بالموظف، يعني الحالة بتبقى `inactive`.
 - الرد بيرجع فيه `deactivatedUsers`، وهي أسماء الحسابات اللي اتعطلت.
 - **الإقفال فوري:** حارس الدخول (بند 5.0) بيقرا حالة المستخدم مع كل طلب. فالتذكرة اللي لسه صالحة بتترفض من الطلب اللي بعده على طول.
 - لو الموظف رجع اتفعّل تاني، **حسابه مش بيرجع يشتغل تلقائي**، لأسباب أمنية. تفعيل الحساب بيبقى قرار إداري منفصل.
 
 **الملفات المتأثرة:**
+
 - **Auth:** `auth.repository.ts` (البحث بـ `employee_reference`، وتغيير حالة المستخدم)، و`auth.service.ts` (`deactivateUsersForEmployee`).
 - **HR:** `hr.service.ts` (الربط، و`AuthService` اتحقن بشكل اختياري)، و`hr.controller.ts`، و`hr.module.ts` (استيراد `AuthModule`)، و`hr.reports-to.spec.ts` (اختبار جديد).
 
 **قاعدة البيانات:** مفيش تغيير.
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 249 من 249 نجحوا.
 - الـ lint: كل الملفات نضيفة.
 - اختبار حي ✅:
 
-| الحالة | النتيجة |
-|---|---|
-| خالد بيستخدم تذكرته | 200 |
-| إنهاء خدمة خالد | `deactivatedUsers = ['khaled']` |
-| **نفس التذكرة بعدها على طول** | **401** "حساب المستخدم غير موجود أو غير نشط" |
-| تسجيل دخول من جديد | 400 "user account is inactive" |
-| حالة المستخدم في قاعدة البيانات | `inactive` |
+| الحالة                          | النتيجة                                      |
+| ------------------------------- | -------------------------------------------- |
+| خالد بيستخدم تذكرته             | 200                                          |
+| إنهاء خدمة خالد                 | `deactivatedUsers = ['khaled']`              |
+| **نفس التذكرة بعدها على طول**   | **401** "حساب المستخدم غير موجود أو غير نشط" |
+| تسجيل دخول من جديد              | 400 "user account is inactive"               |
+| حالة المستخدم في قاعدة البيانات | `inactive`                                   |
 
 ### بند 12 — 3 نسب سماح منفصلة في المشتريات
 
@@ -835,13 +894,14 @@ POST /api/v1/inventory/movements
 
 **قرار مسجّل (تفويض المالك):** "أمر الشراء" هو **عرض المورد المعتمد** (`quotation` بـ `direction = incoming` و`status = approved`). والنسب التلاتة بتتطبق كده:
 
-| النسبة | بتقارن إيه بإيه | مكان الفحص |
-|---|---|---|
-| `over_order_pct` | الكمية اللي المورد عرضها في رده على RFQ مقابل الكمية المطلوبة | `rfq.service.ts`: الرد بقى بيقبل `quantity` اختياري لكل سطر |
-| `over_receipt_pct` | إجمالي الكمية المستلمة مقابل الكمية في أمر الشراء | `inventory.service.ts`: حركة الاستلام بقت بتقبل `purchaseOrderId`، والاستلام بيتختم تلقائي بـ `source_module = 'purchase_order'` |
-| `over_billing_pct` | قيمة الفاتورة، مع اللي اتفوتر قبل كده (غير الملغي)، مقابل قيمة الاستلام | `finance.service.ts`: **فحص بس** عند إنشاء فاتورة شراء فيها سطور مربوطة باستلام |
+| النسبة             | بتقارن إيه بإيه                                                         | مكان الفحص                                                                                                                       |
+| ------------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `over_order_pct`   | الكمية اللي المورد عرضها في رده على RFQ مقابل الكمية المطلوبة           | `rfq.service.ts`: الرد بقى بيقبل `quantity` اختياري لكل سطر                                                                      |
+| `over_receipt_pct` | إجمالي الكمية المستلمة مقابل الكمية في أمر الشراء                       | `inventory.service.ts`: حركة الاستلام بقت بتقبل `purchaseOrderId`، والاستلام بيتختم تلقائي بـ `source_module = 'purchase_order'` |
+| `over_billing_pct` | قيمة الفاتورة، مع اللي اتفوتر قبل كده (غير الملغي)، مقابل قيمة الاستلام | `finance.service.ts`: **فحص بس** عند إنشاء فاتورة شراء فيها سطور مربوطة باستلام                                                  |
 
 **مكان النسب:**
+
 - جدول `settings.purchase_allowance`: صف لكل عقدة في الشجرة (شركة أو فرع)، أو صف عام لما `org_node_id` يكون فاضي.
 - **أقرب صف في الشجرة هو اللي بيتطبق:** صف العقدة نفسها، وإلا أقرب أب ليها، وإلا الصف العام، وإلا صفر.
 - **صفر يعني مفيش سماح خالص.** الكمية أو القيمة بالظبط هي الحد الأقصى.
@@ -849,6 +909,7 @@ POST /api/v1/inventory/movements
 **Bug اتلقط في الاختبار الحي واتصلّح:** دالة `set()` كانت بتفحص **كل** قيم الـ DTO، بما فيها `orgNodeId`، فحفظ النسب كان بيفشل دايمًا. اختبارات الوحدة معدّتهوش، والاختبار الحي هو اللي كشفه. اتصلّح، واتضاف له اختبار انحدار (regression test).
 
 **الملفات المتأثرة:**
+
 - **Settings:** `settings.schema.ts`، وملف جديد `purchase-allowance.service.ts`، وملف جديد `purchase-allowance.controller.ts`، و`settings.module.ts`، وملف جديد `purchase-allowance.spec.ts` (3 اختبارات).
 - **المبيعات:** `rfq.service.ts`، `rfq.types.ts`، `rfq.dto.ts`، `sales.module.ts`.
 - **المخزون:** `inventory.service.ts`، `inventory.repository.ts` (`sumReceivedForOrder` و`findMovementById`)، `inventory.types.ts`، `inventory.dto.ts`، `inventory.controller.ts`، `inventory.module.ts`.
@@ -857,30 +918,32 @@ POST /api/v1/inventory/movements
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| GET | `/api/v1/settings/purchase-allowances?orgNodeId=` | النسب اللي بتتطبق فعلًا، ومصدرها |
-| PUT | `/api/v1/settings/purchase-allowances` | ضبط النسب، وبتاخد `orgNodeId` (اختياري) و`overOrderPct` و`overReceiptPct` و`overBillingPct` |
-| POST | `/api/v1/sales/rfqs/:id/suppliers/:supplierId/response` | السطر بقى بيقبل `quantity` |
-| POST | `/api/v1/inventory/movements` | بقت بتقبل `purchaseOrderId` مع حركة الاستلام |
+| الطريقة | المسار                                                  | الوصف                                                                                       |
+| ------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| GET     | `/api/v1/settings/purchase-allowances?orgNodeId=`       | النسب اللي بتتطبق فعلًا، ومصدرها                                                            |
+| PUT     | `/api/v1/settings/purchase-allowances`                  | ضبط النسب، وبتاخد `orgNodeId` (اختياري) و`overOrderPct` و`overReceiptPct` و`overBillingPct` |
+| POST    | `/api/v1/sales/rfqs/:id/suppliers/:supplierId/response` | السطر بقى بيقبل `quantity`                                                                  |
+| POST    | `/api/v1/inventory/movements`                           | بقت بتقبل `purchaseOrderId` مع حركة الاستلام                                                |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 252 من 252 نجحوا.
 - الـ lint: نفس عدد الأخطاء القديمة، والملفات الجديدة نضيفة.
 - اختبار حي بنسبة 10% في التلات حالات ✅:
 
-| الحالة | النتيجة |
-|---|---|
-| مورد عرض 112 والمطلوب 100 | 400 |
-| مورد عرض 110 (الحد بالظبط) | 201، وبعدها اتعتمد كأمر شراء |
-| استلام 100، وبعده 21 (الإجمالي 121 = 110 × 1.1) | 201 + 201 |
-| استلام وحدة كمان (122) | 400 |
-| فاتورة بـ 2000 على استلام قيمته 2000، وبعدها 200 كمان (الإجمالي 2200) | 201 + 201 |
-| فاتورة بـ 20 كمان (2220) | 400 |
-| الاستلام اتختم بـ `purchase_order` ومعاه رقم الأمر | ✅ |
+| الحالة                                                                | النتيجة                      |
+| --------------------------------------------------------------------- | ---------------------------- |
+| مورد عرض 112 والمطلوب 100                                             | 400                          |
+| مورد عرض 110 (الحد بالظبط)                                            | 201، وبعدها اتعتمد كأمر شراء |
+| استلام 100، وبعده 21 (الإجمالي 121 = 110 × 1.1)                       | 201 + 201                    |
+| استلام وحدة كمان (122)                                                | 400                          |
+| فاتورة بـ 2000 على استلام قيمته 2000، وبعدها 200 كمان (الإجمالي 2200) | 201 + 201                    |
+| فاتورة بـ 20 كمان (2220)                                              | 400                          |
+| الاستلام اتختم بـ `purchase_order` ومعاه رقم الأمر                    | ✅                           |
 
 **مؤجّل:**
+
 - مفيش دور معيّن مسموحله يتخطى النسب (زي "Role allowed to over bill" في ERPNext).
 - مفيش شاشة واجهة للإعدادات.
 
@@ -888,15 +951,15 @@ POST /api/v1/inventory/movements
 
 **الفكرة (زي جدول Bin في ERPNext):** كل حجز بقى ليه نوع (`reservation_type`)، والأنواع 7:
 
-| النوع | في ERPNext | أثره |
-|---|---|---|
-| `sales_order` | reserved_qty | **بيحجز** رصيد موجود |
-| `production` | reserved_qty_for_production | **بيحجز** |
-| `subcontract` | reserved_qty_for_sub_contract | **بيحجز** |
-| `production_plan` | reserved_qty_for_production_plan | **بيحجز** |
-| `purchase_order` | ordered_qty | كمية **جاية** (مش بتحجز) |
-| `material_request` | indented_qty | كمية **جاية** |
-| `work_order` | planned_qty | كمية **جاية** |
+| النوع              | في ERPNext                       | أثره                     |
+| ------------------ | -------------------------------- | ------------------------ |
+| `sales_order`      | reserved_qty                     | **بيحجز** رصيد موجود     |
+| `production`       | reserved_qty_for_production      | **بيحجز**                |
+| `subcontract`      | reserved_qty_for_sub_contract    | **بيحجز**                |
+| `production_plan`  | reserved_qty_for_production_plan | **بيحجز**                |
+| `purchase_order`   | ordered_qty                      | كمية **جاية** (مش بتحجز) |
+| `material_request` | indented_qty                     | كمية **جاية**            |
+| `work_order`       | planned_qty                      | كمية **جاية**            |
 
 - **الأنواع اللي بتحجز:** لازم يكون فيه رصيد متاح يكفيها، وبتتضاف على `stock_balance.reserved`.
 - **الأنواع الجاية:** مش محتاجة رصيد، ومش بتلمس `reserved`، ولما تتفك مش بتلمسه برضه.
@@ -907,46 +970,51 @@ POST /api/v1/inventory/movements
   - **المتوقع** = الفعلي + الكميات الجاية − كل الأنواع اللي بتحجز.
 
 **⚠️ bug قديم اتكشف واتصلّح:**
+
 - الـ migration رقم `0042_careful_richard_fisk` كان **مسح عمود `id` من جدول `inventory.stock_reservation`**، بسبب `DROP COLUMN` اتولّد غلط. الكود كان لسه بيستخدم العمود، **فأي حجز على قاعدة بيانات حقيقية كان بيفشل** بخطأ 500 "column id does not exist". اختبارات الوحدة معدّتهوش لأنها مش بتستخدم قاعدة بيانات.
 - **الحل:** migration مخصص `0069_restore_stock_reservation_id.sql` بيرجّع العمود ويخليه مفتاح أساسي. الـ migration ده **آمن لو اتشغل تاني** (idempotent): لو العمود موجود مش بيعمل حاجة، فقواعد البيانات اللي عندها العمود مش هتتأثر.
 - **راجعت** الأعمدة التانية اللي اتمسحت في migrations قديمة (`technical.bom.job_order_reference` و`accounting.journal_line.updated_at`)، ولقيت إن الكود مش بيستخدمها. يعني مفيش مشكلة تانية.
 
 **الملفات المتأثرة:**
+
 - **المخزون:** `inventory.schema.ts`، `inventory.types.ts`، `inventory.repository.ts`، `inventory.service.ts` (`reserveStock` و`releaseReservation` و`getBins`)، `inventory.dto.ts`، `inventory.controller.ts`.
 - **ملف جديد:** `inventory.bins.spec.ts` (اختبارين).
 - **migrations:** `0068_crazy_captain_midlands.sql` (عمود النوع)، و`0069_restore_stock_reservation_id.sql` (الإصلاح).
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| POST | `/api/v1/inventory/reservations` | بقت بتقبل `reservationType` |
-| GET | `/api/v1/inventory/bins?itemId=&warehouseId=` | عرض Bin الكامل |
+| الطريقة | المسار                                        | الوصف                       |
+| ------- | --------------------------------------------- | --------------------------- |
+| POST    | `/api/v1/inventory/reservations`              | بقت بتقبل `reservationType` |
+| GET     | `/api/v1/inventory/bins?itemId=&warehouseId=` | عرض Bin الكامل              |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 254 من 254 نجحوا.
 - الـ lint: كل الملفات نضيفة.
 - اختبار حي، الرصيد 121 ✅:
 
-| الحالة | النتيجة |
-|---|---|
-| 5 حجوزات بأنواع مختلفة | كلها 201، **وقبل الإصلاح كانت كلها 500** |
-| حجز 999 | 400، والمتاح 91 |
-| عرض Bin | الفعلي 121، ومحجوز للبيع 10، ومحجوز للإنتاج 20، وجاي من شراء 40، ومن طلب مواد 7، ومن أمر شغل 3. **المتاح 91، والمتوقع 141** |
-| `stock_balance.reserved` | 30 (الأنواع اللي بتحجز بس) |
-| فك حجز من نوع شراء | `reserved` فضل 30 |
+| الحالة                   | النتيجة                                                                                                                     |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| 5 حجوزات بأنواع مختلفة   | كلها 201، **وقبل الإصلاح كانت كلها 500**                                                                                    |
+| حجز 999                  | 400، والمتاح 91                                                                                                             |
+| عرض Bin                  | الفعلي 121، ومحجوز للبيع 10، ومحجوز للإنتاج 20، وجاي من شراء 40، ومن طلب مواد 7، ومن أمر شغل 3. **المتاح 91، والمتوقع 141** |
+| `stock_balance.reserved` | 30 (الأنواع اللي بتحجز بس)                                                                                                  |
+| فك حجز من نوع شراء       | `reserved` فضل 30                                                                                                           |
 
 **مؤجّل:** الكميات الجاية لسه مش بتتسجّل تلقائي من المستندات (أوامر الشراء المعتمدة، وطلبات المواد، وأوامر الشغل). التسجيل التلقائي من التصنيع محتاج تعديل في ملفاته، وده ممنوع.
 
 ### بند 14 — حساب "بضاعة اتسلّمت ولسه ما اتفوترتش" (GRNI)
 
 **موجود بالفعل (مبنيتش نسخة تانية منه):**
+
 - **حساب GRNI:** بيتضبط في `company_accounting_config.default_grni_account_id`، أو من قواعد تحديد الحسابات (`grni` / `purchase`).
 - **قيد الاستلام:** من ح/ المخزون إلى ح/ GRNI (`posting-engine.service.ts`).
 - **قيد ترحيل فاتورة الشراء:** من ح/ GRNI إلى ح/ الموردين (`finance.service.ts`).
 
 **الناقص اللي اتضاف: تقرير "بضاعة اتسلّمت ولسه ما اتفوترتش"** (زي تقرير "Received Items To Be Billed" في ERPNext):
+
 - **الاستلامات اللي بتظهر:** استلامات الشراء بس، يعني مش مخرجات الإنتاج ولا تسويات الجرد. ولكل استلام:
   - القيمة المستلمة.
   - المفوتر: مجموع سطور فواتير الشراء غير الملغية اللي مربوطة بالاستلام (`purchaseReceiptId`).
@@ -961,6 +1029,7 @@ POST /api/v1/inventory/movements
 **قاعدة D2:** سطور الفواتير وجدول القيود بيتقروا قراءة بس، ومفيش أي ملف محاسبة أو finance اتعدّل.
 
 **الملفات المتأثرة:**
+
 - **ملفات جديدة:** `inventory/grni-report.repository.ts`، `inventory/grni-report.service.ts`، `inventory/grni-report.spec.ts` (اختبار واحد).
 - **ملفات اتعدّلت:** `inventory.controller.ts` (مسار التقرير)، و`inventory.module.ts`.
 
@@ -969,21 +1038,23 @@ POST /api/v1/inventory/movements
 **الـ API:** `GET /api/v1/inventory/reports/received-not-billed?orgNodeId=&includeFullyBilled=`
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 255 من 255 نجحوا.
 - الـ lint: كل الملفات نضيفة.
 - اختبار حي ✅:
 
-| الحالة | النتيجة |
-|---|---|
-| على مستوى الشركة | 3 استلامات فيها متبقي (50 + 50 + 420 مربوط بأمر شراء)، والإجمالي 520 |
-| الاستلام اللي اتفوتر بالكامل (2000 اتفوتر منه 2200) | مش ظاهر في العرض العادي، وظاهر بمتبقي 0 مع `includeFullyBilled` |
-| بعد ضبط حساب GRNI ومعاه قيد دائن 420 | الرصيد 420، **والفرق −100**. ده بالظبط قيمة استلامين اتعملوا قبل ما الحسابات تتضبط فمعملوش قيد، والتقرير كشفهم |
-| فرع القاهرة بس | 50 |
+| الحالة                                              | النتيجة                                                                                                        |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| على مستوى الشركة                                    | 3 استلامات فيها متبقي (50 + 50 + 420 مربوط بأمر شراء)، والإجمالي 520                                           |
+| الاستلام اللي اتفوتر بالكامل (2000 اتفوتر منه 2200) | مش ظاهر في العرض العادي، وظاهر بمتبقي 0 مع `includeFullyBilled`                                                |
+| بعد ضبط حساب GRNI ومعاه قيد دائن 420                | الرصيد 420، **والفرق −100**. ده بالظبط قيمة استلامين اتعملوا قبل ما الحسابات تتضبط فمعملوش قيد، والتقرير كشفهم |
+| فرع القاهرة بس                                      | 50                                                                                                             |
 
 ### بند 15 — تكلفة الاستيراد (Landed Cost)
 
 **موجود بالفعل (مبنيتش نسخة تانية منه):**
+
 - سند تكلفة استيراد (`landed_cost_voucher` + `landed_cost_item`).
 - توزيع المصاريف حسب القيمة أو الكمية.
 - الترحيل بيعيد تقييم رصيد الصنف ويسجّل إعادة التقييم في دفتر المخزون.
@@ -993,11 +1064,13 @@ POST /api/v1/inventory/movements
 **الفجوة اللي اتسدّت (كانت متسجّلة كقيد معروف في بند 2أ):** الترحيل كان بيضيف المصاريف على **متوسط تكلفة الصنف بس**. فلو الاستلام كان لدفعة، **تكلفة الدفعة مكانتش بتتحدّث**، وده بيعمل مشكلتين: الدفعة بتتصرف بعدين بتكلفة ناقصة، وقيمة الصنف بتبطّل تساوي مجموع قيم دفعاته.
 
 **اللي اتعمل:**
+
 - لكل سطر في السند مربوط باستلام لدفعة، نصيب السطر من المصاريف **بيتضاف على قيمة الدفعة** في المخزن ده، وسعر الدفعة بيتحسب من جديد.
 - **لو الدفعة مابقاش ليها رصيد في المخزن** (يعني اتصرفت كلها)، الترحيل **بيترفض قبل ما يكتب أي حاجة**، ومعاه رسالة واضحة. البديل كان إن القيمتين يبطّلوا يتطابقوا من غير ما حد ياخد باله.
 - **الاستلامات اللي من غير دفعات:** زي ما كانت بالظبط.
 
 **الملفات المتأثرة:**
+
 - `inventory.service.ts`: `postLandedCostVoucher`.
 - `inventory.landed-cost.spec.ts`: إضافة دالة للـ mock.
 - ملف جديد: `inventory.landed-cost-batch.spec.ts` (3 اختبارات).
@@ -1005,16 +1078,17 @@ POST /api/v1/inventory/movements
 **قاعدة البيانات:** مفيش تغيير.
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 258 من 258 نجحوا.
 - الـ lint: كل الملفات نضيفة.
 - اختبار حي ✅:
 
-| الحالة | النتيجة |
-|---|---|
+| الحالة                                      | النتيجة                                                                  |
+| ------------------------------------------- | ------------------------------------------------------------------------ |
 | دفعة فيها 8 وحدات بسعر 100، وسند مصاريف 150 | الدفعة بقت 8 × **118.75 = 950**، ورصيد الصنف كمان 950. القيمتين متطابقين |
-| صرف وحدتين من الدفعة بعد الترحيل | بتكلفة 118.75 |
-| سند تاني بعد ما الدفعة اتصرفت كلها | 400، والرسالة واضحة |
+| صرف وحدتين من الدفعة بعد الترحيل            | بتكلفة 118.75                                                            |
+| سند تاني بعد ما الدفعة اتصرفت كلها          | 400، والرسالة واضحة                                                      |
 
 **ملاحظة:** المصاريف بتتوزع على الكمية **الباقية** من الدفعة وقت الترحيل. مفيش إعادة تقييم للحركات اللي اتصرفت قبل كده (Repost) زي ERPNext.
 
@@ -1023,6 +1097,7 @@ POST /api/v1/inventory/movements
 **اللي كان موجود:** قوائم أسعار للأصناف بس (`catalog.item_price`، شراء وبيع). مفيش أي قواعد خصم.
 
 **اللي اتعمل (زي Pricing Rule في ERPNext، بشكل مبسّط):**
+
 - **القاعدة بتنطبق على:** صنف أو مجموعة أصناف، وبتكون **للبيع أو للشراء**. وممكن تتخصص لعميل أو مورد معيّن، وليها حد أدنى وأقصى للكمية، وفترة صلاحية، وأولوية.
 - **نوعين خصم:**
   - **خصم على السعر:** واحد بس من التلاتة دول: نسبة مئوية، أو مبلغ ثابت على الوحدة، أو سعر محدد.
@@ -1037,34 +1112,37 @@ POST /api/v1/inventory/movements
 **قاعدة D2:** الصنف والمجموعة والطرف (عميل/مورد) مربوطين بالـ UUID بس. وجدول قوائم الأسعار بيتقرا قراءة بس.
 
 **الملفات المتأثرة:**
+
 - **ملفات جديدة في المبيعات:** `pricing.types.ts`، `pricing.engine.ts`، `pricing.repository.ts`، `pricing.service.ts`، `pricing.controller.ts`، `pricing.engine.spec.ts` (4 اختبارات).
 - **ملفات اتعدّلت:** `sales.schema.ts` (جدول `pricing_rule`)، `sales.module.ts`، `sales.service.ts` (الربط الاختياري)، `sales.types.ts`، `sales.dto.ts`، `sales.controller.ts`.
 - migration: `apps/api/drizzle/migrations/0070_noisy_chameleon.sql`.
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| GET/POST | `/api/v1/sales/pricing-rules` | عرض القواعد / إنشاء قاعدة |
-| POST | `/api/v1/sales/pricing-rules/:id/disable` و`/enable` | تعطيل / تفعيل قاعدة |
-| POST | `/api/v1/sales/pricing-rules/apply` | تسعير سطور من غير ما يتعمل أي مستند |
-| POST | `/api/v1/sales/quotations` | بقت بتقبل `applyPricingRules` |
+| الطريقة  | المسار                                               | الوصف                               |
+| -------- | ---------------------------------------------------- | ----------------------------------- |
+| GET/POST | `/api/v1/sales/pricing-rules`                        | عرض القواعد / إنشاء قاعدة           |
+| POST     | `/api/v1/sales/pricing-rules/:id/disable` و`/enable` | تعطيل / تفعيل قاعدة                 |
+| POST     | `/api/v1/sales/pricing-rules/apply`                  | تسعير سطور من غير ما يتعمل أي مستند |
+| POST     | `/api/v1/sales/quotations`                           | بقت بتقبل `applyPricingRules`       |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 262 من 262 نجحوا (زادوا 4).
 - الـ lint: كل الملفات نضيفة.
 - اختبار حي ✅:
 
-| الحالة | النتيجة |
-|---|---|
-| قاعدة 10% على الصاج من 10 وحدات فأكتر، وقاعدة "كل 10 صاج علبة دهان مجانًا" | اتعملوا |
-| قاعدة فيها نوعين خصم سعر | 400 |
-| تسعير 25 صاج (سعر القائمة 100) | 90 بالقاعدة `STEEL10`، ومعاه **2 دهان مجانًا** بالقاعدة `B10G1` |
-| عرض سعر بالخيار | السطور: 25 × 90، و2 دهان × 0 |
-| نفس العرض من غير الخيار | 25 × 100، زي الأول بالظبط |
+| الحالة                                                                     | النتيجة                                                         |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| قاعدة 10% على الصاج من 10 وحدات فأكتر، وقاعدة "كل 10 صاج علبة دهان مجانًا" | اتعملوا                                                         |
+| قاعدة فيها نوعين خصم سعر                                                   | 400                                                             |
+| تسعير 25 صاج (سعر القائمة 100)                                             | 90 بالقاعدة `STEEL10`، ومعاه **2 دهان مجانًا** بالقاعدة `B10G1` |
+| عرض سعر بالخيار                                                            | السطور: 25 × 90، و2 دهان × 0                                    |
+| نفس العرض من غير الخيار                                                    | 25 × 100، زي الأول بالظبط                                       |
 
 **مؤجّل:**
+
 - هامش ربح (margin).
 - كوبونات.
 - قواعد على مجموعة عملاء أو منطقة.
@@ -1073,6 +1151,7 @@ POST /api/v1/inventory/movements
 ### بند 17 — فرصة البيع كمرحلة منفصلة
 
 **الفكرة:** مرحلة بين "العميل المهتم" و"عرض السعر الرسمي":
+
 - الفرصة ليها عميل، ممكن يكون لسه **مهتم** (`lead`) أو **نشط**.
 - فيها: عنوان، ومصدر، وقيمة متوقعة، ونسبة احتمال، وتاريخ إغلاق متوقع، والأصناف المتوقعة (كمية وسعر متوقع).
 - **المراحل:** مفتوحة ← مؤهلة ← اتعرض عليها سعر ← كسبناها أو خسرناها.
@@ -1087,27 +1166,29 @@ POST /api/v1/inventory/movements
 **قرار تصميم:** التحويل لعرض سعر معمول **في موديول المبيعات** مش في CRM، لأن المبيعات أصلًا معتمدة على CRM، فالعكس كان هيعمل ربط دائري. وعرض السعر مربوط بالفرصة بالـ UUID بس (D2).
 
 **الملفات المتأثرة:**
+
 - **CRM:** `crm.schema.ts` (جدولين)، و`crm.module.ts`، وملفات جديدة: `opportunity.types.ts`، `opportunity.repository.ts`، `opportunity.service.ts`، `opportunity.controller.ts`، `opportunity.service.spec.ts` (اختبارين).
 - **المبيعات:** `sales.service.ts` (`createQuotationFromOpportunity`، والفوز لما العرض يتعتمد)، و`sales.controller.ts`، و`sales.dto.ts`.
 - migration: `apps/api/drizzle/migrations/0071_little_ultragirl.sql`.
 
 **قاعدة البيانات:**
 
-| الجدول | المحتوى |
-|---|---|
-| `crm.opportunity` | الرقم، والعميل (FK جوه نفس الموديول)، والعنوان، والمصدر، والقيمة، والاحتمال (0–100)، وتاريخ الإغلاق، والمرحلة، وسبب الخسارة، وعرض السعر (UUID) |
-| `crm.opportunity_item` | الأصناف المتوقعة |
+| الجدول                 | المحتوى                                                                                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crm.opportunity`      | الرقم، والعميل (FK جوه نفس الموديول)، والعنوان، والمصدر، والقيمة، والاحتمال (0–100)، وتاريخ الإغلاق، والمرحلة، وسبب الخسارة، وعرض السعر (UUID) |
+| `crm.opportunity_item` | الأصناف المتوقعة                                                                                                                               |
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| GET/POST | `/api/v1/crm/opportunities` | عرض الفرص (مع `customerId` اختياري) / إنشاء فرصة |
-| GET | `/api/v1/crm/opportunities/:id` | تفاصيل فرصة |
-| POST | `/api/v1/crm/opportunities/:id/stage` | تغيير المرحلة: مفتوحة، أو مؤهلة، أو خسرناها (ومعاها `lostReason`) |
-| POST | `/api/v1/sales/opportunities/:id/quotation` | عرض سعر من الفرصة، وبياخد `prices` و`applyPricingRules` و`orgNodeId` و`validUntil` |
+| الطريقة  | المسار                                      | الوصف                                                                              |
+| -------- | ------------------------------------------- | ---------------------------------------------------------------------------------- |
+| GET/POST | `/api/v1/crm/opportunities`                 | عرض الفرص (مع `customerId` اختياري) / إنشاء فرصة                                   |
+| GET      | `/api/v1/crm/opportunities/:id`             | تفاصيل فرصة                                                                        |
+| POST     | `/api/v1/crm/opportunities/:id/stage`       | تغيير المرحلة: مفتوحة، أو مؤهلة، أو خسرناها (ومعاها `lostReason`)                  |
+| POST     | `/api/v1/sales/opportunities/:id/quotation` | عرض سعر من الفرصة، وبياخد `prices` و`applyPricingRules` و`orgNodeId` و`validUntil` |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 264 من 264 نجحوا (زادوا 2).
 - الـ lint: كل الملفات نضيفة.
@@ -1122,70 +1203,78 @@ POST /api/v1/inventory/movements
 ### بند 18 — منع تكرار رقم فاتورة المورد
 
 **موجود بالفعل، وبشكل أشد من المطلوب:** فيه قيد في قاعدة البيانات (`purchase_invoice_supplier_inv_unique` على المورد + رقم الفاتورة) بيمنع التكرار لنفس المورد **على طول**، مش في نفس السنة المالية بس.
+
 - **قرار مسجّل:** القيد الأشد اتساب زي ما هو. تخفيفه للسنة المالية معناه حذف قيد موجود، وده تغيير لسلوك قائم مش إضافة.
 - **لو المالك حابب يسمح بتكرار الرقم في سنين مختلفة،** ده محتاج قراره.
 
 **المشكلة اللي اتصلّحت:** التكرار كان بيوصل لقيد قاعدة البيانات مباشرة، فبيرجّع **خطأ سيرفر 500 من غير أي توضيح**. دلوقتي فيه فحص (فحص بس) في `finance.service.ts` **قبل الحفظ مباشرة**:
+
 - بيرجّع 400.
 - الرسالة فيها رقم الفاتورة الأصلية في النظام، وتاريخها، وحالتها.
 - الفحص اتحط في آخر خطوة عشان ترتيب التحقق القديم (السطور، وغيرها) يفضل زي ما هو.
 
 **الملفات المتأثرة:**
+
 - `finance.repository.ts`: استعلام قراءة `findPurchaseInvoiceBySupplierNumber`.
 - `finance.service.ts`: الفحص.
 - اختبارات: ملف جديد `finance.duplicate-invoice.spec.ts`، وإضافة دالة الـ mock في `finance.purchase-invoice.spec.ts` و`accounting.full-cycle.spec.ts` (ملفات اختبار بس).
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 265 من 265 نجحوا.
 - الـ lint: نفس عدد الأخطاء القديمة.
 - اختبار حي ✅:
 
-| الحالة | النتيجة |
-|---|---|
-| نفس المورد ونفس الرقم | **400** بدل 500: "مسجّل بالفعل لنفس المورد في PINV-2026-000005 بتاريخ 2026-03-01 (draft)" |
-| نفس الرقم في السنة اللي بعدها | 400 (القيد أشد من المطلوب) |
-| نفس الرقم لمورد تاني | 201 |
+| الحالة                        | النتيجة                                                                                   |
+| ----------------------------- | ----------------------------------------------------------------------------------------- |
+| نفس المورد ونفس الرقم         | **400** بدل 500: "مسجّل بالفعل لنفس المورد في PINV-2026-000005 بتاريخ 2026-03-01 (draft)" |
+| نفس الرقم في السنة اللي بعدها | 400 (القيد أشد من المطلوب)                                                                |
+| نفس الرقم لمورد تاني          | 201                                                                                       |
 
 ### بند 19 — إيقاف فاتورة شراء واحدة بعينها
 
 **الفكرة (زي `on_hold` و`release_date` على فاتورة الشراء في ERPNext):** فاتورة شراء معيّنة ممكن تتوقف عن الدفع، ومعاها **سبب إجباري**، وتاريخ إفراج اختياري بيفك الإيقاف تلقائي.
+
 - **منفصل عن إيقاف المورد كله (بند 8):** باقي فواتير نفس المورد ومستنداته بتشتغل عادي.
 - **الأثر:** إنشاء أو ترحيل دفعة على الفاتورة الموقوفة بيترفض بـ 400، والرسالة فيها السبب وتاريخ الإفراج.
 
 **قرار تصميم:** الإيقاف متسجّل في **جدول لوحده** (`finance.purchase_invoice_hold`)، مربوط بالفاتورة جوه نفس الموديول، ومعاه `on delete cascade`. **مفيش أي عمود اتضاف على جدول الفاتورة نفسه، ولا أي كود بيقرا الفواتير أو يعرضها اتعدّل.** ده بيطبّق مبدأ "إضافة بس" بأقل تدخل ممكن في `finance`.
 
 **الملفات المتأثرة:**
+
 - **Finance:** `finance.schema.ts` (جدول جديد)، و`finance.service.ts` (فحصين على الدفعة، إنشاء وترحيل)، و`finance.module.ts`.
 - **ملفات جديدة:** `purchase-invoice-hold.service.ts`، `purchase-invoice-hold.controller.ts`، `purchase-invoice-hold.spec.ts` (اختبار واحد).
 - migration: `apps/api/drizzle/migrations/0072_pale_rachel_grey.sql`.
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| GET | `/api/v1/finance/purchase-invoices/:id/hold` | حالة الإيقاف |
-| PUT | `/api/v1/finance/purchase-invoices/:id/hold` | إيقاف، وبتاخد `reason` و`releaseDate` (اختياري) |
-| DELETE | `/api/v1/finance/purchase-invoices/:id/hold` | فك الإيقاف |
+| الطريقة | المسار                                       | الوصف                                           |
+| ------- | -------------------------------------------- | ----------------------------------------------- |
+| GET     | `/api/v1/finance/purchase-invoices/:id/hold` | حالة الإيقاف                                    |
+| PUT     | `/api/v1/finance/purchase-invoices/:id/hold` | إيقاف، وبتاخد `reason` و`releaseDate` (اختياري) |
+| DELETE  | `/api/v1/finance/purchase-invoices/:id/hold` | فك الإيقاف                                      |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 266 من 266 نجحوا.
 - الـ lint: كل الملفات نضيفة.
 - اختبار حي ✅:
 
-| الحالة | النتيجة |
-|---|---|
-| إيقاف الفاتورة لحد 2027-01-01 | 200 |
-| دفعة على الفاتورة الموقوفة | 400 "موقوفة عن الدفع حتى 2027-01-01 — السبب: فرق كميات مع الاستلام" |
-| فك الإيقاف | 204 |
-| دفعة بعد فك الإيقاف | 201 |
+| الحالة                        | النتيجة                                                             |
+| ----------------------------- | ------------------------------------------------------------------- |
+| إيقاف الفاتورة لحد 2027-01-01 | 200                                                                 |
+| دفعة على الفاتورة الموقوفة    | 400 "موقوفة عن الدفع حتى 2027-01-01 — السبب: فرق كميات مع الاستلام" |
+| فك الإيقاف                    | 204                                                                 |
+| دفعة بعد فك الإيقاف           | 201                                                                 |
 
 ### بند 20 — تخصيص إجازات بالجملة لمجموعة موظفين بفلاتر
 
 **اللي كان موجود:** موديول HR **مكانش فيه أي نظام إجازات خالص**.
 
 **اللي اتعمل (الأساس الأدنى اللي البند محتاجه، زي Leave Control Panel في ERPNext):**
+
 - **أنواع الإجازات (`hr.leave_type`):** الكود، والاسم، وأقصى عدد أيام في التخصيص الواحد (اختياري).
 - **تخصيص الإجازات (`hr.leave_allocation`):** الموظف، والنوع، والفترة، وعدد الأيام، ومرجع الدفعة لو التخصيص اتعمل بالجملة.
 - **التخصيص بالجملة (`POST /hr/leave-allocations/bulk`):**
@@ -1196,34 +1285,37 @@ POST /api/v1/inventory/movements
   - **بيترفض:** نوع مش موجود، أو فترة معكوسة، أو أيام صفر أو بالسالب، أو أيام أكتر من الحد الأقصى للنوع، أو فلاتر مفيش موظف نشط بيطابقها.
 
 **الملفات المتأثرة:**
+
 - **ملفات اتعدّلت:** `hr.schema.ts` (جدولين)، و`hr.module.ts` (استيراد `OrganizationModule`).
 - **ملفات جديدة:** `leave.service.ts`، `leave.controller.ts`، `leave.service.spec.ts` (اختبار واحد).
 - migration: `apps/api/drizzle/migrations/0073_chubby_falcon.sql`.
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| GET/POST | `/api/v1/hr/leave-types` | عرض الأنواع / إنشاء نوع |
-| GET | `/api/v1/hr/leave-allocations?employeeId=` | عرض التخصيصات |
-| POST | `/api/v1/hr/leave-allocations/bulk` | تخصيص بالجملة |
+| الطريقة  | المسار                                     | الوصف                   |
+| -------- | ------------------------------------------ | ----------------------- |
+| GET/POST | `/api/v1/hr/leave-types`                   | عرض الأنواع / إنشاء نوع |
+| GET      | `/api/v1/hr/leave-allocations?employeeId=` | عرض التخصيصات           |
+| POST     | `/api/v1/hr/leave-allocations/bulk`        | تخصيص بالجملة           |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 267 من 267 نجحوا.
 - الـ lint: كل الملفات نضيفة.
 - اختبار حي ✅:
 
-| الحالة | النتيجة |
-|---|---|
-| فرع القاهرة (ومعاه كل اللي تحته) | E-CAI1 وE-CAI2 |
+| الحالة                                     | النتيجة                                        |
+| ------------------------------------------ | ---------------------------------------------- |
+| فرع القاهرة (ومعاه كل اللي تحته)           | E-CAI1 وE-CAI2                                 |
 | الشركة كلها، وظيفة "عامل"، في فترة متداخلة | E-HQ1 اتخصصله، وE-CAI1 **اتخطّى** بسبب التداخل |
-| 31 يوم والحد الأقصى 30 | 400 |
-| السنة اللي بعدها، الشركة كلها | 4 موظفين نشطين |
-| فلتر مفيش حد بيطابقه | 400 |
-| الموظفين اللي خدمتهم انتهت | ماخدوش أي تخصيص |
+| 31 يوم والحد الأقصى 30                     | 400                                            |
+| السنة اللي بعدها، الشركة كلها              | 4 موظفين نشطين                                 |
+| فلتر مفيش حد بيطابقه                       | 400                                            |
+| الموظفين اللي خدمتهم انتهت                 | ماخدوش أي تخصيص                                |
 
 **مؤجّل:**
+
 - طلبات الإجازة، وخصمها من الرصيد.
 - ترحيل الرصيد من سنة للتانية.
 - الاستحقاق الشهري.
@@ -1233,6 +1325,7 @@ POST /api/v1/inventory/movements
 **الفكرة (زي Full and Final Statement في ERPNext):** مستند تسوية للموظف اللي خدمته انتهت. فيه اللي الشركة مديونة بيه للموظف (**مستحق له**)، واللي الموظف مديون بيه للشركة (**مستحق عليه**)، والصافي بينهم.
 
 **القواعد:**
+
 - **التسوية بتتعمل بعد إنهاء الخدمة (بند 10) بس،** لأن الإنهاء هو اللي بيحدد آخر يوم عمل.
 - **مستند واحد مفتوح بس لكل موظف:** فيه قيد فريد جزئي (partial unique index) بيتجاهل المستندات الملغية.
 - **البنود التلقائية** (الحساب نفسه دالة معزولة، ومتختبرة لوحدها):
@@ -1244,35 +1337,38 @@ POST /api/v1/inventory/movements
 - **الاعتماد بيقفل المستند.** الإلغاء مسموح طول ما المستند مسودة.
 
 **الملفات المتأثرة:**
+
 - **ملفات اتعدّلت:** `hr.schema.ts` (جدولين)، و`hr.module.ts`.
 - **ملفات جديدة:** `final-settlement.service.ts`، `final-settlement.controller.ts`، `final-settlement.spec.ts` (اختبارين).
 - migration: `apps/api/drizzle/migrations/0074_public_shen.sql`.
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| POST | `/api/v1/hr/employees/:id/final-settlement` | مسودة تسوية، ومعاها البنود المقترحة |
-| GET | `/api/v1/hr/final-settlements/:id` | تفاصيل التسوية |
-| POST | `/api/v1/hr/final-settlements/:id/lines` | إضافة بند، وبتاخد `direction` و`component` و`description` و`amount` |
-| DELETE | `/api/v1/hr/final-settlements/:id/lines/:lineId` | حذف بند |
-| POST | `/api/v1/hr/final-settlements/:id/submit` و`/cancel` | اعتماد / إلغاء |
+| الطريقة | المسار                                               | الوصف                                                               |
+| ------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
+| POST    | `/api/v1/hr/employees/:id/final-settlement`          | مسودة تسوية، ومعاها البنود المقترحة                                 |
+| GET     | `/api/v1/hr/final-settlements/:id`                   | تفاصيل التسوية                                                      |
+| POST    | `/api/v1/hr/final-settlements/:id/lines`             | إضافة بند، وبتاخد `direction` و`component` و`description` و`amount` |
+| DELETE  | `/api/v1/hr/final-settlements/:id/lines/:lineId`     | حذف بند                                                             |
+| POST    | `/api/v1/hr/final-settlements/:id/submit` و`/cancel` | اعتماد / إلغاء                                                      |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 269 من 269 نجحوا.
 - الـ lint: كل الملفات نضيفة.
 - اختبار حي، موظف مرتبه 6000 وآخر يوم ليه 2026-09-15 ✅:
 
-| الحالة | النتيجة |
-|---|---|
-| تسوية قبل إنهاء الخدمة | 400 |
-| بعد الإنهاء | مرتب أغسطس اللي متصرفش **6000**، ومرتب نسبي 15/30 **3000**، وبدل **14.84** يوم إجازة **2968.77**. والإجمالي 11968.77 |
-| إضافة سلفة مستحقة عليه 1500 | الصافي بقى **10468.77** |
-| تسوية تانية لنفس الموظف | 400 |
-| الاعتماد، وبعده محاولة تعديل | اتعتمد، والتعديل اترفض |
+| الحالة                       | النتيجة                                                                                                              |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| تسوية قبل إنهاء الخدمة       | 400                                                                                                                  |
+| بعد الإنهاء                  | مرتب أغسطس اللي متصرفش **6000**، ومرتب نسبي 15/30 **3000**، وبدل **14.84** يوم إجازة **2968.77**. والإجمالي 11968.77 |
+| إضافة سلفة مستحقة عليه 1500  | الصافي بقى **10468.77**                                                                                              |
+| تسوية تانية لنفس الموظف      | 400                                                                                                                  |
+| الاعتماد، وبعده محاولة تعديل | اتعتمد، والتعديل اترفض                                                                                               |
 
 **مؤجّل:**
+
 - مكافأة نهاية الخدمة بمعادلة قانون العمل (دلوقتي بتتضاف كبند يدوي).
 - السلف التلقائية (هتيجي في بند 38).
 - قيد محاسبي للتسوية.
@@ -1281,6 +1377,7 @@ POST /api/v1/inventory/movements
 ### بند 22 — حد إعادة الطلب لكل صنف في كل مخزن
 
 **الفكرة (زي Item Reorder في ERPNext):**
+
 - **قاعدة لكل صنف في كل مخزن** (مبتتكررش): حد إعادة الطلب، وكمية إعادة الطلب، ونوع الطلب (شراء، أو تحويل، أو تصنيع).
 - **الاقتراحات:** أي قاعدة **الكمية المتوقعة** فيها (من عرض Bin في بند 13: الفعلي + الجاي − المحجوز) وصلت للحد أو نزلت تحته. الكمية المقترحة = **الأكبر بين** كمية إعادة الطلب والعجز (الحد − المتوقع).
 - **التنفيذ (`raise`):** كل اقتراح بيتسجّل **كطلب مواد متوقع** (حجز من نوع `material_request`، بند 13). الكمية المتوقعة بتزيد بيها، **فالاقتراح مبيتكررش**.
@@ -1288,35 +1385,38 @@ POST /api/v1/inventory/movements
 **قرار مسجّل:** مستند "طلب المواد" الحقيقي موجود في موديولات التخطيط والتصنيع، وده ممنوع ألمسه. عشان كده التنفيذ بيسجّل الكمية كمتوقعة في المخزون بس، والمصدر مكتوب فيه `reorder:<النوع>:<رقم القاعدة>`.
 
 **الملفات المتأثرة:**
+
 - **ملفات اتعدّلت:** `inventory.schema.ts` (جدول `item_reorder`)، و`inventory.module.ts`.
 - **ملفات جديدة:** `reorder.service.ts`، `reorder.controller.ts`، `reorder.spec.ts`.
 - migration: `apps/api/drizzle/migrations/0075_lying_wolfpack.sql`.
 
 **الـ API:**
 
-| الطريقة | المسار | الوصف |
-|---|---|---|
-| GET | `/api/v1/inventory/reorder/rules` | عرض القواعد |
-| PUT | `/api/v1/inventory/reorder/rules` | إضافة أو تعديل قاعدة |
-| DELETE | `/api/v1/inventory/reorder/rules/:id` | حذف قاعدة |
-| GET | `/api/v1/inventory/reorder/suggestions` | الاقتراحات الحالية |
-| POST | `/api/v1/inventory/reorder/raise` | تنفيذ كل الاقتراحات |
+| الطريقة | المسار                                  | الوصف                |
+| ------- | --------------------------------------- | -------------------- |
+| GET     | `/api/v1/inventory/reorder/rules`       | عرض القواعد          |
+| PUT     | `/api/v1/inventory/reorder/rules`       | إضافة أو تعديل قاعدة |
+| DELETE  | `/api/v1/inventory/reorder/rules/:id`   | حذف قاعدة            |
+| GET     | `/api/v1/inventory/reorder/suggestions` | الاقتراحات الحالية   |
+| POST    | `/api/v1/inventory/reorder/raise`       | تنفيذ كل الاقتراحات  |
 
 **الاختبار:**
+
 - الفحص البرمجي: نضيف.
 - الاختبارات: 270 من 270 نجحوا.
 - الـ lint: كل الملفات نضيفة.
 - اختبار حي ✅:
 
-| الحالة | النتيجة |
-|---|---|
-| الوضع قبل القاعدة | الرصيد الفعلي 121، والمتوقع 101 |
-| قاعدة: حد 200، وكمية 100 | اقتراح بـ **100** |
-| التنفيذ | طلب مواد متوقع بـ 100، والمتوقع بقى **201** |
-| الاقتراحات تاني | فاضية |
-| كمية إعادة طلب = صفر | 400 |
+| الحالة                   | النتيجة                                     |
+| ------------------------ | ------------------------------------------- |
+| الوضع قبل القاعدة        | الرصيد الفعلي 121، والمتوقع 101             |
+| قاعدة: حد 200، وكمية 100 | اقتراح بـ **100**                           |
+| التنفيذ                  | طلب مواد متوقع بـ 100، والمتوقع بقى **201** |
+| الاقتراحات تاني          | فاضية                                       |
+| كمية إعادة طلب = صفر     | 400                                         |
 
 **مؤجّل:**
+
 - التشغيل التلقائي المجدول (زي المهمة اليومية في ERPNext).
 - إنشاء مستند طلب مواد حقيقي (محتاج لمس التخطيط والتصنيع).
 
@@ -1325,6 +1425,7 @@ POST /api/v1/inventory/movements
 **قبل:** كل المخازن كانت في مستوى واحد، ومفيش طريقة تشوف رصيد "كل مخازن القاهرة" مرة واحدة.
 
 **اللي اتعمل (كله إضافات):**
+
 - عمودين جداد في جدول المخزن: `parent_warehouse_id` (المخزن الأب، وده ربط جوه نفس الموديول فمسموح) و`is_group` (مخزن مجموعة ولا مخزن عادي). وفيه قيد إن المخزن ميبقاش أبو نفسه.
 - **مخزن المجموعة مبيشيلش بضاعة**: أي حركة أو حجز عليه بيترفض.
 - الأب لازم يكون مخزن مجموعة، ومفيش حلقات في الشجرة (مينفعش "أ" تحت "ب" و"ب" تحت "أ").
@@ -1340,15 +1441,15 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة:**
 
-| الحالة | النتيجة |
-|---|---|
-| مخزن جديد يتحوّل لمجموعة | نجح |
-| تحويل CAI-01 (عليه رصيد) لمجموعة | 400 "عليه رصيد أو حركات" |
-| CAI-01 تحت المجموعة | نجح |
-| المجموعة تحت CAI-01 | 400 "مش مجموعة" |
-| إلغاء المجموعة وتحتها مخزن | 400 "تحتها CAI-01" |
-| حركة استلام على المجموعة | 400 |
-| الشجرة | المجموعة: رصيدها الخاص 0، والإجمالي 121 بقيمة 2420 (نفس رصيد CAI-01) |
+| الحالة                           | النتيجة                                                              |
+| -------------------------------- | -------------------------------------------------------------------- |
+| مخزن جديد يتحوّل لمجموعة         | نجح                                                                  |
+| تحويل CAI-01 (عليه رصيد) لمجموعة | 400 "عليه رصيد أو حركات"                                             |
+| CAI-01 تحت المجموعة              | نجح                                                                  |
+| المجموعة تحت CAI-01              | 400 "مش مجموعة"                                                      |
+| إلغاء المجموعة وتحتها مخزن       | 400 "تحتها CAI-01"                                                   |
+| حركة استلام على المجموعة         | 400                                                                  |
+| الشجرة                           | المجموعة: رصيدها الخاص 0، والإجمالي 121 بقيمة 2420 (نفس رصيد CAI-01) |
 
 **مؤجّل:** شاشة ويب للشجرة. الـ API جاهز.
 
@@ -1363,6 +1464,7 @@ POST /api/v1/inventory/movements
 **قبل:** العميل المحتمل كان مجرد عميل حالته "lead"، ومفيش تسجيل تواصل، ولا تجميع لكذا شخص من نفس الشركة.
 
 **اللي اتعمل (3 جداول جديدة في `crm`):**
+
 - **`lead`** = شخص ممكن نبيع له. لازم يبقى معاه تليفون أو إيميل، ومينفعش يتسجّل مرتين بنفس التليفون أو الإيميل.
 - **`lead_activity`** = مرحلة "التواصل": مكالمة أو زيارة أو إيميل أو ملاحظة. أول تواصل فعلي بيحوّل الحالة من "جديد" لـ"اتواصلنا معاه". الملاحظة لوحدها متتحسبش تواصل.
 - **`prospect`** = الشركة المحتملة، وبتجمع أكتر من شخص مهتم من نفس الشركة.
@@ -1371,15 +1473,16 @@ POST /api/v1/inventory/movements
 
 **القواعد:**
 
-| الحالة | المسموح |
-|---|---|
-| جديد | خسارة (بسبب) / ممنوع التواصل |
-| اتواصلنا | مهتم / خسارة / ممنوع التواصل |
-| مهتم | يدخل Prospect / يتحوّل لعميل / خسارة |
-| خسارة أو ممنوع التواصل | إعادة فتح بس، ومفيش تسجيل تواصل |
-| اتحوّل | خلاص، مفيش تغيير |
+| الحالة                 | المسموح                              |
+| ---------------------- | ------------------------------------ |
+| جديد                   | خسارة (بسبب) / ممنوع التواصل         |
+| اتواصلنا               | مهتم / خسارة / ممنوع التواصل         |
+| مهتم                   | يدخل Prospect / يتحوّل لعميل / خسارة |
+| خسارة أو ممنوع التواصل | إعادة فتح بس، ومفيش تسجيل تواصل      |
+| اتحوّل                 | خلاص، مفيش تغيير                     |
 
 **الـ API:**
+
 - `crm/leads` (قائمة وإنشاء)
 - `crm/leads/:id/activities`
 - `crm/leads/:id/action`
@@ -1394,16 +1497,17 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة:**
 
-| الحالة | النتيجة |
-|---|---|
-| نفس الإيميل بحروف كبيرة | 400 "مسجّل قبل كده: LEAD-2026-000001" |
-| "مهتم" قبل أي تواصل | 400 "لازم يتسجّل تواصل فعلي الأول" |
-| بعد مكالمة | الحالة "اتواصلنا معاه"، ثم "مهتم" |
-| إضافة شخص جديد للـ Prospect | 400 (لازم يكون مهتم) |
-| تحويل الـ Prospect | عميل NILE… نشط، والإيميل اتنقل، والشخص حالته "اتحوّل" |
-| تحويل شخص فردي | عميل باسمه ورقم تليفونه |
+| الحالة                      | النتيجة                                               |
+| --------------------------- | ----------------------------------------------------- |
+| نفس الإيميل بحروف كبيرة     | 400 "مسجّل قبل كده: LEAD-2026-000001"                 |
+| "مهتم" قبل أي تواصل         | 400 "لازم يتسجّل تواصل فعلي الأول"                    |
+| بعد مكالمة                  | الحالة "اتواصلنا معاه"، ثم "مهتم"                     |
+| إضافة شخص جديد للـ Prospect | 400 (لازم يكون مهتم)                                  |
+| تحويل الـ Prospect          | عميل NILE… نشط، والإيميل اتنقل، والشخص حالته "اتحوّل" |
+| تحويل شخص فردي              | عميل باسمه ورقم تليفونه                               |
 
 **مؤجّل:**
+
 - كيان Contact/Address مستقل (بند 26، محتاج موافقة المالك).
 - شاشة ويب. الـ API جاهز.
 - الفرصة (بند 17) لسه بتتعمل على العميل بس، مش على الـ Lead.
@@ -1415,6 +1519,7 @@ POST /api/v1/inventory/movements
 **الوضع الحالي:** العميل والمورد عندهم تليفون وإيميل كأعمدة، وسجل التواصل بقى على الـ Lead (بند 25).
 
 **اقتراح للمالك (لو وافق):**
+
 - جدول `crm.contact` وجدول `crm.address`.
 - جدول ربط عام `crm.party_link` فيه (نوع الطرف + الـ UUID). ده بيسمح لنفس الشخص يترتبط بعميل ومورد وLead، من غير FK بين الموديولات، والتحقق بيتم في الخدمة.
 - الأعمدة القديمة تفضل زي ما هي عشان التوافق.
@@ -1424,6 +1529,7 @@ POST /api/v1/inventory/movements
 **قبل:** مفيش مستند انتقاء. المستخدم كان بيختار الدفعة والمخزن بإيده في كل حركة.
 
 **اللي اتعمل:**
+
 - محرك انتقاء (دالة صافية `planPicks`):
   - **للأصناف المتتبّعة بالدفعة:**
     - الأقرب انتهاءً الأول، ولو الانتهاء واحد فالأقدم تصنيعًا ثم الأقدم تسجيلًا (FIFO).
@@ -1450,18 +1556,19 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة** (صنف دواء بـ 4 دفعات: منتهية 1/9، وأكتوبر، ونوفمبر، و2027):
 
-| الحالة | النتيجة |
-|---|---|
-| اقتراح 40 | أكتوبر 20، ثم نوفمبر 10 (من W2)، ثم 2027 بـ 10. **المنتهية (100 قطعة) متاخدتش** |
-| نفس الطلب بنطاق W2 بس | 10، ومعاه "ناقص 30" |
-| إنشاء بـ 500 | 400 "صنف MED… ناقص 443" |
-| إنشاء 25 ثم إتمام بسطر اتنقى منه 3 بس | رصيد الدفعات: أكتوبر 0، ونوفمبر 7 |
-| إتمام تاني | 400 |
-| نقل 5 لـ W2 | اتنقلوا من دفعة 2027، والدفعة ظهرت في W2 |
+| الحالة                                | النتيجة                                                                         |
+| ------------------------------------- | ------------------------------------------------------------------------------- |
+| اقتراح 40                             | أكتوبر 20، ثم نوفمبر 10 (من W2)، ثم 2027 بـ 10. **المنتهية (100 قطعة) متاخدتش** |
+| نفس الطلب بنطاق W2 بس                 | 10، ومعاه "ناقص 30"                                                             |
+| إنشاء بـ 500                          | 400 "صنف MED… ناقص 443"                                                         |
+| إنشاء 25 ثم إتمام بسطر اتنقى منه 3 بس | رصيد الدفعات: أكتوبر 0، ونوفمبر 7                                               |
+| إتمام تاني                            | 400                                                                             |
+| نقل 5 لـ W2                           | اتنقلوا من دفعة 2027، والدفعة ظهرت في W2                                        |
 
 **ملاحظة:** النظام بيقبل **استلام** دفعة منتهية الصلاحية. ده سلوك قديم ومش جزء من البند ده. الانتقاء بس هو اللي بيتجاهلها.
 
 **مؤجّل:**
+
 - الانتقاء التلقائي لأرقام السيريال (بيرجع رسالة واضحة إنه لسه مش مدعوم).
 - الربط المباشر بمستند التسليم.
 - شاشة ويب.
@@ -1471,16 +1578,19 @@ POST /api/v1/inventory/movements
 **قبل:** مكانش فيه مجموعات عملاء ولا موردين خالص.
 
 **اللي اتعمل:**
+
 - جدول واحد `crm.party_group` فيه نوع المجموعة (عملاء أو موردين)، وكود، واسم، والمجموعة الأب، وعلامة "مجموعة أب".
 - عمود `customer_group_id` على العميل، وعمود `supplier_group_id` على المورد (جوه نفس الموديول).
 
 **القواعد:**
+
 - المجموعة الفرعية بتتحط بس تحت "مجموعة أب" من نفس النوع، ومفيش حلقات.
 - **العميل أو المورد بيتربط بمجموعة فرعية بس** (ورقة في الشجرة)، زي ERPNext.
 - مينفعش تحوّل مجموعة فيها أعضاء لمجموعة أب، ولا تحوّل مجموعة أب تحتها فروع لمجموعة عادية.
 - **حد ائتمان افتراضي** لمجموعة العملاء: العميل اللي ملوش حد خاص بياخد حد أقرب مجموعة فوقه في الشجرة. ده بيأثّر على فحص الائتمان في بند 6، والرد بقى بيقول مصدر الحد (`creditLimitSource`: العميل أو المجموعة).
 
 **الـ API:**
+
 - `GET crm/groups?type=customer|supplier` (الشجرة بعدد الأعضاء المباشرين والإجمالي)
 - `POST crm/groups`
 - `PATCH crm/groups/:id`
@@ -1493,18 +1603,19 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة** (شجرة: كل العملاء (حد 50,000) ← تجزئة ← تجزئة القاهرة):
 
-| الحالة | النتيجة |
-|---|---|
-| مجموعة تحت مجموعة فرعية | 400 "مش مجموعة أب" |
-| حد ائتمان لمجموعة موردين | 400 |
-| "كل العملاء" تحت "تجزئة" | 400 "هيعمل حلقة" |
-| عميل على "تجزئة" (مجموعة أب) | 400 |
-| عميل على "تجزئة القاهرة" | نجح |
-| حالة ائتمان العميل | الحد 50,000، والمصدر **المجموعة**، والمتاح 50,000 |
-| تحويل "تجزئة القاهرة" لمجموعة أب | 400 "فيها عملاء" |
-| الشجرة | الإجمالي 1 في كل مستوى |
+| الحالة                           | النتيجة                                           |
+| -------------------------------- | ------------------------------------------------- |
+| مجموعة تحت مجموعة فرعية          | 400 "مش مجموعة أب"                                |
+| حد ائتمان لمجموعة موردين         | 400                                               |
+| "كل العملاء" تحت "تجزئة"         | 400 "هيعمل حلقة"                                  |
+| عميل على "تجزئة" (مجموعة أب)     | 400                                               |
+| عميل على "تجزئة القاهرة"         | نجح                                               |
+| حالة ائتمان العميل               | الحد 50,000، والمصدر **المجموعة**، والمتاح 50,000 |
+| تحويل "تجزئة القاهرة" لمجموعة أب | 400 "فيها عملاء"                                  |
+| الشجرة                           | الإجمالي 1 في كل مستوى                            |
 
 **مؤجّل:**
+
 - قواعد التسعير على مستوى المجموعة (بند 16 شغال على العميل أو المورد بس).
 - شروط دفع أو قائمة أسعار افتراضية للمجموعة.
 - شاشة ويب.
@@ -1514,10 +1625,12 @@ POST /api/v1/inventory/movements
 **قبل:** الموظف مكانش ليه حتى تاريخ تعيين، ولا أي فكرة عن فترة الاختبار.
 
 **اللي اتعمل (كله إضافات):**
+
 - 3 أعمدة على الموظف: `date_of_joining` (تاريخ التعيين)، و`probation_end_date` (آخر يوم في الاختبار)، و`confirmation_date` (تاريخ التثبيت). وفيه قيود إن التاريخين الأخيرين ميبقوش قبل التعيين.
 - جدول `hr.probation_event`: سجل رسمي لكل بداية ومدّ وتثبيت، مع السبب.
 
 **القواعد:**
+
 - **الحد الأقصى 3 شهور، ومرة واحدة بس عند نفس صاحب العمل** (قانون العمل المصري). بداية تانية بتترفض.
 - المدّ لازم يكون لتاريخ أبعد من الحالي، ومن غير ما يعدّي الـ 3 شهور، وبسبب إجباري.
 - التثبيت الافتراضي بيبقى اليوم اللي بعد آخر يوم اختبار، أو النهارده لو التثبيت بدري. والتاريخ المستقبلي مرفوض.
@@ -1525,6 +1638,7 @@ POST /api/v1/inventory/movements
 - قائمة "فترات اختبار قربت تخلص أو عدّت من غير تثبيت" (`GET hr/probation/due?withinDays=14`).
 
 **الـ API:**
+
 - `GET hr/employees/:id/probation`
 - `POST hr/employees/:id/probation`
 - `POST hr/employees/:id/probation/extend`
@@ -1536,29 +1650,32 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة:**
 
-| الحالة | النتيجة |
-|---|---|
-| تعيين 2026-08-01، 3 شهور | الاختبار لحد 2026-10-31 |
-| بداية تانية | 400 "مرة واحدة بس" |
-| مدّ لـ 11-15 | 400 "آخر يوم مسموح 2026-10-31" |
-| مدّ من غير سبب | 400 |
-| موظف بشهر واحد | "متأخر" (بقاله 5 أيام عدّى من غير تثبيت)، واتمدّ لـ 10-15 |
-| القائمة | الاتنين، الأقرب الأول |
-| تثبيت بدري | اتسجّل بتاريخ النهارده |
-| تاريخ مستقبلي | 400 |
-| تثبيت مرتين، أو من غير فترة اختبار | 400 |
+| الحالة                             | النتيجة                                                   |
+| ---------------------------------- | --------------------------------------------------------- |
+| تعيين 2026-08-01، 3 شهور           | الاختبار لحد 2026-10-31                                   |
+| بداية تانية                        | 400 "مرة واحدة بس"                                        |
+| مدّ لـ 11-15                       | 400 "آخر يوم مسموح 2026-10-31"                            |
+| مدّ من غير سبب                     | 400                                                       |
+| موظف بشهر واحد                     | "متأخر" (بقاله 5 أيام عدّى من غير تثبيت)، واتمدّ لـ 10-15 |
+| القائمة                            | الاتنين، الأقرب الأول                                     |
+| تثبيت بدري                         | اتسجّل بتاريخ النهارده                                    |
+| تاريخ مستقبلي                      | 400                                                       |
+| تثبيت مرتين، أو من غير فترة اختبار | 400                                                       |
 
 **مؤجّل:**
+
 - الربط بالمرتب أو الإجازات (مثلًا منع أنواع إجازات أثناء الاختبار).
 - إشعار تلقائي.
 
 ### بند 31 — تجميد قيد الأستاذ العام ضد الإلغاء الفردي
 
 **اللي كان موجود:**
+
 - القيد المرحّل كان **ممنوع إلغاؤه** بالفعل.
 - المستندات المرحّلة (فواتير ومدفوعات) كانت ممنوع إلغاؤها بالفعل.
 
 **الثغرات اللي اتقفلت:**
+
 1. القيد اللي اتعمل تلقائيًا من مستند كان ممكن يتلغي لوحده وهو لسه "مسودة". **دلوقتي ممنوع**، والرسالة بتقول المستند اللي عمله: "بيتلغي مع مستنده الأصلي بس".
 2. مكانش فيه طريقة رسمية لتصحيح قيد يدوي مرحّل. **دلوقتي فيه "عكس القيد"**:
    - بيتعمل قيد عكسي مرحّل (المدين والدائن متبدّلين، ومعاه نفس الطرف ومركز التكلفة)، ومربوط بالقيد الأصلي، وبسبب إجباري.
@@ -1573,6 +1690,7 @@ POST /api/v1/inventory/movements
 **الأعمدة:** `journal_entry.reversal_of_entry_id` (فريد، يعني عكس واحد لكل قيد) و`reversal_reason`.
 
 **الـ API:**
+
 - `POST accounting/journal-entries/:id/reverse`
 - `GET accounting/journal-entries/:id/reversal`
 - Migration 0081.
@@ -1581,38 +1699,40 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة:**
 
-| الحالة | النتيجة |
-|---|---|
-| نوع حساب بطبيعة غلط | 400 (قبل الإصلاح كان 500) |
-| قيد يدوي 100، ترحيل ثم إلغاء | 400 "اعكسه بقيد جديد" |
-| عكس من غير سبب | 400 |
-| عكس بسبب | قيد JE-…05 مرحّل، والأطراف متبدّلة |
-| عكس تاني | 400 "اتعكس قبل كده" |
-| الأرصدة | الخزينة 0، والمبيعات 0 |
-| إلغاء مسودة قيد تلقائي من فاتورة | 400 "بيتلغي مع مستنده الأصلي بس" |
+| الحالة                           | النتيجة                            |
+| -------------------------------- | ---------------------------------- |
+| نوع حساب بطبيعة غلط              | 400 (قبل الإصلاح كان 500)          |
+| قيد يدوي 100، ترحيل ثم إلغاء     | 400 "اعكسه بقيد جديد"              |
+| عكس من غير سبب                   | 400                                |
+| عكس بسبب                         | قيد JE-…05 مرحّل، والأطراف متبدّلة |
+| عكس تاني                         | 400 "اتعكس قبل كده"                |
+| الأرصدة                          | الخزينة 0، والمبيعات 0             |
+| إلغاء مسودة قيد تلقائي من فاتورة | 400 "بيتلغي مع مستنده الأصلي بس"   |
 
 ### بند 32 — أنواع حسابات معيارية بسلوك مختلف لكل نوع
 
 **قبل:** "نوع الحساب" في النظام كان تصنيف حر (كود + طبيعة مدين أو دائن)، ومفيش أي سلوك مرتبط بيه.
 
 **اللي اتعمل:**
+
 - عمود جديد `account_role` على الحساب (اختياري). وفيه **قائمة ERPNext الكاملة: 30 نوع**، منها: بنك، ونقدية، ومدينون، ودائنون، ومخزون، وGRNI، وأصول ثابتة، ومجمع إهلاك، ومصروف إهلاك، وأصول تحت التنفيذ، وتكلفة بضاعة مباعة، وضرائب، وفروق تقريب، وحساب مؤقت… إلخ. الوثيقة قالت 28، بس القائمة الحالية في ERPNext 30، فاتنفّذت كاملة.
 - كل نوع ليه اسم عربي، وطبيعة رصيد متوقعة، وسلوكه.
 
 **السلوك المطبّق:**
 
-| النوع | السلوك |
-|---|---|
-| أي نوع ليه طبيعة | لازم يتطابق مع طبيعة "تصنيف" الحساب (مثلًا مدينون ميتحطش على حساب طبيعته دائن) |
-| مدينون | أي سطر في **قيد يدوي** لازم يحدد **العميل** |
-| دائنون | أي سطر في **قيد يدوي** لازم يحدد **المورد** |
-| مخزون | **ممنوع القيد اليدوي**. بيتحدّث من حركات المخزون بس |
-| أصول ثابتة / مجمع إهلاك / مصروف إهلاك | عند إنشاء أصل ثابت: لو الحسابات ليها نوع، لازم يكون النوع الصح |
+| النوع                                 | السلوك                                                                         |
+| ------------------------------------- | ------------------------------------------------------------------------------ |
+| أي نوع ليه طبيعة                      | لازم يتطابق مع طبيعة "تصنيف" الحساب (مثلًا مدينون ميتحطش على حساب طبيعته دائن) |
+| مدينون                                | أي سطر في **قيد يدوي** لازم يحدد **العميل**                                    |
+| دائنون                                | أي سطر في **قيد يدوي** لازم يحدد **المورد**                                    |
+| مخزون                                 | **ممنوع القيد اليدوي**. بيتحدّث من حركات المخزون بس                            |
+| أصول ثابتة / مجمع إهلاك / مصروف إهلاك | عند إنشاء أصل ثابت: لو الحسابات ليها نوع، لازم يكون النوع الصح                 |
 
 - القيود التلقائية (من المستندات) مبتتفحصش بالقواعد دي، عشان متكسرش أي دورة شغالة. الفحص على القيد اليدوي بس.
 - الحساب اللي ملوش نوع شغال زي الأول بالظبط.
 
 **الـ API:**
+
 - `GET accounting/account-roles` (القائمة بالسلوك)
 - `PATCH accounting/accounts/:id/role`
 - Migrations 0082 و0083 (العمود + قيد القيم المسموحة).
@@ -1621,26 +1741,29 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة:**
 
-| الحالة | النتيجة |
-|---|---|
-| حساب مبيعات (دائن) كـ "مدينون" | 400 "طبيعته مدين… والحساب طبيعته دائن" |
-| نوع مش موجود | 400 |
-| قيد يدوي على حساب العملاء من غير عميل | 400 "لازم السطر يحدد العميل" |
-| نفس القيد بعميل | نجح |
-| قيد يدوي على حساب المخزون | 400 "بيتحدّث من حركات المخزون بس" |
-| أصل ثابت على حساب "مدينون" | 400 "المفروض أصول ثابتة أو أصول تحت التنفيذ" |
+| الحالة                                | النتيجة                                      |
+| ------------------------------------- | -------------------------------------------- |
+| حساب مبيعات (دائن) كـ "مدينون"        | 400 "طبيعته مدين… والحساب طبيعته دائن"       |
+| نوع مش موجود                          | 400                                          |
+| قيد يدوي على حساب العملاء من غير عميل | 400 "لازم السطر يحدد العميل"                 |
+| نفس القيد بعميل                       | نجح                                          |
+| قيد يدوي على حساب المخزون             | 400 "بيتحدّث من حركات المخزون بس"            |
+| أصل ثابت على حساب "مدينون"            | 400 "المفروض أصول ثابتة أو أصول تحت التنفيذ" |
 
 **مؤجّل:**
+
 - ربط الحسابات الافتراضية للشركة (بند 33) بالأنواع دي.
 - التحقق من الحساب المؤقت بعد الأرصدة الافتتاحية.
 
 ### بند 33 — 19 حساب افتراضي إجباري لكل شركة
 
 **قبل:**
+
 - إعدادات الشركة المحاسبية كان فيها 11 حساب افتراضي، **من غير أي فحص**: ممكن تحط حساب شركة تانية، أو حساب أب، أو حساب من نوع غلط.
 - لو حساب ناقص، القيد التلقائي كان **بيتساب في صمت** (الحركة تتسجّل من غير قيد).
 
 **اللي اتعمل:**
+
 - **8 حسابات افتراضية جديدة**: البنك، والخزينة، وإيراد المبيعات، والمخزون، وفروق التقريب، والشطب، وفروق العملة، ومصروف الإهلاك. بقى المجموع **19**، وكل حساب معاه اسمه العربي، وبيُستخدم في إيه، والأنواع المسموحة له (بند 32).
 - **فحص عند الحفظ:** أي حساب افتراضي لازم يكون موجود، وتبع نفس الشركة، وحساب فرعي، ونشط، ونوعه صح لو ليه نوع.
 - **تقرير جاهزية الشركة** (`GET accounting/company-config/:orgNodeId/readiness`): الـ 19 حساب، وكل واحد "تمام" أو المشكلة بالعربي، وعدد الناقص.
@@ -1655,15 +1778,15 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة:**
 
-| الحالة | النتيجة |
-|---|---|
-| الجاهزية أول مرة | 19 ناقص |
-| "الموردين" = حساب نوعه مدينون | 400 "المتوقع payable" |
-| "الخزينة" = حساب شركة تانية | 400 |
-| حفظ العملاء والخزينة | الناقص بقى 17 |
+| الحالة                                    | النتيجة                               |
+| ----------------------------------------- | ------------------------------------- |
+| الجاهزية أول مرة                          | 19 ناقص                               |
+| "الموردين" = حساب نوعه مدينون             | 400 "المتوقع payable"                 |
+| "الخزينة" = حساب شركة تانية               | 400                                   |
+| حفظ العملاء والخزينة                      | الناقص بقى 17                         |
 | تفعيل الإجباري، واستلام من غير حساب مخزون | 400، و**عدد الحركات مزادش** (18 = 18) |
-| تحديد حساب المخزون وGRNI، والاستلام تاني | نجح، واتعمل قيد JE-…08 بـ 5 جنيه |
-| حفظ الإعدادات مرتين | نفس الـ id |
+| تحديد حساب المخزون وGRNI، والاستلام تاني  | نجح، واتعمل قيد JE-…08 بـ 5 جنيه      |
+| حفظ الإعدادات مرتين                       | نفس الـ id                            |
 
 **ملاحظة:** الإجباري دلوقتي على **حركات المخزون**. الفواتير والمدفوعات في `finance` بتستخدم حسابات من الفاتورة نفسها أو من التحديدات، فمتلمستش.
 
@@ -1672,6 +1795,7 @@ POST /api/v1/inventory/movements
 **قبل:** كل القيود نوع واحد.
 
 **اللي اتعمل:**
+
 - عمود `voucher_type` على القيد، وقيمته الافتراضية "قيد يومية عام"، ومعاه قيد بالقيم الـ 17 المسموحة (قائمة ERPNext):
   - قيد عام، وبين الشركات، وبنك، ونقدية، وبطاقة ائتمان.
   - إشعار مدين، وإشعار دائن.
@@ -1681,22 +1805,23 @@ POST /api/v1/inventory/movements
   - إيراد مؤجل، ومصروف مؤجل، وعكس خصم ضريبة المدخلات.
 - **كل نوع ليه قاعدة** بتتفحص على القيد اليدوي، وبتعتمد على أنواع الحسابات (بند 32) والحسابات الافتراضية (بند 33):
 
-| النوع | القاعدة |
-|---|---|
-| بنك / بطاقة ائتمان | سطر على حساب بنك |
-| نقدية | سطر على حساب خزينة |
-| تحويل بنك وخزينة | **كل** السطور بنك أو خزينة |
-| إشعار مدين / دائن | سطر عليه طرف (عميل أو مورد) |
-| افتتاحي | ممنوع على حسابات الإيرادات والمصروفات |
-| إهلاك | مصروف إهلاك + مجمع إهلاك |
-| شطب / فروق عملة | سطر على الحساب الافتراضي للشركة (لو متحدد) |
-| بين الشركات | لازم مرجع |
-| رسوم إنتاج / عكس خصم ضريبة المدخلات | سطر على حساب ضرائب |
-| إيراد / مصروف مؤجل | سطر على حساب إيراد / مصروف |
+| النوع                               | القاعدة                                    |
+| ----------------------------------- | ------------------------------------------ |
+| بنك / بطاقة ائتمان                  | سطر على حساب بنك                           |
+| نقدية                               | سطر على حساب خزينة                         |
+| تحويل بنك وخزينة                    | **كل** السطور بنك أو خزينة                 |
+| إشعار مدين / دائن                   | سطر عليه طرف (عميل أو مورد)                |
+| افتتاحي                             | ممنوع على حسابات الإيرادات والمصروفات      |
+| إهلاك                               | مصروف إهلاك + مجمع إهلاك                   |
+| شطب / فروق عملة                     | سطر على الحساب الافتراضي للشركة (لو متحدد) |
+| بين الشركات                         | لازم مرجع                                  |
+| رسوم إنتاج / عكس خصم ضريبة المدخلات | سطر على حساب ضرائب                         |
+| إيراد / مصروف مؤجل                  | سطر على حساب إيراد / مصروف                 |
 
 - **القيود التلقائية بتاخد نوعها من مصدرها**: قسط الإهلاك بيتسجّل "قيد إهلاك" لوحده.
 
 **الـ API:**
+
 - `GET accounting/voucher-types`
 - حقل `voucherType` في إنشاء القيد، وبيظهر في كل عرض للقيود.
 - Migration 0085.
@@ -1705,21 +1830,22 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة:**
 
-| الحالة | النتيجة |
-|---|---|
-| قيد بنك على حساب خزينة | 400 "سطر على حساب بنك" |
-| قيد نقدية | نجح (JE-…09) |
-| تحويل بنك وخزينة (خزينة + مبيعات) | 400 |
-| إشعار دائن من غير طرف | 400 |
-| بين الشركات من غير مرجع | 400، وبمرجع نجح |
-| نوع مش موجود | 400 بالقائمة |
-| قسط إهلاك تلقائي | اتسجّل `depreciation_entry` |
+| الحالة                            | النتيجة                     |
+| --------------------------------- | --------------------------- |
+| قيد بنك على حساب خزينة            | 400 "سطر على حساب بنك"      |
+| قيد نقدية                         | نجح (JE-…09)                |
+| تحويل بنك وخزينة (خزينة + مبيعات) | 400                         |
+| إشعار دائن من غير طرف             | 400                         |
+| بين الشركات من غير مرجع           | 400، وبمرجع نجح             |
+| نوع مش موجود                      | 400 بالقائمة                |
+| قسط إهلاك تلقائي                  | اتسجّل `depreciation_entry` |
 
 ### بند 35 — أداة التسوية الدورية (المخزون مقابل الدفاتر)
 
 **قبل:** مكانش فيه طريقة تعرف بيها إن قيمة المخزون في الدفاتر (حساب المخزون) هي نفس قيمة البضاعة فعلًا في المخازن. أي حركة اتعملت قبل ما الحسابات تتضبط كانت بتعمل فرق من غير ما حد ياخد باله.
 
 **اللي اتعمل:**
+
 - **المقارنة** (`GET inventory/stock-gl-reconciliation/:orgNodeId`):
   - كل مخزن في الشركة بيتربط بحساب المخزون بتاعه، بنفس الطريقة اللي محرك القيود بيستخدمها للحركات.
   - لكل حساب مخزون: رصيده في الدفاتر، وقيمة البضاعة الفعلية (مجموع قيم المخازن المربوطة بيه)، والفرق.
@@ -1732,22 +1858,24 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة:**
 
-| الحالة | النتيجة |
-|---|---|
-| قبل تحديد حساب التسويات | CAI-01 "مش مربوط" (2975) |
-| بعد تحديده | الدفاتر 5، والمخزون 2975، والفرق **2970**، والقيد المقترح ظاهر |
-| ترحيل من غير سبب | 400 |
-| ترحيل بسبب | قيد JE-…12 مرحّل |
-| المقارنة بعدها | **متطابق** (2975 = 2975) |
-| ترحيل تاني | 400 "متطابقين" |
+| الحالة                  | النتيجة                                                        |
+| ----------------------- | -------------------------------------------------------------- |
+| قبل تحديد حساب التسويات | CAI-01 "مش مربوط" (2975)                                       |
+| بعد تحديده              | الدفاتر 5، والمخزون 2975، والفرق **2970**، والقيد المقترح ظاهر |
+| ترحيل من غير سبب        | 400                                                            |
+| ترحيل بسبب              | قيد JE-…12 مرحّل                                               |
+| المقارنة بعدها          | **متطابق** (2975 = 2975)                                       |
+| ترحيل تاني              | 400 "متطابقين"                                                 |
 
 **مؤجّل:**
+
 - المقارنة في تاريخ سابق (المقارنة دلوقتي على الرصيد الحالي).
 - جدولة تلقائية دورية.
 
 ### بند 36 — إقفال الفترة: تصفير الأرباح والخسائر + منع القيود الرجعية في الكود
 
 **اكتشاف مهم:** ملفّين `period-closing.service.ts` و`fiscal-year-closing.service.ts` كانوا **محاكاة، مش شغل حقيقي**:
+
 - ميزان المراجعة **رقم ثابت** (1,850,420.5).
 - أرباح السنة **رقم ثابت** (920,000).
 - الحسابات أرقام وهمية (`00000000-…4101`).
@@ -1757,6 +1885,7 @@ POST /api/v1/inventory/movements
 **الملفين اتسابوا من غير لمس** (القاعدة: مفيش إعادة كتابة)، واتبنى الإقفال الحقيقي جنبهم في ملف جديد. **توصية للمالك:** إلغاء المسارين القديمين (`accounting/closing/*` و`accounting/fiscal-year-closing/*`) أو توجيههم للجديد.
 
 **اللي اتعمل (حقيقي):**
+
 1. **معاينة الإقفال السنوي** (`GET accounting/year-end/:fiscalYearId/preview?retainedEarningsAccountId=`):
    - إيرادات السنة وتكاليفها ومصروفاتها الفعلية من الدفاتر، وصافي الربح.
    - ميزان المراجعة الحقيقي للسنة، وعدد قيود المسودة جوه السنة.
@@ -1774,20 +1903,21 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة** (سنة 2025: بيع 1000، وإيجار 300، ومسودة 50):
 
-| الحالة | النتيجة |
-|---|---|
-| المعاينة | ربح 700، والسطور: إيراد مدين 1000، وإيجار دائن 300، وأرباح محتجزة دائن 700 |
-| إقفال والمسودة موجودة | 400 "فيه 1 قيد مسودة" |
-| أرباح محتجزة = حساب خزينة | "مش حساب حقوق ملكية" |
-| الإقفال | قيد JE-2025-…16 مرحّل، والسنة مقفولة |
-| قيد بتاريخ يونيو 2025 | 400 |
-| فتح فترة يناير 2025 | 400 "السنة مقفولة" |
-| تقرير أرباح 2025 | لسه بيقول ربح 700 |
-| الأرصدة | الإيراد 0، والإيجار 0، والأرباح المحتجزة 700 دائن |
-| تجميد لحد 2026-09-01 وقيد 08-15 | 400 "الدفاتر مجمّدة" |
-| مسودة 09-20، ثم تجميد لحد 09-21، ثم ترحيل | 400 (الفحص وقت الترحيل) |
+| الحالة                                    | النتيجة                                                                    |
+| ----------------------------------------- | -------------------------------------------------------------------------- |
+| المعاينة                                  | ربح 700، والسطور: إيراد مدين 1000، وإيجار دائن 300، وأرباح محتجزة دائن 700 |
+| إقفال والمسودة موجودة                     | 400 "فيه 1 قيد مسودة"                                                      |
+| أرباح محتجزة = حساب خزينة                 | "مش حساب حقوق ملكية"                                                       |
+| الإقفال                                   | قيد JE-2025-…16 مرحّل، والسنة مقفولة                                       |
+| قيد بتاريخ يونيو 2025                     | 400                                                                        |
+| فتح فترة يناير 2025                       | 400 "السنة مقفولة"                                                         |
+| تقرير أرباح 2025                          | لسه بيقول ربح 700                                                          |
+| الأرصدة                                   | الإيراد 0، والإيجار 0، والأرباح المحتجزة 700 دائن                          |
+| تجميد لحد 2026-09-01 وقيد 08-15           | 400 "الدفاتر مجمّدة"                                                       |
+| مسودة 09-20، ثم تجميد لحد 09-21، ثم ترحيل | 400 (الفحص وقت الترحيل)                                                    |
 
 **مؤجّل:**
+
 - إقفال شهري بتصفير (ERPNext بيقفل سنوي).
 - صلاحية تتجاوز التجميد لدور معيّن (محتاج بند 5.3).
 
@@ -1796,16 +1926,17 @@ POST /api/v1/inventory/movements
 **قبل:** مفيش أي فحص إن الدفاتر متسقة مع بعض.
 
 **الدفترين اللي بيتقارنوا:**
+
 - **دفتر المستندات:** فواتير البيع، وفواتير الشراء، والمدفوعات، وإشعارات المدين والدائن، والتحويلات البنكية، والتحصيلات.
 - **دفتر الأستاذ العام** (القيود وسطورها).
 
 **الفحوصات:**
 
-| الفحص | معناه |
-|---|---|
-| `missing_gl_entry` | مستند مرحّل **ملوش قيد** في الأستاذ. بيتفحص بس للشركات اللي عندها إعدادات محاسبية، عشان شركة مش ماسكة دفاتر في النظام متطلعش كلها أخطاء |
-| `orphan_gl_entry` | قيد تابع لمستند مالي، و**المستند مش موجود أو مش مرحّل** |
-| `debit_credit_mismatch` | قيد مرحّل **المدين فيه مش بيساوي الدائن** |
+| الفحص                   | معناه                                                                                                                                   |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `missing_gl_entry`      | مستند مرحّل **ملوش قيد** في الأستاذ. بيتفحص بس للشركات اللي عندها إعدادات محاسبية، عشان شركة مش ماسكة دفاتر في النظام متطلعش كلها أخطاء |
+| `orphan_gl_entry`       | قيد تابع لمستند مالي، و**المستند مش موجود أو مش مرحّل**                                                                                 |
+| `debit_credit_mismatch` | قيد مرحّل **المدين فيه مش بيساوي الدائن**                                                                                               |
 
 - الربط بين المستند وقيده بيتم بمفتاح عدم التكرار اللي `finance` بيحطه أصلًا (مثلًا `sales-invoice-<id>`).
 - **السجل:** جدول `finance.ledger_health`، فيه سطر واحد مفتوح لكل مشكلة، ومعاه أول مرة اتلقت وآخر مرة اتشافت. ولو المشكلة اختفت في تشغيل بعدها، بتتقفل تلقائيًا (`resolved_at`).
@@ -1813,6 +1944,7 @@ POST /api/v1/inventory/movements
 - الأداة في موديول `finance`، لأنه بيعتمد على المحاسبة، فالقراءة ماشية في نفس اتجاه التبعية.
 
 **الـ API:**
+
 - `POST finance/ledger-health/run`
 - `GET finance/ledger-health` (المفتوح)، و`?all=true` (الكل)
 - Migration 0087.
@@ -1821,24 +1953,27 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة:**
 
-| الحالة | النتيجة |
-|---|---|
-| التشغيل بمتغيّر = 1 | "ledger health runs every 1 minute(s)" في السجل |
-| أول تشغيل | لقى **مشكلتين حقيقيتين** في قاعدة التجربة: قيد `JE-GRNI` بطرف واحد، وفاتورة `SI-T1` مرحّلة من غير قيد. الاتنين من بيانات اختبارات قديمة |
-| تزويد سطر قيد بجنيه | اتلقت: "JE-2025-…16 مدين 1001 ≠ دائن 1000" |
-| الرجوع للقيمة الأصلية وتشغيل تاني | المشكلة اتقفلت تلقائيًا (resolved) |
+| الحالة                            | النتيجة                                                                                                                                 |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| التشغيل بمتغيّر = 1               | "ledger health runs every 1 minute(s)" في السجل                                                                                         |
+| أول تشغيل                         | لقى **مشكلتين حقيقيتين** في قاعدة التجربة: قيد `JE-GRNI` بطرف واحد، وفاتورة `SI-T1` مرحّلة من غير قيد. الاتنين من بيانات اختبارات قديمة |
+| تزويد سطر قيد بجنيه               | اتلقت: "JE-2025-…16 مدين 1001 ≠ دائن 1000"                                                                                              |
+| الرجوع للقيمة الأصلية وتشغيل تاني | المشكلة اتقفلت تلقائيًا (resolved)                                                                                                      |
 
 **مؤجّل:**
+
 - مقارنة المبلغ نفسه بين المستند وقيده (محتاجة معرفة تفصيلية بشكل كل قيد).
 - إشعار للمحاسب لما مشكلة جديدة تظهر.
 
 ### بند 38 — حجز الدفعات المقدمة في حساب منفصل
 
 **قبل:**
+
 - أي تحصيل من عميل كان بيتقيّد على حساب العملاء (مدينون)، حتى لو مفيش فاتورة لسه، فرصيد العميل بيطلع **دائن** وده مضلّل.
 - أي دفعة لمورد من غير فاتورة كانت بتتقيّد على الموردين (دائنون).
 
 **اللي اتعمل** (زي ERPNext: "Book Advance Payments in Separate Party Account"):
+
 - **إعداد للشركة** (مقفول افتراضيًا): `bookAdvancesSeparately`، وحسابين: "دفعات مقدمة من العملاء" (خصوم متداولة)، و"دفعات مقدمة للموردين" (أصول متداولة). الحسابين بيتفحصوا عند الحفظ: نفس الشركة، وحساب فرعي، والنوع الصح.
 - **العميل:** التحصيل على أمر شغل بيتقسم تلقائيًا: الجزء اللي بتغطيه فواتير مرحّلة لسه مفتوحة بيروح للعملاء، و**الزيادة بتروح للدفعات المقدمة**. المقدار بيتسجّل على التحصيل (`advance_amount`).
 - **المورد:** الدفعة من غير فاتورة بتتسجّل كلها **دفعة مقدمة** (أصل).
@@ -1858,15 +1993,15 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة:**
 
-| الحالة | النتيجة |
-|---|---|
-| "دفعات مقدمة للموردين" = حساب نوعه دائنون | 400 "المتوقع current_asset" |
-| دفعة 1000 لمورد من غير فاتورة | القيد: **الدفعات المقدمة 1000 مدين** / الخزينة 1000 دائن |
-| فاتورة شراء 600 + ضريبة 84 من غير حساب ضريبة | 400 (قبل الإصلاح كان 500) |
-| تسوية 800 على فاتورة 684 | 400 "متبقي منها 684 بس" |
-| تسوية 684 | قيد: الموردين 684 مدين / الدفعات المقدمة 684 دائن. الموردين = 0، والمتبقي من الدفعة 316 |
-| تحصيل 500 من عميل قبل أي فاتورة | القيد: الخزينة 500 / **الدفعات المقدمة من العملاء 500** |
-| فاتورة بيع 300، ثم تسوية 300 | قيد: الدفعات المقدمة 300 مدين / العملاء 300 دائن. المتبقي 200 |
+| الحالة                                       | النتيجة                                                                                 |
+| -------------------------------------------- | --------------------------------------------------------------------------------------- |
+| "دفعات مقدمة للموردين" = حساب نوعه دائنون    | 400 "المتوقع current_asset"                                                             |
+| دفعة 1000 لمورد من غير فاتورة                | القيد: **الدفعات المقدمة 1000 مدين** / الخزينة 1000 دائن                                |
+| فاتورة شراء 600 + ضريبة 84 من غير حساب ضريبة | 400 (قبل الإصلاح كان 500)                                                               |
+| تسوية 800 على فاتورة 684                     | 400 "متبقي منها 684 بس"                                                                 |
+| تسوية 684                                    | قيد: الموردين 684 مدين / الدفعات المقدمة 684 دائن. الموردين = 0، والمتبقي من الدفعة 316 |
+| تحصيل 500 من عميل قبل أي فاتورة              | القيد: الخزينة 500 / **الدفعات المقدمة من العملاء 500**                                 |
+| فاتورة بيع 300، ثم تسوية 300                 | قيد: الدفعات المقدمة 300 مدين / العملاء 300 دائن. المتبقي 200                           |
 
 **ملاحظة فنية مهمة للمالك:** ترحيل المستندات في `finance` مش في transaction واحدة. لو القيد فشل بعد إنشاء المسودة، بتفضل مسودة بتمنع إعادة المحاولة. الحالة الأشهر (الضريبة) اتقفلت، بس الحل الجذري (transaction أو إعادة استخدام المسودة) محتاج قرار، لأنه بيلمس كل مسارات الترحيل.
 
@@ -1875,6 +2010,7 @@ POST /api/v1/inventory/movements
 **قبل:** دفعة المورد كانت بتتربط بفاتورة واحدة بالكتير (`purchaseInvoiceId`)، والتحصيل من العميل مربوط بأمر الشغل بس. ومفيش أقساط خالص.
 
 **اللي اتعمل:**
+
 - **أقساط الفاتورة** (جدول `finance.invoice_installment`): أي فاتورة بيع أو شراء ممكن تتقسم على تواريخ استحقاق، ومجموع الأقساط لازم يساوي إجمالي الفاتورة. التغيير ممنوع بعد ما يتدفع منها حاجة.
 - **المتبقي من الفاتورة وأقساطها** (`GET finance/{sales|purchase}-invoices/:id/outstanding`): المدفوع مباشرة والتخصيصات بتسدد الأقساط الأقدم استحقاقًا الأول، والتخصيص المحدد لقسط بيسدد القسط ده.
 - **تخصيص دفعة مورد أو تحصيل عميل على كذا فاتورة في طلب واحد:**
@@ -1892,19 +2028,20 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة** (فاتورة A بـ 400، وفاتورة B بـ 600 على قسطين 300 + 300، ودفعة 900):
 
-| الحالة | النتيجة |
-|---|---|
-| أقساط مجموعها 500 على فاتورة 600 | 400 |
-| تخصيص بمتبقي "قديم" (450 بدل 400) | **409** بالفاتورة اللي اتغيرت، و**صفر سطور اتكتبت** |
-| تخصيص 400 + 600 من دفعة 900 | 400 "متاح منها 900 بس" |
-| A = 400، وB = 500 | A خلصت. B: القسط 1 خلص، والقسط 2 متبقي منه 100. ودي 3 سطور بـ 3 قيود تحويل (الدفعة مقدمة) |
-| دفعة عادية 100 على القسط 2 | B خلصت، والسطر "مطابقة" من غير قيد |
+| الحالة                            | النتيجة                                                                                   |
+| --------------------------------- | ----------------------------------------------------------------------------------------- |
+| أقساط مجموعها 500 على فاتورة 600  | 400                                                                                       |
+| تخصيص بمتبقي "قديم" (450 بدل 400) | **409** بالفاتورة اللي اتغيرت، و**صفر سطور اتكتبت**                                       |
+| تخصيص 400 + 600 من دفعة 900       | 400 "متاح منها 900 بس"                                                                    |
+| A = 400، وB = 500                 | A خلصت. B: القسط 1 خلص، والقسط 2 متبقي منه 100. ودي 3 سطور بـ 3 قيود تحويل (الدفعة مقدمة) |
+| دفعة عادية 100 على القسط 2        | B خلصت، والسطر "مطابقة" من غير قيد                                                        |
 
 ### بند 40 — محرك تحقق الموازنة مدمج في كل قيد
 
 **قبل:** مفيش موازنات خالص.
 
 **اللي اتعمل:**
+
 - **جدول `accounting.budget`:** موازنة سنوية لكل حساب مصروفات أو تكاليف في سنة مالية. ممكن تكون على مستوى مركز تكلفة، أو على الشركة كلها.
   - **توزيع شهري** اختياري: 12 نسبة مجموعها 100.
   - **التصرف عند التجاوز:** إيقاف (`stop`) أو تحذير (`warn`) أو تجاهل (`ignore`).
@@ -1921,6 +2058,7 @@ POST /api/v1/inventory/movements
 - **تقرير الموازنة مقابل الفعلي** (`GET accounting/budgets/variance/:fiscalYearId`): الموازنة، والفعلي، والمتبقي، ونسبة الاستهلاك.
 
 **الـ API:**
+
 - `PUT accounting/budgets`
 - `GET accounting/budgets`
 - `GET accounting/budgets/variance/:fiscalYearId`
@@ -1930,13 +2068,13 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة** (موازنة إيجار 1000 للسنة):
 
-| الحالة | النتيجة |
-|---|---|
-| موازنة على حساب إيراد | 400 |
-| إيجار 800 | اترحّل |
-| 300 زيادة، والتصرف "إيقاف" | 400 "هيعدّي موازنة السنة بمقدار 100"، ومفيش مسودة اتسابت |
-| نفس الـ 300، والتصرف "تحذير" | اترحّل، ومعاه التحذير |
-| الموازنة مقابل الفعلي | 1000 / 1100 / −100 / 110% |
+| الحالة                                         | النتيجة                                                       |
+| ---------------------------------------------- | ------------------------------------------------------------- |
+| موازنة على حساب إيراد                          | 400                                                           |
+| إيجار 800                                      | اترحّل                                                        |
+| 300 زيادة، والتصرف "إيقاف"                     | 400 "هيعدّي موازنة السنة بمقدار 100"، ومفيش مسودة اتسابت      |
+| نفس الـ 300، والتصرف "تحذير"                   | اترحّل، ومعاه التحذير                                         |
+| الموازنة مقابل الفعلي                          | 1000 / 1100 / −100 / 110%                                     |
 | 12000 في السنة موزعة بالتساوي، و2500 في فبراير | 400 "هيعدّي الموازنة المتراكمة لحد الشهر 2 (2000) بمقدار 500" |
 
 **مؤجّل:** فحص الموازنة على طلبات الشراء وأوامر الشراء قبل ما تبقى قيد (مفيش أوامر شراء في النظام).
@@ -1945,15 +2083,16 @@ POST /api/v1/inventory/movements
 
 **الـ 5 أجزاء:**
 
-| الجزء | الحالة |
-|---|---|
-| منع القيد على حساب أب (تجميعي) | **موجود بالفعل** (`isLeaf` في إنشاء القيد) |
-| مركز تكلفة إجباري لحسابات الإيرادات والمصروفات | جديد |
-| اتجاه الرصيد الطبيعي | جديد |
-| تجميد حساب واحد | جديد |
-| أبعاد محاسبية مخصصة | جديد |
+| الجزء                                          | الحالة                                     |
+| ---------------------------------------------- | ------------------------------------------ |
+| منع القيد على حساب أب (تجميعي)                 | **موجود بالفعل** (`isLeaf` في إنشاء القيد) |
+| مركز تكلفة إجباري لحسابات الإيرادات والمصروفات | جديد                                       |
+| اتجاه الرصيد الطبيعي                           | جديد                                       |
+| تجميد حساب واحد                                | جديد                                       |
+| أبعاد محاسبية مخصصة                            | جديد                                       |
 
 **التفاصيل:**
+
 - **مركز التكلفة:**
   - أي سطر على حساب إيرادات أو تكاليف أو مصروفات لازم يبقى معاه مركز تكلفة.
   - لو مش موجود، بيتملّى تلقائيًا من **مركز التكلفة الافتراضي للشركة** (إعداد جديد `defaultCostCenterId`). ولو مفيش افتراضي، القيد اليدوي بيترفض، والقيد التلقائي بيعدّي عشان متكسرش دورة شغالة.
@@ -1967,6 +2106,7 @@ POST /api/v1/inventory/movements
 - كل الفحوصات بتحصل **قبل كتابة أي حاجة**، وده في ملف جديد `account-controls.service.ts`، والإضافة في إنشاء وترحيل القيد سطرين بس.
 
 **الـ API:**
+
 - `PATCH accounting/accounts/:id/controls`
 - `GET/POST accounting/dimensions`
 - `POST accounting/dimensions/:id/values`
@@ -1978,18 +2118,18 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة:**
 
-| الحالة | النتيجة |
-|---|---|
-| قيد مصروف من غير مركز تكلفة ومفيش افتراضي | 400 "لازم مركز تكلفة" |
-| مركز تكلفة "مجموعة" | 400 |
-| بمركز تكلفة | نجح |
-| تحديد افتراضي، والقيد من غير مركز | نجح، واتملّى تلقائيًا |
-| فرض "مدين" على خزينة رصيدها −1800 | 400 "عكس الاتجاه" |
-| خزينة فرعية (مدين): +100، ثم −150 | 400 "بعد القيد هيبقى −50" |
-| نفس الخزينة: −100 | نجح (الرصيد صفر) |
-| تجميد حساب المصروف، ثم قيد عليه | 400 "مجمّد" |
-| بُعد "المشروع" إجباري، وقيد من غيره | 400 |
-| قيد بالبُعد | نجح، والتقرير: P1 / EXP… / 25 |
+| الحالة                                    | النتيجة                       |
+| ----------------------------------------- | ----------------------------- |
+| قيد مصروف من غير مركز تكلفة ومفيش افتراضي | 400 "لازم مركز تكلفة"         |
+| مركز تكلفة "مجموعة"                       | 400                           |
+| بمركز تكلفة                               | نجح                           |
+| تحديد افتراضي، والقيد من غير مركز         | نجح، واتملّى تلقائيًا         |
+| فرض "مدين" على خزينة رصيدها −1800         | 400 "عكس الاتجاه"             |
+| خزينة فرعية (مدين): +100، ثم −150         | 400 "بعد القيد هيبقى −50"     |
+| نفس الخزينة: −100                         | نجح (الرصيد صفر)              |
+| تجميد حساب المصروف، ثم قيد عليه           | 400 "مجمّد"                   |
+| بُعد "المشروع" إجباري، وقيد من غيره       | 400                           |
+| قيد بالبُعد                               | نجح، والتقرير: P1 / EXP… / 25 |
 
 **تنبيه للمالك:** من دلوقتي، **القيد اليدوي على حساب مصروفات أو إيرادات محتاج مركز تكلفة**. الأسهل: حدد مركز تكلفة افتراضي للشركة.
 
@@ -1998,6 +2138,7 @@ POST /api/v1/inventory/movements
 **شرط الوثيقة:** "يُبنى كأساس للاعتمادات الجديدة فقط". **مفيش أي اعتماد شغال اتعدّل أو اتنقل عليه.**
 
 **اللي اتعمل (موديول جديد `workflow` بـ schema خاص بيه):**
+
 - **تعريف سير العمل:**
   - الحالات: واحدة ابتدائية، وحالة نهائية أو أكتر.
   - الانتقالات: من حالة لحالة بإجراء اسمه (مثلًا "اعتماد")، و**الأدوار المسموح لها**، و**شرط** على بيانات المستند.
@@ -2018,6 +2159,7 @@ POST /api/v1/inventory/movements
 - **"إيه اللي أقدر أعمله دلوقتي؟":** بيرجع لكل إجراء مسموح ولا لأ، والسبب بالعربي.
 
 **الـ API:**
+
 - `GET/POST workflow/definitions`
 - `POST workflow/instances` (ربط مستند)
 - `GET workflow/instances?documentType=&documentId=`
@@ -2029,18 +2171,19 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة** (اعتماد طلب شراء: فوق 10,000 محتاج "مدير"، وتحتها اعتماد تلقائي):
 
-| الحالة | النتيجة |
-|---|---|
-| طلب بـ 15,000 ← تقديم | "مستني الاعتماد" |
-| الإجراءات المتاحة من غير دخول | كلها ممنوعة، وكل واحد بسببه |
-| اعتماد تلقائي على 15,000 | 400 "الشرط مش متحقق" |
-| اعتماد من غير دخول | **403** "محتاج دور مدير" |
-| دخول بمستخدم دوره مدير ← اعتماد بتعليق | "معتمد" (نهائي)، والسجل فيه المستخدم والتعليق |
-| أي إجراء بعد الحالة النهائية | 400 |
-| طلب 5,000 ← اعتماد تلقائي | نجح |
-| طلب 5,000، والبيانات وقت الاعتماد بقت 12,000 | 400 (الشرط اتقيّم على البيانات الجديدة) |
+| الحالة                                       | النتيجة                                       |
+| -------------------------------------------- | --------------------------------------------- |
+| طلب بـ 15,000 ← تقديم                        | "مستني الاعتماد"                              |
+| الإجراءات المتاحة من غير دخول                | كلها ممنوعة، وكل واحد بسببه                   |
+| اعتماد تلقائي على 15,000                     | 400 "الشرط مش متحقق"                          |
+| اعتماد من غير دخول                           | **403** "محتاج دور مدير"                      |
+| دخول بمستخدم دوره مدير ← اعتماد بتعليق       | "معتمد" (نهائي)، والسجل فيه المستخدم والتعليق |
+| أي إجراء بعد الحالة النهائية                 | 400                                           |
+| طلب 5,000 ← اعتماد تلقائي                    | نجح                                           |
+| طلب 5,000، والبيانات وقت الاعتماد بقت 12,000 | 400 (الشرط اتقيّم على البيانات الجديدة)       |
 
 **مؤجّل:**
+
 - ربط مستندات حقيقية بالمحرك (قرار المالك لكل مستند).
 - إشعارات عند الانتقال (بند 50).
 - شاشة ويب لتصميم سير العمل.
@@ -2050,6 +2193,7 @@ POST /api/v1/inventory/movements
 **قبل:** مكانش فيه دعم فني.
 
 **اللي اتعمل (موديول جديد `support` بـ schema خاص بيه):**
+
 - **قوائم إجازات** (تواريخ محلية).
 - **اتفاقيات مستوى خدمة (SLA):**
   - ساعات عمل لكل يوم في الأسبوع بتوقيت المنطقة (القاهرة افتراضيًا، والتوقيت الصيفي محسوب تلقائيًا).
@@ -2072,6 +2216,7 @@ POST /api/v1/inventory/movements
 - **تقرير الالتزام بالـ SLA** لكل أولوية.
 
 **الـ API** (كلها تحت `support/`):
+
 - `holiday-lists`
 - `slas`
 - `tickets`، و`tickets/:id/comments`، و`/status`، و`/split`
@@ -2083,19 +2228,20 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة** (عمل الأحد–الخميس 9–5 بتوقيت القاهرة، والأحد 27/9 إجازة، وأولوية عالية: رد 60 دقيقة وحل 480 دقيقة):
 
-| الحالة | النتيجة |
-|---|---|
-| SLA وقت الرد فيها أكبر من وقت الحل | 400 |
-| تذكرة يوم الخميس 11:13 | الرد لحد **الخميس 12:13**، والحل لحد **الاتنين 11:13** (الجمعة والسبت عطلة، والأحد إجازة) |
-| رد الدعم | "اتردّ عليها"، والرد اتعمل في الميعاد |
-| رد العميل | "مفتوحة" |
-| إيقاف ساعتين ورجوع | موعد الحل اتأخر ساعتين بالظبط (120 دقيقة) |
-| تقسيم تعليق الطابعة | تذكرة TKT-…02 مربوطة بالأصلية، والتعليق اتنقل |
-| سكوت العميل 8 أيام، ثم الفحص | **اتقفلت تلقائيًا** "مفيش رد من العميل 7 يوم" |
-| تذكرة فات ميعاد ردها | اتعلّمت "فشل" |
-| التقرير | 1 في الميعاد، و1 فشل |
+| الحالة                             | النتيجة                                                                                   |
+| ---------------------------------- | ----------------------------------------------------------------------------------------- |
+| SLA وقت الرد فيها أكبر من وقت الحل | 400                                                                                       |
+| تذكرة يوم الخميس 11:13             | الرد لحد **الخميس 12:13**، والحل لحد **الاتنين 11:13** (الجمعة والسبت عطلة، والأحد إجازة) |
+| رد الدعم                           | "اتردّ عليها"، والرد اتعمل في الميعاد                                                     |
+| رد العميل                          | "مفتوحة"                                                                                  |
+| إيقاف ساعتين ورجوع                 | موعد الحل اتأخر ساعتين بالظبط (120 دقيقة)                                                 |
+| تقسيم تعليق الطابعة                | تذكرة TKT-…02 مربوطة بالأصلية، والتعليق اتنقل                                             |
+| سكوت العميل 8 أيام، ثم الفحص       | **اتقفلت تلقائيًا** "مفيش رد من العميل 7 يوم"                                             |
+| تذكرة فات ميعاد ردها               | اتعلّمت "فشل"                                                                             |
+| التقرير                            | 1 في الميعاد، و1 فشل                                                                      |
 
 **مؤجّل:**
+
 - ربط التذاكر بالإيميل.
 - التوزيع التلقائي على الموظفين.
 - شاشة ويب.
@@ -2105,16 +2251,17 @@ POST /api/v1/inventory/movements
 **قبل:** مكانش فيه مشاريع.
 
 **اللي اتعمل (موديول جديد `projects`):**
+
 - **المشروع:** الكود، والاسم، والشركة، والعميل (بيتفحص)، والتواريخ، وقيمة العقد، والتكلفة التقديرية، والحالة.
 - **المهام:** الحالة، والتقدم (0–100)، والوزن، وتاريخ الانتهاء المتوقع.
 - **نسبة الإنجاز بـ 4 طرق** (زي ERPNext)، والمهام الملغية مبتتحسبش:
 
-| الطريقة | الحساب |
-|---|---|
-| يدوي | رقم بيدخّله المستخدم |
-| اكتمال المهام | اللي خلص ÷ كل المهام |
-| تقدم المهام | متوسط تقدم المهام |
-| وزن المهام | التقدم مضروب في وزن كل مهمة |
+| الطريقة       | الحساب                      |
+| ------------- | --------------------------- |
+| يدوي          | رقم بيدخّله المستخدم        |
+| اكتمال المهام | اللي خلص ÷ كل المهام        |
+| تقدم المهام   | متوسط تقدم المهام           |
+| وزن المهام    | التقدم مضروب في وزن كل مهمة |
 
 - **ربحية مستقلة لكل مشروع:**
   - أي مشروع جديد بياخد **قيمة تلقائية في بُعد محاسبي "المشروع"** (بند 41) للشركة.
@@ -2128,6 +2275,7 @@ POST /api/v1/inventory/movements
   - **مطلوب من المالك:** `SMTP_URL` (مثلًا `smtps://user:pass@smtp.gmail.com:465`) و`SMTP_FROM`. من غيرهم، الإيميل بيفضل في الصادر بحالة "مفيش إعدادات".
 
 **الـ API** (تحت `projects/`):
+
 - `projects` (قائمة وإنشاء)، و`:id` (عرض وتعديل)
 - `:id/tasks`، و`tasks/:taskId`
 - `:id/status-report`
@@ -2139,16 +2287,17 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة** (مشروع "تجهيز مستشفى"، والمهام: توريد (وزن 5، خلص)، وتركيب (وزن 3، 50%، متأخر)، وتدريب (وزن 2)):
 
-| الحالة | النتيجة |
-|---|---|
-| إيميل غلط | 400 |
-| وزن المهام / اكتمال المهام / تقدم المهام | **65% / 33.33% / 50%** |
-| قيد إيراد 5000 وتكلفة 2000 على المشروع | الربح 3000، والهامش 60%، والتكاليف 50% من التقدير |
-| تقرير الحالة (بسيرفر SMTP تجريبي محلي) | **اتبعت فعلًا**، ووصل للسيرفر بالعربي، وفيه "مهام متأخرة: التركيب" |
-| نفس التقرير من غير `SMTP_URL` | اتسجّل "مفيش إعدادات" |
-| التقارير المستحقة بعد إرسال حالًا | مفيش (الأسبوعي لسه مجاش ميعاده) |
+| الحالة                                   | النتيجة                                                            |
+| ---------------------------------------- | ------------------------------------------------------------------ |
+| إيميل غلط                                | 400                                                                |
+| وزن المهام / اكتمال المهام / تقدم المهام | **65% / 33.33% / 50%**                                             |
+| قيد إيراد 5000 وتكلفة 2000 على المشروع   | الربح 3000، والهامش 60%، والتكاليف 50% من التقدير                  |
+| تقرير الحالة (بسيرفر SMTP تجريبي محلي)   | **اتبعت فعلًا**، ووصل للسيرفر بالعربي، وفيه "مهام متأخرة: التركيب" |
+| نفس التقرير من غير `SMTP_URL`            | اتسجّل "مفيش إعدادات"                                              |
+| التقارير المستحقة بعد إرسال حالًا        | مفيش (الأسبوعي لسه مجاش ميعاده)                                    |
 
 **مؤجّل:**
+
 - الجدول الزمني (Gantt) واعتمادية المهام على بعض.
 - تسجيل ساعات العمل (Timesheet).
 - شاشة ويب.
@@ -2156,11 +2305,13 @@ POST /api/v1/inventory/movements
 ### بند 45 — دورة تصنيع بالباطن كاملة
 
 **اللي لقيته (موجود بالفعل، في موديول `production_ops`، وده جزء من التصنيع):**
+
 - أمر تصنيع بالباطن (`subcontracting_order`) فيه المورد، وحساب الخدمة، والأصناف بتكلفة الخامة وسعر الخدمة، والتكلفة الجديدة للوحدة.
 - **ترحيل الأمر** بيعمل قيد رسملة المصنعية على "إنتاج تحت التشغيل"، و**بيصرف الخامات** من مخزن المقاول.
 - **إرسال الخامات للمقاول** ممكن من غير أي تعديل، بالتحويل بين المخازن (`POST inventory/transfers` من بند 3).
 
 **الناقص عشان الدورة تكمل:**
+
 - استلام المنتج التام من المقاول واستهلاك الخامات تلقائيًا بنسبة المستلم.
 - ربط فاتورة المقاول بالأمر.
 
@@ -2171,6 +2322,7 @@ POST /api/v1/inventory/movements
 **اللي كان موجود:** أصل ثابت بسيط جوه موديول المحاسبة (`accounting.fixed_asset`): قسط ثابت شهري بس، من غير أصل تحت التنفيذ ولا جدول إهلاك. ولأن المحاسبة مسموح لمسها في البنود 31–41 بس، **الأصل القديم متلمسش**، والنظام الكامل اتبنى في **موديول جديد `assets`**. الموديول الجديد بيرحّل قيوده عن طريق خدمة المحاسبة العامة، زي ما `finance` بيعمل، **من غير أي تعديل في كود المحاسبة**. **توصية للمالك:** نقل الأصول القديمة للنظام الجديد وإلغاء القديم.
 
 **اللي اتعمل:**
+
 - **فئات الأصول:** 4 حسابات (الأصل، ومجمع الإهلاك، ومصروف الإهلاك، والأصول تحت التنفيذ). بتتفحص: نفس الشركة، وحساب فرعي، ومش متكررة. ومعاها الطريقة والمدة والتكرار الافتراضيين.
 - **أصل تحت التنفيذ (CWIP):**
   - كل تكلفة بتتسجّل بقيد (من الأصول تحت التنفيذ إلى الحساب المقابل).
@@ -2178,21 +2330,22 @@ POST /api/v1/inventory/movements
   - الأصل تحت التنفيذ مينفعش يتحط في الاستخدام من غير رسملة.
 - **4 طرق إهلاك** (دالة صافية):
 
-| الطريقة | الحساب |
-|---|---|
-| قسط ثابت | أقساط متساوية |
-| القسط المتناقص المضاعف | 2 ÷ عدد الأقساط من القيمة الدفترية |
-| القيمة المتناقصة | نسبة سنوية، ومحسوبة لكل فترة لو ربع سنوي مثلًا |
-| يدوي | مبالغ بتدخلها أنت، ولازم مجموعها يساوي القيمة القابلة للإهلاك |
+| الطريقة                | الحساب                                                        |
+| ---------------------- | ------------------------------------------------------------- |
+| قسط ثابت               | أقساط متساوية                                                 |
+| القسط المتناقص المضاعف | 2 ÷ عدد الأقساط من القيمة الدفترية                            |
+| القيمة المتناقصة       | نسبة سنوية، ومحسوبة لكل فترة لو ربع سنوي مثلًا                |
+| يدوي                   | مبالغ بتدخلها أنت، ولازم مجموعها يساوي القيمة القابلة للإهلاك |
 
-  - كل الطرق **بتقف عند قيمة الخردة بالظبط**، وآخر قسط بيمتص فروق التقريب.
-  - التكرار: شهري، أو ربع سنوي، أو نصف سنوي، أو سنوي، وتاريخ القسط آخر يوم في الشهر.
+- كل الطرق **بتقف عند قيمة الخردة بالظبط**، وآخر قسط بيمتص فروق التقريب.
+- التكرار: شهري، أو ربع سنوي، أو نصف سنوي، أو سنوي، وتاريخ القسط آخر يوم في الشهر.
 - **جدول إهلاك منفصل** (`depreciation_schedule`): كل قسط بتاريخه ومبلغه والمجمّع، وقيده لما يترحّل.
 - **إعادة حساب تلقائية:** عند **تعديل قيمة الأصل** (اضمحلال أو إعادة تقييم، بقيد على حساب الفرق)، الأقساط المرحّلة بتفضل زي ما هي، **والباقي بيتبني من جديد** من القيمة الدفترية الجديدة على الفترات الباقية.
 - **ترحيل الأقساط المستحقة** لحد تاريخ: قيد لكل قسط (بيتسجّل تلقائيًا "قيد إهلاك"، بند 34). ولما الأقساط تخلص، الأصل بيبقى "مُهلك بالكامل".
 - سجل لكل أحداث القيمة: تكاليف تحت التنفيذ، والرسملة، والتعديلات.
 
 **الـ API** (تحت `assets/`):
+
 - `categories`
 - `assets` (قائمة وإنشاء)، و`:id`
 - `:id/cwip-costs`، و`:id/capitalise`، و`:id/submit`، و`:id/adjust-value`
@@ -2203,17 +2356,18 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة** (خط إنتاج تحت التنفيذ، 12 قسط شهري):
 
-| الحالة | النتيجة |
-|---|---|
-| تكلفتين 50,000 + 10,000 | تحت التنفيذ: 60,000 |
-| وضعه في الاستخدام من غير رسملة | 400 |
-| الرسملة 15/1 | في الاستخدام، و12 قسط × 5,000 من 31/1 لـ 31/12 |
-| ترحيل المستحق لحد 30/6 | 6 أقساط = 30,000 |
-| اضمحلال لقيمة 20,000 | قيد 10,000 خسارة، و**الـ 6 أقساط الباقية اتحسبت من جديد: 3,333.33** وبتنتهي بمجمّع 50,000 |
-| الأرصدة | تحت التنفيذ 0، والأصل 50,000، والمجمّع 30,000 دائن، والاضمحلال 10,000 |
-| سيارة 12,000 (خردة 2,000) بالمتناقص المضاعف على 5 سنين | 4,800، ثم 2,880، ثم 1,728، ثم 592، ثم 0، يعني بتقف عند 2,000 بالظبط |
+| الحالة                                                 | النتيجة                                                                                   |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| تكلفتين 50,000 + 10,000                                | تحت التنفيذ: 60,000                                                                       |
+| وضعه في الاستخدام من غير رسملة                         | 400                                                                                       |
+| الرسملة 15/1                                           | في الاستخدام، و12 قسط × 5,000 من 31/1 لـ 31/12                                            |
+| ترحيل المستحق لحد 30/6                                 | 6 أقساط = 30,000                                                                          |
+| اضمحلال لقيمة 20,000                                   | قيد 10,000 خسارة، و**الـ 6 أقساط الباقية اتحسبت من جديد: 3,333.33** وبتنتهي بمجمّع 50,000 |
+| الأرصدة                                                | تحت التنفيذ 0، والأصل 50,000، والمجمّع 30,000 دائن، والاضمحلال 10,000                     |
+| سيارة 12,000 (خردة 2,000) بالمتناقص المضاعف على 5 سنين | 4,800، ثم 2,880، ثم 1,728، ثم 592، ثم 0، يعني بتقف عند 2,000 بالظبط                       |
 
 **مؤجّل:**
+
 - قسط أول جزئي حسب أيام الاستخدام.
 - بيع أو استبعاد الأصل بقيد أرباح وخسائر.
 - شاشة ويب.
@@ -2223,6 +2377,7 @@ POST /api/v1/inventory/movements
 **قبل:** مفيش نظام طباعة في السيرفر. كل شاشة ويب بتطبع لوحدها بطريقة المتصفح.
 
 **اللي اتعمل (موديول جديد `printing`):**
+
 - **الترويسة منفصلة عن القالب** (`letterhead`): رأس وتذييل لكل شركة، وواحدة افتراضية.
 - **قوالب متعددة لكل نوع مستند** (`print_format`)، وقالب افتراضي، ومعاه CSS خاص بيه، وترويسة معيّنة (اختياري).
 - **الترويسة بتتحدد كده:** المطلوبة في الطلب (أو "من غير ترويسة")، وإلا ترويسة القالب، وإلا الافتراضية للشركة.
@@ -2237,6 +2392,7 @@ POST /api/v1/inventory/movements
 - **سجل طباعة** (`print_log`): مين طبع إيه وإمتى، وبأنهي قالب.
 
 **الـ API:**
+
 - `GET/POST printing/letterheads`
 - `GET/POST printing/formats`
 - `POST printing/render` (بيرجع `text/html`)
@@ -2246,18 +2402,19 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة:**
 
-| الحالة | النتيجة |
-|---|---|
-| قالب ناقصه `{{/each}}` | 400 |
-| طباعة فاتورة مرحّلة | صفحة HTML فيها الترويسة، والكود ITM-1، و"صاج مجلفن"، والتواريخ والمبالغ متنسّقة (**اتصوّرت بمتصفح**) |
-| طباعة مسودة | 400 "رحّله الأول" |
-| طباعة ملغي | 400 |
-| `<script>` في البيانات | اتعرض كنص آمن |
-| سجل الطباعة | اتسجّل |
+| الحالة                 | النتيجة                                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| قالب ناقصه `{{/each}}` | 400                                                                                                  |
+| طباعة فاتورة مرحّلة    | صفحة HTML فيها الترويسة، والكود ITM-1، و"صاج مجلفن"، والتواريخ والمبالغ متنسّقة (**اتصوّرت بمتصفح**) |
+| طباعة مسودة            | 400 "رحّله الأول"                                                                                    |
+| طباعة ملغي             | 400                                                                                                  |
+| `<script>` في البيانات | اتعرض كنص آمن                                                                                        |
+| سجل الطباعة            | اتسجّل                                                                                               |
 
 **ملاحظة:** الترويسة والقالب نفسهم HTML بيكتبه المسؤول (إعداد موثوق)، أما **بيانات المستند** فكلها بتتأمّن.
 
 **مؤجّل:**
+
 - تحويل لـ PDF في السيرفر (المتصفح بيطبع PDF من الصفحة).
 - الطباعة بالجملة (بند 50).
 
@@ -2266,6 +2423,7 @@ POST /api/v1/inventory/movements
 **الفكرة المعمارية:** كل حاجة خاصة بمصر في **موديول منفصل** (`modules/regional/egypt`، وschema اسمه `regional_eg`). الطبقة دي **بتقرا** الفواتير والعملاء والأصناف بالـ UUID، و**عمرها ما بتعدّلهم**. يعني `finance` مفيهوش أي كود مصري، ولو اتضافت دولة تانية بعدين بيبقى ليها موديولها.
 
 **اللي اتعمل:**
+
 - **بيانات الشركة المُصدِرة:** رقم التسجيل الضريبي (9 أرقام)، والاسم، وكود النشاط (4 أرقام)، وعنوان الفرع، ونسخة المستند (0.9 للتجربة، 1.0 للإنتاج).
 - **ملف ضريبي للعميل:** شركة (B)، أو فرد (P)، أو أجنبي (F)، والرقم الضريبي أو القومي، والعنوان.
 - **ربط الصنف بكود EGS/GS1**، ووحدة القياس، ونوع الضريبة الفرعي (V009 افتراضيًا).
@@ -2284,11 +2442,13 @@ POST /api/v1/inventory/movements
 - **الإرسال:** تسجيل دخول لخدمة الهوية، ثم إرسال `documentsubmissions`، ورقم الإرسال والرد بيتسجّلوا.
 
 **مطلوب من المالك للتشغيل الحقيقي:**
+
 1. بيانات الربط من بوابة مصلحة الضرائب: `ETA_ID_SRV_URL`، و`ETA_API_URL`، و`ETA_CLIENT_ID`، و`ETA_CLIENT_SECRET`.
 2. أداة التوقيع (فلاشة + برنامج التوقيع) لنسخة 1.0.
 3. أكواد EGS/GS1 المسجّلة للأصناف.
 
 **الـ API** (تحت `regional/eg/`):
+
 - `issuer`
 - `customers/:id`
 - `items/:id`
@@ -2300,18 +2460,19 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة** (بسيرفر وهمي محلي بيقلّد واجهة المصلحة):
 
-| الحالة | النتيجة |
-|---|---|
-| رقم تسجيل غلط | 400 |
-| تجهيز فاتورة صنفها ملوش كود | "مسودة" ومعاها المشكلة بالعربي |
-| إضافة الكود والملف الضريبي للعميل | "جاهز"، والـ UUID اتحسب |
-| إرسال من غير بيانات ربط | 400 "مش متحددة" |
-| إرسال ببيانات الربط (نسخة 0.9) | **اتبعت**: الدخول بالتوكن، والمستند وصل بالرقم ونوع العميل B ورقمه والإجمالي وكود الصنف، ورقم الإرسال SUB-FAKE-1 |
-| إرسال تاني | 400 "اتبعتت بالفعل" |
-| نسخة 1.0 من غير توقيع | 400 "لازم تتوقّع" |
-| إضافة توقيع | "موقّع" |
+| الحالة                            | النتيجة                                                                                                          |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| رقم تسجيل غلط                     | 400                                                                                                              |
+| تجهيز فاتورة صنفها ملوش كود       | "مسودة" ومعاها المشكلة بالعربي                                                                                   |
+| إضافة الكود والملف الضريبي للعميل | "جاهز"، والـ UUID اتحسب                                                                                          |
+| إرسال من غير بيانات ربط           | 400 "مش متحددة"                                                                                                  |
+| إرسال ببيانات الربط (نسخة 0.9)    | **اتبعت**: الدخول بالتوكن، والمستند وصل بالرقم ونوع العميل B ورقمه والإجمالي وكود الصنف، ورقم الإرسال SUB-FAKE-1 |
+| إرسال تاني                        | 400 "اتبعتت بالفعل"                                                                                              |
+| نسخة 1.0 من غير توقيع             | 400 "لازم تتوقّع"                                                                                                |
+| إضافة توقيع                       | "موقّع"                                                                                                          |
 
 **مؤجّل:**
+
 - الاستعلام عن حالة المستند بعد الإرسال (valid/invalid).
 - الإشعارات الدائنة والمدينة.
 - الإيصال الإلكتروني (B2C).
@@ -2320,6 +2481,7 @@ POST /api/v1/inventory/movements
 ### بند 49 — تتبّع حركة الأصل + تأمين الأصل + أصل مُركّب
 
 **اللي اتعمل (إضافات على موديول `assets` من بند 46):**
+
 - **حركة الأصل:**
   - المكان الحالي والموظف اللي في عهدته (بيتفحص في HR: موجود ونشط).
   - 3 أنواع حركة: **نقل** (مكان و/أو عهدة)، و**تسليم** لموظف (لازم موظف)، و**استلام** من العهدة (لازم يكون في عهدة حد).
@@ -2336,28 +2498,30 @@ POST /api/v1/inventory/movements
 - Migration 0098.
 
 **الـ API:**
+
 - `POST assets/:id/move`، و`GET assets/:id/movements`
 - `POST assets/:id/insurance`، و`GET assets/insurance/alerts?withinDays=30`
 - `POST/GET assets/:id/components`
 
 **تجربة حيّة:**
 
-| الحالة | النتيجة |
-|---|---|
-| استلام أصل مش في عهدة حد | 400 |
-| نقل ← تسليم لموظف ← استلام | السجل فيه الـ 3 حركات بالترتيب |
-| حركة من غير تغيير | 400 |
-| وثيقة تاريخ نهايتها قبل بدايتها | 400 |
-| وثيقة بتنتهي بعد 20 يوم | ظهرت في "هتنتهي"، وخط الإنتاج ظهر في "من غير تأمين" |
-| أصل مركّب مش تحت التنفيذ | 400 |
-| الأصل مكوّن لنفسه | 400 |
+| الحالة                                                | النتيجة                                                     |
+| ----------------------------------------------------- | ----------------------------------------------------------- |
+| استلام أصل مش في عهدة حد                              | 400                                                         |
+| نقل ← تسليم لموظف ← استلام                            | السجل فيه الـ 3 حركات بالترتيب                              |
+| حركة من غير تغيير                                     | 400                                                         |
+| وثيقة تاريخ نهايتها قبل بدايتها                       | 400                                                         |
+| وثيقة بتنتهي بعد 20 يوم                               | ظهرت في "هتنتهي"، وخط الإنتاج ظهر في "من غير تأمين"         |
+| أصل مركّب مش تحت التنفيذ                              | 400                                                         |
+| الأصل مكوّن لنفسه                                     | 400                                                         |
 | غرفة عمليات = السيارة (12,000) + وحدتين مخزون (39.75) | الأصول تحت التنفيذ 12,039.75، وقيدين، والسيارة **"مدموجة"** |
-| ضم السيارة تاني | 400 "merged" |
-| رسملة غرفة العمليات | في الاستخدام بقيمة 12,039.75، و10 أقساط |
+| ضم السيارة تاني                                       | 400 "merged"                                                |
+| رسملة غرفة العمليات                                   | في الاستخدام بقيمة 12,039.75، و10 أقساط                     |
 
 ### بند 50 — طباعة بالجملة في الخلفية + طابعة شبكية + مهام تلقائية مع سير العمل
 
 **اللي اتعمل:**
+
 1. **طباعة بالجملة في الخلفية** (`printing.print_job`):
    - طلب لحد 500 مستند **بيرجع فورًا (202)** برقم مهمة، والتجهيز بيحصل في الخلفية.
    - المسودة والملغي وغير الموجود **بيتسابوا** ومعاهم السبب بالعربي، والباقي بيتجمّع في ملف واحد، **كل مستند في صفحة**.
@@ -2373,6 +2537,7 @@ POST /api/v1/inventory/movements
    - الإيميل بيستخدم صندوق الصادر بتاع بند 44.
 
 **الـ API:**
+
 - `GET/POST printing/printers`
 - `POST printing/jobs` (202)، و`GET printing/jobs`، و`/:id`، و`/:id/output`
 - `GET/POST workflow/definitions/:id/tasks`
@@ -2383,55 +2548,56 @@ POST /api/v1/inventory/movements
 
 **تجربة حيّة** (بطابعة وهمية على 9101 ونظام خارجي وهمي):
 
-| الحالة | النتيجة |
-|---|---|
-| مهمة لـ 3 مستندات (مرحّلة، ومسودة، ومش موجودة) | رجعت فورًا "في الطابور"، وبعدين "خلصت": صفحة واحدة، و**المسودة والمش موجودة اتسابوا بالسبب** |
-| الطابعة | استلمت الفاتورة كنص: الترويسة، والرقم، والتواريخ، والصنف، والإجمالي |
-| مهمة لإجراء مش موجود | 400 |
-| Webhook بعنوان ftp | 400 |
-| اعتماد فاتورة عليها 3 مهام | الانتقال رجع فورًا "معتمد"، وبعدها: **Webhook 200** (البيانات وصلت كاملة)، و**إيميل** (اتسجّل، ومحتاج SMTP)، و**طباعة** (الفاتورة وصلت للطابعة) |
+| الحالة                                         | النتيجة                                                                                                                                         |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| مهمة لـ 3 مستندات (مرحّلة، ومسودة، ومش موجودة) | رجعت فورًا "في الطابور"، وبعدين "خلصت": صفحة واحدة، و**المسودة والمش موجودة اتسابوا بالسبب**                                                    |
+| الطابعة                                        | استلمت الفاتورة كنص: الترويسة، والرقم، والتواريخ، والصنف، والإجمالي                                                                             |
+| مهمة لإجراء مش موجود                           | 400                                                                                                                                             |
+| Webhook بعنوان ftp                             | 400                                                                                                                                             |
+| اعتماد فاتورة عليها 3 مهام                     | الانتقال رجع فورًا "معتمد"، وبعدها: **Webhook 200** (البيانات وصلت كاملة)، و**إيميل** (اتسجّل، ومحتاج SMTP)، و**طباعة** (الفاتورة وصلت للطابعة) |
 
 ## 3. قراراتي المسجّلة
 
-| التاريخ | البند | القرار |
-|---|---|---|
-| 2026-09-23 | 30 | تأجيل بند 30 والبدء ببند 1 |
-| 2026-09-23 | 1 | الخيار (ب): السماح بالتجاوز بخانة اختيارية مع سبب إجباري بيتسجّل في الملاحظة، لحد ما الصلاحيات تتوصّل في بند 5 |
-| 2026-09-23 | 2 | **تكلفة منفصلة لكل دفعة** |
-| 2026-09-23 | 2 | الخيار (ب): أي حركة لصنف متتبّع بالدفعة من غير رقم دفعة بتترفض، ومفيش اختيار تلقائي (FIFO) |
-| 2026-09-23 | 2 | تقسيم البند لخطوتين: 2أ (الصنف + تكلفة الدفعة) و2ب (السيريال) |
-| 2026-09-23 | 3 | ربط التصنيع بالأغراض الجديدة **اتأجّل**. المالك ماوافقش صراحة على تعديل ملفات التصنيع، فالافتراضي إنها متتلمسش |
-| 2026-09-23 | 5 | الموافقة على خطة المراحل الأربعة (5.0 ← 5.3)، وعلى مكتبة `@nestjs/jwt`، وإن التقييد يبدأ بالفرع والمخزن |
-| 2026-09-23 | 5.3 | التفعيل (`AUTH_ENFORCE=true`) **اتأجّل** لحد ما المالك يجرّب على جهازه |
-| 2026-09-23 | 6 | الرصيد الفعلي يتحسب من **دفتر الأستاذ** (ب)، والتخطّي **تحذير بس** (ب). ولأن المالك مجاوبش على سؤال لمس `finance`، الموديول ده متعدّلش |
-| 2026-09-23 | 7 | الموافقة على تصميم RFQ: 3 جداول في المبيعات، والرد بيبقى عرض سعر وارد، والاختيار بيعتمد عرض الفائز |
-| 2026-09-23 | 19 | إيقاف الفاتورة متسجّل في جدول لوحده (`purchase_invoice_hold`) بدل أعمدة على جدول الفاتورة، عشان أقل تدخل ممكن في `finance` |
-| 2026-09-23 | 18 | قيد منع تكرار رقم فاتورة المورد **على طول** (أشد من "في السنة المالية") اتساب زي ما هو. تخفيفه محتاج قرار المالك |
-| 2026-09-23 | 12 | مفيش أوامر شراء، فـ"أمر الشراء" هو **عرض المورد المعتمد**. النسب التلاتة: رد RFQ مقابل المطلوب، والاستلام مقابل الأمر، والفاتورة مقابل قيمة الاستلام. وكل النسب بتتضبط في الإعدادات، وأقرب عقدة في الشجرة هي اللي بتتطبق |
-| 2026-09-24 | 24 | موديول التخطيط (طلب المواد وخطة الإنتاج) اتعامل على إنه **جزء من التصنيع**، فمتلمسش. البند اتسجّل "موجود جزئيًا" |
-| 2026-09-24 | 25 | العميل الناتج من التحويل حالته **نشط** على طول، زي ERPNext. والتواصل اتسجّل كسجل نشاط على الشخص، مش كيان Contact مستقل (بند 26) |
-| 2026-09-24 | 26 | **متنفّذش**. الوثيقة طالبة سؤال المالك صراحة، واتكتب اقتراح في التقرير |
-| 2026-09-24 | 27 | إتمام الانتقاء هو اللي بيحرّك المخزون (صرف أو تحويل)، لأن موديول التسليم الحالي مبيعملش حركات مخزون |
-| 2026-09-24 | 31 | القيد المرحّل بيتصحّح **بقيد عكسي** مربوط بيه، مش بإلغاء ولا تعديل. وإلغاء المستندات المرحّلة فضل ممنوع زي ما هو، والدالة `reverseForSource` جاهزة لو المالك سمح بيه بعدين |
-| 2026-09-24 | 36 | ملفات الإقفال القديمة (محاكاة بأرقام ثابتة) **متلمستش**، والإقفال الحقيقي اتعمل في ملف جديد على مسار `accounting/year-end`. ومستني قرار المالك يلغي القديم |
-| 2026-09-23 | عام | **تفويض المالك: العمل المستمر من غير توقف**، وأي قرار ياخده Claude حسب فهمه للوثيقة. تفسيري: موديول `finance` مسموح فيه **إضافة فحوصات بس** للبنود اللي بتطلبها صراحة (8 و18 و19)، ومنطق القيود المحاسبية ميتلمسش إلا في البنود 31-41. والتصنيع ميتلمسش خالص |
+| التاريخ    | البند | القرار                                                                                                                                                                                                                                                       |
+| ---------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-09-23 | 30    | تأجيل بند 30 والبدء ببند 1                                                                                                                                                                                                                                   |
+| 2026-09-23 | 1     | الخيار (ب): السماح بالتجاوز بخانة اختيارية مع سبب إجباري بيتسجّل في الملاحظة، لحد ما الصلاحيات تتوصّل في بند 5                                                                                                                                               |
+| 2026-09-23 | 2     | **تكلفة منفصلة لكل دفعة**                                                                                                                                                                                                                                    |
+| 2026-09-23 | 2     | الخيار (ب): أي حركة لصنف متتبّع بالدفعة من غير رقم دفعة بتترفض، ومفيش اختيار تلقائي (FIFO)                                                                                                                                                                   |
+| 2026-09-23 | 2     | تقسيم البند لخطوتين: 2أ (الصنف + تكلفة الدفعة) و2ب (السيريال)                                                                                                                                                                                                |
+| 2026-09-23 | 3     | ربط التصنيع بالأغراض الجديدة **اتأجّل**. المالك ماوافقش صراحة على تعديل ملفات التصنيع، فالافتراضي إنها متتلمسش                                                                                                                                               |
+| 2026-09-23 | 5     | الموافقة على خطة المراحل الأربعة (5.0 ← 5.3)، وعلى مكتبة `@nestjs/jwt`، وإن التقييد يبدأ بالفرع والمخزن                                                                                                                                                      |
+| 2026-09-23 | 5.3   | التفعيل (`AUTH_ENFORCE=true`) **اتأجّل** لحد ما المالك يجرّب على جهازه                                                                                                                                                                                       |
+| 2026-09-23 | 6     | الرصيد الفعلي يتحسب من **دفتر الأستاذ** (ب)، والتخطّي **تحذير بس** (ب). ولأن المالك مجاوبش على سؤال لمس `finance`، الموديول ده متعدّلش                                                                                                                       |
+| 2026-09-23 | 7     | الموافقة على تصميم RFQ: 3 جداول في المبيعات، والرد بيبقى عرض سعر وارد، والاختيار بيعتمد عرض الفائز                                                                                                                                                           |
+| 2026-09-23 | 19    | إيقاف الفاتورة متسجّل في جدول لوحده (`purchase_invoice_hold`) بدل أعمدة على جدول الفاتورة، عشان أقل تدخل ممكن في `finance`                                                                                                                                   |
+| 2026-09-23 | 18    | قيد منع تكرار رقم فاتورة المورد **على طول** (أشد من "في السنة المالية") اتساب زي ما هو. تخفيفه محتاج قرار المالك                                                                                                                                             |
+| 2026-09-23 | 12    | مفيش أوامر شراء، فـ"أمر الشراء" هو **عرض المورد المعتمد**. النسب التلاتة: رد RFQ مقابل المطلوب، والاستلام مقابل الأمر، والفاتورة مقابل قيمة الاستلام. وكل النسب بتتضبط في الإعدادات، وأقرب عقدة في الشجرة هي اللي بتتطبق                                     |
+| 2026-09-24 | 24    | موديول التخطيط (طلب المواد وخطة الإنتاج) اتعامل على إنه **جزء من التصنيع**، فمتلمسش. البند اتسجّل "موجود جزئيًا"                                                                                                                                             |
+| 2026-09-24 | 25    | العميل الناتج من التحويل حالته **نشط** على طول، زي ERPNext. والتواصل اتسجّل كسجل نشاط على الشخص، مش كيان Contact مستقل (بند 26)                                                                                                                              |
+| 2026-09-24 | 26    | **متنفّذش**. الوثيقة طالبة سؤال المالك صراحة، واتكتب اقتراح في التقرير                                                                                                                                                                                       |
+| 2026-09-24 | 27    | إتمام الانتقاء هو اللي بيحرّك المخزون (صرف أو تحويل)، لأن موديول التسليم الحالي مبيعملش حركات مخزون                                                                                                                                                          |
+| 2026-09-24 | 31    | القيد المرحّل بيتصحّح **بقيد عكسي** مربوط بيه، مش بإلغاء ولا تعديل. وإلغاء المستندات المرحّلة فضل ممنوع زي ما هو، والدالة `reverseForSource` جاهزة لو المالك سمح بيه بعدين                                                                                   |
+| 2026-09-24 | 36    | ملفات الإقفال القديمة (محاكاة بأرقام ثابتة) **متلمستش**، والإقفال الحقيقي اتعمل في ملف جديد على مسار `accounting/year-end`. ومستني قرار المالك يلغي القديم                                                                                                   |
+| 2026-09-23 | عام   | **تفويض المالك: العمل المستمر من غير توقف**، وأي قرار ياخده Claude حسب فهمه للوثيقة. تفسيري: موديول `finance` مسموح فيه **إضافة فحوصات بس** للبنود اللي بتطلبها صراحة (8 و18 و19)، ومنطق القيود المحاسبية ميتلمسش إلا في البنود 31-41. والتصنيع ميتلمسش خالص |
 
 ## 4. حالة التحقق البصري لكل موديول
 
-| الموديول | الحالة |
-|---|---|
-| المخزون | اتكتب التقرير (`Motion-ERP-Inventory-Report.md`): **لسه محتاج تحقق بصري** |
-| العملاء والمبيعات والمشتريات | اتكتب التقرير (`Motion-ERP-CRM-Sales-Purchasing-Report.md`): **لسه محتاج تحقق بصري** |
-| الموارد البشرية | اتكتب التقرير (`Motion-ERP-HR-Report.md`): **لسه محتاج تحقق بصري** |
-| الجودة والدخول | اتكتب التقرير (`Motion-ERP-Quality-Auth-Report.md`): **لسه محتاج تحقق بصري** |
-| المحاسبة (31-41) | اتكتب التقرير (`Motion-ERP-Accounting-Report.md`): **لسه محتاج تحقق بصري** |
-| البنود 42-50 (الموديولات الجديدة) | اتكتب التقرير (`Motion-ERP-New-Modules-Report.md`): **لسه محتاج تحقق بصري** |
+| الموديول                          | الحالة                                                                               |
+| --------------------------------- | ------------------------------------------------------------------------------------ |
+| المخزون                           | اتكتب التقرير (`Motion-ERP-Inventory-Report.md`): **لسه محتاج تحقق بصري**            |
+| العملاء والمبيعات والمشتريات      | اتكتب التقرير (`Motion-ERP-CRM-Sales-Purchasing-Report.md`): **لسه محتاج تحقق بصري** |
+| الموارد البشرية                   | اتكتب التقرير (`Motion-ERP-HR-Report.md`): **لسه محتاج تحقق بصري**                   |
+| الجودة والدخول                    | اتكتب التقرير (`Motion-ERP-Quality-Auth-Report.md`): **لسه محتاج تحقق بصري**         |
+| المحاسبة (31-41)                  | اتكتب التقرير (`Motion-ERP-Accounting-Report.md`): **لسه محتاج تحقق بصري**           |
+| البنود 42-50 (الموديولات الجديدة) | اتكتب التقرير (`Motion-ERP-New-Modules-Report.md`): **لسه محتاج تحقق بصري**          |
 
 > الوصول لـ demo.erpnext.com متسألش عنه لأن المالك كان نايم، وهيتسأل في آخر رسالة.
 
 ## 5. التأكيد الختامي
 
 **الحصيلة:**
+
 - **اتنفّذ:** 1–4، و5.0–5.2، و6–23، و25، و27–29، و31–44، و46–50.
 - **موجود بالفعل (اتسدّت الفجوات بس):** 14، و15، و18، وجزء من 41 (منع الحساب الأب).
 - **مستني قرار المالك:**
@@ -2502,4 +2668,3 @@ dd7f30a feat(printing,workflow): background bulk printing, network printers and 
 ```
 
 (الـ commit الأخير ده بيضيف القسم ده نفسه.)
-

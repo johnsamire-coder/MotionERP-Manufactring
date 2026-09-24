@@ -1,6 +1,28 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseFilters } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  UseFilters,
+} from '@nestjs/common';
 import { Type } from 'class-transformer';
-import { IsArray, IsIn, IsInt, IsNumberString, IsOptional, IsString, IsUUID, Max, MaxLength, Min, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsIn,
+  IsInt,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { CrmExceptionFilter } from './crm.exception-filter';
 import { OpportunityService } from './opportunity.service';
 import type { OpportunityRecord } from './opportunity.types';
@@ -17,7 +39,11 @@ export class CreateOpportunityDto {
   @IsOptional() @IsNumberString() expectedAmount?: string;
   @IsOptional() @IsInt() @Min(0) @Max(100) probability?: number;
   @IsOptional() @IsString() expectedCloseDate?: string;
-  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => OpportunityItemDto) items?: OpportunityItemDto[];
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => OpportunityItemDto)
+  items?: OpportunityItemDto[];
 }
 export class MoveOpportunityDto {
   @IsIn(['open', 'qualified', 'lost']) stage!: 'open' | 'qualified' | 'lost';
@@ -30,7 +56,9 @@ export class OpportunityController {
   constructor(private readonly service: OpportunityService) {}
 
   @Get()
-  async list(@Query('customerId') customerId?: string): Promise<{ opportunities: OpportunityRecord[] }> {
+  async list(
+    @Query('customerId') customerId?: string,
+  ): Promise<{ opportunities: OpportunityRecord[] }> {
     return { opportunities: await this.service.list(customerId) };
   }
 
@@ -39,13 +67,18 @@ export class OpportunityController {
     return { opportunity: await this.service.get(id) };
   }
 
-  @Post() @HttpCode(201)
+  @Post()
+  @HttpCode(201)
   async create(@Body() dto: CreateOpportunityDto): Promise<{ opportunity: OpportunityRecord }> {
     return { opportunity: await this.service.create(dto) };
   }
 
-  @Post(':id/stage') @HttpCode(200)
-  async move(@Param('id', ParseUUIDPipe) id: string, @Body() dto: MoveOpportunityDto): Promise<{ opportunity: OpportunityRecord }> {
+  @Post(':id/stage')
+  @HttpCode(200)
+  async move(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: MoveOpportunityDto,
+  ): Promise<{ opportunity: OpportunityRecord }> {
     return { opportunity: await this.service.moveStage(id, dto.stage, dto.lostReason) };
   }
 }

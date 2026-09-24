@@ -138,26 +138,28 @@ describe('AccountingService — Financial Reports Engine (Trial Balance, P&L, Ba
         },
       ]),
 
-      getPartnerLedgerLines: jest.fn().mockImplementation(async (partyType: string, partyId: string) => [
-        {
-          id: 'line-1',
-          debitAmount: '11400.0000',
-          creditAmount: '0.0000',
-          description: 'فاتورة مبيعات رقم SINV-2026-000001',
-          entryDate: new Date('2026-09-10'),
-          journalEntryId: 'je-10',
-          entryNumber: 'JE-2026-0010',
-        },
-        {
-          id: 'line-2',
-          debitAmount: '0.0000',
-          creditAmount: '5000.0000',
-          description: 'سند تحصيل نقدي رقم COL-2026-000001',
-          entryDate: new Date('2026-09-15'),
-          journalEntryId: 'je-11',
-          entryNumber: 'JE-2026-0011',
-        },
-      ]),
+      getPartnerLedgerLines: jest
+        .fn()
+        .mockImplementation(async (_partyType: string, _partyId: string) => [
+          {
+            id: 'line-1',
+            debitAmount: '11400.0000',
+            creditAmount: '0.0000',
+            description: 'فاتورة مبيعات رقم SINV-2026-000001',
+            entryDate: new Date('2026-09-10'),
+            journalEntryId: 'je-10',
+            entryNumber: 'JE-2026-0010',
+          },
+          {
+            id: 'line-2',
+            debitAmount: '0.0000',
+            creditAmount: '5000.0000',
+            description: 'سند تحصيل نقدي رقم COL-2026-000001',
+            entryDate: new Date('2026-09-15'),
+            journalEntryId: 'je-11',
+            entryNumber: 'JE-2026-0011',
+          },
+        ]),
     } as unknown as AccountingRepository;
 
     accountingService = new AccountingService(accountingRepo);

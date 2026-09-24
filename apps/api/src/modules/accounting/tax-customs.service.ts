@@ -2,7 +2,13 @@
 // Motion ERP — Egyptian Tax Authority & Customs Service
 // Step 79 | Complete Service with Landed Cost Capitalization
 // ============================================================
-import { Injectable, BadRequestException, NotFoundException, Inject, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  Inject,
+  Optional,
+} from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
 import {
   taxSettlement,
@@ -23,16 +29,21 @@ import {
 } from './tax-customs.dto';
 import { Form41QuarterSummary } from './tax-customs.types';
 import { PostingEngineService } from './posting-engine.service';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { manualJournalPoster, type PostedJournal } from './manual-journal';
 
 @Injectable()
 export class TaxAndCustomsService {
   constructor(
-    @Inject('DRIZZLE') private readonly db: any,
+    @Inject('DRIZZLE') private readonly db: NodePgDatabase,
     @Optional() @Inject(PostingEngineService) private readonly postingEngine?: PostingEngineService,
   ) {}
 
   // ── 1. VAT Return Settlements ──────────────
-  async createTaxSettlement(dto: CreateTaxSettlementDto, userId: string): Promise<{ settlement: TaxSettlement; journalEntry: any }> {
+  async createTaxSettlement(
+    dto: CreateTaxSettlementDto,
+    userId: string,
+  ): Promise<{ settlement: TaxSettlement; journalEntry: PostedJournal }> {
     const netVat = dto.outputVatAmount - dto.inputVatAmount;
     const settlementNumber = `VAT-SETTLE-${dto.taxPeriod}-${Date.now().toString().slice(-4)}`;
 
@@ -67,12 +78,10 @@ export class TaxAndCustomsService {
       ],
     };
 
-    let journalResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      journalResult = await (this.postingEngine as any).createManualJournalEntry(journalPayload);
-    } else {
-      journalResult = { id: `mock-vat-journal-${Date.now()}`, ...journalPayload };
-    }
+    const poster = manualJournalPoster(this.postingEngine);
+    const journalResult: PostedJournal = poster
+      ? await poster.createManualJournalEntry(journalPayload)
+      : { id: `mock-vat-journal-${Date.now()}`, ...journalPayload };
 
     const [record] = await this.db
       .insert(taxSettlement)
@@ -93,10 +102,13 @@ export class TaxAndCustomsService {
       })
       .returning();
 
-    return { settlement: record, journalEntry: journalResult };
+    return { settlement: record!, journalEntry: journalResult };
   }
 
-  async payTaxSettlement(dto: SettleAndPayVatDto, userId: string): Promise<{ settlement: TaxSettlement; paymentJournal: any }> {
+  async payTaxSettlement(
+    dto: SettleAndPayVatDto,
+    userId: string,
+  ): Promise<{ settlement: TaxSettlement; paymentJournal: PostedJournal }> {
     const [settle] = await this.db
       .select()
       .from(taxSettlement)
@@ -133,12 +145,10 @@ export class TaxAndCustomsService {
       ],
     };
 
-    let paymentResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      paymentResult = await (this.postingEngine as any).createManualJournalEntry(paymentJournalPayload);
-    } else {
-      paymentResult = { id: `mock-vat-pay-${Date.now()}`, ...paymentJournalPayload };
-    }
+    const poster = manualJournalPoster(this.postingEngine);
+    const paymentResult: PostedJournal = poster
+      ? await poster.createManualJournalEntry(paymentJournalPayload)
+      : { id: `mock-vat-pay-${Date.now()}`, ...paymentJournalPayload };
 
     const [updated] = await this.db
       .update(taxSettlement)
@@ -151,14 +161,17 @@ export class TaxAndCustomsService {
       .where(eq(taxSettlement.id, dto.settlementId))
       .returning();
 
-    return { settlement: updated, paymentJournal: paymentResult };
+    return { settlement: updated!, paymentJournal: paymentResult };
   }
 
   async listTaxSettlements(query: QueryTaxSettlementsDto): Promise<TaxSettlement[]> {
     const conditions = [];
     if (query.companyId) conditions.push(eq(taxSettlement.companyId, query.companyId));
     if (query.taxPeriod) conditions.push(eq(taxSettlement.taxPeriod, query.taxPeriod));
-    if (query.status) conditions.push(eq(taxSettlement.status, query.status as any));
+    if (query.status)
+      conditions.push(
+        eq(taxSettlement.status, query.status as (typeof taxSettlement.$inferSelect)['status']),
+      );
 
     return this.db
       .select()
@@ -193,10 +206,14 @@ export class TaxAndCustomsService {
       })
       .returning();
 
-    return result;
+    return result!;
   }
 
-  async getForm41QuarterSummary(companyId: string, year: string, quarter: number): Promise<Form41QuarterSummary> {
+  async getForm41QuarterSummary(
+    companyId: string,
+    year: string,
+    quarter: number,
+  ): Promise<Form41QuarterSummary> {
     const entries = await this.db
       .select()
       .from(withholdingTaxEntry)
@@ -228,7 +245,7 @@ export class TaxAndCustomsService {
       }
     }
 
-    const uniqueSuppliers = new Set(entries.map((e: any) => e.partnerId)).size;
+    const uniqueSuppliers = new Set(entries.map((e) => e.partnerId)).size;
 
     return {
       quarter,
@@ -245,8 +262,20 @@ export class TaxAndCustomsService {
     const conditions = [];
     if (query.companyId) conditions.push(eq(withholdingTaxEntry.companyId, query.companyId));
     if (query.quarter) conditions.push(eq(withholdingTaxEntry.quarter, query.quarter));
-    if (query.direction) conditions.push(eq(withholdingTaxEntry.direction, query.direction as any));
-    if (query.status) conditions.push(eq(withholdingTaxEntry.status, query.status as any));
+    if (query.direction)
+      conditions.push(
+        eq(
+          withholdingTaxEntry.direction,
+          query.direction as (typeof withholdingTaxEntry.$inferSelect)['direction'],
+        ),
+      );
+    if (query.status)
+      conditions.push(
+        eq(
+          withholdingTaxEntry.status,
+          query.status as (typeof withholdingTaxEntry.$inferSelect)['status'],
+        ),
+      );
 
     return this.db
       .select()
@@ -255,7 +284,10 @@ export class TaxAndCustomsService {
   }
 
   // ── 3. Customs Declarations (46 K.M) ────────
-  async createCustomsDeclaration(dto: CreateCustomsDeclarationDto, userId: string): Promise<{ declaration: CustomsDeclaration; journalEntry: any }> {
+  async createCustomsDeclaration(
+    dto: CreateCustomsDeclarationDto,
+    userId: string,
+  ): Promise<{ declaration: CustomsDeclaration; journalEntry: PostedJournal }> {
     const cifEgp = dto.cifValueForeign * dto.exchangeRate;
     const devFee = dto.developmentFee || 0;
     const clearance = dto.clearanceExpenses || 0;
@@ -292,12 +324,10 @@ export class TaxAndCustomsService {
       ],
     };
 
-    let journalResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      journalResult = await (this.postingEngine as any).createManualJournalEntry(customsJournalPayload);
-    } else {
-      journalResult = { id: `mock-cust-journal-${Date.now()}`, ...customsJournalPayload };
-    }
+    const poster = manualJournalPoster(this.postingEngine);
+    const journalResult: PostedJournal = poster
+      ? await poster.createManualJournalEntry(customsJournalPayload)
+      : { id: `mock-cust-journal-${Date.now()}`, ...customsJournalPayload };
 
     const [record] = await this.db
       .insert(customsDeclaration)
@@ -325,10 +355,13 @@ export class TaxAndCustomsService {
       })
       .returning();
 
-    return { declaration: record, journalEntry: journalResult };
+    return { declaration: record!, journalEntry: journalResult };
   }
 
-  async capitalizeCustomsToInventory(dto: { declarationId: string; targetWarehouseId: string }, userId: string): Promise<CustomsDeclaration> {
+  async capitalizeCustomsToInventory(
+    dto: { declarationId: string; targetWarehouseId: string },
+    userId: string,
+  ): Promise<CustomsDeclaration> {
     const [decl] = await this.db
       .select()
       .from(customsDeclaration)
@@ -336,7 +369,10 @@ export class TaxAndCustomsService {
 
     if (!decl) throw new NotFoundException(`Customs declaration ${dto.declarationId} not found`);
 
-    const capitalizableDuty = parseFloat(decl.customsDutyAmount) + parseFloat(decl.developmentFee) + parseFloat(decl.clearanceExpenses);
+    const capitalizableDuty =
+      parseFloat(decl.customsDutyAmount) +
+      parseFloat(decl.developmentFee) +
+      parseFloat(decl.clearanceExpenses);
 
     const capitalizationJournal = {
       companyId: decl.companyId,
@@ -361,12 +397,10 @@ export class TaxAndCustomsService {
       ],
     };
 
-    let journalResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      journalResult = await (this.postingEngine as any).createManualJournalEntry(capitalizationJournal);
-    } else {
-      journalResult = { id: `mock-cap-journal-${Date.now()}`, ...capitalizationJournal };
-    }
+    const poster = manualJournalPoster(this.postingEngine);
+    const journalResult: PostedJournal = poster
+      ? await poster.createManualJournalEntry(capitalizationJournal)
+      : { id: `mock-cap-journal-${Date.now()}`, ...capitalizationJournal };
 
     const [updated] = await this.db
       .update(customsDeclaration)
@@ -379,14 +413,21 @@ export class TaxAndCustomsService {
       .where(eq(customsDeclaration.id, dto.declarationId))
       .returning();
 
-    return updated;
+    return updated!;
   }
 
   async listCustomsDeclarations(query: QueryCustomsDto): Promise<CustomsDeclaration[]> {
     const conditions = [];
     if (query.companyId) conditions.push(eq(customsDeclaration.companyId, query.companyId));
-    if (query.declarationNumber) conditions.push(eq(customsDeclaration.declarationNumber, query.declarationNumber));
-    if (query.status) conditions.push(eq(customsDeclaration.status, query.status as any));
+    if (query.declarationNumber)
+      conditions.push(eq(customsDeclaration.declarationNumber, query.declarationNumber));
+    if (query.status)
+      conditions.push(
+        eq(
+          customsDeclaration.status,
+          query.status as (typeof customsDeclaration.$inferSelect)['status'],
+        ),
+      );
 
     return this.db
       .select()

@@ -8,9 +8,12 @@ describe('Project percent complete — four methods (plan item 44)', () => {
     { status: 'cancelled', progress: 90, weight: 50 }, // ignored everywhere
   ];
   it('1. manual', () => expect(percentComplete('manual', tasks, 42.5)).toBe(42.5));
-  it('2. task completion = completed / live tasks', () => expect(percentComplete('task_completion', tasks, null)).toBe(33.33));
-  it('3. task progress = average progress', () => expect(percentComplete('task_progress', tasks, null)).toBe(50));
-  it('4. task weight = progress weighted', () => expect(percentComplete('task_weight', tasks, null)).toBe(65)); // (500 + 150 + 0) / 10
+  it('2. task completion = completed / live tasks', () =>
+    expect(percentComplete('task_completion', tasks, null)).toBe(33.33));
+  it('3. task progress = average progress', () =>
+    expect(percentComplete('task_progress', tasks, null)).toBe(50));
+  it('4. task weight = progress weighted', () =>
+    expect(percentComplete('task_weight', tasks, null)).toBe(65)); // (500 + 150 + 0) / 10
   it('5. no tasks → 0; reports due by frequency', () => {
     expect(percentComplete('task_weight', [], null)).toBe(0);
     const now = new Date('2026-09-24T10:00:00Z');

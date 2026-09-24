@@ -34,14 +34,23 @@ export const LoginDialog: React.FC<LoginDialogProps> = ({ required, onLoggedIn, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70" dir="rtl">
-      <form onSubmit={submit} className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 space-y-4">
+      <form
+        onSubmit={submit}
+        className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 space-y-4"
+      >
         <div>
           <h2 className="text-lg font-extrabold text-slate-900">تسجيل الدخول</h2>
           {required && (
-            <p className="text-xs text-rose-600 mt-1">جلستك انتهت أو النظام يطلب تسجيل الدخول للمتابعة.</p>
+            <p className="text-xs text-rose-600 mt-1">
+              جلستك انتهت أو النظام يطلب تسجيل الدخول للمتابعة.
+            </p>
           )}
         </div>
-        {error && <div className="text-xs bg-rose-50 text-rose-700 border border-rose-200 rounded-lg p-2">{error}</div>}
+        {error && (
+          <div className="text-xs bg-rose-50 text-rose-700 border border-rose-200 rounded-lg p-2">
+            {error}
+          </div>
+        )}
         <label className="block text-xs font-bold text-slate-600">
           اسم المستخدم
           <input
@@ -73,7 +82,11 @@ export const LoginDialog: React.FC<LoginDialogProps> = ({ required, onLoggedIn, 
             {submitting ? 'جارٍ الدخول…' : 'دخول'}
           </button>
           {!required && (
-            <button type="button" onClick={onClose} className="px-4 text-sm font-bold text-slate-500 hover:text-slate-800 cursor-pointer">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 text-sm font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
+            >
               إلغاء
             </button>
           )}

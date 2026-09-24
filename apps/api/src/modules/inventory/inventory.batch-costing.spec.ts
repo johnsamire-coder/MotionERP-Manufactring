@@ -23,9 +23,16 @@ describe('InventoryService — Per-Batch Costing (plan item 2)', () => {
 
   const makeBatch = (id: string, overrides: Partial<ItemBatchRecord> = {}): ItemBatchRecord => {
     const batch: ItemBatchRecord = {
-      id, batchNumber: id.toUpperCase(), itemId: 'item-1', orgNodeId: 'org-1',
-      manufacturingDate: null, expiryDate: null, status: 'active', notes: null,
-      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      id,
+      batchNumber: id.toUpperCase(),
+      itemId: 'item-1',
+      orgNodeId: 'org-1',
+      manufacturingDate: null,
+      expiryDate: null,
+      status: 'active',
+      notes: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       ...overrides,
     };
     batches.set(id, batch);
@@ -41,19 +48,36 @@ describe('InventoryService — Per-Batch Costing (plan item 2)', () => {
     ledger.length = 0;
 
     repo = {
-      findWarehouseById: jest.fn().mockResolvedValue({ id: 'wh-1', code: 'WH', name: 'WH', orgNodeId: 'org-1' } as WarehouseRecord),
+      findWarehouseById: jest.fn().mockResolvedValue({
+        id: 'wh-1',
+        code: 'WH',
+        name: 'WH',
+        orgNodeId: 'org-1',
+      } as WarehouseRecord),
       findLatestMovementDate: jest.fn().mockResolvedValue(null),
       findBalance: jest.fn().mockImplementation(async () => ({
-        id: 'bal-1', itemId: 'item-1', warehouseId: 'wh-1',
-        onHand: String(balance.onHand), reserved: '0',
-        averageCost: String(balance.averageCost), totalValue: String(balance.totalValue),
+        id: 'bal-1',
+        itemId: 'item-1',
+        warehouseId: 'wh-1',
+        onHand: String(balance.onHand),
+        reserved: '0',
+        averageCost: String(balance.averageCost),
+        totalValue: String(balance.totalValue),
       })),
       findBatchById: jest.fn().mockImplementation(async (id: string) => batches.get(id) ?? null),
       findBatchByNumber: jest.fn().mockResolvedValue(null),
       insertBatch: jest.fn().mockImplementation(async (input) => ({ ...input, status: 'active' })),
-      findBatchBalance: jest.fn().mockImplementation(async (batchId: string, whId: string) => batchBalances.get(`${batchId}|${whId}`) ?? null),
+      findBatchBalance: jest
+        .fn()
+        .mockImplementation(
+          async (batchId: string, whId: string) => batchBalances.get(`${batchId}|${whId}`) ?? null,
+        ),
       upsertBatchBalance: jest.fn().mockImplementation(async (input) => {
-        const record = { id: `bb-${input.batchId}`, updatedAt: new Date().toISOString(), ...input } as BatchBalanceRecord;
+        const record = {
+          id: `bb-${input.batchId}`,
+          updatedAt: new Date().toISOString(),
+          ...input,
+        } as BatchBalanceRecord;
         batchBalances.set(`${input.batchId}|${input.warehouseId}`, record);
         return record;
       }),
@@ -62,11 +86,15 @@ describe('InventoryService — Per-Batch Costing (plan item 2)', () => {
         movements.push(record);
         return record;
       }),
-      applyDelta: jest.fn().mockImplementation(async (_i, _w, delta: string) => { balance.onHand += Number(delta); }),
-      applyValuation: jest.fn().mockImplementation(async (_i, _w, v: { averageCost: string; totalValue: string }) => {
-        balance.averageCost = Number(v.averageCost);
-        balance.totalValue = Number(v.totalValue);
+      applyDelta: jest.fn().mockImplementation(async (_i, _w, delta: string) => {
+        balance.onHand += Number(delta);
       }),
+      applyValuation: jest
+        .fn()
+        .mockImplementation(async (_i, _w, v: { averageCost: string; totalValue: string }) => {
+          balance.averageCost = Number(v.averageCost);
+          balance.totalValue = Number(v.totalValue);
+        }),
       insertLedgerEntry: jest.fn().mockImplementation(async (input) => {
         const record = { ...input, createdAt: new Date().toISOString() } as StockLedgerEntryRecord;
         ledger.push(record);
@@ -75,16 +103,31 @@ describe('InventoryService — Per-Batch Costing (plan item 2)', () => {
     } as unknown as InventoryRepository;
 
     const catalog = {
-      getItem: jest.fn().mockImplementation(async (id: string) => ({ id, ...itemFlags, hasSerialNo: false })),
+      getItem: jest
+        .fn()
+        .mockImplementation(async (id: string) => ({ id, ...itemFlags, hasSerialNo: false })),
     } as unknown as CatalogService;
 
     service = new InventoryService(repo, undefined, catalog);
   });
 
   const receive = (batchId: string | undefined, quantity: string, unitCost: string) =>
-    service.createMovement({ itemId: 'item-1', warehouseId: 'wh-1', movementType: 'receipt', quantity, unitCost, batchId });
+    service.createMovement({
+      itemId: 'item-1',
+      warehouseId: 'wh-1',
+      movementType: 'receipt',
+      quantity,
+      unitCost,
+      batchId,
+    });
   const issue = (batchId: string | undefined, quantity: string) =>
-    service.createMovement({ itemId: 'item-1', warehouseId: 'wh-1', movementType: 'issue', quantity, batchId });
+    service.createMovement({
+      itemId: 'item-1',
+      warehouseId: 'wh-1',
+      movementType: 'issue',
+      quantity,
+      batchId,
+    });
 
   it('1. issues each batch at its own cost, not the item average', async () => {
     makeBatch('b-a');
@@ -157,7 +200,10 @@ describe('InventoryService — Per-Batch Costing (plan item 2)', () => {
 
     itemFlags.shelfLifeInDays = 30;
     const batch = await service.createBatch({
-      batchNumber: 'X2', itemId: 'item-1', orgNodeId: 'org-1', manufacturingDate: '2026-01-01T00:00:00.000Z',
+      batchNumber: 'X2',
+      itemId: 'item-1',
+      orgNodeId: 'org-1',
+      manufacturingDate: '2026-01-01T00:00:00.000Z',
     });
     expect(batch.expiryDate).toBe('2026-01-31T00:00:00.000Z');
   });

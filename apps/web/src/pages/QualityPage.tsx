@@ -3,25 +3,54 @@ import { ShieldCheck, CheckCircle2, XCircle } from 'lucide-react';
 
 export const QualityPage: React.FC = () => {
   const tests = [
-    { id: 'INSP-2026-089', item: 'سرير عناية مركزة كهربائي (WO-2026-08150)', standard: 'ISO 13485 / IEC 60601', result: 'pass', inspector: 'د. مجدي إبراهيم', date: '2026-10-08' },
-    { id: 'INSP-2026-085', item: 'صاج ستانلس 304 طبي (LOT-2026-MED-0941)', standard: 'ISO 22196 (مقاومة بكتيريا)', result: 'pass', inspector: 'م. أحمد شكري', date: '2026-08-10' },
-    { id: 'INSP-2026-081', item: 'بودرة دهان إلكتروستاتيك (LOT-2026-MED-0899)', standard: 'سمك الطلاء والتصليد', result: 'fail', inspector: 'د. مجدي إبراهيم', date: '2026-07-15' },
+    {
+      id: 'INSP-2026-089',
+      item: 'سرير عناية مركزة كهربائي (WO-2026-08150)',
+      standard: 'ISO 13485 / IEC 60601',
+      result: 'pass',
+      inspector: 'د. مجدي إبراهيم',
+      date: '2026-10-08',
+    },
+    {
+      id: 'INSP-2026-085',
+      item: 'صاج ستانلس 304 طبي (LOT-2026-MED-0941)',
+      standard: 'ISO 22196 (مقاومة بكتيريا)',
+      result: 'pass',
+      inspector: 'م. أحمد شكري',
+      date: '2026-08-10',
+    },
+    {
+      id: 'INSP-2026-081',
+      item: 'بودرة دهان إلكتروستاتيك (LOT-2026-MED-0899)',
+      standard: 'سمك الطلاء والتصليد',
+      result: 'fail',
+      inspector: 'د. مجدي إبراهيم',
+      date: '2026-07-15',
+    },
   ];
 
   return (
     <div className="p-6 space-y-6 bg-slate-50 min-h-screen text-slate-800" dir="rtl">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-emerald-600 text-white rounded-xl shadow-md"><ShieldCheck className="w-7 h-7" /></div>
+          <div className="p-3 bg-emerald-600 text-white rounded-xl shadow-md">
+            <ShieldCheck className="w-7 h-7" />
+          </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">مراقبة الجودة الطبية والامتثال القياسي (ISO 13485)</h1>
-            <p className="text-sm text-slate-500">اختبارات الفحص المخبري معايير القبول Zero Defect وسجلات الحجر الصحي</p>
+            <h1 className="text-2xl font-bold text-slate-900">
+              مراقبة الجودة الطبية والامتثال القياسي (ISO 13485)
+            </h1>
+            <p className="text-sm text-slate-500">
+              اختبارات الفحص المخبري معايير القبول Zero Defect وسجلات الحجر الصحي
+            </p>
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 font-bold text-slate-900">سجل عمليات الفحص والجودة الأخيرة</div>
+        <div className="p-4 border-b border-slate-200 bg-slate-50 font-bold text-slate-900">
+          سجل عمليات الفحص والجودة الأخيرة
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-right text-sm">
             <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">

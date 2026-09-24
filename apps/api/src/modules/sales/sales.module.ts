@@ -19,7 +19,17 @@ import { CustomerCreditService } from './customer-credit.service';
 @Module({
   imports: [CrmModule, CatalogModule, SettingsModule],
   controllers: [SalesSerialLinkController, SalesController, RfqController, PricingController],
-  providers: [SalesSerialLinkService, SalesService, SalesRepository, CustomerCreditService, CustomerCreditRepository, RfqService, RfqRepository, PricingService, PricingRepository],
+  providers: [
+    SalesSerialLinkService,
+    SalesService,
+    SalesRepository,
+    CustomerCreditService,
+    CustomerCreditRepository,
+    RfqService,
+    RfqRepository,
+    PricingService,
+    PricingRepository,
+  ],
   exports: [SalesService, CustomerCreditService],
 })
 export class SalesModule {}

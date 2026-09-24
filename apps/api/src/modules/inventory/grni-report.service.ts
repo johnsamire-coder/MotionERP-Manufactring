@@ -24,12 +24,18 @@ export class GrniReportService {
     @Optional() private readonly access?: InventoryAccessService,
   ) {}
 
-  async receivedNotBilled(orgNodeId?: string, includeFullyBilled = false): Promise<ReceivedNotBilledReport> {
+  async receivedNotBilled(
+    orgNodeId?: string,
+    includeFullyBilled = false,
+  ): Promise<ReceivedNotBilledReport> {
     let scope: string[] | null = null;
     if (orgNodeId) {
       const subtree = await this.organization.getSubtree(orgNodeId);
       const ids: string[] = [];
-      const walk = (n: OrgTreeNode): void => { ids.push(n.id); n.children.forEach(walk); };
+      const walk = (n: OrgTreeNode): void => {
+        ids.push(n.id);
+        n.children.forEach(walk);
+      };
       walk(subtree);
       scope = ids;
     }
@@ -42,7 +48,13 @@ export class GrniReportService {
     return {
       rows,
       totalOutstanding: total.toFixed(4),
-      ledger: ledger ? { accountId: ledger.accountId, balance: ledger.balance.toFixed(4), difference: (ledger.balance - total).toFixed(4) } : null,
+      ledger: ledger
+        ? {
+            accountId: ledger.accountId,
+            balance: ledger.balance.toFixed(4),
+            difference: (ledger.balance - total).toFixed(4),
+          }
+        : null,
     };
   }
 }

@@ -38,7 +38,13 @@ import type {
 import { RESERVING_TYPES, type ReservationType, type StockBinRecord } from './inventory.types';
 
 const RESERVATION_TYPES: readonly ReservationType[] = [
-  'sales_order', 'production', 'subcontract', 'production_plan', 'purchase_order', 'material_request', 'work_order',
+  'sales_order',
+  'production',
+  'subcontract',
+  'production_plan',
+  'purchase_order',
+  'material_request',
+  'work_order',
 ];
 
 // Which accounting directions each business purpose may use (plan item 3).
@@ -65,23 +71,35 @@ export class InventoryService {
    * the configured %. Returns the source fields to stamp on the movement.
    */
   private async checkReceiptAgainstOrder(
-    input: CreateMovementInput, quantityNum: number, orgNodeId: string,
+    input: CreateMovementInput,
+    quantityNum: number,
+    orgNodeId: string,
   ): Promise<{ sourceModule: string; sourceId: string } | null> {
     if (!input.purchaseOrderId) return null;
-    if (input.movementType !== 'receipt') throw new InventoryValidationError('purchaseOrderId only applies to receipts');
+    if (input.movementType !== 'receipt')
+      throw new InventoryValidationError('purchaseOrderId only applies to receipts');
     if (!this.salesService) throw new InventoryValidationError('purchase orders are not available');
     const order = await this.salesService.getQuotation(input.purchaseOrderId).catch(() => null);
-    if (!order || order.direction !== 'incoming') throw new InventoryNotFoundError(`purchase order ${input.purchaseOrderId} does not exist`);
-    if (order.status !== 'approved') throw new InventoryValidationError(`purchase order ${order.quotationNumber} is "${order.status}", not approved`);
-    const ordered = order.lines.filter((l) => l.itemId === input.itemId).reduce((a, l) => a + Number(l.quantity), 0);
-    if (ordered <= 0) throw new InventoryValidationError(`item ${input.itemId} is not on purchase order ${order.quotationNumber}`);
+    if (!order || order.direction !== 'incoming')
+      throw new InventoryNotFoundError(`purchase order ${input.purchaseOrderId} does not exist`);
+    if (order.status !== 'approved')
+      throw new InventoryValidationError(
+        `purchase order ${order.quotationNumber} is "${order.status}", not approved`,
+      );
+    const ordered = order.lines
+      .filter((l) => l.itemId === input.itemId)
+      .reduce((a, l) => a + Number(l.quantity), 0);
+    if (ordered <= 0)
+      throw new InventoryValidationError(
+        `item ${input.itemId} is not on purchase order ${order.quotationNumber}`,
+      );
     const received = await this.repository.sumReceivedForOrder(order.id, input.itemId);
     const pct = this.allowances ? (await this.allowances.resolve(orgNodeId)).overReceiptPct : 0;
     const max = PurchaseAllowanceService.limit(ordered, pct);
     if (received + quantityNum > max + 1e-9) {
       throw new InventoryValidationError(
         `الاستلام يتجاوز أمر الشراء ${order.quotationNumber}: المطلوب ${ordered}، المستلم سابقاً ${received}، ` +
-        `الحالي ${quantityNum}، والحد المسموح ${Number(max.toFixed(4))} (نسبة السماح ${pct}%)`,
+          `الحالي ${quantityNum}، والحد المسموح ${Number(max.toFixed(4))} (نسبة السماح ${pct}%)`,
       );
     }
     return { sourceModule: 'purchase_order', sourceId: order.id };
@@ -98,11 +116,16 @@ export class InventoryService {
     if (this.access) await this.access.assertWarehouseAllowed(warehouseId);
   }
 
-  private async filterByWarehouse<T extends { warehouseId: string | null }>(rows: T[], requestedWarehouseId?: string): Promise<T[]> {
+  private async filterByWarehouse<T extends { warehouseId: string | null }>(
+    rows: T[],
+    requestedWarehouseId?: string,
+  ): Promise<T[]> {
     if (!this.access) return rows;
     if (requestedWarehouseId) await this.access.assertWarehouseAllowed(requestedWarehouseId);
     const allowed = await this.access.allowedWarehouseIds();
-    return allowed ? rows.filter((r) => r.warehouseId !== null && allowed.has(r.warehouseId)) : rows;
+    return allowed
+      ? rows.filter((r) => r.warehouseId !== null && allowed.has(r.warehouseId))
+      : rows;
   }
 
   async getWarehouses(): Promise<WarehouseRecord[]> {
@@ -119,7 +142,12 @@ export class InventoryService {
     if (existing) {
       throw new InventoryValidationError(`a warehouse with code "${code}" already exists`);
     }
-    return this.repository.insertWarehouse({ id: randomUUID(), code, name, orgNodeId: input.orgNodeId });
+    return this.repository.insertWarehouse({
+      id: randomUUID(),
+      code,
+      name,
+      orgNodeId: input.orgNodeId,
+    });
   }
 
   async getBalances(): Promise<StockBalanceRecord[]> {
@@ -141,24 +169,40 @@ export class InventoryService {
     }
     await this.assertWarehouseAllowed(input.warehouseId);
     if (warehouseRecord.isGroup) {
-      throw new InventoryValidationError(`warehouse ${warehouseRecord.code} is a group warehouse and cannot hold stock (plan item 23)`);
+      throw new InventoryValidationError(
+        `warehouse ${warehouseRecord.code} is a group warehouse and cannot hold stock (plan item 23)`,
+      );
     }
-    const orderSource = await this.checkReceiptAgainstOrder(input, quantityNum, warehouseRecord.orgNodeId);
-    await this.assertPostingReady(warehouseRecord.orgNodeId, input.warehouseId, input.movementType, orderSource?.sourceModule ?? input.sourceModule);
+    const orderSource = await this.checkReceiptAgainstOrder(
+      input,
+      quantityNum,
+      warehouseRecord.orgNodeId,
+    );
+    await this.assertPostingReady(
+      warehouseRecord.orgNodeId,
+      input.warehouseId,
+      input.movementType,
+      orderSource?.sourceModule ?? input.sourceModule,
+    );
 
     // Backdating guard: a movement may not be dated before the latest recorded
     // movement of the same item/warehouse, unless explicitly allowed with a reason.
     const movementDate = input.movementDate ? new Date(input.movementDate) : new Date();
     if (Number.isNaN(movementDate.getTime())) {
-      throw new InventoryValidationError(`movementDate "${input.movementDate}" is not a valid date`);
+      throw new InventoryValidationError(
+        `movementDate "${input.movementDate}" is not a valid date`,
+      );
     }
     let note = input.note;
-    const latestMovementDate = await this.repository.findLatestMovementDate(input.itemId, input.warehouseId);
+    const latestMovementDate = await this.repository.findLatestMovementDate(
+      input.itemId,
+      input.warehouseId,
+    );
     if (latestMovementDate && movementDate.getTime() < latestMovementDate.getTime()) {
       if (!input.allowBackdate) {
         throw new InventoryValidationError(
           `backdated movement rejected: movementDate ${movementDate.toISOString()} is before the latest movement ` +
-          `${latestMovementDate.toISOString()} for this item/warehouse (set allowBackdate with a backdateReason to override)`,
+            `${latestMovementDate.toISOString()} for this item/warehouse (set allowBackdate with a backdateReason to override)`,
         );
       }
       const reason = input.backdateReason?.trim();
@@ -185,8 +229,20 @@ export class InventoryService {
     // Per-batch costing: batch-tracked items must name a batch; issues use that batch's own cost.
     // Serial-tracked items must list one serial per unit, validated before anything is written.
     const tracking = await this.getItemTracking(input.itemId);
-    const batchContext = await this.resolveBatchContext(input, tracking, isDecrease, movementDate, quantityNum);
-    const serialPlan = await this.resolveSerials(input, tracking, isDecrease, quantityNum, batchContext?.batchId ?? null);
+    const batchContext = await this.resolveBatchContext(
+      input,
+      tracking,
+      isDecrease,
+      movementDate,
+      quantityNum,
+    );
+    const serialPlan = await this.resolveSerials(
+      input,
+      tracking,
+      isDecrease,
+      quantityNum,
+      batchContext?.batchId ?? null,
+    );
 
     if (isDecrease) {
       const balance = await this.repository.findBalance(input.itemId, input.warehouseId);
@@ -194,7 +250,9 @@ export class InventoryService {
       const currentReserved = balance ? Number(balance.reserved) : 0;
       const currentAvailable = currentOnHand - currentReserved;
       if (currentAvailable < quantityNum) {
-        throw new InventoryValidationError(`insufficient stock: available ${currentAvailable}, requested ${quantityNum}`);
+        throw new InventoryValidationError(
+          `insufficient stock: available ${currentAvailable}, requested ${quantityNum}`,
+        );
       }
     }
 
@@ -205,11 +263,15 @@ export class InventoryService {
 
     if (isDecrease) {
       movementUnitCost = batchContext
-        ? (batchContext.quantity > 0 ? batchContext.totalValue / batchContext.quantity : 0)
+        ? batchContext.quantity > 0
+          ? batchContext.totalValue / batchContext.quantity
+          : 0
         : oldAvg;
     } else {
       if (input.unitCost === undefined || input.unitCost === null || input.unitCost === '') {
-        throw new InventoryValidationError('unitCost is required for receipts and inbound transfers');
+        throw new InventoryValidationError(
+          'unitCost is required for receipts and inbound transfers',
+        );
       }
       movementUnitCost = Number(input.unitCost);
       if (!Number.isFinite(movementUnitCost) || movementUnitCost < 0) {
@@ -218,21 +280,29 @@ export class InventoryService {
     }
 
     // Issuing a whole batch removes its exact value (no rounding residue).
-    const movementTotalValue = batchContext && isDecrease && quantityNum === batchContext.quantity
-      ? batchContext.totalValue
-      : movementUnitCost * quantityNum;
+    const movementTotalValue =
+      batchContext && isDecrease && quantityNum === batchContext.quantity
+        ? batchContext.totalValue
+        : movementUnitCost * quantityNum;
     const newQty = isDecrease ? oldQty - quantityNum : oldQty + quantityNum;
     let newAvg: number;
     let newStockValue: number;
     if (batchContext) {
       // Item value = sum of its batch values; the item average is derived from it.
       const oldValue = bal ? Number(bal.totalValue) : 0;
-      newStockValue = newQty > 0 ? (isDecrease ? oldValue - movementTotalValue : oldValue + movementTotalValue) : 0;
+      newStockValue =
+        newQty > 0
+          ? isDecrease
+            ? oldValue - movementTotalValue
+            : oldValue + movementTotalValue
+          : 0;
       newAvg = newQty > 0 ? newStockValue / newQty : 0;
     } else {
       newAvg = isDecrease
         ? oldAvg
-        : (newQty > 0 ? ((oldQty * oldAvg) + movementTotalValue) / newQty : movementUnitCost);
+        : newQty > 0
+          ? (oldQty * oldAvg + movementTotalValue) / newQty
+          : movementUnitCost;
       newStockValue = newQty * newAvg;
     }
 
@@ -256,14 +326,26 @@ export class InventoryService {
     await this.repository.applyDelta(input.itemId, input.warehouseId, signedQuantity);
 
     if (serialPlan) {
-      await this.applySerialMovement(serialPlan, movement.id, input, isDecrease, batchContext?.batchId ?? null, warehouseRecord.orgNodeId);
+      await this.applySerialMovement(
+        serialPlan,
+        movement.id,
+        input,
+        isDecrease,
+        batchContext?.batchId ?? null,
+        warehouseRecord.orgNodeId,
+      );
     }
 
     if (batchContext) {
-      const batchQty = isDecrease ? batchContext.quantity - quantityNum : batchContext.quantity + quantityNum;
-      const batchValue = batchQty > 0
-        ? (isDecrease ? batchContext.totalValue - movementTotalValue : batchContext.totalValue + movementTotalValue)
-        : 0;
+      const batchQty = isDecrease
+        ? batchContext.quantity - quantityNum
+        : batchContext.quantity + quantityNum;
+      const batchValue =
+        batchQty > 0
+          ? isDecrease
+            ? batchContext.totalValue - movementTotalValue
+            : batchContext.totalValue + movementTotalValue
+          : 0;
       await this.repository.upsertBatchBalance({
         batchId: batchContext.batchId,
         itemId: input.itemId,
@@ -273,7 +355,7 @@ export class InventoryService {
         totalValue: batchValue.toFixed(6),
       });
     }
-    
+
     await this.repository.applyValuation(input.itemId, input.warehouseId, {
       averageCost: newAvg.toFixed(6),
       totalValue: newStockValue.toFixed(4),
@@ -290,7 +372,9 @@ export class InventoryService {
       balanceQtyAfter: newQty.toFixed(6),
       incomingRate: isDecrease ? '0' : movementUnitCost.toFixed(6),
       valuationRate: newAvg.toFixed(6),
-      stockValueChange: isDecrease ? `-${movementTotalValue.toFixed(4)}` : movementTotalValue.toFixed(4),
+      stockValueChange: isDecrease
+        ? `-${movementTotalValue.toFixed(4)}`
+        : movementTotalValue.toFixed(4),
       stockValueAfter: newStockValue.toFixed(4),
     });
 
@@ -315,7 +399,12 @@ export class InventoryService {
   }
 
   /** Plan item 33: refuse the movement before saving it when the company enforces its default accounts and they are missing. */
-  private async assertPostingReady(orgNodeId: string, warehouseId: string, movementType: MovementType, sourceModule?: string | null): Promise<void> {
+  private async assertPostingReady(
+    orgNodeId: string,
+    warehouseId: string,
+    movementType: MovementType,
+    sourceModule?: string | null,
+  ): Promise<void> {
     if (!this.postingEngine?.assertCanPost) return;
     try {
       await this.postingEngine.assertCanPost(orgNodeId, warehouseId, movementType, sourceModule);
@@ -330,7 +419,8 @@ export class InventoryService {
     try {
       return await this.catalogService.getItem(itemId);
     } catch (err) {
-      if (err instanceof CatalogNotFoundError) throw new InventoryNotFoundError(`item ${itemId} does not exist`);
+      if (err instanceof CatalogNotFoundError)
+        throw new InventoryNotFoundError(`item ${itemId} does not exist`);
       throw err;
     }
   }
@@ -344,12 +434,16 @@ export class InventoryService {
   ): Promise<{ batchId: string; quantity: number; totalValue: number } | null> {
     if (!tracking?.hasBatchNo) {
       if (input.batchId) {
-        throw new InventoryValidationError(`item ${input.itemId} is not batch-tracked; batchId must not be set`);
+        throw new InventoryValidationError(
+          `item ${input.itemId} is not batch-tracked; batchId must not be set`,
+        );
       }
       return null;
     }
     if (!input.batchId) {
-      throw new InventoryValidationError(`item ${input.itemId} is batch-tracked: batchId is required for every stock movement`);
+      throw new InventoryValidationError(
+        `item ${input.itemId} is batch-tracked: batchId is required for every stock movement`,
+      );
     }
     const batch = await this.repository.findBatchById(input.batchId);
     if (!batch) throw new InventoryNotFoundError(`item batch ${input.batchId} does not exist`);
@@ -358,13 +452,19 @@ export class InventoryService {
     }
     if (isDecrease) {
       if (batch.status !== 'active') {
-        throw new InventoryValidationError(`batch ${batch.batchNumber} is "${batch.status}" and cannot be issued`);
+        throw new InventoryValidationError(
+          `batch ${batch.batchNumber} is "${batch.status}" and cannot be issued`,
+        );
       }
       if (batch.expiryDate && new Date(batch.expiryDate).getTime() < movementDate.getTime()) {
-        throw new InventoryValidationError(`batch ${batch.batchNumber} expired on ${batch.expiryDate} and cannot be issued`);
+        throw new InventoryValidationError(
+          `batch ${batch.batchNumber} expired on ${batch.expiryDate} and cannot be issued`,
+        );
       }
     } else if (batch.status === 'recalled') {
-      throw new InventoryValidationError(`batch ${batch.batchNumber} is recalled and cannot receive stock`);
+      throw new InventoryValidationError(
+        `batch ${batch.batchNumber} is recalled and cannot receive stock`,
+      );
     }
     const balance = await this.repository.findBatchBalance(batch.id, input.warehouseId);
     const quantity = balance ? Number(balance.quantity) : 0;
@@ -386,12 +486,16 @@ export class InventoryService {
   ): Promise<Array<{ serialNo: string; existing: SerialNumberRecord | null }> | null> {
     if (!tracking?.hasSerialNo) {
       if (input.serialNos && input.serialNos.length > 0) {
-        throw new InventoryValidationError(`item ${input.itemId} is not serial-tracked; serialNos must not be set`);
+        throw new InventoryValidationError(
+          `item ${input.itemId} is not serial-tracked; serialNos must not be set`,
+        );
       }
       return null;
     }
     if (!Number.isInteger(quantityNum)) {
-      throw new InventoryValidationError('quantity must be a whole number for serial-tracked items');
+      throw new InventoryValidationError(
+        'quantity must be a whole number for serial-tracked items',
+      );
     }
     const serialNos = (input.serialNos ?? []).map((s) => s.trim()).filter((s) => s.length > 0);
     if (serialNos.length !== quantityNum) {
@@ -400,25 +504,35 @@ export class InventoryService {
       );
     }
     const duplicate = serialNos.find((s, idx) => serialNos.indexOf(s) !== idx);
-    if (duplicate) throw new InventoryValidationError(`serial number "${duplicate}" is listed more than once`);
+    if (duplicate)
+      throw new InventoryValidationError(`serial number "${duplicate}" is listed more than once`);
 
     const plan: Array<{ serialNo: string; existing: SerialNumberRecord | null }> = [];
     for (const serialNo of serialNos) {
       const existing = await this.repository.findSerialByNo(input.itemId, serialNo);
       if (isDecrease) {
-        if (!existing) throw new InventoryNotFoundError(`serial number "${serialNo}" does not exist for this item`);
+        if (!existing)
+          throw new InventoryNotFoundError(
+            `serial number "${serialNo}" does not exist for this item`,
+          );
         if (existing.status !== 'active' || existing.warehouseId !== input.warehouseId) {
-          throw new InventoryValidationError(`serial number "${serialNo}" is not in stock in this warehouse`);
+          throw new InventoryValidationError(
+            `serial number "${serialNo}" is not in stock in this warehouse`,
+          );
         }
         if (batchId && existing.batchId !== batchId) {
-          throw new InventoryValidationError(`serial number "${serialNo}" does not belong to the selected batch`);
+          throw new InventoryValidationError(
+            `serial number "${serialNo}" does not belong to the selected batch`,
+          );
         }
       } else if (existing) {
         if (existing.status === 'active' && existing.warehouseId) {
           throw new InventoryValidationError(`serial number "${serialNo}" is already in stock`);
         }
         if (existing.status === 'decommissioned') {
-          throw new InventoryValidationError(`serial number "${serialNo}" is decommissioned and cannot be received`);
+          throw new InventoryValidationError(
+            `serial number "${serialNo}" is decommissioned and cannot be received`,
+          );
         }
       }
       plan.push({ serialNo, existing });
@@ -444,7 +558,11 @@ export class InventoryService {
         });
         serialIds.push(existing!.id);
       } else if (existing) {
-        await this.repository.moveSerial(existing.id, { status: 'active', warehouseId: input.warehouseId, batchId });
+        await this.repository.moveSerial(existing.id, {
+          status: 'active',
+          warehouseId: input.warehouseId,
+          batchId,
+        });
         serialIds.push(existing.id);
       } else {
         const created = await this.repository.insertSerial({
@@ -470,8 +588,15 @@ export class InventoryService {
     return this.repository.listSerialMovements(serialId);
   }
 
-  async getBatchBalances(itemId?: string, warehouseId?: string, batchId?: string): Promise<BatchBalanceRecord[]> {
-    return this.filterByWarehouse(await this.repository.listBatchBalances(itemId, warehouseId, batchId), warehouseId);
+  async getBatchBalances(
+    itemId?: string,
+    warehouseId?: string,
+    batchId?: string,
+  ): Promise<BatchBalanceRecord[]> {
+    return this.filterByWarehouse(
+      await this.repository.listBatchBalances(itemId, warehouseId, batchId),
+      warehouseId,
+    );
   }
 
   /**
@@ -490,18 +615,24 @@ export class InventoryService {
     await this.assertWarehouseAllowed(input.fromWarehouseId);
     await this.assertWarehouseAllowed(input.toWarehouseId);
     const target = await this.repository.findWarehouseById(input.toWarehouseId);
-    if (!target) throw new InventoryNotFoundError(`warehouse ${input.toWarehouseId} does not exist`);
+    if (!target)
+      throw new InventoryNotFoundError(`warehouse ${input.toWarehouseId} does not exist`);
 
     // Both legs share one date; check the target leg's backdating rule before moving anything out.
     const movementDate = input.movementDate ? new Date(input.movementDate) : new Date();
     if (Number.isNaN(movementDate.getTime())) {
-      throw new InventoryValidationError(`movementDate "${input.movementDate}" is not a valid date`);
+      throw new InventoryValidationError(
+        `movementDate "${input.movementDate}" is not a valid date`,
+      );
     }
-    const latestAtTarget = await this.repository.findLatestMovementDate(input.itemId, input.toWarehouseId);
+    const latestAtTarget = await this.repository.findLatestMovementDate(
+      input.itemId,
+      input.toWarehouseId,
+    );
     if (latestAtTarget && movementDate.getTime() < latestAtTarget.getTime()) {
       throw new InventoryValidationError(
         `backdated movement rejected: movementDate ${movementDate.toISOString()} is before the latest movement ` +
-        `${latestAtTarget.toISOString()} in the target warehouse`,
+          `${latestAtTarget.toISOString()} in the target warehouse`,
       );
     }
 
@@ -516,7 +647,11 @@ export class InventoryService {
       sourceModule: input.sourceModule,
       sourceId: input.sourceId,
     };
-    const transferOut = await this.createMovement({ ...shared, warehouseId: input.fromWarehouseId, movementType: 'transfer_out' });
+    const transferOut = await this.createMovement({
+      ...shared,
+      warehouseId: input.fromWarehouseId,
+      movementType: 'transfer_out',
+    });
     const transferIn = await this.createMovement({
       ...shared,
       warehouseId: input.toWarehouseId,
@@ -544,12 +679,16 @@ export class InventoryService {
       throw new InventoryNotFoundError(`warehouse ${input.warehouseId} does not exist`);
     }
     if (warehouseRecord.isGroup) {
-      throw new InventoryValidationError(`warehouse ${warehouseRecord.code} is a group warehouse and cannot hold stock (plan item 23)`);
+      throw new InventoryValidationError(
+        `warehouse ${warehouseRecord.code} is a group warehouse and cannot hold stock (plan item 23)`,
+      );
     }
 
     const reservationType = input.reservationType ?? 'sales_order';
     if (!RESERVATION_TYPES.includes(reservationType)) {
-      throw new InventoryValidationError(`reservationType must be one of: ${RESERVATION_TYPES.join(', ')}`);
+      throw new InventoryValidationError(
+        `reservationType must be one of: ${RESERVATION_TYPES.join(', ')}`,
+      );
     }
     // Plan item 13: only "reserving" types hold existing stock; ordered / indented / planned
     // quantities are expectations and neither need nor lock available stock.
@@ -560,7 +699,9 @@ export class InventoryService {
       const currentReserved = balance ? Number(balance.reserved) : 0;
       const currentAvailable = currentOnHand - currentReserved;
       if (currentAvailable < quantityNum) {
-        throw new InventoryValidationError(`insufficient available stock to reserve: available ${currentAvailable}, requested ${quantityNum}`);
+        throw new InventoryValidationError(
+          `insufficient available stock to reserve: available ${currentAvailable}, requested ${quantityNum}`,
+        );
       }
     }
 
@@ -572,7 +713,8 @@ export class InventoryService {
       source: input.source,
       reservationType,
     });
-    if (reserving) await this.repository.applyReservedDelta(input.itemId, input.warehouseId, input.quantity);
+    if (reserving)
+      await this.repository.applyReservedDelta(input.itemId, input.warehouseId, input.quantity);
     return reservation;
   }
 
@@ -584,7 +726,11 @@ export class InventoryService {
     await this.assertWarehouseAllowed(reservation.warehouseId);
     if (reservation.status === 'released') return reservation;
     if (RESERVING_TYPES.includes(reservation.reservationType)) {
-      await this.repository.applyReservedDelta(reservation.itemId, reservation.warehouseId, `-${reservation.quantity}`);
+      await this.repository.applyReservedDelta(
+        reservation.itemId,
+        reservation.warehouseId,
+        `-${reservation.quantity}`,
+      );
     }
     return this.repository.setReservationReleased(id);
   }
@@ -594,38 +740,73 @@ export class InventoryService {
    * request type kept separate, with available and projected quantities derived from them.
    */
   async getBins(itemId?: string, warehouseId?: string): Promise<StockBinRecord[]> {
-    const balances = (await this.getBalances())
-      .filter((b) => (!itemId || b.itemId === itemId) && (!warehouseId || b.warehouseId === warehouseId));
-    const reservations = (await this.getReservations())
-      .filter((r) => r.status === 'active' && (!itemId || r.itemId === itemId) && (!warehouseId || r.warehouseId === warehouseId));
-    const bins = new Map<string, { itemId: string; warehouseId: string; actual: number; by: Record<ReservationType, number> }>();
-    const bin = (i: string, w: string): { itemId: string; warehouseId: string; actual: number; by: Record<ReservationType, number> } => {
+    const balances = (await this.getBalances()).filter(
+      (b) => (!itemId || b.itemId === itemId) && (!warehouseId || b.warehouseId === warehouseId),
+    );
+    const reservations = (await this.getReservations()).filter(
+      (r) =>
+        r.status === 'active' &&
+        (!itemId || r.itemId === itemId) &&
+        (!warehouseId || r.warehouseId === warehouseId),
+    );
+    const bins = new Map<
+      string,
+      { itemId: string; warehouseId: string; actual: number; by: Record<ReservationType, number> }
+    >();
+    const bin = (
+      i: string,
+      w: string,
+    ): {
+      itemId: string;
+      warehouseId: string;
+      actual: number;
+      by: Record<ReservationType, number>;
+    } => {
       const key = `${i}|${w}`;
       let b = bins.get(key);
       if (!b) {
-        b = { itemId: i, warehouseId: w, actual: 0, by: Object.fromEntries(RESERVATION_TYPES.map((t) => [t, 0])) as Record<ReservationType, number> };
+        b = {
+          itemId: i,
+          warehouseId: w,
+          actual: 0,
+          by: Object.fromEntries(RESERVATION_TYPES.map((t) => [t, 0])) as Record<
+            ReservationType,
+            number
+          >,
+        };
         bins.set(key, b);
       }
       return b;
     };
     for (const b of balances) bin(b.itemId, b.warehouseId).actual = Number(b.onHand);
-    for (const r of reservations) bin(r.itemId, r.warehouseId).by[r.reservationType] += Number(r.quantity);
+    for (const r of reservations)
+      bin(r.itemId, r.warehouseId).by[r.reservationType] += Number(r.quantity);
     const f = (n: number): string => n.toFixed(6);
     return [...bins.values()].map((b) => {
       const reserved = RESERVING_TYPES.reduce((a, t) => a + b.by[t], 0);
       const expected = b.by.purchase_order + b.by.material_request + b.by.work_order;
       return {
-        itemId: b.itemId, warehouseId: b.warehouseId, actualQty: f(b.actual),
-        reservedQty: f(b.by.sales_order), reservedForProduction: f(b.by.production),
-        reservedForSubcontract: f(b.by.subcontract), reservedForProductionPlan: f(b.by.production_plan),
-        orderedQty: f(b.by.purchase_order), indentedQty: f(b.by.material_request), plannedQty: f(b.by.work_order),
-        availableQty: f(b.actual - reserved), projectedQty: f(b.actual + expected - reserved),
+        itemId: b.itemId,
+        warehouseId: b.warehouseId,
+        actualQty: f(b.actual),
+        reservedQty: f(b.by.sales_order),
+        reservedForProduction: f(b.by.production),
+        reservedForSubcontract: f(b.by.subcontract),
+        reservedForProductionPlan: f(b.by.production_plan),
+        orderedQty: f(b.by.purchase_order),
+        indentedQty: f(b.by.material_request),
+        plannedQty: f(b.by.work_order),
+        availableQty: f(b.actual - reserved),
+        projectedQty: f(b.actual + expected - reserved),
       };
     });
   }
 
   async getLedgerEntries(itemId?: string, warehouseId?: string): Promise<StockLedgerEntryRecord[]> {
-    return this.filterByWarehouse(await this.repository.listLedgerEntries(itemId, warehouseId), warehouseId);
+    return this.filterByWarehouse(
+      await this.repository.listLedgerEntries(itemId, warehouseId),
+      warehouseId,
+    );
   }
 
   // --- Medical Batch & Lot Tracking ---
@@ -646,9 +827,14 @@ export class InventoryService {
     if (!input.itemId) throw new InventoryValidationError('itemId is required');
     if (!input.orgNodeId) throw new InventoryValidationError('orgNodeId is required');
 
-    const existing = await this.repository.findBatchByNumber(input.itemId, input.batchNumber.trim());
+    const existing = await this.repository.findBatchByNumber(
+      input.itemId,
+      input.batchNumber.trim(),
+    );
     if (existing) {
-      throw new InventoryValidationError(`batch number "${input.batchNumber}" already exists for this item`);
+      throw new InventoryValidationError(
+        `batch number "${input.batchNumber}" already exists for this item`,
+      );
     }
 
     // Expiry rules from the item: derive expiry from shelf life, and require it for expiry-tracked items.
@@ -664,7 +850,11 @@ export class InventoryService {
         'expiryDate is required for this item (or give manufacturingDate and set the item shelfLifeInDays)',
       );
     }
-    if (expiryDate && input.manufacturingDate && new Date(expiryDate) < new Date(input.manufacturingDate)) {
+    if (
+      expiryDate &&
+      input.manufacturingDate &&
+      new Date(expiryDate) < new Date(input.manufacturingDate)
+    ) {
       throw new InventoryValidationError('expiryDate cannot be before manufacturingDate');
     }
 
@@ -682,8 +872,15 @@ export class InventoryService {
   }
 
   // --- Serial Number Tracking ---
-  async getSerials(itemId?: string, warehouseId?: string, batchId?: string): Promise<SerialNumberRecord[]> {
-    return this.filterByWarehouse(await this.repository.listSerials(itemId, warehouseId, batchId), warehouseId);
+  async getSerials(
+    itemId?: string,
+    warehouseId?: string,
+    batchId?: string,
+  ): Promise<SerialNumberRecord[]> {
+    return this.filterByWarehouse(
+      await this.repository.listSerials(itemId, warehouseId, batchId),
+      warehouseId,
+    );
   }
 
   async getSerial(id: string): Promise<SerialNumberRecord> {
@@ -701,7 +898,9 @@ export class InventoryService {
 
     const existing = await this.repository.findSerialByNo(input.itemId, input.serialNo.trim());
     if (existing) {
-      throw new InventoryValidationError(`serial number "${input.serialNo}" already exists for this item`);
+      throw new InventoryValidationError(
+        `serial number "${input.serialNo}" already exists for this item`,
+      );
     }
 
     return this.repository.insertSerial({
@@ -734,7 +933,12 @@ export class InventoryService {
     return results;
   }
 
-  async setSerialStatus(id: string, status: SerialNumberStatus, warehouseId?: string, deliveryOrderId?: string): Promise<SerialNumberRecord> {
+  async setSerialStatus(
+    id: string,
+    status: SerialNumberStatus,
+    warehouseId?: string,
+    deliveryOrderId?: string,
+  ): Promise<SerialNumberRecord> {
     await this.getSerial(id);
     return this.repository.setSerialStatus(id, status, warehouseId, deliveryOrderId);
   }
@@ -756,12 +960,15 @@ export class InventoryService {
     // (كان هيلخبط أرصدة الدفعات وحالة السيريالات). التسوية لازم تتم بحركة مخزون تحدد الدفعة/السيريال.
     const tracking = await this.getItemTracking(input.itemId);
     if (tracking?.hasBatchNo || tracking?.hasSerialNo) {
-      const trackedBy = tracking.hasBatchNo && tracking.hasSerialNo
-        ? 'الدفعة والسيريال'
-        : tracking.hasBatchNo ? 'الدفعة' : 'السيريال';
+      const trackedBy =
+        tracking.hasBatchNo && tracking.hasSerialNo
+          ? 'الدفعة والسيريال'
+          : tracking.hasBatchNo
+            ? 'الدفعة'
+            : 'السيريال';
       throw new InventoryValidationError(
         `لا يمكن جرد هذا الصنف بالجرد العادي لأنه متتبّع بـ${trackedBy}. ` +
-        'استخدم حركة مخزون بدلاً منه: صرف (issue) للعجز أو تسوية (adjustment) للزيادة، مع تحديد الدفعة (batchId) و/أو أرقام السيريال (serialNos).',
+          'استخدم حركة مخزون بدلاً منه: صرف (issue) للعجز أو تسوية (adjustment) للزيادة، مع تحديد الدفعة (batchId) و/أو أرقام السيريال (serialNos).',
       );
     }
 
@@ -781,7 +988,12 @@ export class InventoryService {
       };
     }
 
-    await this.assertPostingReady(warehouseRecord.orgNodeId, input.warehouseId, 'adjustment', 'inventory');
+    await this.assertPostingReady(
+      warehouseRecord.orgNodeId,
+      input.warehouseId,
+      'adjustment',
+      'inventory',
+    );
     const isSurplus = diff > 0;
     const diffQtyAbs = Math.abs(diff);
     const signedQty = diff.toFixed(6);
@@ -818,7 +1030,9 @@ export class InventoryService {
       balanceQtyAfter: targetPhysicalQty.toFixed(6),
       incomingRate: unitCost.toFixed(6),
       valuationRate: unitCost.toFixed(6),
-      stockValueChange: isSurplus ? totalAdjustmentValue.toFixed(4) : `-${totalAdjustmentValue.toFixed(4)}`,
+      stockValueChange: isSurplus
+        ? totalAdjustmentValue.toFixed(4)
+        : `-${totalAdjustmentValue.toFixed(4)}`,
       stockValueAfter: (targetPhysicalQty * unitCost).toFixed(4),
     });
 
@@ -860,7 +1074,9 @@ export class InventoryService {
     return found;
   }
 
-  async createLandedCostVoucher(input: CreateLandedCostVoucherInput): Promise<LandedCostVoucherRecord> {
+  async createLandedCostVoucher(
+    input: CreateLandedCostVoucherInput,
+  ): Promise<LandedCostVoucherRecord> {
     if (!input.orgNodeId) throw new InventoryValidationError('orgNodeId is required');
     if (!input.expenseAccountId) throw new InventoryValidationError('expenseAccountId is required');
 
@@ -879,8 +1095,9 @@ export class InventoryService {
     for (const item of input.items) {
       const qty = Number(item.quantity);
       const rate = Number(item.originalRate);
-      if (qty <= 0 || rate < 0) throw new InventoryValidationError('Invalid receipt quantity or rate in item list');
-      basisSum += distributeMethod === 'by_amount' ? (qty * rate) : qty;
+      if (qty <= 0 || rate < 0)
+        throw new InventoryValidationError('Invalid receipt quantity or rate in item list');
+      basisSum += distributeMethod === 'by_amount' ? qty * rate : qty;
     }
 
     if (basisSum === 0) throw new InventoryValidationError('Total distribution basis is zero');
@@ -889,7 +1106,7 @@ export class InventoryService {
     const computedItems = input.items.map((item) => {
       const qty = Number(item.quantity);
       const rate = Number(item.originalRate);
-      const itemBasis = distributeMethod === 'by_amount' ? (qty * rate) : qty;
+      const itemBasis = distributeMethod === 'by_amount' ? qty * rate : qty;
       const allocated = (itemBasis / basisSum) * totalExpense;
       const addedRatePerUnit = allocated / qty;
       const newValuationRate = rate + addedRatePerUnit;
@@ -922,15 +1139,24 @@ export class InventoryService {
   async postLandedCostVoucher(id: string): Promise<LandedCostVoucherRecord> {
     const voucher = await this.getLandedCostVoucher(id);
     if (voucher.status !== 'draft') {
-      throw new InventoryValidationError(`Voucher ${id} is "${voucher.status}" and cannot be posted`);
+      throw new InventoryValidationError(
+        `Voucher ${id} is "${voucher.status}" and cannot be posted`,
+      );
     }
 
     // Plan item 15 (per-batch costing, item 2a): a receipt into a batch also carries its share of the
     // landed cost into that batch's own cost, so the item value keeps equalling the sum of its batches.
     // Validated for every line before anything is written.
-    const batchShares: Array<{ batchId: string; itemId: string; warehouseId: string; expense: number }> = [];
+    const batchShares: Array<{
+      batchId: string;
+      itemId: string;
+      warehouseId: string;
+      expense: number;
+    }> = [];
     for (const item of voucher.items) {
-      const receipt = item.receiptMovementId ? await this.repository.findMovementById(item.receiptMovementId) : null;
+      const receipt = item.receiptMovementId
+        ? await this.repository.findMovementById(item.receiptMovementId)
+        : null;
       if (!receipt?.batchId) continue;
       const bb = await this.repository.findBatchBalance(receipt.batchId, item.warehouseId);
       if (!bb || Number(bb.quantity) <= 0) {
@@ -938,7 +1164,12 @@ export class InventoryService {
           `الدفعة المرتبطة بالاستلام ${item.receiptMovementId} لم يعد لها رصيد في المخزن؛ سجّل تكلفة الاستيراد قبل صرف الدفعة`,
         );
       }
-      batchShares.push({ batchId: receipt.batchId, itemId: item.itemId, warehouseId: item.warehouseId, expense: Number(item.allocatedExpense) });
+      batchShares.push({
+        batchId: receipt.batchId,
+        itemId: item.itemId,
+        warehouseId: item.warehouseId,
+        expense: Number(item.allocatedExpense),
+      });
     }
 
     // Capitalize expenses onto stock balance & stock ledger
@@ -950,7 +1181,7 @@ export class InventoryService {
       const currentQty = bal ? Number(bal.onHand) : 0;
       const currentTotalVal = bal ? Number(bal.totalValue) : 0;
       const updatedTotalVal = currentTotalVal + addedExpenseVal;
-      const updatedAvg = currentQty > 0 ? (updatedTotalVal / currentQty) : newRate;
+      const updatedAvg = currentQty > 0 ? updatedTotalVal / currentQty : newRate;
 
       // Update Stock Valuation
       await this.repository.applyValuation(item.itemId, item.warehouseId, {
@@ -978,8 +1209,12 @@ export class InventoryService {
       const qty = Number(bb.quantity);
       const value = Number(bb.totalValue) + share.expense;
       await this.repository.upsertBatchBalance({
-        batchId: share.batchId, itemId: share.itemId, warehouseId: share.warehouseId,
-        quantity: bb.quantity, totalValue: value.toFixed(6), valuationRate: (value / qty).toFixed(6),
+        batchId: share.batchId,
+        itemId: share.itemId,
+        warehouseId: share.warehouseId,
+        quantity: bb.quantity,
+        totalValue: value.toFixed(6),
+        valuationRate: (value / qty).toFixed(6),
       });
     }
 

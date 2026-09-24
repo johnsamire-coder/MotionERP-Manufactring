@@ -1,17 +1,40 @@
 /** The four ways to compute a project's percent complete (plan item 44), pure. */
 export type PercentMethod = 'manual' | 'task_completion' | 'task_progress' | 'task_weight';
-export interface TaskProgress { status: string; progress: number; weight: number; }
+export interface TaskProgress {
+  status: string;
+  progress: number;
+  weight: number;
+}
 
-export function percentComplete(method: PercentMethod, tasks: TaskProgress[], manual: number | null): number {
+export function percentComplete(
+  method: PercentMethod,
+  tasks: TaskProgress[],
+  manual: number | null,
+): number {
   const live = tasks.filter((t) => t.status !== 'cancelled');
   const round = (n: number): number => Number(n.toFixed(2));
   switch (method) {
-    case 'manual': return round(manual ?? 0);
-    case 'task_completion': return live.length === 0 ? 0 : round((live.filter((t) => t.status === 'completed').length / live.length) * 100);
-    case 'task_progress': return live.length === 0 ? 0 : round(live.reduce((s, t) => s + (t.status === 'completed' ? 100 : t.progress), 0) / live.length);
+    case 'manual':
+      return round(manual ?? 0);
+    case 'task_completion':
+      return live.length === 0
+        ? 0
+        : round((live.filter((t) => t.status === 'completed').length / live.length) * 100);
+    case 'task_progress':
+      return live.length === 0
+        ? 0
+        : round(
+            live.reduce((s, t) => s + (t.status === 'completed' ? 100 : t.progress), 0) /
+              live.length,
+          );
     case 'task_weight': {
       const w = live.reduce((s, t) => s + t.weight, 0);
-      return w === 0 ? 0 : round(live.reduce((s, t) => s + (t.status === 'completed' ? 100 : t.progress) * t.weight, 0) / w);
+      return w === 0
+        ? 0
+        : round(
+            live.reduce((s, t) => s + (t.status === 'completed' ? 100 : t.progress) * t.weight, 0) /
+              w,
+          );
     }
   }
 }

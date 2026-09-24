@@ -1,7 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { DeliveryNotFoundError, DeliveryValidationError } from './delivery.errors';
 
-interface HttpResponse { status(code: number): HttpResponse; json(body: unknown): void; }
+interface HttpResponse {
+  status(code: number): HttpResponse;
+  json(body: unknown): void;
+}
 
 @Catch(DeliveryNotFoundError, DeliveryValidationError)
 export class DeliveryExceptionFilter implements ExceptionFilter {

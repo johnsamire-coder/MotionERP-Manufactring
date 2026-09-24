@@ -4,7 +4,6 @@ import { AccountingRepository } from '../accounting/accounting.repository';
 import type {
   CompanyAccountingConfigRecord,
   AccountDeterminationRecord,
-  JournalEntryRecord,
 } from '../accounting/accounting.types';
 import type { StockMovementPostingPayload } from '../accounting/posting-engine.types';
 

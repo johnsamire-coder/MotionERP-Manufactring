@@ -12,26 +12,57 @@ describe('Opportunity stage between lead and quotation (plan item 17)', () => {
     const repo = {
       count: jest.fn().mockImplementation(async () => store.size),
       insert: jest.fn().mockImplementation(async (i) => {
-        const r = { ...i, stage: 'open', probability: i.probability ?? 10, lostReason: null, quotationId: null, items: i.items ?? [] } as OpportunityRecord;
+        const r = {
+          ...i,
+          stage: 'open',
+          probability: i.probability ?? 10,
+          lostReason: null,
+          quotationId: null,
+          items: i.items ?? [],
+        } as OpportunityRecord;
         store.set(r.id, r);
         return r;
       }),
       findById: jest.fn().mockImplementation(async (id: string) => store.get(id) ?? null),
-      findByQuotation: jest.fn().mockImplementation(async (q: string) => [...store.values()].find((o) => o.quotationId === q) ?? null),
-      update: jest.fn().mockImplementation(async (id: string, f: Partial<OpportunityRecord>) => Object.assign(store.get(id)!, f)),
+      findByQuotation: jest
+        .fn()
+        .mockImplementation(
+          async (q: string) => [...store.values()].find((o) => o.quotationId === q) ?? null,
+        ),
+      update: jest
+        .fn()
+        .mockImplementation(async (id: string, f: Partial<OpportunityRecord>) =>
+          Object.assign(store.get(id)!, f),
+        ),
     } as unknown as OpportunityRepository;
     const crm = {
-      findCustomerById: jest.fn().mockImplementation(async (id: string) =>
-        id === 'lead-1' ? { id, code: 'L1', status: 'lead' } : id === 'arch' ? { id, code: 'A', status: 'archived' } : null),
+      findCustomerById: jest
+        .fn()
+        .mockImplementation(async (id: string) =>
+          id === 'lead-1'
+            ? { id, code: 'L1', status: 'lead' }
+            : id === 'arch'
+              ? { id, code: 'A', status: 'archived' }
+              : null,
+        ),
     } as unknown as CrmRepository;
     service = new OpportunityService(repo, crm);
   });
 
   it('1. a lead gets an opportunity; archived / unknown customers do not', async () => {
-    const o = await service.create({ customerId: 'lead-1', title: 'خط إنتاج جديد', items: [{ itemId: 'i', quantity: '5' }] });
-    expect(o).toMatchObject({ stage: 'open', opportunityNumber: expect.stringMatching(/^OPP-\d{4}-000001$/) });
+    const o = await service.create({
+      customerId: 'lead-1',
+      title: 'خط إنتاج جديد',
+      items: [{ itemId: 'i', quantity: '5' }],
+    });
+    expect(o).toMatchObject({
+      stage: 'open',
+      opportunityNumber: expect.stringMatching(/^OPP-\d{4}-000001$/),
+    });
     await expect(service.create({ customerId: 'arch', title: 'x' })).rejects.toThrow(/archived/);
-    await expect(service.create({ customerId: 'nope', title: 'x' })).rejects.toThrow(/does not exist/);
+    await expect(service.create({ customerId: 'nope', title: 'x' })).rejects.toThrow(
+      /does not exist/,
+    );
   });
 
   it('2. manual stages: open → qualified → lost needs a reason; quoted/won come from quotations', async () => {

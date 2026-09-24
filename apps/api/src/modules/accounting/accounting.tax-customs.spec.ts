@@ -3,7 +3,6 @@
 // Step 79 | Aligned with accrual.schema.ts | 100% PASS ✅
 // ============================================================
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { TaxAndCustomsService } from './tax-customs.service';
 import { WhtDirection } from './tax-customs.dto';
 import { taxSettlement, withholdingTaxEntry, customsDeclaration } from './tax-customs.schema';
@@ -11,11 +10,11 @@ import { taxSettlement, withholdingTaxEntry, customsDeclaration } from './tax-cu
 describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
   let service: TaxAndCustomsService;
 
-  const mockCompanyId    = '11111111-1111-1111-1111-111111111111';
+  const mockCompanyId = '11111111-1111-1111-1111-111111111111';
   const mockFiscalYearId = '22222222-2222-2222-2222-222222222222';
-  const mockPeriodId     = '33333333-3333-3333-3333-333333333333';
-  const mockBankAccId    = '44444444-4444-4444-4444-444444444444';
-  const mockUserId       = '99999999-9999-9999-9999-999999999999';
+  const mockPeriodId = '33333333-3333-3333-3333-333333333333';
+  const mockBankAccId = '44444444-4444-4444-4444-444444444444';
+  const mockUserId = '99999999-9999-9999-9999-999999999999';
 
   // داتابيز حية في الذاكرة (In-Memory Database Emulation)
   let taxSettlementsDb: any[] = [];
@@ -28,7 +27,7 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
       return {
         from: jest.fn().mockImplementation((table) => {
           return {
-            where: jest.fn().mockImplementation((condition) => {
+            where: jest.fn().mockImplementation((_condition) => {
               // توجيه الاستعلام للجدول المناسب بالذاكرة
               if (table === taxSettlement) {
                 return taxSettlementsDb;
@@ -50,11 +49,11 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         values: jest.fn().mockImplementation((data) => {
           return {
             returning: jest.fn().mockImplementation(() => {
-              const record = { 
-                id: `id-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`, 
-                ...data 
+              const record = {
+                id: `id-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+                ...data,
               };
-              
+
               if (table === taxSettlement) {
                 taxSettlementsDb.push(record);
               } else if (table === withholdingTaxEntry) {
@@ -72,7 +71,7 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
       return {
         set: jest.fn().mockImplementation((updateData) => {
           return {
-            where: jest.fn().mockImplementation((condition) => {
+            where: jest.fn().mockImplementation((_condition) => {
               return {
                 returning: jest.fn().mockImplementation(() => {
                   // تحديث السجلات في الذاكرة
@@ -102,10 +101,7 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TaxAndCustomsService,
-        { provide: 'DRIZZLE', useValue: mockDb },
-      ],
+      providers: [TaxAndCustomsService, { provide: 'DRIZZLE', useValue: mockDb }],
     }).compile();
 
     service = module.get<TaxAndCustomsService>(TaxAndCustomsService);
@@ -122,20 +118,20 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         periodId: mockPeriodId,
         taxPeriod: '2026-08',
         totalSalesTaxable: 1850000,
-        outputVatAmount: 259000, 
+        outputVatAmount: 259000,
         totalPurchaseTaxable: 1120000,
-        inputVatAmount: 156800,  
+        inputVatAmount: 156800,
       },
       mockUserId,
     );
 
     expect(result).toBeDefined();
     expect(result.settlement.status).toBe('filed');
-    expect(parseFloat(result.settlement.netVatPayable)).toBe(102200); 
+    expect(parseFloat(result.settlement.netVatPayable)).toBe(102200);
 
     expect(result.journalEntry.lines).toHaveLength(3);
-    const outputVatLine = result.journalEntry.lines.find((l: any) => l.debit > 0);
-    expect(outputVatLine.debit).toBe(259000);
+    const outputVatLine = result.journalEntry.lines!.find((l: any) => l.debit > 0);
+    expect(outputVatLine!.debit).toBe(259000);
   });
 
   // ────────────────────────────────────────────
@@ -150,9 +146,9 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         periodId: mockPeriodId,
         taxPeriod: '2026-08',
         totalSalesTaxable: 1850000,
-        outputVatAmount: 259000, 
+        outputVatAmount: 259000,
         totalPurchaseTaxable: 1120000,
-        inputVatAmount: 156800,  
+        inputVatAmount: 156800,
       },
       mockUserId,
     );
@@ -169,8 +165,8 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
     );
 
     expect(paymentResult.settlement.status).toBe('paid');
-    expect(paymentResult.paymentJournal.lines[0].debit).toBe(102200);
-    expect(paymentResult.paymentJournal.lines[1].credit).toBe(102200);
+    expect(paymentResult.paymentJournal.lines![0]!.debit).toBe(102200);
+    expect(paymentResult.paymentJournal.lines![1]!.credit).toBe(102200);
   });
 
   // ────────────────────────────────────────────
@@ -190,7 +186,7 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         taxRegistrationNum: '100-245-891',
         invoiceNumber: 'PINV-001',
         baseAmount: 350000,
-        whtRate: 1, 
+        whtRate: 1,
       },
       mockUserId,
     );
@@ -208,7 +204,7 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         taxRegistrationNum: '200-345-999',
         invoiceNumber: 'PINV-002',
         baseAmount: 85000,
-        whtRate: 3, 
+        whtRate: 3,
       },
       mockUserId,
     );
@@ -240,17 +236,17 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         currency: 'USD',
         exchangeRate: 48.5,
         cifValueForeign: 30000,
-        customsDutyAmount: 72500, 
-        developmentFee: 43500,    
-        vatPaidAtCustoms: 219240, 
+        customsDutyAmount: 72500,
+        developmentFee: 43500,
+        vatPaidAtCustoms: 219240,
         clearanceExpenses: 15000,
       },
       mockUserId,
     );
 
     expect(result.declaration.status).toBe('cleared');
-    expect(parseFloat(result.declaration.cifValueEgp)).toBe(1455000); 
-    expect(parseFloat(result.declaration.totalPaidAmount)).toBe(350240); 
+    expect(parseFloat(result.declaration.cifValueEgp)).toBe(1455000);
+    expect(parseFloat(result.declaration.totalPaidAmount)).toBe(350240);
     expect(result.journalEntry.lines).toHaveLength(3);
   });
 
@@ -271,9 +267,9 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         currency: 'USD',
         exchangeRate: 48.5,
         cifValueForeign: 30000,
-        customsDutyAmount: 72500, 
-        developmentFee: 43500,    
-        vatPaidAtCustoms: 219240, 
+        customsDutyAmount: 72500,
+        developmentFee: 43500,
+        vatPaidAtCustoms: 219240,
         clearanceExpenses: 15000,
       },
       mockUserId,

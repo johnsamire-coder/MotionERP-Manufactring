@@ -19,15 +19,34 @@ import type {
   UomRecord,
 } from './catalog.types';
 
-export interface UpdateItemCategoryInput { name?: string; description?: string | null; position?: number; parentId?: string | null; }
-export interface UpdateItemInput extends ItemTrackingInput { name?: string; nameAr?: string; nameEn?: string; description?: string | null; itemType?: ItemType; categoryId?: string; baseUnitId?: string; }
+export interface UpdateItemCategoryInput {
+  name?: string;
+  description?: string | null;
+  position?: number;
+  parentId?: string | null;
+}
+export interface UpdateItemInput extends ItemTrackingInput {
+  name?: string;
+  nameAr?: string;
+  nameEn?: string;
+  description?: string | null;
+  itemType?: ItemType;
+  categoryId?: string;
+  baseUnitId?: string;
+}
 
 function validateItemTracking(input: ItemTrackingInput): void {
   if (input.hasExpiryDate && !input.hasBatchNo) {
-    throw new CatalogValidationError('hasExpiryDate requires hasBatchNo (expiry is tracked per batch)');
+    throw new CatalogValidationError(
+      'hasExpiryDate requires hasBatchNo (expiry is tracked per batch)',
+    );
   }
   const shelfLife = input.shelfLifeInDays;
-  if (shelfLife !== undefined && shelfLife !== null && (!Number.isInteger(shelfLife) || shelfLife < 0)) {
+  if (
+    shelfLife !== undefined &&
+    shelfLife !== null &&
+    (!Number.isInteger(shelfLife) || shelfLife < 0)
+  ) {
     throw new CatalogValidationError('shelfLifeInDays must be a non-negative integer');
   }
 }
@@ -39,7 +58,8 @@ function buildCategoryForest(rows: ItemCategoryRecord[]): ItemCategoryTreeNode[]
   for (const row of rows) {
     const node = byId.get(row.id)!;
     const parent = row.parentId ? byId.get(row.parentId) : undefined;
-    if (parent) parent.children.push(node); else roots.push(node);
+    if (parent) parent.children.push(node);
+    else roots.push(node);
   }
   const byOrder = (a: ItemCategoryTreeNode, b: ItemCategoryTreeNode): number =>
     a.position - b.position || a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
@@ -56,8 +76,12 @@ export class CatalogService {
   constructor(private readonly repository: CatalogRepository) {}
 
   // --- UOM Classes & Units ---
-  async getUomClasses(): Promise<UomClassRecord[]> { return this.repository.listUomClasses(); }
-  async getUoms(language: Language = 'en'): Promise<UomRecord[]> { return this.repository.listUoms(language); }
+  async getUomClasses(): Promise<UomClassRecord[]> {
+    return this.repository.listUomClasses();
+  }
+  async getUoms(language: Language = 'en'): Promise<UomRecord[]> {
+    return this.repository.listUoms(language);
+  }
   async getUomByCode(code: string, language: Language = 'en'): Promise<UomRecord> {
     const found = await this.repository.findUomByCode(code, language);
     if (!found) throw new CatalogNotFoundError(`UOM ${code} does not exist`);
@@ -71,8 +95,14 @@ export class CatalogService {
     const existing = await this.repository.findUomByCode(code);
     if (existing) throw new CatalogValidationError(`a UOM with code "${code}" already exists`);
     return this.repository.insertUom({
-      id: randomUUID(), code, name, nameAr: input.nameAr, nameEn: input.nameEn,
-      symbol: input.symbol, classCode: foundClass.code, decimalPrecision: input.decimalPrecision,
+      id: randomUUID(),
+      code,
+      name,
+      nameAr: input.nameAr,
+      nameEn: input.nameEn,
+      symbol: input.symbol,
+      classCode: foundClass.code,
+      decimalPrecision: input.decimalPrecision,
     });
   }
 
@@ -91,22 +121,39 @@ export class CatalogService {
     const name = normalizeName(input.name);
     const position = normalizePosition(input.position ?? 0);
     const existing = await this.repository.findCategoryByCode(code);
-    if (existing) throw new CatalogValidationError(`an item category with code "${code}" already exists`);
+    if (existing)
+      throw new CatalogValidationError(`an item category with code "${code}" already exists`);
     if (input.parentId) {
       const parent = await this.repository.findCategoryById(input.parentId);
-      if (!parent) throw new CatalogNotFoundError(`parent category ${input.parentId} does not exist`);
-      if (parent.status === 'archived') throw new CatalogValidationError(`parent category ${input.parentId} is archived and cannot take children`);
+      if (!parent)
+        throw new CatalogNotFoundError(`parent category ${input.parentId} does not exist`);
+      if (parent.status === 'archived')
+        throw new CatalogValidationError(
+          `parent category ${input.parentId} is archived and cannot take children`,
+        );
     }
     return this.repository.insertCategory({
-      id: randomUUID(), code, name, nameAr: input.nameAr, nameEn: input.nameEn,
-      description: input.description, parentId: input.parentId ?? null, position,
+      id: randomUUID(),
+      code,
+      name,
+      nameAr: input.nameAr,
+      nameEn: input.nameEn,
+      description: input.description,
+      parentId: input.parentId ?? null,
+      position,
     });
   }
   async updateCategory(id: string, patch: UpdateItemCategoryInput): Promise<ItemCategoryRecord> {
     const category = await this.repository.findCategoryById(id);
     if (!category) throw new CatalogNotFoundError(`item category ${id} does not exist`);
-    if (category.status === 'archived') throw new CatalogValidationError(`item category ${id} is archived and cannot be modified`);
-    const fields: { name?: string; description?: string | null; position?: number; parentId?: string | null } = {};
+    if (category.status === 'archived')
+      throw new CatalogValidationError(`item category ${id} is archived and cannot be modified`);
+    const fields: {
+      name?: string;
+      description?: string | null;
+      position?: number;
+      parentId?: string | null;
+    } = {};
     if (patch.name !== undefined) fields.name = normalizeName(patch.name);
     if (patch.description !== undefined) fields.description = patch.description;
     if (patch.position !== undefined) fields.position = normalizePosition(patch.position);
@@ -123,21 +170,36 @@ export class CatalogService {
     if (!category) throw new CatalogNotFoundError(`item category ${id} does not exist`);
     if (category.status === 'archived') return category;
     const activeChildren = await this.repository.countActiveChildren(id);
-    if (activeChildren > 0) throw new CatalogValidationError(`item category ${id} still has ${activeChildren} non-archived child categor(y/ies); archive the children first`);
+    if (activeChildren > 0)
+      throw new CatalogValidationError(
+        `item category ${id} still has ${activeChildren} non-archived child categor(y/ies); archive the children first`,
+      );
     return this.repository.setCategoryStatus(id, 'archived');
   }
-  private async assertMoveAllowed(category: ItemCategoryRecord, newParentId: string | null): Promise<void> {
-    if (newParentId === category.id) throw new CatalogValidationError('a category cannot be its own parent');
+  private async assertMoveAllowed(
+    category: ItemCategoryRecord,
+    newParentId: string | null,
+  ): Promise<void> {
+    if (newParentId === category.id)
+      throw new CatalogValidationError('a category cannot be its own parent');
     if (newParentId === null) return;
     const parent = await this.repository.findCategoryById(newParentId);
     if (!parent) throw new CatalogNotFoundError(`parent category ${newParentId} does not exist`);
-    if (parent.status === 'archived') throw new CatalogValidationError(`parent category ${newParentId} is archived and cannot take children`);
+    if (parent.status === 'archived')
+      throw new CatalogValidationError(
+        `parent category ${newParentId} is archived and cannot take children`,
+      );
     const ancestorIds = await this.repository.listAncestorIds(newParentId);
-    if (ancestorIds.includes(category.id)) throw new CatalogValidationError(`moving category ${category.id} under ${newParentId} would create a cycle`);
+    if (ancestorIds.includes(category.id))
+      throw new CatalogValidationError(
+        `moving category ${category.id} under ${newParentId} would create a cycle`,
+      );
   }
 
   // --- Items ---
-  async getItems(language: Language = 'en'): Promise<ItemRecord[]> { return this.repository.listItems(language); }
+  async getItems(language: Language = 'en'): Promise<ItemRecord[]> {
+    return this.repository.listItems(language);
+  }
   async getItem(id: string, language: Language = 'en'): Promise<ItemRecord> {
     const found = await this.repository.findItemById(id, language);
     if (!found) throw new CatalogNotFoundError(`item ${id} does not exist`);
@@ -149,23 +211,43 @@ export class CatalogService {
     const existing = await this.repository.findItemByCode(code);
     if (existing) throw new CatalogValidationError(`an item with code "${code}" already exists`);
     const category = await this.repository.findCategoryById(input.categoryId);
-    if (!category) throw new CatalogNotFoundError(`item category ${input.categoryId} does not exist`);
-    if (category.status === 'archived') throw new CatalogValidationError(`item category ${input.categoryId} is archived and cannot take new items`);
+    if (!category)
+      throw new CatalogNotFoundError(`item category ${input.categoryId} does not exist`);
+    if (category.status === 'archived')
+      throw new CatalogValidationError(
+        `item category ${input.categoryId} is archived and cannot take new items`,
+      );
     const baseUnit = await this.repository.findUomById(input.baseUnitId);
     if (!baseUnit) throw new CatalogNotFoundError(`UOM ${input.baseUnitId} does not exist`);
     validateItemTracking(input);
     return this.repository.insertItem({
-      id: randomUUID(), code, name, nameAr: input.nameAr, nameEn: input.nameEn,
-      description: input.description, itemType: input.itemType, categoryId: category.id, baseUnitId: baseUnit.id,
-      hasBatchNo: input.hasBatchNo, hasSerialNo: input.hasSerialNo,
-      hasExpiryDate: input.hasExpiryDate, shelfLifeInDays: input.shelfLifeInDays,
+      id: randomUUID(),
+      code,
+      name,
+      nameAr: input.nameAr,
+      nameEn: input.nameEn,
+      description: input.description,
+      itemType: input.itemType,
+      categoryId: category.id,
+      baseUnitId: baseUnit.id,
+      hasBatchNo: input.hasBatchNo,
+      hasSerialNo: input.hasSerialNo,
+      hasExpiryDate: input.hasExpiryDate,
+      shelfLifeInDays: input.shelfLifeInDays,
     });
   }
   async updateItem(id: string, patch: UpdateItemInput): Promise<ItemRecord> {
     const found = await this.repository.findItemById(id);
     if (!found) throw new CatalogNotFoundError(`item ${id} does not exist`);
-    if (found.status === 'archived') throw new CatalogValidationError(`item ${id} is archived and cannot be modified`);
-    const fields: { name?: string; description?: string | null; itemType?: ItemType; categoryId?: string; baseUnitId?: string } & ItemTrackingInput = {};
+    if (found.status === 'archived')
+      throw new CatalogValidationError(`item ${id} is archived and cannot be modified`);
+    const fields: {
+      name?: string;
+      description?: string | null;
+      itemType?: ItemType;
+      categoryId?: string;
+      baseUnitId?: string;
+    } & ItemTrackingInput = {};
     if (patch.hasBatchNo !== undefined) fields.hasBatchNo = patch.hasBatchNo;
     if (patch.hasSerialNo !== undefined) fields.hasSerialNo = patch.hasSerialNo;
     if (patch.hasExpiryDate !== undefined) fields.hasExpiryDate = patch.hasExpiryDate;
@@ -173,14 +255,16 @@ export class CatalogService {
     validateItemTracking({
       hasBatchNo: fields.hasBatchNo ?? found.hasBatchNo,
       hasExpiryDate: fields.hasExpiryDate ?? found.hasExpiryDate,
-      shelfLifeInDays: fields.shelfLifeInDays !== undefined ? fields.shelfLifeInDays : found.shelfLifeInDays,
+      shelfLifeInDays:
+        fields.shelfLifeInDays !== undefined ? fields.shelfLifeInDays : found.shelfLifeInDays,
     });
     if (patch.name !== undefined) fields.name = normalizeName(patch.name);
     if (patch.description !== undefined) fields.description = patch.description;
     if (patch.itemType !== undefined) fields.itemType = patch.itemType;
     if (patch.categoryId !== undefined) {
       const category = await this.repository.findCategoryById(patch.categoryId);
-      if (!category) throw new CatalogNotFoundError(`item category ${patch.categoryId} does not exist`);
+      if (!category)
+        throw new CatalogNotFoundError(`item category ${patch.categoryId} does not exist`);
       fields.categoryId = category.id;
     }
     if (patch.baseUnitId !== undefined) {
@@ -188,8 +272,10 @@ export class CatalogService {
       if (!baseUnit) throw new CatalogNotFoundError(`UOM ${patch.baseUnitId} does not exist`);
       fields.baseUnitId = baseUnit.id;
     }
-    if (patch.nameAr !== undefined) await this.repository.upsertItemTranslation(id, 'ar', normalizeName(patch.nameAr));
-    if (patch.nameEn !== undefined) await this.repository.upsertItemTranslation(id, 'en', normalizeName(patch.nameEn));
+    if (patch.nameAr !== undefined)
+      await this.repository.upsertItemTranslation(id, 'ar', normalizeName(patch.nameAr));
+    if (patch.nameEn !== undefined)
+      await this.repository.upsertItemTranslation(id, 'en', normalizeName(patch.nameEn));
     if (Object.keys(fields).length === 0) return (await this.repository.findItemById(id))!;
     return this.repository.updateItemFields(id, fields);
   }
@@ -223,9 +309,15 @@ export class CatalogService {
     const toUom = await this.repository.findUomById(input.toUnitId);
     if (!toUom) throw new CatalogNotFoundError(`toUnit ${input.toUnitId} does not exist`);
 
-    const existing = await this.repository.findUomConversion(input.itemId, input.fromUnitId, input.toUnitId);
+    const existing = await this.repository.findUomConversion(
+      input.itemId,
+      input.fromUnitId,
+      input.toUnitId,
+    );
     if (existing) {
-      throw new CatalogValidationError('UOM conversion rule already exists for this item and unit pair');
+      throw new CatalogValidationError(
+        'UOM conversion rule already exists for this item and unit pair',
+      );
     }
 
     return this.repository.insertUomConversion({
@@ -292,7 +384,8 @@ export class CatalogService {
 function normalizeCode(raw: unknown): string {
   if (typeof raw !== 'string') throw new CatalogValidationError('code is required');
   const trimmed = raw.trim();
-  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(trimmed)) throw new CatalogValidationError('code must match ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(trimmed))
+    throw new CatalogValidationError('code must match ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
   return trimmed;
 }
 function normalizeName(raw: unknown): string {
@@ -302,6 +395,7 @@ function normalizeName(raw: unknown): string {
   return trimmed;
 }
 function normalizePosition(raw: number): number {
-  if (!Number.isInteger(raw) || raw < 0) throw new CatalogValidationError('position must be a non-negative integer');
+  if (!Number.isInteger(raw) || raw < 0)
+    throw new CatalogValidationError('position must be a non-negative integer');
   return raw;
 }

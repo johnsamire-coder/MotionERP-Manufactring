@@ -26,13 +26,17 @@ export class InventoryAccessService {
     const scope = await this.scope();
     if (!scope) return null;
     const warehouses = await this.repository.listWarehouses();
-    return new Set(warehouses.filter((w) => this.warehouseInScope(scope, w.id, w.orgNodeId)).map((w) => w.id));
+    return new Set(
+      warehouses.filter((w) => this.warehouseInScope(scope, w.id, w.orgNodeId)).map((w) => w.id),
+    );
   }
 
   async assertWarehouseAllowed(warehouseId: string): Promise<void> {
     const allowed = await this.allowedWarehouseIds();
     if (allowed && !allowed.has(warehouseId)) {
-      throw new InventoryForbiddenError('غير مسموح لك بالعمل على هذا المخزن (مقيّد بصلاحيات المستخدم)');
+      throw new InventoryForbiddenError(
+        'غير مسموح لك بالعمل على هذا المخزن (مقيّد بصلاحيات المستخدم)',
+      );
     }
   }
 
@@ -44,7 +48,9 @@ export class InventoryAccessService {
       throw new InventoryForbiddenError('المستخدم مقيّد بمخازن محددة ولا يمكنه إنشاء مخازن جديدة');
     }
     if (scope.orgNodeIds && !scope.orgNodeIds.has(orgNodeId)) {
-      throw new InventoryForbiddenError('غير مسموح لك بإنشاء مخزن تحت هذا الفرع (مقيّد بصلاحيات المستخدم)');
+      throw new InventoryForbiddenError(
+        'غير مسموح لك بإنشاء مخزن تحت هذا الفرع (مقيّد بصلاحيات المستخدم)',
+      );
     }
   }
 
@@ -59,7 +65,10 @@ export class InventoryAccessService {
   }
 
   /** Current user's restrictions with org nodes expanded to their whole subtree; null = unrestricted. */
-  private async scope(): Promise<{ warehouseIds: Set<string> | null; orgNodeIds: Set<string> | null } | null> {
+  private async scope(): Promise<{
+    warehouseIds: Set<string> | null;
+    orgNodeIds: Set<string> | null;
+  } | null> {
     const userId = requestContext.currentUserId();
     if (!userId) return null;
     const restrictions = await this.userPermissions.getRestrictions(userId);

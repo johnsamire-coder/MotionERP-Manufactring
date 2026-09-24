@@ -1,7 +1,24 @@
-import { IsIn, IsInt, IsNumberString, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 const CATEGORIES = ['manufacturing', 'administrative', 'selling', 'distribution'] as const;
-const BASES = ['units_produced', 'direct_labor_hours', 'direct_labor_cost', 'machine_hours', 'direct_material_cost', 'sales_revenue'] as const;
+const BASES = [
+  'units_produced',
+  'direct_labor_hours',
+  'direct_labor_cost',
+  'machine_hours',
+  'direct_material_cost',
+  'sales_revenue',
+] as const;
 
 export class CreateOverheadPoolDto {
   @IsUUID() orgNodeId!: string;

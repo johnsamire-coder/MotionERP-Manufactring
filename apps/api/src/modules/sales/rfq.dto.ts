@@ -1,5 +1,14 @@
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsNumberString, IsOptional, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
 
 export class RfqLineDto {
   @IsUUID() itemId!: string;
@@ -11,7 +20,11 @@ export class CreateRfqDto {
   @IsOptional() @IsString() respondBy?: string;
   @IsOptional() @IsString() @MaxLength(128) materialRequestReference?: string;
   @IsOptional() @IsString() note?: string;
-  @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true }) @Type(() => RfqLineDto) lines!: RfqLineDto[];
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => RfqLineDto)
+  lines!: RfqLineDto[];
   @IsArray() @ArrayMinSize(2) @IsUUID('all', { each: true }) supplierIds!: string[];
 }
 
@@ -22,7 +35,10 @@ export class RfqResponseLineDto {
 }
 
 export class RecordRfqResponseDto {
-  @IsArray() @ValidateNested({ each: true }) @Type(() => RfqResponseLineDto) lines!: RfqResponseLineDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RfqResponseLineDto)
+  lines!: RfqResponseLineDto[];
   @IsOptional() @IsString() validUntil?: string;
   @IsOptional() @IsString() note?: string;
 }

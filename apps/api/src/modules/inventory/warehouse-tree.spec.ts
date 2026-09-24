@@ -7,16 +7,43 @@ describe('Tree warehouses (plan item 23)', () => {
   let whs: WarehouseRecord[];
   let history: Set<string>;
   let service: WarehouseTreeService;
-  const wh = (id: string, isGroup = false, parentWarehouseId: string | null = null): WarehouseRecord =>
-    ({ id, code: id.toUpperCase(), name: id, orgNodeId: 'o', isGroup, parentWarehouseId } as WarehouseRecord);
+  const wh = (
+    id: string,
+    isGroup = false,
+    parentWarehouseId: string | null = null,
+  ): WarehouseRecord =>
+    ({
+      id,
+      code: id.toUpperCase(),
+      name: id,
+      orgNodeId: 'o',
+      isGroup,
+      parentWarehouseId,
+    }) as WarehouseRecord;
 
   beforeEach(() => {
-    whs = [wh('all', true), wh('cairo', true, 'all'), wh('c1', false, 'cairo'), wh('c2', false, 'cairo'), wh('alx', false, 'all'), wh('loose')];
+    whs = [
+      wh('all', true),
+      wh('cairo', true, 'all'),
+      wh('c1', false, 'cairo'),
+      wh('c2', false, 'cairo'),
+      wh('alx', false, 'all'),
+      wh('loose'),
+    ];
     history = new Set(['c1', 'loose']);
     const repo = {
       listWarehouses: jest.fn().mockImplementation(async () => whs),
-      findWarehouseById: jest.fn().mockImplementation(async (id: string) => whs.find((w) => w.id === id) ?? null),
-      setWarehouseTree: jest.fn().mockImplementation(async (id: string, f: Partial<WarehouseRecord>) => { Object.assign(whs.find((w) => w.id === id)!, f); }),
+      findWarehouseById: jest
+        .fn()
+        .mockImplementation(async (id: string) => whs.find((w) => w.id === id) ?? null),
+      setWarehouseTree: jest
+        .fn()
+        .mockImplementation(async (id: string, f: Partial<WarehouseRecord>) => {
+          Object.assign(
+            whs.find((w) => w.id === id)!,
+            f,
+          );
+        }),
       warehouseHasStockHistory: jest.fn().mockImplementation(async (id: string) => history.has(id)),
     } as unknown as InventoryRepository;
     service = new WarehouseTreeService(repo, {} as InventoryService);
@@ -30,13 +57,23 @@ describe('Tree warehouses (plan item 23)', () => {
       { warehouseId: 'alx', onHand: '2', totalValue: '8' },
     ]);
     const all = tree.find((n) => n.id === 'all')!;
-    expect(all).toMatchObject({ ownOnHand: '0.000000', totalOnHand: '20.000000', totalValue: '158.0000' });
-    expect(all.children.find((c) => c.id === 'cairo')).toMatchObject({ totalOnHand: '18.000000', totalValue: '150.0000' });
+    expect(all).toMatchObject({
+      ownOnHand: '0.000000',
+      totalOnHand: '20.000000',
+      totalValue: '158.0000',
+    });
+    expect(all.children.find((c) => c.id === 'cairo')).toMatchObject({
+      totalOnHand: '18.000000',
+      totalValue: '150.0000',
+    });
     expect(tree.map((n) => n.id).sort()).toEqual(['all', 'loose']);
   });
 
   it('2. a warehouse whose parent is hidden shows as a root', () => {
-    const tree = buildWarehouseTree(whs.filter((w) => w.id !== 'all'), []);
+    const tree = buildWarehouseTree(
+      whs.filter((w) => w.id !== 'all'),
+      [],
+    );
     expect(tree.map((n) => n.id).sort()).toEqual(['alx', 'cairo', 'loose']);
   });
 

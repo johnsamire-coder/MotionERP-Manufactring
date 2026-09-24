@@ -5,7 +5,6 @@ import {
   Cpu,
   Printer,
   Download,
-  Percent,
   Clock,
   Package,
   DollarSign,
@@ -196,13 +195,16 @@ export const JobCostSheetPage: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900">كارت التكلفة الصناعية الفعلية (Job Cost Sheet)</h1>
+              <h1 className="text-2xl font-bold text-slate-900">
+                كارت التكلفة الصناعية الفعلية (Job Cost Sheet)
+              </h1>
               <span className="bg-amber-100 text-amber-800 font-mono text-xs px-2.5 py-1 rounded-full font-bold">
                 {selectedOrder}
               </span>
             </div>
             <p className="text-sm text-slate-500">
-              تحليل تكلفة الخامات المباشرة أزمنة الماكينات نسب الهالك وتحميل الـ Overhead وهامش الربح
+              تحليل تكلفة الخامات المباشرة أزمنة الماكينات نسب الهالك وتحميل الـ Overhead وهامش
+              الربح
             </p>
           </div>
         </div>
@@ -215,20 +217,22 @@ export const JobCostSheetPage: React.FC = () => {
             <Printer className="w-4 h-4" /> طباعة كارت التكلفة
           </button>
           <button
-            onClick={() => costExportService.exportJobCostSheetToExcel(
-              selectedOrder,
-              {
-                targetUnits,
-                totalDirectMaterials,
-                totalDirectLabor: totalDirectLaborMachine,
-                totalOverhead,
-                totalJobCost,
-                unitCost,
-                unitSellingPriceWithVat: unitSellingPrice,
-              },
-              materials,
-              operations
-            )}
+            onClick={() =>
+              costExportService.exportJobCostSheetToExcel(
+                selectedOrder,
+                {
+                  targetUnits,
+                  totalDirectMaterials,
+                  totalDirectLabor: totalDirectLaborMachine,
+                  totalOverhead,
+                  totalJobCost,
+                  unitCost,
+                  unitSellingPriceWithVat: unitSellingPrice,
+                },
+                materials,
+                operations,
+              )
+            }
             className="flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-sm font-semibold shadow transition cursor-pointer"
           >
             <Download className="w-4 h-4" /> تصدير Excel
@@ -245,30 +249,46 @@ export const JobCostSheetPage: React.FC = () => {
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mt-2">{totalJobCost.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م</h3>
-          <span className="text-xs text-slate-500 font-medium">لتصنيع {targetUnits} سرير عناية مركزة</span>
+          <h3 className="text-2xl font-bold text-slate-900 mt-2">
+            {totalJobCost.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م
+          </h3>
+          <span className="text-xs text-slate-500 font-medium">
+            لتصنيع {targetUnits} سرير عناية مركزة
+          </span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500 uppercase">الخامات المباشرة + الهالك</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase">
+              الخامات المباشرة + الهالك
+            </p>
             <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
               <Layers className="w-5 h-5" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-blue-700 mt-2">{totalDirectMaterials.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م</h3>
-          <span className="text-xs text-blue-600 font-medium">تمثل {((totalDirectMaterials / totalJobCost) * 100).toFixed(1)}% من التكلفة</span>
+          <h3 className="text-2xl font-bold text-blue-700 mt-2">
+            {totalDirectMaterials.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م
+          </h3>
+          <span className="text-xs text-blue-600 font-medium">
+            تمثل {((totalDirectMaterials / totalJobCost) * 100).toFixed(1)}% من التكلفة
+          </span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500 uppercase">أزمنة الماكينات والعمالة</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase">
+              أزمنة الماكينات والعمالة
+            </p>
             <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl">
               <Clock className="w-5 h-5" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-purple-700 mt-2">{totalDirectLaborMachine.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م</h3>
-          <span className="text-xs text-purple-600 font-medium">إجمالي 46.6 ساعة تشغيل بالورشة</span>
+          <h3 className="text-2xl font-bold text-purple-700 mt-2">
+            {totalDirectLaborMachine.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م
+          </h3>
+          <span className="text-xs text-purple-600 font-medium">
+            إجمالي 46.6 ساعة تشغيل بالورشة
+          </span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
@@ -278,7 +298,9 @@ export const JobCostSheetPage: React.FC = () => {
               <Package className="w-5 h-5" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-emerald-700 mt-2">{unitCost.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م</h3>
+          <h3 className="text-2xl font-bold text-emerald-700 mt-2">
+            {unitCost.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م
+          </h3>
           <span className="text-xs text-emerald-600 font-medium">تكلفة تصنيع السرير الواحد</span>
         </div>
       </div>
@@ -288,7 +310,9 @@ export const JobCostSheetPage: React.FC = () => {
         <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-blue-600" />
-            <h3 className="font-bold text-slate-900 text-lg">1. تكلفة الخامات والصاج والمستلزمات (Direct Materials)</h3>
+            <h3 className="font-bold text-slate-900 text-lg">
+              1. تكلفة الخامات والصاج والمستلزمات (Direct Materials)
+            </h3>
           </div>
           <span className="text-sm font-bold text-blue-700">
             الإجمالي: {totalDirectMaterials.toLocaleString('ar-EG')} ج.م
@@ -314,10 +338,14 @@ export const JobCostSheetPage: React.FC = () => {
                   <td className="p-4 font-semibold text-slate-800">{m.name}</td>
                   <td className="p-4 text-slate-600">{m.unit}</td>
                   <td className="p-4 font-mono">{m.netQty}</td>
-                  <td className="p-4 font-mono text-amber-700 font-bold">{m.scrapPercentage > 0 ? `+${m.scrapPercentage}%` : '—'}</td>
+                  <td className="p-4 font-mono text-amber-700 font-bold">
+                    {m.scrapPercentage > 0 ? `+${m.scrapPercentage}%` : '—'}
+                  </td>
                   <td className="p-4 font-mono font-bold text-slate-900">{m.grossQty}</td>
                   <td className="p-4 font-mono">{m.unitCost.toLocaleString()} ج.م</td>
-                  <td className="p-4 font-mono font-bold text-blue-700">{m.totalCost.toLocaleString()} ج.م</td>
+                  <td className="p-4 font-mono font-bold text-blue-700">
+                    {m.totalCost.toLocaleString()} ج.م
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -330,10 +358,13 @@ export const JobCostSheetPage: React.FC = () => {
         <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-2">
             <Cpu className="w-5 h-5 text-purple-600" />
-            <h3 className="font-bold text-slate-900 text-lg">2. أزمنة ومصنعيات مراكز التشغيل (Workstation Operations)</h3>
+            <h3 className="font-bold text-slate-900 text-lg">
+              2. أزمنة ومصنعيات مراكز التشغيل (Workstation Operations)
+            </h3>
           </div>
           <span className="text-sm font-bold text-purple-700">
-            الإجمالي: {totalDirectLaborMachine.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م
+            الإجمالي:{' '}
+            {totalDirectLaborMachine.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م
           </span>
         </div>
 
@@ -357,9 +388,13 @@ export const JobCostSheetPage: React.FC = () => {
                   <td className="p-4 text-slate-600">{op.operationName}</td>
                   <td className="p-4 font-mono text-slate-500">{op.setupTimeMin} د</td>
                   <td className="p-4 font-mono text-slate-500">{op.runTimeMin} د</td>
-                  <td className="p-4 font-mono font-bold text-slate-900">{op.totalTimeMin} دقيقة</td>
+                  <td className="p-4 font-mono font-bold text-slate-900">
+                    {op.totalTimeMin} دقيقة
+                  </td>
                   <td className="p-4 font-mono">{op.hourlyRate} ج.م/ساعة</td>
-                  <td className="p-4 font-mono font-bold text-purple-700">{op.totalCost.toLocaleString('ar-EG', { maximumFractionDigits: 1 })} ج.م</td>
+                  <td className="p-4 font-mono font-bold text-purple-700">
+                    {op.totalCost.toLocaleString('ar-EG', { maximumFractionDigits: 1 })} ج.م
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -371,8 +406,12 @@ export const JobCostSheetPage: React.FC = () => {
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-lg space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-700 pb-4 gap-4">
           <div>
-            <h3 className="text-xl font-bold">3. هيكل التسعير والربحية المقترح (Pricing & Margins)</h3>
-            <p className="text-sm text-slate-400">حساب سعر البيع الموصى به للمستشفيات طبقا لشيت العميل</p>
+            <h3 className="text-xl font-bold">
+              3. هيكل التسعير والربحية المقترح (Pricing & Margins)
+            </h3>
+            <p className="text-sm text-slate-400">
+              حساب سعر البيع الموصى به للمستشفيات طبقا لشيت العميل
+            </p>
           </div>
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
@@ -389,22 +428,32 @@ export const JobCostSheetPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
           <div className="p-4 bg-slate-800/60 rounded-xl border border-slate-700">
             <p className="text-xs text-slate-400 mb-1">التكلفة المباشرة (خامات + تشغيل)</p>
-            <h4 className="text-xl font-bold text-slate-100">{totalDirectCost.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م</h4>
+            <h4 className="text-xl font-bold text-slate-100">
+              {totalDirectCost.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م
+            </h4>
           </div>
 
           <div className="p-4 bg-slate-800/60 rounded-xl border border-slate-700">
-            <p className="text-xs text-slate-400 mb-1">المصاريف غير المباشرة (OH {overheadRate}%)</p>
-            <h4 className="text-xl font-bold text-amber-400">+{totalOverhead.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م</h4>
+            <p className="text-xs text-slate-400 mb-1">
+              المصاريف غير المباشرة (OH {overheadRate}%)
+            </p>
+            <h4 className="text-xl font-bold text-amber-400">
+              +{totalOverhead.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م
+            </h4>
           </div>
 
           <div className="p-4 bg-slate-800/60 rounded-xl border border-slate-700">
             <p className="text-xs text-slate-400 mb-1">الربح المستهدف ({profitMargin}%)</p>
-            <h4 className="text-xl font-bold text-emerald-400">+{targetProfitAmount.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م</h4>
+            <h4 className="text-xl font-bold text-emerald-400">
+              +{targetProfitAmount.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م
+            </h4>
           </div>
 
           <div className="p-4 bg-emerald-950/80 rounded-xl border border-emerald-600/50">
             <p className="text-xs text-emerald-300 mb-1">سعر بيع السرير للعميل (شامل 14% VAT)</p>
-            <h4 className="text-2xl font-extrabold text-emerald-400">{unitSellingPrice.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م</h4>
+            <h4 className="text-2xl font-extrabold text-emerald-400">
+              {unitSellingPrice.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ج.م
+            </h4>
           </div>
         </div>
       </div>

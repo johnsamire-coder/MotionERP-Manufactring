@@ -2,7 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { AuthNotFoundError, AuthValidationError } from './auth.errors';
 import { AuthRepository } from './auth.repository';
-import type { CreateUserPermissionInput, UserPermissionAllowType, UserPermissionRecord } from './auth.types';
+import type {
+  CreateUserPermissionInput,
+  UserPermissionAllowType,
+  UserPermissionRecord,
+} from './auth.types';
 
 const ALLOW_TYPES: readonly UserPermissionAllowType[] = ['org_node', 'warehouse'];
 
@@ -22,14 +26,21 @@ export class UserPermissionService {
     const user = await this.repository.findUserById(input.userId);
     if (!user) throw new AuthNotFoundError(`user ${input.userId} does not exist`);
 
-    const exists = input.allowType === 'org_node'
-      ? await this.repository.orgNodeExists(input.allowValue)
-      : await this.repository.warehouseExists(input.allowValue);
+    const exists =
+      input.allowType === 'org_node'
+        ? await this.repository.orgNodeExists(input.allowValue)
+        : await this.repository.warehouseExists(input.allowValue);
     if (!exists) {
-      throw new AuthNotFoundError(`${input.allowType === 'org_node' ? 'org node' : 'warehouse'} ${input.allowValue} does not exist`);
+      throw new AuthNotFoundError(
+        `${input.allowType === 'org_node' ? 'org node' : 'warehouse'} ${input.allowValue} does not exist`,
+      );
     }
 
-    const duplicate = await this.repository.findUserPermission(input.userId, input.allowType, input.allowValue);
+    const duplicate = await this.repository.findUserPermission(
+      input.userId,
+      input.allowType,
+      input.allowValue,
+    );
     if (duplicate) throw new AuthValidationError('this restriction already exists for the user');
 
     return this.repository.insertUserPermission({ ...input, id: randomUUID() });
@@ -45,7 +56,9 @@ export class UserPermissionService {
    * The raw restrictions of a user, grouped by dimension. `null` = unrestricted on that
    * dimension. Expanding org nodes to their subtree is left to the enforcing module (5.2).
    */
-  async getRestrictions(userId: string): Promise<{ orgNodeIds: string[] | null; warehouseIds: string[] | null }> {
+  async getRestrictions(
+    userId: string,
+  ): Promise<{ orgNodeIds: string[] | null; warehouseIds: string[] | null }> {
     const rows = await this.repository.listUserPermissions(userId);
     const pick = (type: UserPermissionAllowType): string[] | null => {
       const values = rows.filter((r) => r.allowType === type).map((r) => r.allowValue);

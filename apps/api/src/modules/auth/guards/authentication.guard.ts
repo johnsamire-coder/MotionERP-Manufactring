@@ -21,11 +21,18 @@ export class AuthenticationGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     if (context.getType() !== 'http') return true;
-    const request = context.switchToHttp().getRequest<{ headers: Record<string, unknown>; user?: unknown }>();
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [context.getHandler(), context.getClass()]) === true;
+    const request = context
+      .switchToHttp()
+      .getRequest<{ headers: Record<string, unknown>; user?: unknown }>();
+    const isPublic =
+      this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ]) === true;
 
     const header = request.headers['authorization'];
-    const token = typeof header === 'string' && header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+    const token =
+      typeof header === 'string' && header.startsWith('Bearer ') ? header.slice(7).trim() : '';
 
     if (token) {
       try {

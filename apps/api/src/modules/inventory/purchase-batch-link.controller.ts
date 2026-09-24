@@ -10,6 +10,7 @@ import {
   QueryPurchaseBatchesDto,
   TraceabilitySearchDto,
 } from './purchase-batch-link.dto';
+import type { RequestWithUser } from '../auth/request-with-user';
 
 @Controller({ path: 'inventory/purchase-batches', version: '1' })
 export class PurchaseBatchLinkController {
@@ -17,14 +18,14 @@ export class PurchaseBatchLinkController {
 
   // ── تسجيل اللوطات عند الاستلام ──────────────
   @Post('register')
-  async registerBatches(@Body() dto: RegisterPurchaseBatchesDto, @Req() req: any) {
+  async registerBatches(@Body() dto: RegisterPurchaseBatchesDto, @Req() req: RequestWithUser) {
     const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
     return this.batchLinkService.registerBatches(dto, userId);
   }
 
   // ── تحديث حالة الحجر الصحي ──────────────────
   @Post('status')
-  async updateStatus(@Body() dto: UpdateBatchStatusDto, @Req() req: any) {
+  async updateStatus(@Body() dto: UpdateBatchStatusDto, @Req() req: RequestWithUser) {
     const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
     return this.batchLinkService.updateBatchStatus(dto, userId);
   }

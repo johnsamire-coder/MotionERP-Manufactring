@@ -45,13 +45,18 @@ export class CustomerCreditService {
       const invoiced = await this.repository.postedInvoicedNet(order.jobOrderNumber);
       unbilledOrders += Math.max(0, value - invoiced);
     }
-    const deliveredNotInvoicedCount = await this.repository.deliveredNotInvoicedCount(orders.map((o) => o.jobOrderNumber));
+    const deliveredNotInvoicedCount = await this.repository.deliveredNotInvoicedCount(
+      orders.map((o) => o.jobOrderNumber),
+    );
 
     const totalExposure = ledgerBalance + unbilledOrders;
     // Own limit first, else the nearest customer group that sets a default (plan item 28).
     const effective = this.groups
       ? await this.groups.effectiveCreditLimit(customer)
-      : { limit: customer.creditLimit, source: customer.creditLimit === null ? null : ('customer' as const) };
+      : {
+          limit: customer.creditLimit,
+          source: customer.creditLimit === null ? null : ('customer' as const),
+        };
     const limit = effective.limit === null ? null : Number(effective.limit);
     return {
       customerId,
@@ -67,7 +72,9 @@ export class CustomerCreditService {
   }
 
   /** A warning message when the customer is over the limit, otherwise null. Never blocks. */
-  async warningFor(customerId: string | null): Promise<{ message: string; status: CustomerCreditStatus } | null> {
+  async warningFor(
+    customerId: string | null,
+  ): Promise<{ message: string; status: CustomerCreditStatus } | null> {
     if (!customerId) return null;
     const status = await this.getStatus(customerId);
     if (!status.exceeded) return null;

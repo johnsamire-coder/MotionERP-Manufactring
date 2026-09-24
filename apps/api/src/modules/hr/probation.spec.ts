@@ -15,9 +15,20 @@ describe('Probation dates (plan item 29)', () => {
   });
 
   it('3. state: on probation, overdue, confirmed, not set', () => {
-    expect(probationState({ probationEndDate: '2026-10-01', confirmationDate: null }, '2026-09-24')).toEqual({ state: 'on_probation', daysLeft: 7 });
-    expect(probationState({ probationEndDate: '2026-09-20', confirmationDate: null }, '2026-09-24')).toEqual({ state: 'overdue', daysLeft: -4 });
-    expect(probationState({ probationEndDate: '2026-09-20', confirmationDate: '2026-09-21' }, '2026-09-24').state).toBe('confirmed');
-    expect(probationState({ probationEndDate: null, confirmationDate: null }, '2026-09-24').state).toBe('not_set');
+    expect(
+      probationState({ probationEndDate: '2026-10-01', confirmationDate: null }, '2026-09-24'),
+    ).toEqual({ state: 'on_probation', daysLeft: 7 });
+    expect(
+      probationState({ probationEndDate: '2026-09-20', confirmationDate: null }, '2026-09-24'),
+    ).toEqual({ state: 'overdue', daysLeft: -4 });
+    expect(
+      probationState(
+        { probationEndDate: '2026-09-20', confirmationDate: '2026-09-21' },
+        '2026-09-24',
+      ).state,
+    ).toBe('confirmed');
+    expect(
+      probationState({ probationEndDate: null, confirmationDate: null }, '2026-09-24').state,
+    ).toBe('not_set');
   });
 });

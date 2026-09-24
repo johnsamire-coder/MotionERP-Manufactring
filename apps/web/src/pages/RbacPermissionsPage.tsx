@@ -1,20 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ShieldCheck,
-  Users,
-  Key,
-  Check,
-  X,
-  Save,
-  Printer,
-  Search,
-  Lock,
-  Building,
-  Factory,
-  CheckCircle2,
-  AlertCircle,
-  HelpCircle,
-} from 'lucide-react';
+import { ShieldCheck, Key, Save, Search, CheckCircle2 } from 'lucide-react';
 
 interface PermissionItem {
   module: string;
@@ -40,7 +25,11 @@ export const RbacPermissionsPage: React.FC = () => {
     { module: 'المحاسبة العامة', code: 'acc:view', name: 'استعراض الدفاتر والتقارير المالية' },
     { module: 'المحاسبة العامة', code: 'acc:post', name: 'ترحيل واعتماد قيود اليومية' },
     { module: 'المحاسبة العامة', code: 'acc:close', name: 'إقفال الفترات والسنوات المالية' },
-    { module: 'الضرائب والجمارك', code: 'tax:settle', name: 'تسوية ضريبة القيمة المضافة ونموذج 41' },
+    {
+      module: 'الضرائب والجمارك',
+      code: 'tax:settle',
+      name: 'تسوية ضريبة القيمة المضافة ونموذج 41',
+    },
     { module: 'التكاليف الصناعية', code: 'cost:view', name: 'استعراض كروت التكلفة والربحية' },
     { module: 'التكاليف الصناعية', code: 'cost:edit', name: 'تعديل المعايير وتوزيع الـ Overhead' },
     { module: 'إدارة المخازن', code: 'inv:view', name: 'استعراض الأرصدة والسجل المالي' },
@@ -49,7 +38,11 @@ export const RbacPermissionsPage: React.FC = () => {
     { module: 'صالة الإنتاج', code: 'prod:time', name: 'تسجيل أزمنة الماكينات والتشغيل' },
     { module: 'الجودة الطبية', code: 'qc:inspect', name: 'إجراء الفحص الطبي والحجر الصحي' },
     { module: 'الجودة الطبية', code: 'qc:recall', name: 'إطلاق أوامر الاستدعاء الطبي السريع' },
-    { module: 'إدارة المبيعات', code: 'sales:manage', name: 'إدارة العملاء وفواتير المبيعات والضمان' },
+    {
+      module: 'إدارة المبيعات',
+      code: 'sales:manage',
+      name: 'إدارة العملاء وفواتير المبيعات والضمان',
+    },
     { module: 'الرقابة والأمان', code: 'admin:audit', name: 'استعراض سجل التدقيق الرقابي (Audit)' },
   ];
 
@@ -68,7 +61,15 @@ export const RbacPermissionsPage: React.FC = () => {
       name: 'المدير المالي والمحاسب القانوني',
       description: 'إدارة الدفاتر المحاسبية، الضرائب، الإقفالات، وسندات الصرف',
       usersCount: 3,
-      permissions: ['acc:view', 'acc:post', 'acc:close', 'tax:settle', 'cost:view', 'inv:view', 'admin:audit'],
+      permissions: [
+        'acc:view',
+        'acc:post',
+        'acc:close',
+        'tax:settle',
+        'cost:view',
+        'inv:view',
+        'admin:audit',
+      ],
     },
     {
       id: 'r-cost-acc',
@@ -127,7 +128,7 @@ export const RbacPermissionsPage: React.FC = () => {
           return { ...r, permissions: newPerms };
         }
         return r;
-      })
+      }),
     );
   };
 
@@ -140,7 +141,7 @@ export const RbacPermissionsPage: React.FC = () => {
     (p) =>
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.module.toLowerCase().includes(searchTerm.toLowerCase())
+      p.module.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -152,7 +153,9 @@ export const RbacPermissionsPage: React.FC = () => {
             <Key className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">مصفوفة الصلاحيات والتحكم بالأدوار (RBAC Matrix)</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              مصفوفة الصلاحيات والتحكم بالأدوار (RBAC Matrix)
+            </h1>
             <p className="text-sm text-slate-500">
               تحديد الصلاحيات الدقيقة لكل دور وظيفي وفصل المهام الرقابية بين الإدارات
             </p>
@@ -178,7 +181,9 @@ export const RbacPermissionsPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* ── 1. قائمة الأدوار الوظيفية (Sidebar) ── */}
         <div className="lg:col-span-1 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2 mb-2">الأدوار الوظيفية</h3>
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2 mb-2">
+            الأدوار الوظيفية
+          </h3>
           {roles.map((r) => (
             <button
               key={r.id}
@@ -209,7 +214,8 @@ export const RbacPermissionsPage: React.FC = () => {
                 <h3 className="font-bold text-slate-900 text-lg">صلاحيات: {currentRole.name}</h3>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                ممنوح له ({currentRole.permissions.length}) من أصل ({permissionsList.length}) صلاحية بالنظام
+                ممنوح له ({currentRole.permissions.length}) من أصل ({permissionsList.length}) صلاحية
+                بالنظام
               </p>
             </div>
 

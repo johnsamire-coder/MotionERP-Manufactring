@@ -1,18 +1,13 @@
 import React, { useState } from 'react';
 import {
-  TrendingUp,
-  TrendingDown,
   AlertTriangle,
   CheckCircle2,
   Printer,
-  Download,
   Percent,
   Layers,
   ShoppingBag,
   Scissors,
   Shuffle,
-  Info,
-  DollarSign,
 } from 'lucide-react';
 
 interface MaterialVarianceRecord {
@@ -34,12 +29,12 @@ interface MaterialVarianceRecord {
   standardScrapPct: number;
   actualScrapPct: number;
   scrapVarianceAmount: number;
-  
+
   netTotalVariance: number;
 }
 
 export const MaterialVariancePage: React.FC = () => {
-  const [selectedWO] = useState('WO-2026-08112');
+  const [_selectedWO] = useState('WO-2026-08112');
 
   // ── بيانات حقيقية من صالة الإنتاج والاشتريات (تشكيل الصاج) ──
   const [records] = useState<MaterialVarianceRecord[]>([
@@ -56,7 +51,7 @@ export const MaterialVariancePage: React.FC = () => {
       qtyVarianceAmount: -7955, // عجز استخدام بسبب زيادة المنصرف
 
       substitutionImpact: 0, // لم يتم استبداله
-      
+
       standardScrapPct: 8,
       actualScrapPct: 11.5, // الهالك الفعلي زاد لـ 11.5% بسبب عطل في الليزر
       scrapVarianceAmount: -4810, // هدر غير مخطط
@@ -76,7 +71,7 @@ export const MaterialVariancePage: React.FC = () => {
       qtyVarianceAmount: 840, // وفر استخدام
 
       substitutionImpact: 0,
-      
+
       standardScrapPct: 5,
       actualScrapPct: 4.8, // الهالك مطابق للمعياري
       scrapVarianceAmount: 28,
@@ -97,13 +92,13 @@ export const MaterialVariancePage: React.FC = () => {
 
       substitutionImpact: -1500, // اضطرينا نستخدم بودرة دهان ألماني لعدم توفر التركي
       substitutedWith: 'بودرة دهان جوتن ألماني مستورد',
-      
+
       standardScrapPct: 10,
       actualScrapPct: 10,
       scrapVarianceAmount: 0,
 
       netTotalVariance: -1500,
-    }
+    },
   ]);
 
   const getStatusIcon = (value: number) => {
@@ -126,9 +121,12 @@ export const MaterialVariancePage: React.FC = () => {
             <Percent className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">انحرافات المواد على المستويات الأربعة (4-Level Variance)</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              انحرافات المواد على المستويات الأربعة (4-Level Variance)
+            </h1>
             <p className="text-sm text-slate-500">
-              تفكيك الانحراف الكلي للمواد لتحديد الهدر الدقيق الناتج عن الأسعار، الاستخدام، الإحلال، وهالك الليزر والصاج
+              تفكيك الانحراف الكلي للمواد لتحديد الهدر الدقيق الناتج عن الأسعار، الاستخدام، الإحلال،
+              وهالك الليزر والصاج
             </p>
           </div>
         </div>
@@ -171,7 +169,8 @@ export const MaterialVariancePage: React.FC = () => {
             <h4>3. انحراف الإحلال</h4>
           </div>
           <p className="text-xs text-slate-500 leading-relaxed">
-            الفرق المالي الناتج عن استخدام صنف بديل بمواصفة مختلفة لعدم توفر الخامة الأساسية بالمخزن.
+            الفرق المالي الناتج عن استخدام صنف بديل بمواصفة مختلفة لعدم توفر الخامة الأساسية
+            بالمخزن.
           </p>
         </div>
 
@@ -182,7 +181,8 @@ export const MaterialVariancePage: React.FC = () => {
             <h4>4. انحراف الهالك</h4>
           </div>
           <p className="text-xs text-slate-500 leading-relaxed">
-            الفرق المالي الناتج عن تخطي نسبة الهالك المعيارية المسموح بها في مقطوعية الليزر وتشكيل الصاج.
+            الفرق المالي الناتج عن تخطي نسبة الهالك المعيارية المسموح بها في مقطوعية الليزر وتشكيل
+            الصاج.
           </p>
         </div>
       </div>
@@ -190,8 +190,12 @@ export const MaterialVariancePage: React.FC = () => {
       {/* ── لوحة التحليلات والجدول الرئيسي ── */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-5 border-b border-slate-200 bg-slate-50/50">
-          <h3 className="font-bold text-slate-900 text-lg">تحليل الانحراف الرباعي التفصيلي للمواد</h3>
-          <p className="text-xs text-slate-500 mt-1">تفكيك كامل للتكلفة لمعرفة مسببي العجز أو الوفر بدقة</p>
+          <h3 className="font-bold text-slate-900 text-lg">
+            تحليل الانحراف الرباعي التفصيلي للمواد
+          </h3>
+          <p className="text-xs text-slate-500 mt-1">
+            تفكيك كامل للتكلفة لمعرفة مسببي العجز أو الوفر بدقة
+          </p>
         </div>
 
         <div className="overflow-x-auto">
@@ -245,9 +249,7 @@ export const MaterialVariancePage: React.FC = () => {
                     <span className={getVarianceTextClass(r.substitutionImpact)}>
                       {r.substitutionImpact.toLocaleString()} ج.م
                     </span>
-                    <div className="text-[10px] text-slate-400 mt-1">
-                      أثر الإحلال على السعر
-                    </div>
+                    <div className="text-[10px] text-slate-400 mt-1">أثر الإحلال على السعر</div>
                   </td>
 
                   {/* 4. انحراف الهالك */}

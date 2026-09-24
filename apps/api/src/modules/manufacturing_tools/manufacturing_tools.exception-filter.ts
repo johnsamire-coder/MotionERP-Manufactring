@@ -1,11 +1,20 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { ManufacturingToolsNotFoundError, ManufacturingToolsValidationError } from './manufacturing_tools.errors';
+import {
+  ManufacturingToolsNotFoundError,
+  ManufacturingToolsValidationError,
+} from './manufacturing_tools.errors';
 
-interface HttpResponse { status(code: number): HttpResponse; json(body: unknown): void; }
+interface HttpResponse {
+  status(code: number): HttpResponse;
+  json(body: unknown): void;
+}
 
 @Catch(ManufacturingToolsNotFoundError, ManufacturingToolsValidationError)
 export class ManufacturingToolsExceptionFilter implements ExceptionFilter {
-  catch(exception: ManufacturingToolsNotFoundError | ManufacturingToolsValidationError, host: ArgumentsHost): void {
+  catch(
+    exception: ManufacturingToolsNotFoundError | ManufacturingToolsValidationError,
+    host: ArgumentsHost,
+  ): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<HttpResponse>();
     const status = exception instanceof ManufacturingToolsNotFoundError ? 404 : 400;

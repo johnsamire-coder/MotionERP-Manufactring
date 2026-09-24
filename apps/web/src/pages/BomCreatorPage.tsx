@@ -55,24 +55,24 @@ export const BomCreatorPage: React.FC = () => {
     setLines(lines.filter((_, i) => i !== idx));
   };
 
-  const updateLine = (idx: number, field: keyof BomLine, value: any) => {
+  const updateLine = <K extends keyof BomLine>(idx: number, field: K, value: BomLine[K]) => {
     const updated = [...lines];
-    (updated[idx] as any)[field] = value;
+    if (updated[idx]) updated[idx][field] = value;
     if (field === 'componentItemId') {
       const item = items.find((i) => i.id === value);
       const row = updated[idx];
-      if (row) row.componentName = item ? (item.code + ' - ' + item.name) : '';
+      if (row) row.componentName = item ? item.code + ' - ' + item.name : '';
     }
     setLines(updated);
   };
 
   const totalMaterialCost = lines.reduce(
     (sum, l) => sum + (parseFloat(l.quantity) || 0) * l.unitCost,
-    0
+    0,
   );
   const totalLaborMinutes = lines.reduce(
     (sum, l) => sum + (parseFloat(l.standardTimeMinutes) || 0),
-    0
+    0,
   );
   const laborCost = (totalLaborMinutes / 60) * 280;
   const overheadCost = (totalMaterialCost + laborCost) * 0.25;
@@ -89,8 +89,9 @@ export const BomCreatorPage: React.FC = () => {
     setErrorMsg('');
     try {
       const orgNodes = await fetch(API + '/organization/tree').then((r) => r.json());
-      const manufacturingNode =
-        orgNodes.tree?.[0]?.children?.[0]?.children?.find((c: any) => c.name === 'Manufacturing');
+      const manufacturingNode = orgNodes.tree?.[0]?.children?.[0]?.children?.find(
+        (c: { id: string; name: string }) => c.name === 'Manufacturing',
+      );
       const orgNodeId = manufacturingNode?.id || orgNodes.tree?.[0]?.children?.[0]?.id;
 
       const body = {
@@ -124,8 +125,8 @@ export const BomCreatorPage: React.FC = () => {
         setErrorMsg('فشل الحفظ: ' + JSON.stringify(data));
         setStatus('error');
       }
-    } catch (e: any) {
-      setErrorMsg('خطأ: ' + e.message);
+    } catch (e) {
+      setErrorMsg('خطأ: ' + (e instanceof Error ? e.message : String(e)));
       setStatus('error');
     }
   };
@@ -149,13 +150,15 @@ export const BomCreatorPage: React.FC = () => {
           disabled={status === 'saving'}
           className="flex items-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-400 text-white rounded-xl font-bold shadow transition cursor-pointer"
         >
-          <Save className="w-5 h-5" /> {status === 'saving' ? 'جاري الحفظ...' : 'حفظ واعتماد الـ BOM'}
+          <Save className="w-5 h-5" />{' '}
+          {status === 'saving' ? 'جاري الحفظ...' : 'حفظ واعتماد الـ BOM'}
         </button>
       </div>
 
       {status === 'saved' && (
         <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 p-4 rounded-xl flex items-center gap-2 font-bold">
-          <CheckCircle2 className="w-5 h-5" /> تم حفظ واعتماد الـ BOM بنجاح! رقم الـ BOM: {savedBomId}
+          <CheckCircle2 className="w-5 h-5" /> تم حفظ واعتماد الـ BOM بنجاح! رقم الـ BOM:{' '}
+          {savedBomId}
         </div>
       )}
       {status === 'error' && (
@@ -274,7 +277,7 @@ export const BomCreatorPage: React.FC = () => {
                   <td className="p-3 font-mono font-bold text-purple-700">
                     {(((parseFloat(l.standardTimeMinutes) || 0) / 60) * 280).toLocaleString(
                       'ar-EG',
-                      { maximumFractionDigits: 0 }
+                      { maximumFractionDigits: 0 },
                     )}{' '}
                     ج.م
                   </td>

@@ -1,22 +1,14 @@
 import React, { useState } from 'react';
 import {
   Landmark,
-  Receipt,
   FileSpreadsheet,
-  FileText,
   Printer,
   Download,
   CheckCircle2,
   Calculator,
-  Building2,
-  Calendar,
-  Layers,
   ArrowUpRight,
   ArrowDownLeft,
   Ship,
-  DollarSign,
-  AlertCircle,
-  Plus,
 } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────
@@ -66,8 +58,8 @@ interface CustomsRecord {
 
 export const TaxAndCustomsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'vat' | 'wht' | 'customs'>('vat');
-  const [selectedQuarter, setSelectedQuarter] = useState<number>(3); // الربع الثالث
-  const [selectedYear, setSelectedYear] = useState<string>('2026');
+  const [_selectedQuarter, _setSelectedQuarter] = useState<number>(3); // الربع الثالث
+  const [_selectedYear, _setSelectedYear] = useState<string>('2026');
 
   // ── Mock Data واقعية للمصنع ───────────────────
   const [vatSettlements] = useState<VatSettlementRecord[]>([
@@ -78,8 +70,8 @@ export const TaxAndCustomsPage: React.FC = () => {
       totalSalesTaxable: 1850000,
       outputVatAmount: 259000, // 14%
       totalPurchaseTaxable: 1120000,
-      inputVatAmount: 156800,  // 14%
-      netVatPayable: 102200,   // الصافي واجب السداد
+      inputVatAmount: 156800, // 14%
+      netVatPayable: 102200, // الصافي واجب السداد
       status: 'paid',
       paymentReference: 'CBE-EGP-TAX-891044',
       paymentDate: '2026-09-15',
@@ -151,9 +143,9 @@ export const TaxAndCustomsPage: React.FC = () => {
       declarationDate: '2026-08-18',
       billOfLading: 'MED-BL-994102',
       cifValueEgp: 1450000,
-      customsDutyAmount: 72500,   // 5% ضريبة جمركية
-      developmentFee: 43500,      // 3% رسم تنمية
-      vatPaidAtCustoms: 219240,   // 14% تسدد بالجمارك وتسترد كمدخلات
+      customsDutyAmount: 72500, // 5% ضريبة جمركية
+      developmentFee: 43500, // 3% رسم تنمية
+      vatPaidAtCustoms: 219240, // 14% تسدد بالجمارك وتسترد كمدخلات
       totalPaidAmount: 335240,
       status: 'capitalized',
     },
@@ -164,7 +156,7 @@ export const TaxAndCustomsPage: React.FC = () => {
     .filter((w) => w.direction === 'deducted_by_us')
     .reduce((acc, w) => acc + w.whtAmount, 0);
 
-  const totalWhtDeductedFromUs = whtEntries
+  const _totalWhtDeductedFromUs = whtEntries
     .filter((w) => w.direction === 'deducted_from_us')
     .reduce((acc, w) => acc + w.whtAmount, 0);
 
@@ -177,7 +169,9 @@ export const TaxAndCustomsPage: React.FC = () => {
             <Landmark className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">منظومة مصلحة الضرائب المصرية والجمارك</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              منظومة مصلحة الضرائب المصرية والجمارك
+            </h1>
             <p className="text-sm text-slate-500">
               تسويات القيمة المضافة (14%)، إقرارات الخصم والإضافة (نموذج 41)، ورسملة الرسوم الجمركية
             </p>
@@ -198,7 +192,9 @@ export const TaxAndCustomsPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">ضريبة المبيعات (مخرجات 14%)</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              ضريبة المبيعات (مخرجات 14%)
+            </p>
             <h3 className="text-2xl font-bold text-slate-900 mt-1">294,000 ج.م</h3>
             <span className="text-xs text-indigo-600 font-medium">عن مبيعات شهر سبتمبر</span>
           </div>
@@ -209,7 +205,9 @@ export const TaxAndCustomsPage: React.FC = () => {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">ضريبة المشتريات (مدخلات 14%)</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              ضريبة المشتريات (مدخلات 14%)
+            </p>
             <h3 className="text-2xl font-bold text-emerald-700 mt-1">203,000 ج.م</h3>
             <span className="text-xs text-emerald-600 font-medium">قابلة للخصم من الإقرار</span>
           </div>
@@ -220,7 +218,9 @@ export const TaxAndCustomsPage: React.FC = () => {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">صافي ضريبة VAT المستحقة</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              صافي ضريبة VAT المستحقة
+            </p>
             <h3 className="text-2xl font-bold text-rose-700 mt-1">91,000 ج.م</h3>
             <span className="text-xs text-rose-600 font-medium">واجبة السداد للمصلحة</span>
           </div>
@@ -231,7 +231,9 @@ export const TaxAndCustomsPage: React.FC = () => {
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">مستقطعات نموذج 41 (Q3)</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              مستقطعات نموذج 41 (Q3)
+            </p>
             <h3 className="text-2xl font-bold text-amber-700 mt-1">
               {totalWhtDeductedByUs.toLocaleString()} ج.م
             </h3>
@@ -305,13 +307,25 @@ export const TaxAndCustomsPage: React.FC = () => {
               <tbody className="divide-y divide-slate-100">
                 {vatSettlements.map((v) => (
                   <tr key={v.id} className="hover:bg-slate-50/80 transition">
-                    <td className="p-4 font-mono font-bold text-indigo-700">{v.settlementNumber}</td>
+                    <td className="p-4 font-mono font-bold text-indigo-700">
+                      {v.settlementNumber}
+                    </td>
                     <td className="p-4 font-semibold text-slate-900">{v.taxPeriod}</td>
-                    <td className="p-4 text-slate-700">{v.totalSalesTaxable.toLocaleString()} ج.م</td>
-                    <td className="p-4 font-semibold text-indigo-700">+{v.outputVatAmount.toLocaleString()} ج.م</td>
-                    <td className="p-4 text-slate-700">{v.totalPurchaseTaxable.toLocaleString()} ج.م</td>
-                    <td className="p-4 font-semibold text-emerald-700">-{v.inputVatAmount.toLocaleString()} ج.م</td>
-                    <td className="p-4 font-bold text-rose-700">{v.netVatPayable.toLocaleString()} ج.م</td>
+                    <td className="p-4 text-slate-700">
+                      {v.totalSalesTaxable.toLocaleString()} ج.م
+                    </td>
+                    <td className="p-4 font-semibold text-indigo-700">
+                      +{v.outputVatAmount.toLocaleString()} ج.م
+                    </td>
+                    <td className="p-4 text-slate-700">
+                      {v.totalPurchaseTaxable.toLocaleString()} ج.م
+                    </td>
+                    <td className="p-4 font-semibold text-emerald-700">
+                      -{v.inputVatAmount.toLocaleString()} ج.م
+                    </td>
+                    <td className="p-4 font-bold text-rose-700">
+                      {v.netVatPayable.toLocaleString()} ج.م
+                    </td>
                     <td className="p-4">
                       {v.status === 'paid' ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
@@ -359,7 +373,9 @@ export const TaxAndCustomsPage: React.FC = () => {
                     <td className="p-4 text-xs text-slate-500">{w.entryDate}</td>
                     <td className="p-4 font-medium">{w.baseAmount.toLocaleString()} ج.م</td>
                     <td className="p-4 font-bold text-indigo-700">{w.whtRate}%</td>
-                    <td className="p-4 font-bold text-amber-700">{w.whtAmount.toLocaleString()} ج.م</td>
+                    <td className="p-4 font-bold text-amber-700">
+                      {w.whtAmount.toLocaleString()} ج.م
+                    </td>
                     <td className="p-4">
                       {w.direction === 'deducted_by_us' ? (
                         <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
@@ -398,7 +414,9 @@ export const TaxAndCustomsPage: React.FC = () => {
               <tbody className="divide-y divide-slate-100">
                 {customsList.map((c) => (
                   <tr key={c.id} className="hover:bg-slate-50/80 transition">
-                    <td className="p-4 font-mono font-bold text-indigo-700">{c.declarationNumber}</td>
+                    <td className="p-4 font-mono font-bold text-indigo-700">
+                      {c.declarationNumber}
+                    </td>
                     <td className="p-4">
                       <div className="font-semibold text-slate-900">{c.supplierName}</div>
                       <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
@@ -408,10 +426,16 @@ export const TaxAndCustomsPage: React.FC = () => {
                     </td>
                     <td className="p-4 font-mono text-xs text-slate-600">{c.billOfLading}</td>
                     <td className="p-4 font-medium">{c.cifValueEgp.toLocaleString()} ج.م</td>
-                    <td className="p-4 text-slate-800">{c.customsDutyAmount.toLocaleString()} ج.م</td>
+                    <td className="p-4 text-slate-800">
+                      {c.customsDutyAmount.toLocaleString()} ج.م
+                    </td>
                     <td className="p-4 text-slate-800">{c.developmentFee.toLocaleString()} ج.م</td>
-                    <td className="p-4 font-bold text-emerald-700">{c.vatPaidAtCustoms.toLocaleString()} ج.م</td>
-                    <td className="p-4 font-bold text-rose-700">{c.totalPaidAmount.toLocaleString()} ج.م</td>
+                    <td className="p-4 font-bold text-emerald-700">
+                      {c.vatPaidAtCustoms.toLocaleString()} ج.م
+                    </td>
+                    <td className="p-4 font-bold text-rose-700">
+                      {c.totalPaidAmount.toLocaleString()} ج.م
+                    </td>
                     <td className="p-4">
                       <span className="inline-flex items-center gap-1 text-xs font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
                         <CheckCircle2 className="w-3.5 h-3.5" /> مرسملة على المخزون

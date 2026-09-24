@@ -1,6 +1,12 @@
 export class CrmNotFoundError extends Error {
-  constructor(message: string) { super(message); this.name = "CrmNotFoundError"; }
+  constructor(message: string) {
+    super(message);
+    this.name = 'CrmNotFoundError';
+  }
 }
 export class CrmValidationError extends Error {
-  constructor(message: string) { super(message); this.name = "CrmValidationError"; }
+  constructor(message: string) {
+    super(message);
+    this.name = 'CrmValidationError';
+  }
 }

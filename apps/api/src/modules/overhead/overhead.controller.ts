@@ -4,6 +4,7 @@
 // ============================================================
 import { Controller, Get, Post, Body, Query, Req } from '@nestjs/common';
 import { OverheadService, RunAllocationDto } from './overhead.service';
+import type { RequestWithUser } from '../auth/request-with-user';
 
 @Controller({ path: 'overhead', version: '1' })
 export class OverheadController {
@@ -15,20 +16,28 @@ export class OverheadController {
   }
 
   @Post('allocate')
-  async runAllocation(@Body() dto: RunAllocationDto, @Req() req: any) {
+  async runAllocation(@Body() dto: RunAllocationDto, @Req() req: RequestWithUser) {
     const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
     return this.overheadService.runAllocationEngine(dto, userId);
   }
 
   @Post('integrate-depreciation')
-  async integrateDepreciation(@Body() dto: {
-    companyId: string;
-    fiscalYearId: string;
-    periodId: string;
-    periodMonth: string;
-    totalMachineryDepreciation: number;
-    machinesBreakdown?: Array<{ machineName: string; depreciationAmount: number; operatingHours: number }>;
-  }, @Req() req: any) {
+  async integrateDepreciation(
+    @Body()
+    dto: {
+      companyId: string;
+      fiscalYearId: string;
+      periodId: string;
+      periodMonth: string;
+      totalMachineryDepreciation: number;
+      machinesBreakdown?: Array<{
+        machineName: string;
+        depreciationAmount: number;
+        operatingHours: number;
+      }>;
+    },
+    @Req() req: RequestWithUser,
+  ) {
     const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
     return this.overheadService.integrateMachineryDepreciation(dto, userId);
   }

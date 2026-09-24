@@ -1,4 +1,17 @@
-import { IsArray, IsBoolean, IsDateString, IsIn, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength, ValidateNested, Min, ArrayMinSize } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsIn,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  ValidateNested,
+  ArrayMinSize,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ProductionStepMaterialDto {
@@ -9,7 +22,10 @@ export class ProductionStepMaterialDto {
 }
 
 export class AddStepMaterialsDto {
-  @IsArray() @ValidateNested({ each: true }) @Type(() => ProductionStepMaterialDto) materials!: ProductionStepMaterialDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductionStepMaterialDto)
+  materials!: ProductionStepMaterialDto[];
 }
 
 export class WorkOrderOperationDto {
@@ -67,7 +83,11 @@ export class CreateWorkOrderDto {
   @IsOptional() @IsNumberString() materialConsumptionPercentage?: string;
   @IsOptional() @IsIn(['transfer', 'move']) materialTransferMode?: 'transfer' | 'move';
   @IsOptional() @IsBoolean() trackOperations?: boolean;
-  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => WorkOrderOperationDto) operations?: WorkOrderOperationDto[];
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => WorkOrderOperationDto)
+  operations?: WorkOrderOperationDto[];
 }
 
 export class CreateWorkstationTypeDto {
@@ -106,5 +126,9 @@ export class CreateSubcontractingOrderDto {
   @IsNumberString() totalServiceCost!: string;
   @IsUUID() serviceAccountId!: string;
   @IsOptional() @IsString() notes?: string;
-  @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true }) @Type(() => CreateSubcontractingItemDto) items!: CreateSubcontractingItemDto[];
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => CreateSubcontractingItemDto)
+  items!: CreateSubcontractingItemDto[];
 }

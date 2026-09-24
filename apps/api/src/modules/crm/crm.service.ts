@@ -3,36 +3,62 @@ import { Injectable } from '@nestjs/common';
 import { CrmNotFoundError, CrmValidationError } from './crm.errors';
 import { CrmRepository } from './crm.repository';
 import type {
-  CreateCustomerInput, CreateInteractionInput, CreateSupplierInput,
-  CustomerInteractionRecord, CustomerRecord, SupplierAction, SupplierHoldType, SupplierRecord,
+  CreateCustomerInput,
+  CreateInteractionInput,
+  CreateSupplierInput,
+  CustomerInteractionRecord,
+  CustomerRecord,
+  SupplierAction,
+  SupplierHoldType,
+  SupplierRecord,
 } from './crm.types';
 
 const HOLD_TYPES: readonly SupplierHoldType[] = ['all', 'invoices', 'payments'];
-const HOLD_LABEL: Record<SupplierHoldType, string> = { all: 'إيقاف كامل', invoices: 'منع الفواتير', payments: 'منع المدفوعات' };
+const HOLD_LABEL: Record<SupplierHoldType, string> = {
+  all: 'إيقاف كامل',
+  invoices: 'منع الفواتير',
+  payments: 'منع المدفوعات',
+};
 
 @Injectable()
 export class CrmService {
   constructor(private readonly repository: CrmRepository) {}
 
-  async getSuppliers(): Promise<SupplierRecord[]> { return this.repository.listSuppliers(); }
+  async getSuppliers(): Promise<SupplierRecord[]> {
+    return this.repository.listSuppliers();
+  }
 
   /**
    * Puts a supplier on hold (plan item 8) or lifts it (holdType null). An optional release
    * date lifts the hold automatically once reached (checked on every use, no job needed).
    */
-  async setSupplierHold(id: string, input: { holdType: SupplierHoldType | null; reason?: string; releaseDate?: string }): Promise<SupplierRecord> {
+  async setSupplierHold(
+    id: string,
+    input: { holdType: SupplierHoldType | null; reason?: string; releaseDate?: string },
+  ): Promise<SupplierRecord> {
     await this.getSupplier(id);
     if (input.holdType === null) {
-      return this.repository.setSupplierHold(id, { holdType: null, holdReason: null, holdReleaseDate: null });
+      return this.repository.setSupplierHold(id, {
+        holdType: null,
+        holdReason: null,
+        holdReleaseDate: null,
+      });
     }
-    if (!HOLD_TYPES.includes(input.holdType)) throw new CrmValidationError(`holdType must be one of: ${HOLD_TYPES.join(', ')}`);
+    if (!HOLD_TYPES.includes(input.holdType))
+      throw new CrmValidationError(`holdType must be one of: ${HOLD_TYPES.join(', ')}`);
     let releaseDate: Date | null = null;
     if (input.releaseDate) {
       releaseDate = new Date(input.releaseDate);
-      if (Number.isNaN(releaseDate.getTime())) throw new CrmValidationError('releaseDate is not a valid date');
-      if (releaseDate.getTime() <= Date.now()) throw new CrmValidationError('releaseDate must be in the future');
+      if (Number.isNaN(releaseDate.getTime()))
+        throw new CrmValidationError('releaseDate is not a valid date');
+      if (releaseDate.getTime() <= Date.now())
+        throw new CrmValidationError('releaseDate must be in the future');
     }
-    return this.repository.setSupplierHold(id, { holdType: input.holdType, holdReason: input.reason?.trim() || null, holdReleaseDate: releaseDate });
+    return this.repository.setSupplierHold(id, {
+      holdType: input.holdType,
+      holdReason: input.reason?.trim() || null,
+      holdReleaseDate: releaseDate,
+    });
   }
 
   /** The hold in force right now, or null (no hold, or its release date has passed). */
@@ -51,7 +77,10 @@ export class CrmService {
     if (!s) return null;
     const hold = this.effectiveHold(s);
     if (!hold) return null;
-    const blocked = hold === 'all' || (hold === 'invoices' && action === 'invoice') || (hold === 'payments' && action === 'payment');
+    const blocked =
+      hold === 'all' ||
+      (hold === 'invoices' && action === 'invoice') ||
+      (hold === 'payments' && action === 'payment');
     if (!blocked) return null;
     const until = s.holdReleaseDate ? ` حتى ${s.holdReleaseDate.slice(0, 10)}` : '';
     const why = s.holdReason ? ` — السبب: ${s.holdReason}` : '';
@@ -70,12 +99,18 @@ export class CrmService {
     const existing = await this.repository.findSupplierByCode(code);
     if (existing) throw new CrmValidationError(`a supplier with code "${code}" already exists`);
     return this.repository.insertSupplier({
-      id: randomUUID(), code, name, contactPhone: input.contactPhone,
-      contactEmail: input.contactEmail, orgNodeId: input.orgNodeId,
+      id: randomUUID(),
+      code,
+      name,
+      contactPhone: input.contactPhone,
+      contactEmail: input.contactEmail,
+      orgNodeId: input.orgNodeId,
     });
   }
 
-  async getCustomers(): Promise<CustomerRecord[]> { return this.repository.listCustomers(); }
+  async getCustomers(): Promise<CustomerRecord[]> {
+    return this.repository.listCustomers();
+  }
 
   async getCustomer(id: string): Promise<CustomerRecord> {
     const found = await this.repository.findCustomerById(id);
@@ -90,8 +125,13 @@ export class CrmService {
     const existing = await this.repository.findCustomerByCode(code);
     if (existing) throw new CrmValidationError(`a customer with code "${code}" already exists`);
     return this.repository.insertCustomer({
-      id: randomUUID(), code, name, contactPhone: input.contactPhone,
-      contactEmail: input.contactEmail, orgNodeId: input.orgNodeId, status: input.status ?? 'lead',
+      id: randomUUID(),
+      code,
+      name,
+      contactPhone: input.contactPhone,
+      contactEmail: input.contactEmail,
+      orgNodeId: input.orgNodeId,
+      status: input.status ?? 'lead',
       creditLimit: normalizeCreditLimit(input.creditLimit),
     });
   }
@@ -130,7 +170,8 @@ export class CrmService {
 function normalizeCode(raw: unknown): string {
   if (typeof raw !== 'string') throw new CrmValidationError('code is required');
   const trimmed = raw.trim();
-  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(trimmed)) throw new CrmValidationError('code must match ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(trimmed))
+    throw new CrmValidationError('code must match ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$');
   return trimmed;
 }
 function normalizeName(raw: unknown): string {
@@ -143,6 +184,7 @@ function normalizeName(raw: unknown): string {
 function normalizeCreditLimit(value: string | null | undefined): string | null {
   if (value === undefined || value === null || value === '') return null;
   const n = Number(value);
-  if (!Number.isFinite(n) || n < 0) throw new CrmValidationError('creditLimit must be a non-negative number');
+  if (!Number.isFinite(n) || n < 0)
+    throw new CrmValidationError('creditLimit must be a non-negative number');
   return n.toFixed(4);
 }

@@ -1,7 +1,10 @@
 ﻿import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { PlanningNotFoundError, PlanningValidationError } from './planning.errors';
 
-interface HttpResponse { status(code: number): HttpResponse; json(body: unknown): void; }
+interface HttpResponse {
+  status(code: number): HttpResponse;
+  json(body: unknown): void;
+}
 
 @Catch(PlanningNotFoundError, PlanningValidationError)
 export class PlanningExceptionFilter implements ExceptionFilter {

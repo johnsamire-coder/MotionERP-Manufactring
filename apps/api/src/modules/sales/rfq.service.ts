@@ -25,7 +25,9 @@ export class RfqService {
     @Optional() private readonly allowances?: PurchaseAllowanceService,
   ) {}
 
-  async list(): Promise<RfqRecord[]> { return this.repository.list(); }
+  async list(): Promise<RfqRecord[]> {
+    return this.repository.list();
+  }
 
   async get(id: string): Promise<RfqRecord> {
     const found = await this.repository.findById(id);
@@ -34,18 +36,30 @@ export class RfqService {
   }
 
   async create(input: CreateRfqInput): Promise<RfqRecord> {
-    if (!input.lines || input.lines.length === 0) throw new SalesValidationError('an RFQ needs at least one item line');
+    if (!input.lines || input.lines.length === 0)
+      throw new SalesValidationError('an RFQ needs at least one item line');
     const supplierIds = [...new Set(input.supplierIds ?? [])];
-    if (supplierIds.length < 2) throw new SalesValidationError('an RFQ goes to at least two different suppliers');
+    if (supplierIds.length < 2)
+      throw new SalesValidationError('an RFQ goes to at least two different suppliers');
     const itemIds = input.lines.map((l) => l.itemId);
-    if (new Set(itemIds).size !== itemIds.length) throw new SalesValidationError('each item may appear only once in an RFQ');
+    if (new Set(itemIds).size !== itemIds.length)
+      throw new SalesValidationError('each item may appear only once in an RFQ');
     for (const line of input.lines) {
       const qty = Number(line.quantity);
-      if (!Number.isFinite(qty) || qty <= 0) throw new SalesValidationError('line quantity must be positive');
-      await this.mustExist(() => this.catalog.getItem(line.itemId), CatalogNotFoundError, `item ${line.itemId} does not exist`);
+      if (!Number.isFinite(qty) || qty <= 0)
+        throw new SalesValidationError('line quantity must be positive');
+      await this.mustExist(
+        () => this.catalog.getItem(line.itemId),
+        CatalogNotFoundError,
+        `item ${line.itemId} does not exist`,
+      );
     }
     for (const supplierId of supplierIds) {
-      await this.mustExist(() => this.crm.getSupplier(supplierId), CrmNotFoundError, `supplier ${supplierId} does not exist`);
+      await this.mustExist(
+        () => this.crm.getSupplier(supplierId),
+        CrmNotFoundError,
+        `supplier ${supplierId} does not exist`,
+      );
       const blocked = await this.crm.supplierBlockReason(supplierId, 'rfq');
       if (blocked) throw new SalesValidationError(blocked);
     }
@@ -56,38 +70,55 @@ export class RfqService {
 
   async send(id: string): Promise<RfqRecord> {
     const found = await this.get(id);
-    if (found.status !== 'draft') throw new SalesValidationError(`RFQ ${found.rfqNumber} is "${found.status}" and cannot be sent`);
+    if (found.status !== 'draft')
+      throw new SalesValidationError(
+        `RFQ ${found.rfqNumber} is "${found.status}" and cannot be sent`,
+      );
     await this.repository.setStatus(id, 'sent');
     return this.get(id);
   }
 
   /** Records a supplier's prices for every RFQ line as a new incoming quotation. */
-  async recordResponse(id: string, supplierId: string, input: RecordRfqResponseInput): Promise<{ rfq: RfqRecord; quotation: QuotationRecord }> {
+  async recordResponse(
+    id: string,
+    supplierId: string,
+    input: RecordRfqResponseInput,
+  ): Promise<{ rfq: RfqRecord; quotation: QuotationRecord }> {
     const found = await this.get(id);
     const invited = this.invitedPending(found, supplierId);
     const prices = new Map<string, string>();
     const quantities = new Map<string, string>();
     for (const line of input.lines ?? []) {
-      if (prices.has(line.itemId)) throw new SalesValidationError(`item ${line.itemId} is priced twice`);
+      if (prices.has(line.itemId))
+        throw new SalesValidationError(`item ${line.itemId} is priced twice`);
       prices.set(line.itemId, line.unitPrice);
       if (line.quantity !== undefined) quantities.set(line.itemId, line.quantity);
     }
     const missing = found.lines.filter((l) => !prices.has(l.itemId));
-    const extra = [...prices.keys()].filter((itemId) => !found.lines.some((l) => l.itemId === itemId));
+    const extra = [...prices.keys()].filter(
+      (itemId) => !found.lines.some((l) => l.itemId === itemId),
+    );
     if (missing.length > 0 || extra.length > 0) {
-      throw new SalesValidationError('the response must price exactly the RFQ items (no missing or extra items)');
+      throw new SalesValidationError(
+        'the response must price exactly the RFQ items (no missing or extra items)',
+      );
     }
     // Over-order allowance (plan item 12): a supplier may offer more than requested only within the %.
     if (quantities.size > 0) {
-      const pct = this.allowances ? (await this.allowances.resolve(found.orgNodeId)).overOrderPct : 0;
+      const pct = this.allowances
+        ? (await this.allowances.resolve(found.orgNodeId)).overOrderPct
+        : 0;
       for (const l of found.lines) {
         const offered = quantities.get(l.itemId);
         if (offered === undefined) continue;
         const q = Number(offered);
-        if (!Number.isFinite(q) || q <= 0) throw new SalesValidationError('offered quantity must be positive');
+        if (!Number.isFinite(q) || q <= 0)
+          throw new SalesValidationError('offered quantity must be positive');
         const max = PurchaseAllowanceService.limit(Number(l.quantity), pct);
         if (q > max + 1e-9) {
-          throw new SalesValidationError(`الكمية المعروضة ${q} تتجاوز المطلوب ${Number(l.quantity)} بأكثر من نسبة السماح ${pct}% (الحد ${Number(max.toFixed(4))})`);
+          throw new SalesValidationError(
+            `الكمية المعروضة ${q} تتجاوز المطلوب ${Number(l.quantity)} بأكثر من نسبة السماح ${pct}% (الحد ${Number(max.toFixed(4))})`,
+          );
         }
       }
     }
@@ -97,7 +128,11 @@ export class RfqService {
       orgNodeId: found.orgNodeId ?? undefined,
       validUntil: input.validUntil,
       note: input.note ?? `رد على طلب عرض الأسعار ${found.rfqNumber}`,
-      lines: found.lines.map((l) => ({ itemId: l.itemId, quantity: quantities.get(l.itemId) ?? l.quantity, unitPrice: prices.get(l.itemId)! })),
+      lines: found.lines.map((l) => ({
+        itemId: l.itemId,
+        quantity: quantities.get(l.itemId) ?? l.quantity,
+        unitPrice: prices.get(l.itemId)!,
+      })),
     });
     await this.repository.setSupplierResponse(id, supplierId, 'received', quotation.id);
     return { rfq: await this.get(id), quotation };
@@ -115,7 +150,8 @@ export class RfqService {
     const found = await this.get(id);
     const quotations = new Map<string, QuotationRecord>();
     for (const s of found.suppliers) {
-      if (s.status === 'received' && s.quotationId) quotations.set(s.supplierId, await this.sales.getQuotation(s.quotationId));
+      if (s.status === 'received' && s.quotationId)
+        quotations.set(s.supplierId, await this.sales.getQuotation(s.quotationId));
     }
     const totals = new Map<string, number>();
     const lines = found.lines.map((line) => {
@@ -124,7 +160,9 @@ export class RfqService {
         if (!ql) return [];
         const lineTotal = Number(ql.unitPrice) * Number(line.quantity);
         totals.set(supplierId, (totals.get(supplierId) ?? 0) + lineTotal);
-        return [{ supplierId, unitPrice: ql.unitPrice, lineTotal: lineTotal.toFixed(4), isLowest: false }];
+        return [
+          { supplierId, unitPrice: ql.unitPrice, lineTotal: lineTotal.toFixed(4), isLowest: false },
+        ];
       });
       const min = Math.min(...offers.map((o) => Number(o.unitPrice)));
       for (const o of offers) o.isLowest = Number(o.unitPrice) === min;
@@ -133,12 +171,17 @@ export class RfqService {
     let lowestTotalSupplierId: string | null = null;
     let lowest = Infinity;
     for (const [supplierId, total] of totals) {
-      if (total < lowest) { lowest = total; lowestTotalSupplierId = supplierId; }
+      if (total < lowest) {
+        lowest = total;
+        lowestTotalSupplierId = supplierId;
+      }
     }
     return {
       rfqId: id,
       suppliers: found.suppliers.map((s) => ({
-        supplierId: s.supplierId, status: s.status, quotationId: s.quotationId,
+        supplierId: s.supplierId,
+        status: s.status,
+        quotationId: s.quotationId,
         total: totals.has(s.supplierId) ? totals.get(s.supplierId)!.toFixed(4) : null,
       })),
       lines,
@@ -149,7 +192,10 @@ export class RfqService {
   /** Approves the chosen supplier's quotation, rejects the other answers and closes the RFQ. */
   async award(id: string, supplierId: string): Promise<RfqRecord> {
     const found = await this.get(id);
-    if (found.status !== 'sent') throw new SalesValidationError(`RFQ ${found.rfqNumber} is "${found.status}" and cannot be awarded`);
+    if (found.status !== 'sent')
+      throw new SalesValidationError(
+        `RFQ ${found.rfqNumber} is "${found.status}" and cannot be awarded`,
+      );
     const winner = found.suppliers.find((s) => s.supplierId === supplierId);
     if (!winner) throw new SalesValidationError('this supplier was not invited to the RFQ');
     if (winner.status !== 'received' || !winner.quotationId) {
@@ -175,14 +221,22 @@ export class RfqService {
   }
 
   private invitedPending(found: RfqRecord, supplierId: string): RfqRecord['suppliers'][number] {
-    if (found.status !== 'sent') throw new SalesValidationError(`RFQ ${found.rfqNumber} must be "sent" to record answers (it is "${found.status}")`);
+    if (found.status !== 'sent')
+      throw new SalesValidationError(
+        `RFQ ${found.rfqNumber} must be "sent" to record answers (it is "${found.status}")`,
+      );
     const invited = found.suppliers.find((s) => s.supplierId === supplierId);
     if (!invited) throw new SalesValidationError('this supplier was not invited to the RFQ');
-    if (invited.status !== 'pending') throw new SalesValidationError(`this supplier already answered ("${invited.status}")`);
+    if (invited.status !== 'pending')
+      throw new SalesValidationError(`this supplier already answered ("${invited.status}")`);
     return invited;
   }
 
-  private async mustExist(load: () => Promise<unknown>, notFound: new (...args: never[]) => Error, message: string): Promise<void> {
+  private async mustExist(
+    load: () => Promise<unknown>,
+    notFound: new (...args: never[]) => Error,
+    message: string,
+  ): Promise<void> {
     try {
       await load();
     } catch (err) {

@@ -2,19 +2,15 @@ import React, { useState } from 'react';
 import {
   AlertOctagon,
   Search,
-  ArrowRightLeft,
   Building2,
   Package,
   Layers,
-  FileSpreadsheet,
   AlertTriangle,
-  CheckCircle2,
   PhoneCall,
   Download,
   Printer,
   ShieldAlert,
   GitFork,
-  ArrowDownRight,
   Send,
 } from 'lucide-react';
 
@@ -154,7 +150,9 @@ export const MedicalRecallPage: React.FC = () => {
             <AlertOctagon className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">غرفة الاستدعاء والتتبع الطبي السريع (Medical Recall)</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              غرفة الاستدعاء والتتبع الطبي السريع (Medical Recall)
+            </h1>
             <p className="text-sm text-slate-500">
               تتبع مسار أي تشغيلة خامات معيوبة وحصر جميع الأجهزة الطبية المتأثرة بالمستشفيات فوراً
             </p>
@@ -199,15 +197,36 @@ export const MedicalRecallPage: React.FC = () => {
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 right-0 w-2 h-full bg-teal-500" />
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-teal-700 bg-teal-50 px-2 py-1 rounded">المرحلة 1: التوريد والخام</span>
+                <span className="text-xs font-bold text-teal-700 bg-teal-50 px-2 py-1 rounded">
+                  المرحلة 1: التوريد والخام
+                </span>
                 <Package className="w-5 h-5 text-teal-600" />
               </div>
-              <h3 className="font-mono font-bold text-slate-900 text-lg">{traceData.rawMaterial.batchNumber}</h3>
-              <p className="text-sm font-semibold text-slate-700 mt-1">{traceData.rawMaterial.itemName}</p>
+              <h3 className="font-mono font-bold text-slate-900 text-lg">
+                {traceData.rawMaterial.batchNumber}
+              </h3>
+              <p className="text-sm font-semibold text-slate-700 mt-1">
+                {traceData.rawMaterial.itemName}
+              </p>
               <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1">
-                <div>المورد: <span className="font-medium text-slate-800">{traceData.rawMaterial.supplierName}</span></div>
-                <div>تاريخ الاستلام: <span className="font-medium text-slate-800">{traceData.rawMaterial.receivedDate}</span></div>
-                <div>شهادة المطابقة: <span className="font-mono text-teal-700">{traceData.rawMaterial.certificateNumber}</span></div>
+                <div>
+                  المورد:{' '}
+                  <span className="font-medium text-slate-800">
+                    {traceData.rawMaterial.supplierName}
+                  </span>
+                </div>
+                <div>
+                  تاريخ الاستلام:{' '}
+                  <span className="font-medium text-slate-800">
+                    {traceData.rawMaterial.receivedDate}
+                  </span>
+                </div>
+                <div>
+                  شهادة المطابقة:{' '}
+                  <span className="font-mono text-teal-700">
+                    {traceData.rawMaterial.certificateNumber}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -215,15 +234,36 @@ export const MedicalRecallPage: React.FC = () => {
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 right-0 w-2 h-full bg-blue-500" />
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded">المرحلة 2: خطوط الإنتاج</span>
+                <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                  المرحلة 2: خطوط الإنتاج
+                </span>
                 <Layers className="w-5 h-5 text-blue-600" />
               </div>
-              <h3 className="font-mono font-bold text-slate-900 text-lg">{traceData.manufacturing.workOrderNumber}</h3>
-              <p className="text-sm font-semibold text-slate-700 mt-1">{traceData.manufacturing.productionLine}</p>
+              <h3 className="font-mono font-bold text-slate-900 text-lg">
+                {traceData.manufacturing.workOrderNumber}
+              </h3>
+              <p className="text-sm font-semibold text-slate-700 mt-1">
+                {traceData.manufacturing.productionLine}
+              </p>
               <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1">
-                <div>تاريخ الإغلاق: <span className="font-medium text-slate-800">{traceData.manufacturing.completionDate}</span></div>
-                <div>الكمية المصنعة: <span className="font-bold text-blue-700">{traceData.manufacturing.producedQty} وحدة تامة</span></div>
-                <div>المشرف: <span className="font-medium text-slate-800">{traceData.manufacturing.supervisorName}</span></div>
+                <div>
+                  تاريخ الإغلاق:{' '}
+                  <span className="font-medium text-slate-800">
+                    {traceData.manufacturing.completionDate}
+                  </span>
+                </div>
+                <div>
+                  الكمية المصنعة:{' '}
+                  <span className="font-bold text-blue-700">
+                    {traceData.manufacturing.producedQty} وحدة تامة
+                  </span>
+                </div>
+                <div>
+                  المشرف:{' '}
+                  <span className="font-medium text-slate-800">
+                    {traceData.manufacturing.supervisorName}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -231,10 +271,14 @@ export const MedicalRecallPage: React.FC = () => {
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 right-0 w-2 h-full bg-rose-500" />
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-1 rounded">المرحلة 3: التوزيع بالمستشفيات</span>
+                <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-1 rounded">
+                  المرحلة 3: التوزيع بالمستشفيات
+                </span>
                 <AlertTriangle className="w-5 h-5 text-rose-600" />
               </div>
-              <h3 className="font-bold text-slate-900 text-2xl">{traceData.affectedDevices.length} أجهزة مطابقة</h3>
+              <h3 className="font-bold text-slate-900 text-2xl">
+                {traceData.affectedDevices.length} أجهزة مطابقة
+              </h3>
               <p className="text-sm text-slate-600 mt-1">موزعة على 3 مستشفيات ومراكز طبية</p>
               <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-xs text-rose-600 font-semibold">تتطلب مراجعة فورية</span>
@@ -242,10 +286,13 @@ export const MedicalRecallPage: React.FC = () => {
                   onClick={handleTriggerRecall}
                   disabled={recallAlertTriggered}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition ${
-                    recallAlertTriggered ? 'bg-slate-400 cursor-not-allowed' : 'bg-rose-600 hover:bg-rose-700 shadow-sm'
+                    recallAlertTriggered
+                      ? 'bg-slate-400 cursor-not-allowed'
+                      : 'bg-rose-600 hover:bg-rose-700 shadow-sm'
                   }`}
                 >
-                  <Send className="w-3.5 h-3.5" /> {recallAlertTriggered ? 'تم إطلاق الاستدعاء' : 'إطلاق أمر استدعاء'}
+                  <Send className="w-3.5 h-3.5" />{' '}
+                  {recallAlertTriggered ? 'تم إطلاق الاستدعاء' : 'إطلاق أمر استدعاء'}
                 </button>
               </div>
             </div>
@@ -255,8 +302,12 @@ export const MedicalRecallPage: React.FC = () => {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border-b border-slate-200 gap-4">
               <div>
-                <h3 className="text-lg font-bold text-slate-900">سجل الأجهزة الطبية المشحونة من هذه التشغيلة</h3>
-                <p className="text-xs text-slate-500">بيانات الاتصال الدقيقة بالمستشفيات لفرق الصيانة الميدانية</p>
+                <h3 className="text-lg font-bold text-slate-900">
+                  سجل الأجهزة الطبية المشحونة من هذه التشغيلة
+                </h3>
+                <p className="text-xs text-slate-500">
+                  بيانات الاتصال الدقيقة بالمستشفيات لفرق الصيانة الميدانية
+                </p>
               </div>
 
               <div className="flex items-center gap-2">
@@ -296,7 +347,9 @@ export const MedicalRecallPage: React.FC = () => {
                           <Building2 className="w-4 h-4 text-slate-400" />
                           {dev.hospitalName}
                         </div>
-                        <div className="text-xs text-rose-700 font-medium mt-0.5">{dev.department}</div>
+                        <div className="text-xs text-rose-700 font-medium mt-0.5">
+                          {dev.department}
+                        </div>
                       </td>
                       <td className="p-4">
                         <div className="text-slate-800 font-medium">{dev.contactPerson}</div>

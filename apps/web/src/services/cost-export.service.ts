@@ -4,6 +4,25 @@
 // ============================================================
 import * as XLSX from 'xlsx';
 
+export interface CostExportMaterial {
+  name: string;
+  unit: string;
+  netQty: number;
+  scrapPercentage: number;
+  grossQty: number;
+  unitCost: number;
+  totalCost: number;
+}
+export interface CostExportOperation {
+  workstation: string;
+  operationName: string;
+  setupTimeMin: number;
+  runTimeMin: number;
+  totalTimeMin: number;
+  hourlyRate: number;
+  totalCost: number;
+}
+
 export const costExportService = {
   // ── 1. تصدير كارت التكلفة الشامل إلى Excel ──
   exportJobCostSheetToExcel(
@@ -17,8 +36,8 @@ export const costExportService = {
       unitCost: number;
       unitSellingPriceWithVat: number;
     },
-    materials: any[],
-    operations: any[],
+    materials: CostExportMaterial[],
+    operations: CostExportOperation[],
   ) {
     const wb = XLSX.utils.book_new();
 
@@ -42,7 +61,15 @@ export const costExportService = {
 
     // Sheet 2: تفصيل الخامات والصاج والهالك
     const materialsData = [
-      ['بيان الخامة والصنف', 'الوحدة', 'الكمية الصافية', 'نسبة الهالك %', 'المنصرف الفعلي', 'سعر الوحدة', 'إجمالي التكلفة'],
+      [
+        'بيان الخامة والصنف',
+        'الوحدة',
+        'الكمية الصافية',
+        'نسبة الهالك %',
+        'المنصرف الفعلي',
+        'سعر الوحدة',
+        'إجمالي التكلفة',
+      ],
       ...materials.map((m) => [
         m.name,
         m.unit,
@@ -58,7 +85,15 @@ export const costExportService = {
 
     // Sheet 3: أزمنة الماكينات والتشغيل
     const operationsData = [
-      ['مركز العمل / الماكينة', 'العملية الصناعية', 'زمن التجهيز (د)', 'زمن التشغيل (د)', 'إجمالي الزمن (د)', 'معدل الساعة', 'تكلفة التشغيل'],
+      [
+        'مركز العمل / الماكينة',
+        'العملية الصناعية',
+        'زمن التجهيز (د)',
+        'زمن التشغيل (د)',
+        'إجمالي الزمن (د)',
+        'معدل الساعة',
+        'تكلفة التشغيل',
+      ],
       ...operations.map((op) => [
         op.workstation,
         op.operationName,
@@ -77,7 +112,10 @@ export const costExportService = {
   },
 
   // ── 2. تصدير كشف مقارنة المعياري بالفعلي إلى Excel ──
-  exportStandardVsActualToExcel(workOrderNumber: string, variances: any[]) {
+  exportStandardVsActualToExcel(
+    workOrderNumber: string,
+    variances: Array<Record<string, unknown>>,
+  ) {
     const wb = XLSX.utils.book_new();
 
     const data = [
@@ -85,7 +123,17 @@ export const costExportService = {
       ['رقم أمر الشغل', workOrderNumber],
       ['تاريخ التقرير', new Date().toLocaleDateString('ar-EG')],
       ['', ''],
-      ['البند الصناعي', 'نوع التكلفة', 'الوحدة', 'المعياري المخطط', 'الفعلي الحقيقي', 'انحراف الكمية', 'التكلفة المعيارية', 'التكلفة الفعلية', 'صافي الانحراف المالي'],
+      [
+        'البند الصناعي',
+        'نوع التكلفة',
+        'الوحدة',
+        'المعياري المخطط',
+        'الفعلي الحقيقي',
+        'انحراف الكمية',
+        'التكلفة المعيارية',
+        'التكلفة الفعلية',
+        'صافي الانحراف المالي',
+      ],
       ...variances.map((v) => [
         v.item,
         v.type,
@@ -105,14 +153,25 @@ export const costExportService = {
   },
 
   // ── 3. تصدير كشف ربحية أوامر الشغل إلى Excel ──
-  exportProfitabilityToExcel(orders: any[]) {
+  exportProfitabilityToExcel(orders: Array<Record<string, unknown>>) {
     const wb = XLSX.utils.book_new();
 
     const data = [
       ['تقرير ربحية أوامر الشغل ومبيعات المستشفيات', ''],
       ['تاريخ الاستخراج', new Date().toLocaleDateString('ar-EG')],
       ['', ''],
-      ['أمر الشغل', 'رقم الفاتورة', 'المستشفى / العميل', 'المنتج الطبي', 'الكمية', 'الإيراد المحقق', 'التكلفة الفعلية', 'صافي الربح الفعلي', 'هامش الربح %', 'المستهدف %'],
+      [
+        'أمر الشغل',
+        'رقم الفاتورة',
+        'المستشفى / العميل',
+        'المنتج الطبي',
+        'الكمية',
+        'الإيراد المحقق',
+        'التكلفة الفعلية',
+        'صافي الربح الفعلي',
+        'هامش الربح %',
+        'المستهدف %',
+      ],
       ...orders.map((o) => [
         o.workOrderNumber,
         o.salesInvoiceNumber,

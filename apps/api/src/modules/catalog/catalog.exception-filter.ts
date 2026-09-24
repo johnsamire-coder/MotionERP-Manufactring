@@ -1,7 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { CatalogNotFoundError, CatalogValidationError } from './catalog.errors';
 
-interface HttpResponse { status(code: number): HttpResponse; json(body: unknown): void; }
+interface HttpResponse {
+  status(code: number): HttpResponse;
+  json(body: unknown): void;
+}
 
 @Catch(CatalogNotFoundError, CatalogValidationError)
 export class CatalogExceptionFilter implements ExceptionFilter {

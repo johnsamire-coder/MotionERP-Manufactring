@@ -1,4 +1,14 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseFilters } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  UseFilters,
+} from '@nestjs/common';
 import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { HrExceptionFilter } from './hr.exception-filter';
 import { ProbationService, type ProbationRecord } from './probation.service';
@@ -29,20 +39,34 @@ export class ProbationController {
   }
 
   @Get('employees/:id/probation')
-  async get(@Param('id', ParseUUIDPipe) id: string): Promise<{ probation: ProbationRecord }> { return { probation: await this.service.get(id) }; }
+  async get(@Param('id', ParseUUIDPipe) id: string): Promise<{ probation: ProbationRecord }> {
+    return { probation: await this.service.get(id) };
+  }
 
-  @Post('employees/:id/probation') @HttpCode(200)
-  async start(@Param('id', ParseUUIDPipe) id: string, @Body() dto: StartProbationDto): Promise<{ probation: ProbationRecord }> {
+  @Post('employees/:id/probation')
+  @HttpCode(200)
+  async start(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: StartProbationDto,
+  ): Promise<{ probation: ProbationRecord }> {
     return { probation: await this.service.start(id, dto) };
   }
 
-  @Post('employees/:id/probation/extend') @HttpCode(200)
-  async extend(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ExtendProbationDto): Promise<{ probation: ProbationRecord }> {
+  @Post('employees/:id/probation/extend')
+  @HttpCode(200)
+  async extend(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ExtendProbationDto,
+  ): Promise<{ probation: ProbationRecord }> {
     return { probation: await this.service.extend(id, dto) };
   }
 
-  @Post('employees/:id/confirm') @HttpCode(200)
-  async confirm(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ConfirmEmployeeDto): Promise<{ probation: ProbationRecord }> {
+  @Post('employees/:id/confirm')
+  @HttpCode(200)
+  async confirm(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ConfirmEmployeeDto,
+  ): Promise<{ probation: ProbationRecord }> {
     return { probation: await this.service.confirm(id, dto) };
   }
 }

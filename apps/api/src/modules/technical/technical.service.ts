@@ -4,7 +4,14 @@ import { SalesService } from '../sales/sales.service';
 import type { JobOrderRecord } from '../sales/sales.types';
 import { TechnicalNotFoundError, TechnicalValidationError } from './technical.errors';
 import { TechnicalRepository } from './technical.repository';
-import type { BomCreatorRecord, BomRecord, CreateBomCreatorInput, CreateBomInput, CreateTechnicalDocumentInput, TechnicalDocumentRecord } from './technical.types';
+import type {
+  BomCreatorRecord,
+  BomRecord,
+  CreateBomCreatorInput,
+  CreateBomInput,
+  CreateTechnicalDocumentInput,
+  TechnicalDocumentRecord,
+} from './technical.types';
 @Injectable()
 export class TechnicalService {
   constructor(
@@ -25,9 +32,15 @@ export class TechnicalService {
     if (!input.fileReference || input.fileReference.trim().length === 0) {
       throw new TechnicalValidationError('fileReference is required');
     }
-    return this.repository.insertDocument({ id: randomUUID(), orgNodeId: jobOrder.orgNodeId, ...input });
+    return this.repository.insertDocument({
+      id: randomUUID(),
+      orgNodeId: jobOrder.orgNodeId,
+      ...input,
+    });
   }
-  async getBoms(productItemId?: string): Promise<BomRecord[]> { return this.repository.listBoms(productItemId); }
+  async getBoms(productItemId?: string): Promise<BomRecord[]> {
+    return this.repository.listBoms(productItemId);
+  }
   async getBom(id: string): Promise<BomRecord> {
     const found = await this.repository.findBomById(id);
     if (!found) throw new TechnicalNotFoundError(`BOM ${id} does not exist`);
@@ -46,14 +59,18 @@ export class TechnicalService {
     }
     for (const line of input.lines) {
       const qty = Number(line.quantity);
-      if (!Number.isFinite(qty) || qty <= 0) throw new TechnicalValidationError('every BOM line quantity must be positive');
-      if (line.componentItemId === input.productItemId) throw new TechnicalValidationError('a product cannot be a component of its own BOM');
+      if (!Number.isFinite(qty) || qty <= 0)
+        throw new TechnicalValidationError('every BOM line quantity must be positive');
+      if (line.componentItemId === input.productItemId)
+        throw new TechnicalValidationError('a product cannot be a component of its own BOM');
     }
     const outputQty = Number(input.outputQuantity ?? '1');
-    if (!Number.isFinite(outputQty) || outputQty <= 0) throw new TechnicalValidationError('output quantity must be positive');
+    if (!Number.isFinite(outputQty) || outputQty <= 0)
+      throw new TechnicalValidationError('output quantity must be positive');
     let version = 1;
     // eslint-disable-next-line no-constant-condition
-    while (await this.repository.findBomByItemAndVersion(input.productItemId, version)) version += 1;
+    while (await this.repository.findBomByItemAndVersion(input.productItemId, version))
+      version += 1;
     if (input.isDefault) {
       await this.repository.clearDefaultForItem(input.productItemId);
     }
@@ -62,11 +79,16 @@ export class TechnicalService {
   async approveBom(id: string): Promise<BomRecord> {
     const found = await this.repository.findBomById(id);
     if (!found) throw new TechnicalNotFoundError(`BOM ${id} does not exist`);
-    if (found.status !== 'draft') throw new TechnicalValidationError(`BOM ${id} is "${found.status}" and cannot be approved (must be "draft")`);
+    if (found.status !== 'draft')
+      throw new TechnicalValidationError(
+        `BOM ${id} is "${found.status}" and cannot be approved (must be "draft")`,
+      );
     return this.repository.setBomStatus(id, 'approved');
   }
 
-  async getBomCreators(): Promise<BomCreatorRecord[]> { return this.repository.listBomCreators(); }
+  async getBomCreators(): Promise<BomCreatorRecord[]> {
+    return this.repository.listBomCreators();
+  }
 
   async getBomCreator(id: string): Promise<BomCreatorRecord> {
     const found = await this.repository.findBomCreatorById(id);
@@ -81,12 +103,15 @@ export class TechnicalService {
     const tempIds = new Set<number>();
     for (const it of input.items) {
       const qty = Number(it.quantity);
-      if (!Number.isFinite(qty) || qty <= 0) throw new TechnicalValidationError('every BOM creator item quantity must be positive');
+      if (!Number.isFinite(qty) || qty <= 0)
+        throw new TechnicalValidationError('every BOM creator item quantity must be positive');
       tempIds.add(it.tempId);
     }
     for (const it of input.items) {
       if (it.parentTempId !== undefined && !tempIds.has(it.parentTempId)) {
-        throw new TechnicalValidationError(`parentTempId ${it.parentTempId} does not match any item in this request`);
+        throw new TechnicalValidationError(
+          `parentTempId ${it.parentTempId} does not match any item in this request`,
+        );
       }
     }
     const sequence = (await this.repository.countBomCreators()) + 1;
@@ -98,7 +123,10 @@ export class TechnicalService {
   async createBoms(id: string): Promise<BomCreatorRecord> {
     const bc = await this.repository.findBomCreatorById(id);
     if (!bc) throw new TechnicalNotFoundError(`BOM creator ${id} does not exist`);
-    if (bc.status !== 'draft') throw new TechnicalValidationError(`BOM creator ${id} is "${bc.status}" and cannot generate BOMs (must be "draft")`);
+    if (bc.status !== 'draft')
+      throw new TechnicalValidationError(
+        `BOM creator ${id} is "${bc.status}" and cannot generate BOMs (must be "draft")`,
+      );
     const childrenOf = new Map<string | null, typeof bc.items>();
     for (const it of bc.items) {
       const key = it.parentId;
@@ -106,9 +134,12 @@ export class TechnicalService {
       childrenOf.get(key)!.push(it);
     }
     const topLevel = childrenOf.get(null) ?? [];
-    if (topLevel.length === 0) throw new TechnicalValidationError('the BOM tree has no top-level components');
-    const rootBom = await this.createBom({
-      productItemId: bc.productItemId, orgNodeId: bc.orgNodeId, outputQuantity: bc.quantityToProduce,
+    if (topLevel.length === 0)
+      throw new TechnicalValidationError('the BOM tree has no top-level components');
+    const _rootBom = await this.createBom({
+      productItemId: bc.productItemId,
+      orgNodeId: bc.orgNodeId,
+      outputQuantity: bc.quantityToProduce,
       allowAlternativeItem: bc.allowAlternativeItem,
       lines: topLevel.map((it) => ({ componentItemId: it.componentItemId, quantity: it.quantity })),
     });
@@ -116,15 +147,22 @@ export class TechnicalService {
     return this.repository.setBomCreatorStatus(id, 'completed');
   }
 
-  private async generateSubAssemblyBoms(bc: BomCreatorRecord, childrenOf: Map<string | null, BomCreatorRecord['items']>): Promise<void> {
+  private async generateSubAssemblyBoms(
+    bc: BomCreatorRecord,
+    childrenOf: Map<string | null, BomCreatorRecord['items']>,
+  ): Promise<void> {
     for (const node of bc.items) {
       if (!node.isSubAssembly) continue;
       const children = childrenOf.get(node.id) ?? [];
       if (children.length === 0) {
-        throw new TechnicalValidationError(`sub-assembly item ${node.id} is marked isSubAssembly but has no child components`);
+        throw new TechnicalValidationError(
+          `sub-assembly item ${node.id} is marked isSubAssembly but has no child components`,
+        );
       }
       const subBom = await this.createBom({
-        productItemId: node.componentItemId, orgNodeId: bc.orgNodeId, outputQuantity: '1',
+        productItemId: node.componentItemId,
+        orgNodeId: bc.orgNodeId,
+        outputQuantity: '1',
         lines: children.map((c) => ({ componentItemId: c.componentItemId, quantity: c.quantity })),
       });
       await this.repository.setBcItemGeneratedBom(node.id, subBom.id);

@@ -25,7 +25,9 @@ describe('CustomerCreditService — composite credit limit (plan item 6)', () =>
       postedInvoicedNet: jest.fn().mockImplementation(async (jo: string) => invoiced[jo] ?? 0),
       deliveredNotInvoicedCount: jest.fn().mockResolvedValue(2),
     } as unknown as CustomerCreditRepository;
-    const crm = { getCustomer: jest.fn().mockImplementation(async (id: string) => ({ id, creditLimit })) } as unknown as CrmService;
+    const crm = {
+      getCustomer: jest.fn().mockImplementation(async (id: string) => ({ id, creditLimit })),
+    } as unknown as CrmService;
     service = new CustomerCreditService(repo, crm);
   });
 

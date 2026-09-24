@@ -1,14 +1,46 @@
-import { ArgumentsHost, Body, Catch, Controller, ExceptionFilter, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, UseFilters } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  Body,
+  Catch,
+  Controller,
+  ExceptionFilter,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  UseFilters,
+} from '@nestjs/common';
 import { Type } from 'class-transformer';
-import { IsIn, IsOptional, IsString, IsUUID, Matches, MaxLength, ValidateNested } from 'class-validator';
-import { EgyptEinvoiceService, EgyptNotFoundError, EgyptValidationError } from './egypt-einvoice.service';
+import {
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
+import {
+  EgyptEinvoiceService,
+  EgyptNotFoundError,
+  EgyptValidationError,
+} from './egypt-einvoice.service';
 
-interface HttpResponse { status(code: number): HttpResponse; json(body: unknown): void; }
+interface HttpResponse {
+  status(code: number): HttpResponse;
+  json(body: unknown): void;
+}
 @Catch(EgyptNotFoundError, EgyptValidationError)
 export class EgyptExceptionFilter implements ExceptionFilter {
   catch(e: Error, host: ArgumentsHost): void {
     const status = e instanceof EgyptNotFoundError ? 404 : 400;
-    host.switchToHttp().getResponse<HttpResponse>().status(status).json({ statusCode: status, message: e.message });
+    host
+      .switchToHttp()
+      .getResponse<HttpResponse>()
+      .status(status)
+      .json({ statusCode: status, message: e.message });
   }
 }
 
@@ -40,7 +72,9 @@ export class ItemCodeDto {
   @IsOptional() @IsString() unitType?: string;
   @IsOptional() @IsString() taxSubType?: string;
 }
-export class SignatureDto { @IsString() signature!: string; }
+export class SignatureDto {
+  @IsString() signature!: string;
+}
 
 type Svc = EgyptEinvoiceService;
 
@@ -52,30 +86,63 @@ export class EgyptEinvoiceController {
 
   @Put('issuer')
   async issuer(@Body() dto: IssuerDto): Promise<{ issuer: Awaited<ReturnType<Svc['setIssuer']>> }> {
-    return { issuer: await this.service.setIssuer({ ...dto, address: { ...dto.address, branchID: dto.address.branchID ?? '0' } }) };
+    return {
+      issuer: await this.service.setIssuer({
+        ...dto,
+        address: { ...dto.address, branchID: dto.address.branchID ?? '0' },
+      }),
+    };
   }
 
   @Put('customers/:customerId')
-  async party(@Param('customerId', ParseUUIDPipe) id: string, @Body() dto: PartyDto): Promise<{ profile: Awaited<ReturnType<Svc['setParty']>> }> {
-    return { profile: await this.service.setParty(id, { ...dto, taxId: dto.taxId ?? null, address: dto.address ?? null }) };
+  async party(
+    @Param('customerId', ParseUUIDPipe) id: string,
+    @Body() dto: PartyDto,
+  ): Promise<{ profile: Awaited<ReturnType<Svc['setParty']>> }> {
+    return {
+      profile: await this.service.setParty(id, {
+        ...dto,
+        taxId: dto.taxId ?? null,
+        address: dto.address ?? null,
+      }),
+    };
   }
 
   @Put('items/:itemId')
-  async item(@Param('itemId', ParseUUIDPipe) id: string, @Body() dto: ItemCodeDto): Promise<{ code: Awaited<ReturnType<Svc['setItemCode']>> }> {
+  async item(
+    @Param('itemId', ParseUUIDPipe) id: string,
+    @Body() dto: ItemCodeDto,
+  ): Promise<{ code: Awaited<ReturnType<Svc['setItemCode']>> }> {
     return { code: await this.service.setItemCode(id, dto) };
   }
 
   @Get('documents')
-  async documents(): Promise<{ documents: Awaited<ReturnType<Svc['list']>> }> { return { documents: await this.service.list() }; }
+  async documents(): Promise<{ documents: Awaited<ReturnType<Svc['list']>> }> {
+    return { documents: await this.service.list() };
+  }
 
-  @Post('invoices/:salesInvoiceId/prepare') @HttpCode(200)
-  async prepare(@Param('salesInvoiceId', ParseUUIDPipe) id: string): Promise<{ document: Awaited<ReturnType<Svc['prepare']>> }> { return { document: await this.service.prepare(id) }; }
+  @Post('invoices/:salesInvoiceId/prepare')
+  @HttpCode(200)
+  async prepare(
+    @Param('salesInvoiceId', ParseUUIDPipe) id: string,
+  ): Promise<{ document: Awaited<ReturnType<Svc['prepare']>> }> {
+    return { document: await this.service.prepare(id) };
+  }
 
-  @Post('invoices/:salesInvoiceId/signature') @HttpCode(200)
-  async sign(@Param('salesInvoiceId', ParseUUIDPipe) id: string, @Body() dto: SignatureDto): Promise<{ document: Awaited<ReturnType<Svc['attachSignature']>> }> {
+  @Post('invoices/:salesInvoiceId/signature')
+  @HttpCode(200)
+  async sign(
+    @Param('salesInvoiceId', ParseUUIDPipe) id: string,
+    @Body() dto: SignatureDto,
+  ): Promise<{ document: Awaited<ReturnType<Svc['attachSignature']>> }> {
     return { document: await this.service.attachSignature(id, dto.signature) };
   }
 
-  @Post('invoices/:salesInvoiceId/submit') @HttpCode(200)
-  async submit(@Param('salesInvoiceId', ParseUUIDPipe) id: string): Promise<{ document: Awaited<ReturnType<Svc['submit']>> }> { return { document: await this.service.submit(id) }; }
+  @Post('invoices/:salesInvoiceId/submit')
+  @HttpCode(200)
+  async submit(
+    @Param('salesInvoiceId', ParseUUIDPipe) id: string,
+  ): Promise<{ document: Awaited<ReturnType<Svc['submit']>> }> {
+    return { document: await this.service.submit(id) };
+  }
 }

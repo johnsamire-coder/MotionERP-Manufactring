@@ -89,26 +89,26 @@ export interface AmortizationLine {
 
 // ── Journal Entry Templates ──────────────────
 export const ACCRUAL_POSTING = {
-  debit:  'expense_account',
+  debit: 'expense_account',
   credit: 'liability_account',
 } as const;
 
 export const PREPAID_INITIAL_POSTING = {
-  debit:  'prepaid_account',
+  debit: 'prepaid_account',
   credit: 'bank_account',
 } as const;
 
 export const PREPAID_MONTHLY_POSTING = {
-  debit:  'expense_account',
+  debit: 'expense_account',
   credit: 'prepaid_account',
 } as const;
 
 export const PROVISION_POSTING = {
-  debit:  'expense_account',
+  debit: 'expense_account',
   credit: 'provision_account',
 } as const;
 
 export const PROVISION_UTILIZATION = {
-  debit:  'provision_account',
+  debit: 'provision_account',
   credit: 'inventory_or_cash',
 } as const;

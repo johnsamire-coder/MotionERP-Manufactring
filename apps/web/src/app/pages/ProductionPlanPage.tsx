@@ -106,10 +106,10 @@ export function ProductionPlanPage(): JSX.Element {
   const [planBy, setPlanBy] = useState('job_order');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-  const [matRequests, setMatRequests] = useState<MaterialRequestRecord[]>([]);
-  const [showMatReqModal, setShowMatReqModal] = useState<ProductionPlanRecord | null>(null);
-  const [calculatedReqs, setCalculatedReqs] = useState<MaterialRequirement[]>([]);
-  const [loadingReqs, setLoadingReqs] = useState(false);
+  const [_matRequests, _setMatRequests] = useState<MaterialRequestRecord[]>([]);
+  const [_showMatReqModal, setShowMatReqModal] = useState<ProductionPlanRecord | null>(null);
+  const [_calculatedReqs, setCalculatedReqs] = useState<MaterialRequirement[]>([]);
+  const [_loadingReqs, setLoadingReqs] = useState(false);
   const [lines, setLines] = useState<ProductionPlanItemInput[]>([
     { productItemId: '', bomId: '', qtyToPlan: '1', warehouseId: '' },
   ]);
@@ -163,10 +163,12 @@ export function ProductionPlanPage(): JSX.Element {
     return boms.filter((bom) => bom.productItemId === productItemId && bom.status === 'approved');
   }
 
-  async function pullFromMaterialRequest(mrId: string): Promise<void> {
+  async function _pullFromMaterialRequest(mrId: string): Promise<void> {
     if (!mrId) return;
     try {
-      const res = await api.get<{ materialRequest: MaterialRequestRecord }>('/planning/material-requests/' + mrId);
+      const res = await api.get<{ materialRequest: MaterialRequestRecord }>(
+        '/planning/material-requests/' + mrId,
+      );
       const mr = res.materialRequest;
       if (mr && mr.lines && mr.lines.length > 0) {
         const newLines: ProductionPlanItemInput[] = mr.lines.map((l) => {
@@ -186,11 +188,15 @@ export function ProductionPlanPage(): JSX.Element {
     }
   }
 
-  function pullAllApprovedBomItems(): void {
-    const uniqueItemIds = Array.from(new Set(boms.filter((b) => b.status === 'approved').map((b) => b.productItemId)));
+  function _pullAllApprovedBomItems(): void {
+    const uniqueItemIds = Array.from(
+      new Set(boms.filter((b) => b.status === 'approved').map((b) => b.productItemId)),
+    );
     if (uniqueItemIds.length === 0) return;
     const newLines: ProductionPlanItemInput[] = uniqueItemIds.map((itemId) => {
-      const defaultBom = boms.find((b) => b.productItemId === itemId && b.status === 'approved' && b.isDefault) || approvedBomsForItem(itemId)[0];
+      const defaultBom =
+        boms.find((b) => b.productItemId === itemId && b.status === 'approved' && b.isDefault) ||
+        approvedBomsForItem(itemId)[0];
       return {
         productItemId: itemId,
         bomId: defaultBom?.id ?? '',
@@ -208,8 +214,16 @@ export function ProductionPlanPage(): JSX.Element {
     try {
       // 1. جلب بنود الـ BOMs والأرصدة
       const [bomsDetailsRes, stockRes] = await Promise.all([
-        Promise.all(plan.items.map((item) => api.get<{ bom: { lines: BomLineRecord[] } }>('/technical/boms/' + item.bomId).catch(() => ({ bom: { lines: [] } })))),
-        api.get<{ balances: StockBalanceRecord[] }>('/inventory/stock-balances').catch(() => ({ balances: [] })),
+        Promise.all(
+          plan.items.map((item) =>
+            api
+              .get<{ bom: { lines: BomLineRecord[] } }>('/technical/boms/' + item.bomId)
+              .catch(() => ({ bom: { lines: [] } })),
+          ),
+        ),
+        api
+          .get<{ balances: StockBalanceRecord[] }>('/inventory/stock-balances')
+          .catch(() => ({ balances: [] })),
       ]);
 
       // 2. تجميع الاحتياجات الإجمالية لكل مادة خام
@@ -221,7 +235,10 @@ export function ProductionPlanPage(): JSX.Element {
           bomDetail.bom.lines.forEach((line) => {
             const lineQty = parseFloat(line.quantity || '0');
             const totalRequired = planQty * lineQty;
-            reqMap.set(line.componentItemId, (reqMap.get(line.componentItemId) || 0) + totalRequired);
+            reqMap.set(
+              line.componentItemId,
+              (reqMap.get(line.componentItemId) || 0) + totalRequired,
+            );
           });
         }
       });
@@ -622,7 +639,9 @@ export function ProductionPlanPage(): JSX.Element {
                       type="button"
                       className="filter-button"
                       style={{ fontSize: 12, padding: '4px 8px', background: '#f1f5f9' }}
-                      onClick={() => { void openMaterialRequirements(plan); }}
+                      onClick={() => {
+                        void openMaterialRequirements(plan);
+                      }}
                     >
                       📊 {t('pages.production_plan.materialRequirements')}
                     </button>

@@ -28,7 +28,11 @@ export const rbacApi = {
     }
   },
 
-  async updateRolePermissions(payload: { roleId: string; roleName: string; permissions: string[] }) {
+  async updateRolePermissions(payload: {
+    roleId: string;
+    roleName: string;
+    permissions: string[];
+  }) {
     const res = await fetch(`${API_BASE}/v1/auth/rbac/update-permissions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

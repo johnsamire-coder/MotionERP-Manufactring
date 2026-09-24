@@ -19,7 +19,6 @@ export * from '../../../modules/sales/sales.schema';
 
 export * from '../../../modules/planning/planning.schema';
 
-
 export * from '../../../modules/technical/technical.schema';
 
 export * from '../../../modules/production/production.schema';

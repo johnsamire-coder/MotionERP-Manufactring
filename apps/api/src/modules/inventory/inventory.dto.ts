@@ -15,7 +15,11 @@ import {
 import { Type } from 'class-transformer';
 
 const MOVEMENT_TYPES = ['receipt', 'issue', 'transfer_in', 'transfer_out', 'adjustment'] as const;
-const MOVEMENT_PURPOSES = ['general', 'material_transfer_for_manufacture', 'manufacture_consumption'] as const;
+const MOVEMENT_PURPOSES = [
+  'general',
+  'material_transfer_for_manufacture',
+  'manufacture_consumption',
+] as const;
 const BATCH_STATUSES = ['active', 'expired', 'quarantined', 'recalled'] as const;
 const SERIAL_STATUSES = ['active', 'delivered', 'under_maintenance', 'decommissioned'] as const;
 const DISTRIBUTE_METHODS = ['by_amount', 'by_quantity'] as const;
@@ -154,8 +158,23 @@ export class CreateReservationDto {
   source!: string;
 
   @IsOptional()
-  @IsIn(['sales_order', 'production', 'subcontract', 'production_plan', 'purchase_order', 'material_request', 'work_order'])
-  reservationType?: 'sales_order' | 'production' | 'subcontract' | 'production_plan' | 'purchase_order' | 'material_request' | 'work_order';
+  @IsIn([
+    'sales_order',
+    'production',
+    'subcontract',
+    'production_plan',
+    'purchase_order',
+    'material_request',
+    'work_order',
+  ])
+  reservationType?:
+    | 'sales_order'
+    | 'production'
+    | 'subcontract'
+    | 'production_plan'
+    | 'purchase_order'
+    | 'material_request'
+    | 'work_order';
 }
 
 export class QueryLedgerDto {

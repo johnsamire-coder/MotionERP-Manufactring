@@ -8,13 +8,25 @@
 type Data = Record<string, unknown>;
 
 export function escapeHtml(v: unknown): string {
-  return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+  return String(v ?? '').replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
+  );
 }
 
 const FILTERS: Record<string, (v: unknown) => string> = {
-  date: (v) => { const d = new Date(String(v)); return v && !Number.isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : String(v ?? ''); },
-  money: (v) => (v === undefined || v === null || v === '' || Number.isNaN(Number(v)) ? String(v ?? '') : Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })),
-  number: (v) => (v === undefined || v === null || v === '' || Number.isNaN(Number(v)) ? String(v ?? '') : String(Number(v))),
+  date: (v) => {
+    const d = new Date(String(v));
+    return v && !Number.isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : String(v ?? '');
+  },
+  money: (v) =>
+    v === undefined || v === null || v === '' || Number.isNaN(Number(v))
+      ? String(v ?? '')
+      : Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+  number: (v) =>
+    v === undefined || v === null || v === '' || Number.isNaN(Number(v))
+      ? String(v ?? '')
+      : String(Number(v)),
 };
 
 function lookup(expr: string, scopes: Data[]): unknown {
@@ -31,23 +43,38 @@ function lookup(expr: string, scopes: Data[]): unknown {
 function lookupPath(path: string, scopes: Data[]): unknown {
   let depth = 0;
   let p = path.trim();
-  while (p.startsWith('../')) { depth++; p = p.slice(3); }
+  while (p.startsWith('../')) {
+    depth++;
+    p = p.slice(3);
+  }
   const scope = scopes[Math.max(0, scopes.length - 1 - depth)] ?? {};
   if (p === 'this') return scope;
-  return p.split('.').reduce<unknown>((cur, key) => (cur !== null && typeof cur === 'object' ? (cur as Data)[key] : undefined), scope);
+  return p
+    .split('.')
+    .reduce<unknown>(
+      (cur, key) => (cur !== null && typeof cur === 'object' ? (cur as Data)[key] : undefined),
+      scope,
+    );
 }
 
 const truthy = (v: unknown): boolean => (Array.isArray(v) ? v.length > 0 : Boolean(v) && v !== '0');
 
 /** Finds the matching close tag for a block starting after `from`, honouring nesting. */
-function findClose(tpl: string, kind: 'each' | 'if', from: number): { elseAt: number; closeAt: number } {
+function findClose(
+  tpl: string,
+  kind: 'each' | 'if',
+  from: number,
+): { elseAt: number; closeAt: number } {
   const re = new RegExp(`{{(#${kind}\\b[^}]*|else|/${kind})}}`, 'g');
   re.lastIndex = from;
-  let depth = 0; let elseAt = -1; let m: RegExpExecArray | null;
+  let depth = 0;
+  let elseAt = -1;
+  let m: RegExpExecArray | null;
   while ((m = re.exec(tpl))) {
     if (m[1]!.startsWith('#')) depth++;
-    else if (m[1] === 'else') { if (depth === 0 && kind === 'if' && elseAt === -1) elseAt = m.index; }
-    else if (depth === 0) return { elseAt, closeAt: m.index };
+    else if (m[1] === 'else') {
+      if (depth === 0 && kind === 'if' && elseAt === -1) elseAt = m.index;
+    } else if (depth === 0) return { elseAt, closeAt: m.index };
     else depth--;
   }
   throw new Error(`template: missing {{/${kind}}}`);
@@ -58,7 +85,10 @@ function renderWith(tpl: string, scopes: Data[]): string {
   let i = 0;
   while (i < tpl.length) {
     const open = tpl.indexOf('{{', i);
-    if (open === -1) { out += tpl.slice(i); break; }
+    if (open === -1) {
+      out += tpl.slice(i);
+      break;
+    }
     out += tpl.slice(i, open);
     if (tpl.startsWith('{{{', open)) {
       const end = tpl.indexOf('}}}', open);
@@ -79,7 +109,17 @@ function renderWith(tpl: string, scopes: Data[]): string {
       const value = lookup(expr, scopes);
       if (kind === 'each') {
         const list = Array.isArray(value) ? value : [];
-        out += list.map((item, index) => renderWith(body, [...scopes, { ...(typeof item === 'object' && item !== null ? item as Data : { this: item }), '@index': index + 1 }])).join('');
+        out += list
+          .map((item, index) =>
+            renderWith(body, [
+              ...scopes,
+              {
+                ...(typeof item === 'object' && item !== null ? (item as Data) : { this: item }),
+                '@index': index + 1,
+              },
+            ]),
+          )
+          .join('');
       } else {
         out += renderWith(truthy(value) ? body : alt, scopes);
       }

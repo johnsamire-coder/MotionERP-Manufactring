@@ -73,6 +73,8 @@ export class AppConfigService {
     const apiUrl = this.config.get('ETA_API_URL', { infer: true });
     const clientId = this.config.get('ETA_CLIENT_ID', { infer: true });
     const clientSecret = this.config.get('ETA_CLIENT_SECRET', { infer: true });
-    return idSrvUrl && apiUrl && clientId && clientSecret ? { idSrvUrl, apiUrl, clientId, clientSecret } : null;
+    return idSrvUrl && apiUrl && clientId && clientSecret
+      ? { idSrvUrl, apiUrl, clientId, clientSecret }
+      : null;
   }
 }

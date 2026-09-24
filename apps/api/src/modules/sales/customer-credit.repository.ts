@@ -17,29 +17,45 @@ export class CustomerCreditRepository {
   /** Customer balance in the general ledger: posted debits − credits on lines tagged with the customer. */
   async ledgerBalance(customerId: string): Promise<number> {
     const rows = await this.database.db
-      .select({ balance: sql<string>`coalesce(sum(${journalLine.debitAmount} - ${journalLine.creditAmount}), 0)` })
+      .select({
+        balance: sql<string>`coalesce(sum(${journalLine.debitAmount} - ${journalLine.creditAmount}), 0)`,
+      })
       .from(journalLine)
       .innerJoin(journalEntry, eq(journalEntry.id, journalLine.journalEntryId))
-      .where(and(
-        eq(journalLine.partyType, 'customer'),
-        eq(journalLine.partyId, customerId),
-        eq(journalEntry.status, 'posted'),
-      ));
+      .where(
+        and(
+          eq(journalLine.partyType, 'customer'),
+          eq(journalLine.partyId, customerId),
+          eq(journalEntry.status, 'posted'),
+        ),
+      );
     return Number(rows[0]?.balance ?? 0);
   }
 
   /** The customer's open (approved / in progress) job orders. */
-  async openJobOrders(customerId: string): Promise<Array<{ jobOrderNumber: string; quotationReference: string | null }>> {
+  async openJobOrders(
+    customerId: string,
+  ): Promise<Array<{ jobOrderNumber: string; quotationReference: string | null }>> {
     return this.database.db
-      .select({ jobOrderNumber: jobOrder.jobOrderNumber, quotationReference: jobOrder.quotationReference })
+      .select({
+        jobOrderNumber: jobOrder.jobOrderNumber,
+        quotationReference: jobOrder.quotationReference,
+      })
       .from(jobOrder)
-      .where(and(eq(jobOrder.customerId, customerId), inArray(jobOrder.status, ['approved', 'in_progress'])));
+      .where(
+        and(
+          eq(jobOrder.customerId, customerId),
+          inArray(jobOrder.status, ['approved', 'in_progress']),
+        ),
+      );
   }
 
   /** Net value of an approved quotation (sum of quantity × unit price), by quotation number. */
   async quotationNetValue(quotationNumber: string): Promise<number> {
     const rows = await this.database.db
-      .select({ total: sql<string>`coalesce(sum(${quotationLine.quantity} * ${quotationLine.unitPrice}), 0)` })
+      .select({
+        total: sql<string>`coalesce(sum(${quotationLine.quantity} * ${quotationLine.unitPrice}), 0)`,
+      })
       .from(quotationLine)
       .innerJoin(quotation, eq(quotation.id, quotationLine.quotationId))
       .where(eq(quotation.quotationNumber, quotationNumber));
@@ -51,7 +67,9 @@ export class CustomerCreditRepository {
     const rows = await this.database.db
       .select({ total: sql<string>`coalesce(sum(${salesInvoice.netAmount}), 0)` })
       .from(salesInvoice)
-      .where(and(eq(salesInvoice.jobOrderReference, jobOrderNumber), eq(salesInvoice.status, 'posted')));
+      .where(
+        and(eq(salesInvoice.jobOrderReference, jobOrderNumber), eq(salesInvoice.status, 'posted')),
+      );
     return Number(rows[0]?.total ?? 0);
   }
 
@@ -62,15 +80,19 @@ export class CustomerCreditRepository {
       .select({ id: salesInvoiceLine.deliveryOrderId })
       .from(salesInvoiceLine)
       .innerJoin(salesInvoice, eq(salesInvoice.id, salesInvoiceLine.salesInvoiceId))
-      .where(and(isNotNull(salesInvoiceLine.deliveryOrderId), ne(salesInvoice.status, 'cancelled')));
+      .where(
+        and(isNotNull(salesInvoiceLine.deliveryOrderId), ne(salesInvoice.status, 'cancelled')),
+      );
     const rows = await this.database.db
       .select({ count: sql<string>`count(*)` })
       .from(deliveryOrder)
-      .where(and(
-        inArray(deliveryOrder.jobOrderReference, jobOrderNumbers),
-        eq(deliveryOrder.status, 'delivered'),
-        sql`${deliveryOrder.id} not in (${invoiced})`,
-      ));
+      .where(
+        and(
+          inArray(deliveryOrder.jobOrderReference, jobOrderNumbers),
+          eq(deliveryOrder.status, 'delivered'),
+          sql`${deliveryOrder.id} not in (${invoiced})`,
+        ),
+      );
     return Number(rows[0]?.count ?? 0);
   }
 }

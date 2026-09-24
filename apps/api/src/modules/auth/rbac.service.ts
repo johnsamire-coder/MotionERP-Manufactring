@@ -2,8 +2,9 @@
 // Motion ERP — RBAC Permissions Service
 // Step 95 | Role-Based Access Control Matrix
 // ============================================================
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { UpdateRolePermissionsDto, AssignUserRoleDto } from './rbac.dto';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 export interface RoleMatrixItem {
   id: string;
@@ -16,7 +17,7 @@ export interface RoleMatrixItem {
 
 @Injectable()
 export class RbacService {
-  constructor(@Inject('DRIZZLE') private readonly db: any) {}
+  constructor(@Inject('DRIZZLE') private readonly db: NodePgDatabase) {}
 
   // ── قائمة الصلاحيات القياسية للمصنع ──
   getAllSystemPermissions() {
@@ -55,7 +56,15 @@ export class RbacService {
         name: 'المدير المالي والمحاسب القانوني',
         description: 'إدارة الدفاتر المحاسبية، الضرائب، الإقفالات، وسندات الصرف',
         usersCount: 3,
-        permissions: ['acc:view', 'acc:post', 'acc:close', 'tax:settle', 'cost:view', 'inv:view', 'admin:audit'],
+        permissions: [
+          'acc:view',
+          'acc:post',
+          'acc:close',
+          'tax:settle',
+          'cost:view',
+          'inv:view',
+          'admin:audit',
+        ],
       },
       {
         id: 'r-cost-acc',

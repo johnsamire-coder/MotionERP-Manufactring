@@ -7,8 +7,12 @@ describe('Budget engine (plan item 40)', () => {
   });
 
   it('2. annual check', () => {
-    expect(evaluateBudget({ amount: 1000, monthlyPercentages: null }, 5, 900, 0, 50).annualOver).toBe(-50);
-    expect(evaluateBudget({ amount: 1000, monthlyPercentages: null }, 5, 900, 0, 150).annualOver).toBe(50);
+    expect(
+      evaluateBudget({ amount: 1000, monthlyPercentages: null }, 5, 900, 0, 50).annualOver,
+    ).toBe(-50);
+    expect(
+      evaluateBudget({ amount: 1000, monthlyPercentages: null }, 5, 900, 0, 150).annualOver,
+    ).toBe(50);
   });
 
   it('3. accumulated monthly check uses the distribution up to the entry month', () => {

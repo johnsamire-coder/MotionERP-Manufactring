@@ -17,15 +17,23 @@ export class WarehouseTreeController {
   constructor(private readonly service: WarehouseTreeService) {}
 
   @Get()
-  async tree(): Promise<{ tree: WarehouseTreeNode[] }> { return { tree: await this.service.tree() }; }
+  async tree(): Promise<{ tree: WarehouseTreeNode[] }> {
+    return { tree: await this.service.tree() };
+  }
 
   @Patch(':id/parent')
-  async setParent(@Param('id', ParseUUIDPipe) id: string, @Body() dto: SetWarehouseParentDto): Promise<{ warehouse: WarehouseRecord }> {
+  async setParent(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetWarehouseParentDto,
+  ): Promise<{ warehouse: WarehouseRecord }> {
     return { warehouse: await this.service.setParent(id, dto.parentWarehouseId ?? null) };
   }
 
   @Patch(':id/group')
-  async setGroup(@Param('id', ParseUUIDPipe) id: string, @Body() dto: SetWarehouseGroupDto): Promise<{ warehouse: WarehouseRecord }> {
+  async setGroup(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetWarehouseGroupDto,
+  ): Promise<{ warehouse: WarehouseRecord }> {
     return { warehouse: await this.service.setGroup(id, dto.isGroup) };
   }
 }

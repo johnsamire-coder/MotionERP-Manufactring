@@ -1,7 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { FinanceNotFoundError, FinanceValidationError } from './finance.errors';
 
-interface HttpResponse { status(code: number): HttpResponse; json(body: unknown): void; }
+interface HttpResponse {
+  status(code: number): HttpResponse;
+  json(body: unknown): void;
+}
 
 @Catch(FinanceNotFoundError, FinanceValidationError)
 export class FinanceExceptionFilter implements ExceptionFilter {

@@ -12,7 +12,14 @@ import {
   Min,
 } from 'class-validator';
 
-const ITEM_TYPES = ['raw_material', 'finished_product', 'semi_finished_product', 'consumable', 'spare_part', 'service'] as const;
+const ITEM_TYPES = [
+  'raw_material',
+  'finished_product',
+  'semi_finished_product',
+  'consumable',
+  'spare_part',
+  'service',
+] as const;
 
 export class CreateUomDto {
   @Matches(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/)

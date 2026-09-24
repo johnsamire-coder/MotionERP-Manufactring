@@ -7,7 +7,8 @@ import { IsUUID, IsString, IsOptional } from 'class-validator';
 export class RecordAuditLogDto {
   @IsString() entityName!: string;
   @IsString() entityId!: string;
-  @IsString() action!: 'CREATE' | 'UPDATE' | 'DELETE' | 'POST' | 'REVERSE' | 'CLOSE' | 'REOPEN' | 'LOGIN';
+  @IsString() action!:
+    'CREATE' | 'UPDATE' | 'DELETE' | 'POST' | 'REVERSE' | 'CLOSE' | 'REOPEN' | 'LOGIN';
   @IsOptional() @IsUUID() performedBy?: string;
   @IsOptional() @IsString() performedByName?: string;
   @IsOptional() @IsUUID() companyId?: string;

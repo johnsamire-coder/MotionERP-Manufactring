@@ -189,10 +189,12 @@ describe('organizational core (integration, requires PostgreSQL)', () => {
 
     // ON DELETE RESTRICT refuses the delete. PostgreSQL 16 reports it as foreign_key_violation (23503),
     // older servers as restrict_violation (23001) — either way on the parent FK.
-    const refused = await pool.query('delete from "platform"."org_node" where id = $1', [parent]).then(
-      () => null,
-      (e: { code?: string; constraint?: string }) => e,
-    );
+    const refused = await pool
+      .query('delete from "platform"."org_node" where id = $1', [parent])
+      .then(
+        () => null,
+        (e: { code?: string; constraint?: string }) => e,
+      );
     expect(['23001', '23503']).toContain(refused?.code);
     expect(refused?.constraint).toBe('org_node_parent_id_fk');
   });
@@ -278,7 +280,9 @@ describe('organizational core (integration, requires PostgreSQL)', () => {
         migrationsSchema: BOOKKEEPING_SCHEMA,
       });
       // one row per migration in the journal, all applied
-      const journal = JSON.parse(readFileSync(join(defaultMigrationsFolder(), 'meta', '_journal.json'), 'utf8')) as { entries: unknown[] };
+      const journal = JSON.parse(
+        readFileSync(join(defaultMigrationsFolder(), 'meta', '_journal.json'), 'utf8'),
+      ) as { entries: unknown[] };
       expect(before).toHaveLength(journal.entries.length);
       expect(before.every((m) => m.applied)).toBe(true);
 

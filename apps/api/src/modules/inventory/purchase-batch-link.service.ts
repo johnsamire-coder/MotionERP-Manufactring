@@ -3,23 +3,31 @@
 // Step 68 | Medical Traceability
 // ============================================================
 import { Injectable, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
-import { eq, and, like } from 'drizzle-orm';
-import { purchaseLineBatch, PurchaseLineBatch, NewPurchaseLineBatch } from './purchase-batch-link.schema';
+import { eq, and } from 'drizzle-orm';
+import {
+  purchaseLineBatch,
+  PurchaseLineBatch,
+  NewPurchaseLineBatch,
+} from './purchase-batch-link.schema';
 import {
   RegisterPurchaseBatchesDto,
   UpdateBatchStatusDto,
   QueryPurchaseBatchesDto,
   TraceabilitySearchDto,
 } from './purchase-batch-link.dto';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 @Injectable()
 export class PurchaseBatchLinkService {
-  constructor(@Inject('DRIZZLE') private readonly db: any) {}
+  constructor(@Inject('DRIZZLE') private readonly db: NodePgDatabase) {}
 
   // ═════════════════════════════════════════════
   // 1. تسجيل اللوطات عند استلام فاتورة مشتريات
   // ═════════════════════════════════════════════
-  async registerBatches(dto: RegisterPurchaseBatchesDto, userId: string): Promise<PurchaseLineBatch[]> {
+  async registerBatches(
+    dto: RegisterPurchaseBatchesDto,
+    userId: string,
+  ): Promise<PurchaseLineBatch[]> {
     if (!dto.batches || dto.batches.length === 0) {
       throw new BadRequestException('At least one batch must be registered for medical items');
     }
@@ -68,12 +76,9 @@ export class PurchaseBatchLinkService {
         createdBy: userId,
       };
 
-      const [inserted] = await this.db
-        .insert(purchaseLineBatch)
-        .values(record)
-        .returning();
+      const [inserted] = await this.db.insert(purchaseLineBatch).values(record).returning();
 
-      results.push(inserted);
+      results.push(inserted!);
     }
 
     return results;
@@ -82,7 +87,7 @@ export class PurchaseBatchLinkService {
   // ═════════════════════════════════════════════
   // 2. تحديث حالة الحجر الصحي للوط
   // ═════════════════════════════════════════════
-  async updateBatchStatus(dto: UpdateBatchStatusDto, userId: string): Promise<PurchaseLineBatch> {
+  async updateBatchStatus(dto: UpdateBatchStatusDto, _userId: string): Promise<PurchaseLineBatch> {
     const [batch] = await this.db
       .select()
       .from(purchaseLineBatch)
@@ -96,7 +101,7 @@ export class PurchaseBatchLinkService {
       throw new BadRequestException('Cannot update a permanently rejected batch');
     }
 
-    const updateData: any = {
+    const updateData: Partial<typeof purchaseLineBatch.$inferInsert> = {
       quarantineStatus: dto.action,
       updatedAt: new Date(),
     };
@@ -111,7 +116,7 @@ export class PurchaseBatchLinkService {
       .where(eq(purchaseLineBatch.id, dto.batchLinkId))
       .returning();
 
-    return updated;
+    return updated!;
   }
 
   // ═════════════════════════════════════════════
@@ -119,10 +124,17 @@ export class PurchaseBatchLinkService {
   // ═════════════════════════════════════════════
   async queryBatches(query: QueryPurchaseBatchesDto): Promise<PurchaseLineBatch[]> {
     const conditions = [];
-    if (query.purchaseInvoiceId) conditions.push(eq(purchaseLineBatch.purchaseInvoiceId, query.purchaseInvoiceId));
+    if (query.purchaseInvoiceId)
+      conditions.push(eq(purchaseLineBatch.purchaseInvoiceId, query.purchaseInvoiceId));
     if (query.itemId) conditions.push(eq(purchaseLineBatch.itemId, query.itemId));
     if (query.batchNumber) conditions.push(eq(purchaseLineBatch.batchNumber, query.batchNumber));
-    if (query.quarantineStatus) conditions.push(eq(purchaseLineBatch.quarantineStatus, query.quarantineStatus as any));
+    if (query.quarantineStatus)
+      conditions.push(
+        eq(
+          purchaseLineBatch.quarantineStatus,
+          query.quarantineStatus as (typeof purchaseLineBatch.$inferSelect)['quarantineStatus'],
+        ),
+      );
 
     return this.db
       .select()

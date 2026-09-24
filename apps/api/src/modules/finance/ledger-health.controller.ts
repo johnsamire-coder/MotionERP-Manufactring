@@ -8,11 +8,14 @@ export class LedgerHealthController {
   constructor(private readonly service: LedgerHealthService) {}
 
   @Get()
-  async list(@Query('all') all?: string): Promise<{ issues: Awaited<ReturnType<LedgerHealthService['list']>> }> {
+  async list(
+    @Query('all') all?: string,
+  ): Promise<{ issues: Awaited<ReturnType<LedgerHealthService['list']>> }> {
     return { issues: await this.service.list(all !== 'true') };
   }
 
-  @Post('run') @HttpCode(200)
+  @Post('run')
+  @HttpCode(200)
   async run(): Promise<{ result: Awaited<ReturnType<LedgerHealthService['run']>> }> {
     return { result: await this.service.run() };
   }

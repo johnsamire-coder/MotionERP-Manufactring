@@ -19,19 +19,42 @@ describe('InventoryService — Serial Numbers on Stock Movements (plan item 2b)'
     links.length = 0;
 
     repo = {
-      findWarehouseById: jest.fn().mockImplementation(async (id: string) => ({ id, code: id, name: id, orgNodeId: 'org-1' } as WarehouseRecord)),
+      findWarehouseById: jest
+        .fn()
+        .mockImplementation(
+          async (id: string) => ({ id, code: id, name: id, orgNodeId: 'org-1' }) as WarehouseRecord,
+        ),
       findLatestMovementDate: jest.fn().mockResolvedValue(null),
       findBalance: jest.fn().mockImplementation(async () => ({
-        id: 'bal-1', onHand: String(onHand), reserved: '0', averageCost: '10', totalValue: String(onHand * 10),
+        id: 'bal-1',
+        onHand: String(onHand),
+        reserved: '0',
+        averageCost: '10',
+        totalValue: String(onHand * 10),
       })),
-      insertMovement: jest.fn().mockImplementation(async (input) => ({ ...input, createdAt: new Date().toISOString() } as StockMovementRecord)),
-      applyDelta: jest.fn().mockImplementation(async (_i, _w, delta: string) => { onHand += Number(delta); }),
+      insertMovement: jest
+        .fn()
+        .mockImplementation(
+          async (input) =>
+            ({ ...input, createdAt: new Date().toISOString() }) as StockMovementRecord,
+        ),
+      applyDelta: jest.fn().mockImplementation(async (_i, _w, delta: string) => {
+        onHand += Number(delta);
+      }),
       applyValuation: jest.fn().mockResolvedValue(undefined),
       insertLedgerEntry: jest.fn().mockResolvedValue({}),
-      findSerialByNo: jest.fn().mockImplementation(async (_itemId: string, no: string) =>
-        [...serials.values()].find((s) => s.serialNo === no) ?? null),
+      findSerialByNo: jest
+        .fn()
+        .mockImplementation(
+          async (_itemId: string, no: string) =>
+            [...serials.values()].find((s) => s.serialNo === no) ?? null,
+        ),
       insertSerial: jest.fn().mockImplementation(async (input) => {
-        const record = { ...input, status: 'active', batchId: input.batchId ?? null } as SerialNumberRecord;
+        const record = {
+          ...input,
+          status: 'active',
+          batchId: input.batchId ?? null,
+        } as SerialNumberRecord;
         serials.set(record.id, record);
         return record;
       }),
@@ -41,23 +64,36 @@ describe('InventoryService — Serial Numbers on Stock Movements (plan item 2b)'
         s.warehouseId = changes.warehouseId;
         if (changes.batchId !== undefined) s.batchId = changes.batchId;
       }),
-      insertMovementSerials: jest.fn().mockImplementation(async (movementId: string, serialIds: string[]) => {
-        links.push({ movementId, serialIds });
-      }),
+      insertMovementSerials: jest
+        .fn()
+        .mockImplementation(async (movementId: string, serialIds: string[]) => {
+          links.push({ movementId, serialIds });
+        }),
     } as unknown as InventoryRepository;
 
     const catalog = {
       getItem: jest.fn().mockImplementation(async (id: string) => ({
-        id, hasBatchNo: false, hasSerialNo, hasExpiryDate: false, shelfLifeInDays: null,
+        id,
+        hasBatchNo: false,
+        hasSerialNo,
+        hasExpiryDate: false,
+        shelfLifeInDays: null,
       })),
     } as unknown as CatalogService;
 
     service = new InventoryService(repo, undefined, catalog);
   });
 
-  const move = (movementType: 'receipt' | 'issue' | 'transfer_out' | 'transfer_in', warehouseId: string, serialNos?: string[], quantity?: string) =>
+  const move = (
+    movementType: 'receipt' | 'issue' | 'transfer_out' | 'transfer_in',
+    warehouseId: string,
+    serialNos?: string[],
+    quantity?: string,
+  ) =>
     service.createMovement({
-      itemId: 'item-1', warehouseId, movementType,
+      itemId: 'item-1',
+      warehouseId,
+      movementType,
       quantity: quantity ?? String(serialNos?.length ?? 1),
       unitCost: movementType === 'receipt' || movementType === 'transfer_in' ? '10' : undefined,
       serialNos,
@@ -73,9 +109,15 @@ describe('InventoryService — Serial Numbers on Stock Movements (plan item 2b)'
   });
 
   it('2. requires exactly one serial per unit, whole quantities and no duplicates', async () => {
-    await expect(move('receipt', 'wh-1', ['SN-1'], '2')).rejects.toThrow(/2 serial numbers required, got 1/);
-    await expect(move('receipt', 'wh-1', undefined, '1')).rejects.toThrow(/1 serial numbers required, got 0/);
-    await expect(move('receipt', 'wh-1', ['SN-1', 'SN-1'])).rejects.toThrow(/listed more than once/);
+    await expect(move('receipt', 'wh-1', ['SN-1'], '2')).rejects.toThrow(
+      /2 serial numbers required, got 1/,
+    );
+    await expect(move('receipt', 'wh-1', undefined, '1')).rejects.toThrow(
+      /1 serial numbers required, got 0/,
+    );
+    await expect(move('receipt', 'wh-1', ['SN-1', 'SN-1'])).rejects.toThrow(
+      /listed more than once/,
+    );
     await expect(move('receipt', 'wh-1', ['SN-1'], '1.5')).rejects.toThrow(/whole number/);
   });
 

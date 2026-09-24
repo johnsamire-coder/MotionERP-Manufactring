@@ -3,16 +3,11 @@ import {
   Factory,
   Zap,
   Users,
-  Wrench,
   Building,
-  Calculator,
   Printer,
-  Download,
-  Percent,
   Sliders,
   CheckCircle2,
   AlertCircle,
-  Clock,
   DollarSign,
   TrendingUp,
   TrendingDown,
@@ -25,15 +20,15 @@ interface OverheadPool {
   name: string;
   allocationBasis: 'machine_hours' | 'labor_hours' | 'direct_cost_pct';
   allocationBasisLabel: string;
-  periodActualCost: number;     // المصروف الفعلي في أغسطس
-  appliedToProduction: number;   // المحمّل فعلياً على أوامر الشغل
-  absorptionVariance: number;    // فرق التحميل (Over / Under Absorption)
-  ratePerUnit: number;           // معدل التحميل المحسوب
+  periodActualCost: number; // المصروف الفعلي في أغسطس
+  appliedToProduction: number; // المحمّل فعلياً على أوامر الشغل
+  absorptionVariance: number; // فرق التحميل (Over / Under Absorption)
+  ratePerUnit: number; // معدل التحميل المحسوب
   rateUnitLabel: string;
 }
 
 export const OverheadDashboardPage: React.FC = () => {
-  const [selectedMonth, setSelectedMonth] = useState('أغسطس 2026');
+  const [selectedMonth, _setSelectedMonth] = useState('أغسطس 2026');
 
   // ── مجمعات التكاليف الفعلية لشهر أغسطس (طبقاً لشيت العميل) ──
   const [pools] = useState<OverheadPool[]>([
@@ -46,7 +41,7 @@ export const OverheadDashboardPage: React.FC = () => {
       periodActualCost: 85000,
       appliedToProduction: 88400,
       absorptionVariance: 3400, // Over-applied (وفر تحميل)
-      ratePerUnit: 185,         // 185 ج.م لكل ساعة تشغيل ماكينة
+      ratePerUnit: 185, // 185 ج.م لكل ساعة تشغيل ماكينة
       rateUnitLabel: 'ج.م / ساعة ماكينة',
     },
     {
@@ -58,7 +53,7 @@ export const OverheadDashboardPage: React.FC = () => {
       periodActualCost: 110000,
       appliedToProduction: 104500,
       absorptionVariance: -5500, // Under-applied (عجز تحميل)
-      ratePerUnit: 95,           // 95 ج.م لكل ساعة عمل مباشر
+      ratePerUnit: 95, // 95 ج.م لكل ساعة عمل مباشر
       rateUnitLabel: 'ج.م / ساعة عامل',
     },
     {
@@ -102,13 +97,16 @@ export const OverheadDashboardPage: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900">إدارة التكاليف غير المباشرة ومجمعات التحميل (Overhead Dashboard)</h1>
+              <h1 className="text-2xl font-bold text-slate-900">
+                إدارة التكاليف غير المباشرة ومجمعات التحميل (Overhead Dashboard)
+              </h1>
               <span className="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full">
                 {selectedMonth}
               </span>
             </div>
             <p className="text-sm text-slate-500">
-              متابعة مجمعات مصاريف الكهرباء، الإشراف، الإهلاك، وسياسات التوزيع والتحميل على أوامر الشغل
+              متابعة مجمعات مصاريف الكهرباء، الإشراف، الإهلاك، وسياسات التوزيع والتحميل على أوامر
+              الشغل
             </p>
           </div>
         </div>
@@ -127,34 +125,56 @@ export const OverheadDashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500 uppercase">المصروف الفعلي (Actual OH)</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase">
+              المصروف الفعلي (Actual OH)
+            </p>
             <div className="p-2.5 bg-slate-100 text-slate-600 rounded-xl">
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mt-2">{totalActualOH.toLocaleString()} ج.م</h3>
-          <span className="text-xs text-slate-500 font-medium">إجمالي المصروفات الدفترية للشهر</span>
+          <h3 className="text-2xl font-bold text-slate-900 mt-2">
+            {totalActualOH.toLocaleString()} ج.م
+          </h3>
+          <span className="text-xs text-slate-500 font-medium">
+            إجمالي المصروفات الدفترية للشهر
+          </span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500 uppercase">المحمل على الإنتاج (Applied OH)</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase">
+              المحمل على الإنتاج (Applied OH)
+            </p>
             <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
               <Layers className="w-5 h-5" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-indigo-700 mt-2">{totalAppliedOH.toLocaleString()} ج.م</h3>
-          <span className="text-xs text-indigo-600 font-medium">تم امتصاصه في تكلفة أوامر الشغل</span>
+          <h3 className="text-2xl font-bold text-indigo-700 mt-2">
+            {totalAppliedOH.toLocaleString()} ج.م
+          </h3>
+          <span className="text-xs text-indigo-600 font-medium">
+            تم امتصاصه في تكلفة أوامر الشغل
+          </span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500 uppercase">صافي فرق التحميل (Variance)</p>
-            <div className={`p-2.5 rounded-xl ${netAbsorptionVariance >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-              {netAbsorptionVariance >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+            <p className="text-xs font-semibold text-slate-500 uppercase">
+              صافي فرق التحميل (Variance)
+            </p>
+            <div
+              className={`p-2.5 rounded-xl ${netAbsorptionVariance >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}
+            >
+              {netAbsorptionVariance >= 0 ? (
+                <TrendingUp className="w-5 h-5" />
+              ) : (
+                <TrendingDown className="w-5 h-5" />
+              )}
             </div>
           </div>
-          <h3 className={`text-2xl font-bold mt-2 ${netAbsorptionVariance >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+          <h3
+            className={`text-2xl font-bold mt-2 ${netAbsorptionVariance >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}
+          >
             {Math.abs(netAbsorptionVariance).toLocaleString()} ج.م
           </h3>
           <span className="text-xs font-medium text-slate-500">
@@ -178,8 +198,12 @@ export const OverheadDashboardPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="font-bold text-slate-900 text-lg">مجمعات التكاليف غير المباشرة (Cost Pools & Allocation Drivers)</h3>
-            <p className="text-xs text-slate-500 mt-1">معدلات التحميل المحسوبة طبقاً لساعات التشغيل والعمالة المباشرة</p>
+            <h3 className="font-bold text-slate-900 text-lg">
+              مجمعات التكاليف غير المباشرة (Cost Pools & Allocation Drivers)
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              معدلات التحميل المحسوبة طبقاً لساعات التشغيل والعمالة المباشرة
+            </p>
           </div>
         </div>
 
@@ -220,13 +244,21 @@ export const OverheadDashboardPage: React.FC = () => {
                   <td className="p-4 font-mono font-bold text-indigo-700">
                     {p.ratePerUnit} {p.rateUnitLabel}
                   </td>
-                  <td className="p-4 font-mono font-medium">{p.periodActualCost.toLocaleString()} ج.م</td>
-                  <td className="p-4 font-mono font-bold text-slate-900">{p.appliedToProduction.toLocaleString()} ج.م</td>
+                  <td className="p-4 font-mono font-medium">
+                    {p.periodActualCost.toLocaleString()} ج.م
+                  </td>
+                  <td className="p-4 font-mono font-bold text-slate-900">
+                    {p.appliedToProduction.toLocaleString()} ج.م
+                  </td>
                   <td className="p-4 font-mono font-bold">
                     {p.absorptionVariance > 0 ? (
-                      <span className="text-emerald-700">+{p.absorptionVariance.toLocaleString()} ج.م (وفر)</span>
+                      <span className="text-emerald-700">
+                        +{p.absorptionVariance.toLocaleString()} ج.م (وفر)
+                      </span>
                     ) : p.absorptionVariance < 0 ? (
-                      <span className="text-rose-700">{p.absorptionVariance.toLocaleString()} ج.م (عجز)</span>
+                      <span className="text-rose-700">
+                        {p.absorptionVariance.toLocaleString()} ج.م (عجز)
+                      </span>
                     ) : (
                       <span className="text-slate-500">0 ج.م (متوازن)</span>
                     )}
