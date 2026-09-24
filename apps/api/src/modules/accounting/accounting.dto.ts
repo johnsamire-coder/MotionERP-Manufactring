@@ -1,6 +1,21 @@
 import { Type } from 'class-transformer';
 import type { VoucherType } from './voucher-types';
-import { ArrayMinSize, IsArray, IsBoolean, IsDateString, IsIn, IsInt, IsNumberString, IsOptional, IsPositive, IsString, IsUUID, MaxLength, ValidateIf, ValidateNested } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsIn,
+  IsInt,
+  IsNumberString,
+  IsOptional,
+  IsPositive,
+  IsString,
+  IsUUID,
+  MaxLength,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
 
 export class CreateAccountTypeDto {
   @IsString() @MaxLength(64) code!: string;
@@ -33,7 +48,8 @@ export class CreateCostCenterDto {
 
 export class CreateAccountDeterminationDto {
   @IsUUID() orgNodeId!: string;
-  @IsIn(['item_category', 'warehouse', 'default']) determinationType!: 'item_category' | 'warehouse' | 'default';
+  @IsIn(['item_category', 'warehouse', 'default']) determinationType!:
+    'item_category' | 'warehouse' | 'default';
   @IsOptional() @IsUUID() referenceId?: string;
   @IsString() accountPurpose!: string;
   @IsUUID() accountId!: string;
@@ -53,7 +69,11 @@ export class CreateJournalLineDto {
   @IsOptional() @IsUUID() partyId?: string;
   @IsOptional() @IsUUID() costCenterId?: string;
   @IsOptional() @IsUUID() jobOrderId?: string;
-  @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => LineDimensionDto) dimensions?: LineDimensionDto[];
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LineDimensionDto)
+  dimensions?: LineDimensionDto[];
 }
 
 export class CreateJournalEntryDto {
@@ -61,8 +81,32 @@ export class CreateJournalEntryDto {
   @IsString() @MaxLength(500) description!: string;
   @IsOptional() @IsString() @MaxLength(200) reference?: string;
   @IsOptional() @IsDateString() entryDate?: string;
-  @IsOptional() @IsIn(['journal_entry', 'inter_company_journal_entry', 'bank_entry', 'cash_entry', 'credit_card_entry', 'debit_note', 'credit_note', 'contra_entry', 'excise_entry', 'write_off_entry', 'opening_entry', 'depreciation_entry', 'exchange_rate_revaluation', 'exchange_gain_or_loss', 'deferred_revenue', 'deferred_expense', 'reversal_of_itc']) voucherType?: VoucherType;
-  @IsArray() @ArrayMinSize(2) @ValidateNested({ each: true }) @Type(() => CreateJournalLineDto) lines!: CreateJournalLineDto[];
+  @IsOptional()
+  @IsIn([
+    'journal_entry',
+    'inter_company_journal_entry',
+    'bank_entry',
+    'cash_entry',
+    'credit_card_entry',
+    'debit_note',
+    'credit_note',
+    'contra_entry',
+    'excise_entry',
+    'write_off_entry',
+    'opening_entry',
+    'depreciation_entry',
+    'exchange_rate_revaluation',
+    'exchange_gain_or_loss',
+    'deferred_revenue',
+    'deferred_expense',
+    'reversal_of_itc',
+  ])
+  voucherType?: VoucherType;
+  @IsArray()
+  @ArrayMinSize(2)
+  @ValidateNested({ each: true })
+  @Type(() => CreateJournalLineDto)
+  lines!: CreateJournalLineDto[];
 }
 
 export class UpsertCompanyAccountingConfigDto {
@@ -89,7 +133,8 @@ export class UpsertCompanyAccountingConfigDto {
   @IsOptional() @IsUUID() defaultExchangeGainLossAccountId?: string;
   @IsOptional() @IsUUID() defaultDepreciationExpenseAccountId?: string;
   @IsOptional() @IsBoolean() enforceDefaultAccounts?: boolean;
-  @IsOptional() @ValidateIf((_, v) => v !== null) @IsDateString() accountsFrozenUntil?: string | null;
+  @IsOptional() @ValidateIf((_, v) => v !== null) @IsDateString() accountsFrozenUntil?:
+    string | null;
   @IsOptional() @IsBoolean() bookAdvancesSeparately?: boolean;
   @IsOptional() @IsUUID() defaultAdvanceReceivedAccountId?: string;
   @IsOptional() @IsUUID() defaultAdvancePaidAccountId?: string;
@@ -123,52 +168,6 @@ export class PartnerLedgerQueryDto {
   @IsOptional()
   @IsDateString()
   endDate?: string;
-}
-
-export class CreateFixedAssetDto {
-  @IsUUID()
-  orgNodeId!: string;
-
-  @IsString()
-  @MaxLength(64)
-  assetCode!: string;
-
-  @IsString()
-  @MaxLength(255)
-  assetName!: string;
-
-  @IsDateString()
-  purchaseDate!: string;
-
-  @IsNumberString()
-  purchaseCost!: string;
-
-  @IsInt()
-  @IsPositive()
-  usefulLifeMonths!: number;
-
-  @IsOptional()
-  @IsNumberString()
-  salvageValue?: string;
-
-  @IsUUID()
-  assetAccountId!: string;
-
-  @IsUUID()
-  accumulatedDepreciationAccountId!: string;
-
-  @IsUUID()
-  depreciationExpenseAccountId!: string;
-
-  @IsOptional()
-  @IsUUID()
-  costCenterId?: string;
-}
-
-export class PostDepreciationDto {
-  @IsOptional()
-  @IsDateString()
-  periodDate?: string;
 }
 
 export class PostVatSettlementDto {

@@ -1,7 +1,10 @@
 const API_BASE_URL = 'http://localhost:3000/api/v1';
 
 export class ApiError extends Error {
-  constructor(public statusCode: number, message: string) {
+  constructor(
+    public statusCode: number,
+    message: string,
+  ) {
     super(message);
   }
 }
@@ -14,14 +17,20 @@ const TOKEN_KEY = 'motion-erp.access-token';
 export const AUTH_REQUIRED_EVENT = 'motion-erp:auth-required';
 
 export function getAccessToken(): string | null {
-  try { return window.localStorage.getItem(TOKEN_KEY); } catch { return null; }
+  try {
+    return window.localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
 }
 
 export function setAccessToken(token: string | null): void {
   try {
     if (token) window.localStorage.setItem(TOKEN_KEY, token);
     else window.localStorage.removeItem(TOKEN_KEY);
-  } catch { /* storage unavailable: the session lasts until reload */ }
+  } catch {
+    /* storage unavailable: the session lasts until reload */
+  }
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -48,8 +57,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   get: <T>(path: string): Promise<T> => request<T>(path),
-  post: <T>(path: string, body: unknown): Promise<T> => request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
-  patch: <T>(path: string, body: unknown): Promise<T> => request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
+  post: <T>(path: string, body: unknown): Promise<T> =>
+    request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+  patch: <T>(path: string, body: unknown): Promise<T> =>
+    request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: <T = void>(path: string): Promise<T> => request<T>(path, { method: 'DELETE' }),
 };
 
@@ -61,9 +72,11 @@ export interface SessionUser {
 
 export const authApi = {
   login: (username: string, password: string) =>
-    api.post<{ user: { id: string; username: string }; accessToken: string; expiresInSeconds: number }>(
-      '/auth/login', { username, password },
-    ),
+    api.post<{
+      user: { id: string; username: string };
+      accessToken: string;
+      expiresInSeconds: number;
+    }>('/auth/login', { username, password }),
   me: () => api.get<{ user: SessionUser }>('/auth/me'),
 };
 
@@ -71,14 +84,18 @@ export const authApi = {
 
 export const financeApi = {
   getPurchaseInvoices: (orgNodeId?: string) =>
-    api.get<{ purchaseInvoices: any[] }>(`/finance/purchase-invoices${orgNodeId ? `?orgNodeId=${orgNodeId}` : ''}`),
+    api.get<{ purchaseInvoices: any[] }>(
+      `/finance/purchase-invoices${orgNodeId ? `?orgNodeId=${orgNodeId}` : ''}`,
+    ),
   createPurchaseInvoice: (data: any) =>
     api.post<{ purchaseInvoice: any }>('/finance/purchase-invoices', data),
   postPurchaseInvoice: (id: string) =>
     api.post<{ purchaseInvoice: any }>(`/finance/purchase-invoices/${id}/post`, {}),
 
   getSalesInvoices: (orgNodeId?: string) =>
-    api.get<{ salesInvoices: any[] }>(`/finance/sales-invoices${orgNodeId ? `?orgNodeId=${orgNodeId}` : ''}`),
+    api.get<{ salesInvoices: any[] }>(
+      `/finance/sales-invoices${orgNodeId ? `?orgNodeId=${orgNodeId}` : ''}`,
+    ),
   createSalesInvoice: (data: any) =>
     api.post<{ salesInvoice: any }>('/finance/sales-invoices', data),
   postSalesInvoice: (id: string) =>
@@ -86,24 +103,57 @@ export const financeApi = {
 
   getPayments: (orgNodeId?: string) =>
     api.get<{ payments: any[] }>(`/finance/payments${orgNodeId ? `?orgNodeId=${orgNodeId}` : ''}`),
-  createPayment: (data: any) =>
-    api.post<{ payment: any }>('/finance/payments', data),
-  postPayment: (id: string) =>
-    api.post<{ payment: any }>(`/finance/payments/${id}/post`, {}),
+  createPayment: (data: any) => api.post<{ payment: any }>('/finance/payments', data),
+  postPayment: (id: string) => api.post<{ payment: any }>(`/finance/payments/${id}/post`, {}),
 
   getCollections: (jobOrderReference?: string) =>
-    api.get<{ collections: any[] }>(`/finance/collections${jobOrderReference ? `?jobOrderReference=${jobOrderReference}` : ''}`),
-  recordCollection: (data: any) =>
-    api.post<{ collection: any }>('/finance/collections', data),
+    api.get<{ collections: any[] }>(
+      `/finance/collections${jobOrderReference ? `?jobOrderReference=${jobOrderReference}` : ''}`,
+    ),
+  recordCollection: (data: any) => api.post<{ collection: any }>('/finance/collections', data),
 };
+
+/** A fixed asset from the assets module (the legacy accounting/fixed-assets register was migrated there). */
+export interface FixedAssetRecord {
+  id: string;
+  assetCode: string;
+  name: string;
+  categoryId: string;
+  status: 'draft' | 'cwip' | 'in_use' | 'fully_depreciated' | 'scrapped' | 'merged';
+  grossValue: string;
+  salvageValue: string;
+  accumulatedDepreciation: string;
+  periods: number;
+  availableForUseDate: string | null;
+}
+export interface AssetCategoryRecord {
+  id: string;
+  orgNodeId: string;
+  code: string;
+  name: string;
+}
 
 export const accountingApi = {
   getFixedAssets: (orgNodeId?: string) =>
-    api.get<{ fixedAssets: any[] }>(`/accounting/fixed-assets${orgNodeId ? `?orgNodeId=${orgNodeId}` : ''}`),
-  createFixedAsset: (data: any) =>
-    api.post<{ fixedAsset: any }>('/accounting/fixed-assets', data),
-  postDepreciation: (id: string, periodDate?: string) =>
-    api.post(`/accounting/fixed-assets/${id}/depreciate`, { periodDate }),
+    api.get<{ assets: FixedAssetRecord[] }>(`/assets${orgNodeId ? `?orgNodeId=${orgNodeId}` : ''}`),
+  getAssetCategories: () => api.get<{ categories: AssetCategoryRecord[] }>('/assets/categories'),
+  createFixedAsset: (data: {
+    assetCode: string;
+    name: string;
+    categoryId: string;
+    grossValue: string;
+    salvageValue?: string;
+    periods: number;
+  }) => api.post<{ asset: FixedAssetRecord }>('/assets', data),
+  /** A bought asset goes into use and gets its depreciation schedule. */
+  submitFixedAsset: (id: string, availableForUseDate: string) =>
+    api.post<{ asset: FixedAssetRecord }>(`/assets/${id}/submit`, { availableForUseDate }),
+  /** Posts every scheduled depreciation row due on or before `asOf`, for all assets. */
+  postDueDepreciation: (asOf?: string) =>
+    api.post<{ posted: Array<{ assetCode: string; rowNumber: number; amount: string }> }>(
+      '/assets/depreciate-due',
+      { asOf },
+    ),
 
   getTrialBalance: (orgNodeId: string, startDate?: string, endDate?: string) => {
     const params = new URLSearchParams({ orgNodeId });
@@ -125,8 +175,7 @@ export const accountingApi = {
   getPartnerLedger: (partyType: string, partyId: string) =>
     api.get<any>(`/accounting/reports/partner-ledger?partyType=${partyType}&partyId=${partyId}`),
 
-  getJournalEntries: () =>
-    api.get<{ entries: any[] }>('/accounting/journal-entries'),
+  getJournalEntries: () => api.get<{ entries: any[] }>('/accounting/journal-entries'),
   postJournalEntry: (id: string) =>
     api.post<{ entry: any }>(`/accounting/journal-entries/${id}/post`, {}),
 };

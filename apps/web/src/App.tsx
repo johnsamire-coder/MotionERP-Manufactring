@@ -72,6 +72,7 @@ import AuditTrailPage from './pages/AuditTrailPage';
 import RbacPermissionsPage from './pages/RbacPermissionsPage';
 import UserRestrictionsPage from './app/pages/UserRestrictionsPage';
 import RfqPage from './app/pages/RfqPage';
+import { BalanceSheetPage as LedgerReportsPage } from './app/pages/BalanceSheetPage';
 
 // ── 2. شاشات التخطيط والتصنيع (الشغل الأصلي - ERPNext parity) ──
 import { ManufacturingPage } from './app/pages/ManufacturingPage';
@@ -220,6 +221,7 @@ export const App: React.FC = () => {
         { id: 'accounting-main', label: 'شجرة الحسابات والقيود', icon: BookOpen },
         { id: 'payments', label: 'سندات الصرف والقبض', icon: CreditCard },
         { id: 'balance-sheet', label: 'الميزانية والأصول الثابتة', icon: Scale },
+        { id: 'ledger-reports', label: 'تقارير الدفاتر وسجل الأصول', icon: Scale },
         { id: 'tax-customs', label: 'الضرائب والجمارك نموذج 41', icon: Landmark },
       ],
     },
@@ -410,6 +412,7 @@ export const App: React.FC = () => {
         {currentTab === 'accounting-main' && <AccountingPage />}
         {currentTab === 'payments' && <PaymentEntryPage />}
         {currentTab === 'balance-sheet' && <BalanceSheetPage />}
+        {currentTab === 'ledger-reports' && <LedgerReportsPage />}
         {currentTab === 'tax-customs' && <TaxAndCustomsPage />}
 
         {/* 7. الإقفال والرقابة */}

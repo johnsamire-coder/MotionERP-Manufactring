@@ -1,5 +1,17 @@
 import { sql } from 'drizzle-orm';
-import { check, date, index, integer, jsonb, numeric, pgSchema, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import {
+  check,
+  date,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgSchema,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 export const assetsSchema = pgSchema('assets');
 
@@ -8,114 +20,163 @@ export const assetsSchema = pgSchema('assets');
  * depreciation methods and a stored schedule that is rebuilt when the value changes. Accounts,
  * company and cost center are UUIDs validated through the accounting service (D2). Entries are
  * posted through AccountingService — the accounting module's code is not changed. The older basic
- * accounting.fixed_asset (straight line only) is left as it is.
+ * accounting.fixed_asset register was migrated here (migration 0100) and its endpoints retired.
  */
-export const assetCategory = assetsSchema.table('asset_category', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  orgNodeId: uuid('org_node_id').notNull(),
-  code: text('code').notNull(),
-  name: text('name').notNull(),
-  fixedAssetAccountId: uuid('fixed_asset_account_id').notNull(),
-  accumulatedDepreciationAccountId: uuid('accumulated_depreciation_account_id').notNull(),
-  depreciationExpenseAccountId: uuid('depreciation_expense_account_id').notNull(),
-  cwipAccountId: uuid('cwip_account_id'),
-  defaultMethod: text('default_method').notNull().default('straight_line'),
-  defaultPeriods: integer('default_periods').notNull().default(60),
-  defaultFrequencyMonths: integer('default_frequency_months').notNull().default(1),
-}, (t) => [unique('asset_category_org_code_unique').on(t.orgNodeId, t.code)]);
+export const assetCategory = assetsSchema.table(
+  'asset_category',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orgNodeId: uuid('org_node_id').notNull(),
+    code: text('code').notNull(),
+    name: text('name').notNull(),
+    fixedAssetAccountId: uuid('fixed_asset_account_id').notNull(),
+    accumulatedDepreciationAccountId: uuid('accumulated_depreciation_account_id').notNull(),
+    depreciationExpenseAccountId: uuid('depreciation_expense_account_id').notNull(),
+    cwipAccountId: uuid('cwip_account_id'),
+    defaultMethod: text('default_method').notNull().default('straight_line'),
+    defaultPeriods: integer('default_periods').notNull().default(60),
+    defaultFrequencyMonths: integer('default_frequency_months').notNull().default(1),
+  },
+  (t) => [unique('asset_category_org_code_unique').on(t.orgNodeId, t.code)],
+);
 
-export const asset = assetsSchema.table('asset', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  assetCode: text('asset_code').notNull(),
-  name: text('name').notNull(),
-  orgNodeId: uuid('org_node_id').notNull(),
-  categoryId: uuid('category_id').notNull().references(() => assetCategory.id, { onDelete: 'restrict' }),
-  status: text('status').notNull().default('draft'),
-  isCwip: text('is_cwip').notNull().default('no'),
-  cwipAmount: numeric('cwip_amount', { precision: 18, scale: 2 }).notNull().default('0'),
-  grossValue: numeric('gross_value', { precision: 18, scale: 2 }).notNull().default('0'),
-  salvageValue: numeric('salvage_value', { precision: 18, scale: 2 }).notNull().default('0'),
-  openingAccumulated: numeric('opening_accumulated', { precision: 18, scale: 2 }).notNull().default('0'),
-  accumulatedDepreciation: numeric('accumulated_depreciation', { precision: 18, scale: 2 }).notNull().default('0'),
-  method: text('method').notNull().default('straight_line'),
-  periods: integer('periods').notNull().default(60),
-  frequencyMonths: integer('frequency_months').notNull().default(1),
-  annualRatePercent: numeric('annual_rate_percent', { precision: 6, scale: 2 }),
-  manualAmounts: jsonb('manual_amounts').$type<number[]>(),
-  availableForUseDate: date('available_for_use_date', { mode: 'string' }),
-  costCenterId: uuid('cost_center_id'),
-  /** Plan item 49: where the asset is and who holds it (employee UUID, validated in the service). */
-  location: text('location'),
-  custodianEmployeeId: uuid('custodian_employee_id'),
-  /** Plan item 49: set when this asset was merged into a composite asset. */
-  parentAssetId: uuid('parent_asset_id'),
-  isComposite: text('is_composite').notNull().default('no'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  unique('asset_org_code_unique').on(t.orgNodeId, t.assetCode),
-  check('asset_status_valid', sql`${t.status} in ('draft', 'cwip', 'in_use', 'fully_depreciated', 'scrapped', 'merged')`),
-  check('asset_is_cwip_valid', sql`${t.isCwip} in ('yes', 'no')`),
-  check('asset_method_valid', sql`${t.method} in ('straight_line', 'double_declining_balance', 'written_down_value', 'manual')`),
-  check('asset_frequency_valid', sql`${t.frequencyMonths} in (1, 3, 6, 12)`),
-  check('asset_periods_positive', sql`${t.periods} > 0`),
-]);
+export const asset = assetsSchema.table(
+  'asset',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    assetCode: text('asset_code').notNull(),
+    name: text('name').notNull(),
+    orgNodeId: uuid('org_node_id').notNull(),
+    categoryId: uuid('category_id')
+      .notNull()
+      .references(() => assetCategory.id, { onDelete: 'restrict' }),
+    status: text('status').notNull().default('draft'),
+    isCwip: text('is_cwip').notNull().default('no'),
+    cwipAmount: numeric('cwip_amount', { precision: 18, scale: 2 }).notNull().default('0'),
+    grossValue: numeric('gross_value', { precision: 18, scale: 2 }).notNull().default('0'),
+    salvageValue: numeric('salvage_value', { precision: 18, scale: 2 }).notNull().default('0'),
+    openingAccumulated: numeric('opening_accumulated', { precision: 18, scale: 2 })
+      .notNull()
+      .default('0'),
+    accumulatedDepreciation: numeric('accumulated_depreciation', { precision: 18, scale: 2 })
+      .notNull()
+      .default('0'),
+    method: text('method').notNull().default('straight_line'),
+    periods: integer('periods').notNull().default(60),
+    frequencyMonths: integer('frequency_months').notNull().default(1),
+    annualRatePercent: numeric('annual_rate_percent', { precision: 6, scale: 2 }),
+    manualAmounts: jsonb('manual_amounts').$type<number[]>(),
+    availableForUseDate: date('available_for_use_date', { mode: 'string' }),
+    costCenterId: uuid('cost_center_id'),
+    /** Plan item 49: where the asset is and who holds it (employee UUID, validated in the service). */
+    location: text('location'),
+    custodianEmployeeId: uuid('custodian_employee_id'),
+    /** Plan item 49: set when this asset was merged into a composite asset. */
+    parentAssetId: uuid('parent_asset_id'),
+    isComposite: text('is_composite').notNull().default('no'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('asset_org_code_unique').on(t.orgNodeId, t.assetCode),
+    check(
+      'asset_status_valid',
+      sql`${t.status} in ('draft', 'cwip', 'in_use', 'fully_depreciated', 'scrapped', 'merged')`,
+    ),
+    check('asset_is_cwip_valid', sql`${t.isCwip} in ('yes', 'no')`),
+    check(
+      'asset_method_valid',
+      sql`${t.method} in ('straight_line', 'double_declining_balance', 'written_down_value', 'manual')`,
+    ),
+    check('asset_frequency_valid', sql`${t.frequencyMonths} in (1, 3, 6, 12)`),
+    check('asset_periods_positive', sql`${t.periods} > 0`),
+  ],
+);
 
-export const depreciationSchedule = assetsSchema.table('depreciation_schedule', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  assetId: uuid('asset_id').notNull().references(() => asset.id, { onDelete: 'cascade' }),
-  rowNumber: integer('row_number').notNull(),
-  scheduleDate: date('schedule_date', { mode: 'string' }).notNull(),
-  amount: numeric('amount', { precision: 18, scale: 2 }).notNull(),
-  accumulated: numeric('accumulated', { precision: 18, scale: 2 }).notNull(),
-  journalEntryId: uuid('journal_entry_id'),
-  /** Set when the row is booked (a zero row is booked without an entry). */
-  postedAt: timestamp('posted_at', { withTimezone: true }),
-}, (t) => [
-  unique('depreciation_schedule_row_unique').on(t.assetId, t.rowNumber),
-  index('depreciation_schedule_date_idx').on(t.scheduleDate),
-]);
+export const depreciationSchedule = assetsSchema.table(
+  'depreciation_schedule',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    assetId: uuid('asset_id')
+      .notNull()
+      .references(() => asset.id, { onDelete: 'cascade' }),
+    rowNumber: integer('row_number').notNull(),
+    scheduleDate: date('schedule_date', { mode: 'string' }).notNull(),
+    amount: numeric('amount', { precision: 18, scale: 2 }).notNull(),
+    accumulated: numeric('accumulated', { precision: 18, scale: 2 }).notNull(),
+    journalEntryId: uuid('journal_entry_id'),
+    /** Set when the row is booked (a zero row is booked without an entry). */
+    postedAt: timestamp('posted_at', { withTimezone: true }),
+  },
+  (t) => [
+    unique('depreciation_schedule_row_unique').on(t.assetId, t.rowNumber),
+    index('depreciation_schedule_date_idx').on(t.scheduleDate),
+  ],
+);
 
 /** Every value event of an asset: CWIP costs, capitalisation, value adjustments. */
-export const assetValueEvent = assetsSchema.table('asset_value_event', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  assetId: uuid('asset_id').notNull().references(() => asset.id, { onDelete: 'cascade' }),
-  eventType: text('event_type').notNull(),
-  eventDate: date('event_date', { mode: 'string' }).notNull(),
-  amount: numeric('amount', { precision: 18, scale: 2 }).notNull(),
-  journalEntryId: uuid('journal_entry_id'),
-  note: text('note'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [check('asset_value_event_type_valid', sql`${t.eventType} in ('cwip_cost', 'capitalisation', 'value_adjustment', 'component_asset', 'component_stock')`)]);
+export const assetValueEvent = assetsSchema.table(
+  'asset_value_event',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    assetId: uuid('asset_id')
+      .notNull()
+      .references(() => asset.id, { onDelete: 'cascade' }),
+    eventType: text('event_type').notNull(),
+    eventDate: date('event_date', { mode: 'string' }).notNull(),
+    amount: numeric('amount', { precision: 18, scale: 2 }).notNull(),
+    journalEntryId: uuid('journal_entry_id'),
+    note: text('note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check(
+      'asset_value_event_type_valid',
+      sql`${t.eventType} in ('cwip_cost', 'capitalisation', 'value_adjustment', 'component_asset', 'component_stock')`,
+    ),
+  ],
+);
 
 /** Plan item 49: every change of location / custodian. */
-export const assetMovement = assetsSchema.table('asset_movement', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  assetId: uuid('asset_id').notNull().references(() => asset.id, { onDelete: 'cascade' }),
-  movementDate: timestamp('movement_date', { withTimezone: true }).notNull().defaultNow(),
-  purpose: text('purpose').notNull(),
-  fromLocation: text('from_location'),
-  toLocation: text('to_location'),
-  fromCustodianId: uuid('from_custodian_id'),
-  toCustodianId: uuid('to_custodian_id'),
-  note: text('note'),
-}, (t) => [
-  check('asset_movement_purpose_valid', sql`${t.purpose} in ('transfer', 'issue', 'receipt')`),
-  index('asset_movement_asset_idx').on(t.assetId),
-]);
+export const assetMovement = assetsSchema.table(
+  'asset_movement',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    assetId: uuid('asset_id')
+      .notNull()
+      .references(() => asset.id, { onDelete: 'cascade' }),
+    movementDate: timestamp('movement_date', { withTimezone: true }).notNull().defaultNow(),
+    purpose: text('purpose').notNull(),
+    fromLocation: text('from_location'),
+    toLocation: text('to_location'),
+    fromCustodianId: uuid('from_custodian_id'),
+    toCustodianId: uuid('to_custodian_id'),
+    note: text('note'),
+  },
+  (t) => [
+    check('asset_movement_purpose_valid', sql`${t.purpose} in ('transfer', 'issue', 'receipt')`),
+    index('asset_movement_asset_idx').on(t.assetId),
+  ],
+);
 
 /** Plan item 49: insurance policies on an asset. */
-export const assetInsurance = assetsSchema.table('asset_insurance', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  assetId: uuid('asset_id').notNull().references(() => asset.id, { onDelete: 'cascade' }),
-  insurer: text('insurer').notNull(),
-  policyNumber: text('policy_number').notNull(),
-  insuredValue: numeric('insured_value', { precision: 18, scale: 2 }).notNull(),
-  premium: numeric('premium', { precision: 18, scale: 2 }),
-  startDate: date('start_date', { mode: 'string' }).notNull(),
-  endDate: date('end_date', { mode: 'string' }).notNull(),
-}, (t) => [
-  unique('asset_insurance_policy_unique').on(t.insurer, t.policyNumber),
-  check('asset_insurance_dates_valid', sql`${t.endDate} > ${t.startDate}`),
-  check('asset_insurance_value_positive', sql`${t.insuredValue} > 0`),
-]);
+export const assetInsurance = assetsSchema.table(
+  'asset_insurance',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    assetId: uuid('asset_id')
+      .notNull()
+      .references(() => asset.id, { onDelete: 'cascade' }),
+    insurer: text('insurer').notNull(),
+    policyNumber: text('policy_number').notNull(),
+    insuredValue: numeric('insured_value', { precision: 18, scale: 2 }).notNull(),
+    premium: numeric('premium', { precision: 18, scale: 2 }),
+    startDate: date('start_date', { mode: 'string' }).notNull(),
+    endDate: date('end_date', { mode: 'string' }).notNull(),
+  },
+  (t) => [
+    unique('asset_insurance_policy_unique').on(t.insurer, t.policyNumber),
+    check('asset_insurance_dates_valid', sql`${t.endDate} > ${t.startDate}`),
+    check('asset_insurance_value_positive', sql`${t.insuredValue} > 0`),
+  ],
+);

@@ -118,12 +118,8 @@
           "tableFrom": "org_node",
           "tableTo": "org_node_type",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "node_type"
-          ],
-          "columnsTo": [
-            "code"
-          ],
+          "columnsFrom": ["node_type"],
+          "columnsTo": ["code"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -132,12 +128,8 @@
           "tableFrom": "org_node",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -192,12 +184,8 @@
           "tableFrom": "org_node_parent_rule",
           "tableTo": "org_node_type",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "child_type"
-          ],
-          "columnsTo": [
-            "code"
-          ],
+          "columnsFrom": ["child_type"],
+          "columnsTo": ["code"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -206,12 +194,8 @@
           "tableFrom": "org_node_parent_rule",
           "tableTo": "org_node_type",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "parent_type"
-          ],
-          "columnsTo": [
-            "code"
-          ],
+          "columnsFrom": ["parent_type"],
+          "columnsTo": ["code"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -219,10 +203,7 @@
       "compositePrimaryKeys": {
         "org_node_parent_rule_pk": {
           "name": "org_node_parent_rule_pk",
-          "columns": [
-            "child_type",
-            "parent_type"
-          ]
+          "columns": ["child_type", "parent_type"]
         }
       },
       "uniqueConstraints": {},
@@ -376,12 +357,8 @@
           "tableFrom": "item",
           "tableTo": "item_category",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -390,12 +367,8 @@
           "tableFrom": "item",
           "tableTo": "uom",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "base_unit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["base_unit_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -405,9 +378,7 @@
         "item_code_unique": {
           "name": "item_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -502,9 +473,7 @@
         "item_category_code_unique": {
           "name": "item_category_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -560,12 +529,8 @@
           "tableFrom": "item_category_translation",
           "tableTo": "item_category",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -573,10 +538,7 @@
       "compositePrimaryKeys": {
         "item_category_translation_pk": {
           "name": "item_category_translation_pk",
-          "columns": [
-            "category_id",
-            "language"
-          ]
+          "columns": ["category_id", "language"]
         }
       },
       "uniqueConstraints": {},
@@ -629,12 +591,8 @@
           "tableFrom": "item_translation",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -642,10 +600,7 @@
       "compositePrimaryKeys": {
         "item_translation_pk": {
           "name": "item_translation_pk",
-          "columns": [
-            "item_id",
-            "language"
-          ]
+          "columns": ["item_id", "language"]
         }
       },
       "uniqueConstraints": {},
@@ -749,12 +704,8 @@
           "tableFrom": "uom",
           "tableTo": "uom_class",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "class_code"
-          ],
-          "columnsTo": [
-            "code"
-          ],
+          "columnsFrom": ["class_code"],
+          "columnsTo": ["code"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -764,9 +715,7 @@
         "uom_code_unique": {
           "name": "uom_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -851,12 +800,8 @@
           "tableFrom": "uom_translation",
           "tableTo": "uom",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "uom_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["uom_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -864,10 +809,7 @@
       "compositePrimaryKeys": {
         "uom_translation_pk": {
           "name": "uom_translation_pk",
-          "columns": [
-            "uom_id",
-            "language"
-          ]
+          "columns": ["uom_id", "language"]
         }
       },
       "uniqueConstraints": {},

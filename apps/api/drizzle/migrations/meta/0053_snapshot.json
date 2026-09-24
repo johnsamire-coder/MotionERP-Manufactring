@@ -118,12 +118,8 @@
           "tableFrom": "org_node",
           "tableTo": "org_node_type",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "node_type"
-          ],
-          "columnsTo": [
-            "code"
-          ],
+          "columnsFrom": ["node_type"],
+          "columnsTo": ["code"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -132,12 +128,8 @@
           "tableFrom": "org_node",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -192,12 +184,8 @@
           "tableFrom": "org_node_parent_rule",
           "tableTo": "org_node_type",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "child_type"
-          ],
-          "columnsTo": [
-            "code"
-          ],
+          "columnsFrom": ["child_type"],
+          "columnsTo": ["code"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -206,12 +194,8 @@
           "tableFrom": "org_node_parent_rule",
           "tableTo": "org_node_type",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "parent_type"
-          ],
-          "columnsTo": [
-            "code"
-          ],
+          "columnsFrom": ["parent_type"],
+          "columnsTo": ["code"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -219,10 +203,7 @@
       "compositePrimaryKeys": {
         "org_node_parent_rule_pk": {
           "name": "org_node_parent_rule_pk",
-          "columns": [
-            "child_type",
-            "parent_type"
-          ]
+          "columns": ["child_type", "parent_type"]
         }
       },
       "uniqueConstraints": {},
@@ -320,12 +301,8 @@
           "tableFrom": "company_profile",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -335,9 +312,7 @@
         "company_profile_org_node_unique": {
           "name": "company_profile_org_node_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "org_node_id"
-          ]
+          "columns": ["org_node_id"]
         }
       },
       "policies": {},
@@ -456,12 +431,8 @@
           "tableFrom": "item",
           "tableTo": "item_category",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -470,12 +441,8 @@
           "tableFrom": "item",
           "tableTo": "uom",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "base_unit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["base_unit_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -485,9 +452,7 @@
         "item_code_unique": {
           "name": "item_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -582,9 +547,7 @@
         "item_category_code_unique": {
           "name": "item_category_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -640,12 +603,8 @@
           "tableFrom": "item_category_translation",
           "tableTo": "item_category",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -653,10 +612,7 @@
       "compositePrimaryKeys": {
         "item_category_translation_pk": {
           "name": "item_category_translation_pk",
-          "columns": [
-            "category_id",
-            "language"
-          ]
+          "columns": ["category_id", "language"]
         }
       },
       "uniqueConstraints": {},
@@ -775,12 +731,8 @@
           "tableFrom": "item_price",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -836,12 +788,8 @@
           "tableFrom": "item_translation",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -849,10 +797,7 @@
       "compositePrimaryKeys": {
         "item_translation_pk": {
           "name": "item_translation_pk",
-          "columns": [
-            "item_id",
-            "language"
-          ]
+          "columns": ["item_id", "language"]
         }
       },
       "uniqueConstraints": {},
@@ -956,12 +901,8 @@
           "tableFrom": "uom",
           "tableTo": "uom_class",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "class_code"
-          ],
-          "columnsTo": [
-            "code"
-          ],
+          "columnsFrom": ["class_code"],
+          "columnsTo": ["code"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -971,9 +912,7 @@
         "uom_code_unique": {
           "name": "uom_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -1122,12 +1061,8 @@
           "tableFrom": "uom_conversion",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -1136,12 +1071,8 @@
           "tableFrom": "uom_conversion",
           "tableTo": "uom",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "from_unit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["from_unit_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -1150,12 +1081,8 @@
           "tableFrom": "uom_conversion",
           "tableTo": "uom",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "to_unit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["to_unit_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -1165,11 +1092,7 @@
         "uom_conversion_item_units_unique": {
           "name": "uom_conversion_item_units_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "item_id",
-            "from_unit_id",
-            "to_unit_id"
-          ]
+          "columns": ["item_id", "from_unit_id", "to_unit_id"]
         }
       },
       "policies": {},
@@ -1211,12 +1134,8 @@
           "tableFrom": "uom_translation",
           "tableTo": "uom",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "uom_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["uom_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1224,10 +1143,7 @@
       "compositePrimaryKeys": {
         "uom_translation_pk": {
           "name": "uom_translation_pk",
-          "columns": [
-            "uom_id",
-            "language"
-          ]
+          "columns": ["uom_id", "language"]
         }
       },
       "uniqueConstraints": {},
@@ -1366,12 +1282,8 @@
           "tableFrom": "item_batch",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -1380,12 +1292,8 @@
           "tableFrom": "item_batch",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -1395,10 +1303,7 @@
         "item_batch_item_batch_unique": {
           "name": "item_batch_item_batch_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "item_id",
-            "batch_number"
-          ]
+          "columns": ["item_id", "batch_number"]
         }
       },
       "policies": {},
@@ -1515,12 +1420,8 @@
           "tableFrom": "landed_cost_item",
           "tableTo": "landed_cost_voucher",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "voucher_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["voucher_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1529,12 +1430,8 @@
           "tableFrom": "landed_cost_item",
           "tableTo": "stock_movement",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "receipt_movement_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["receipt_movement_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1543,12 +1440,8 @@
           "tableFrom": "landed_cost_item",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1557,12 +1450,8 @@
           "tableFrom": "landed_cost_item",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1687,12 +1576,8 @@
           "tableFrom": "landed_cost_voucher",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -1701,12 +1586,8 @@
           "tableFrom": "landed_cost_voucher",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "expense_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1716,9 +1597,7 @@
         "landed_cost_voucher_voucher_number_unique": {
           "name": "landed_cost_voucher_voucher_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "voucher_number"
-          ]
+          "columns": ["voucher_number"]
         }
       },
       "policies": {},
@@ -1893,12 +1772,8 @@
           "tableFrom": "serial_number",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -1907,12 +1782,8 @@
           "tableFrom": "serial_number",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         },
@@ -1921,12 +1792,8 @@
           "tableFrom": "serial_number",
           "tableTo": "item_batch",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "batch_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["batch_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         },
@@ -1935,12 +1802,8 @@
           "tableFrom": "serial_number",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -1950,10 +1813,7 @@
         "serial_number_item_unique": {
           "name": "serial_number_item_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "item_id",
-            "serial_no"
-          ]
+          "columns": ["item_id", "serial_no"]
         }
       },
       "policies": {},
@@ -2074,12 +1934,8 @@
           "tableFrom": "stock_balance",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -2088,12 +1944,8 @@
           "tableFrom": "stock_balance",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -2103,10 +1955,7 @@
         "stock_balance_item_warehouse_unique": {
           "name": "stock_balance_item_warehouse_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "item_id",
-            "warehouse_id"
-          ]
+          "columns": ["item_id", "warehouse_id"]
         }
       },
       "policies": {},
@@ -2243,12 +2092,8 @@
           "tableFrom": "stock_ledger_entry",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -2257,12 +2102,8 @@
           "tableFrom": "stock_ledger_entry",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -2271,12 +2112,8 @@
           "tableFrom": "stock_ledger_entry",
           "tableTo": "stock_movement",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "movement_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["movement_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         }
@@ -2416,12 +2253,8 @@
           "tableFrom": "stock_movement",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -2430,12 +2263,8 @@
           "tableFrom": "stock_movement",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -2540,12 +2369,8 @@
           "tableFrom": "stock_reservation",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -2554,12 +2379,8 @@
           "tableFrom": "stock_reservation",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -2653,12 +2474,8 @@
           "tableFrom": "warehouse",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -2668,9 +2485,7 @@
         "warehouse_code_unique": {
           "name": "warehouse_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -2776,12 +2591,8 @@
           "tableFrom": "customer",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -2791,9 +2602,7 @@
         "customer_code_unique": {
           "name": "customer_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -2879,12 +2688,8 @@
           "tableFrom": "customer_interaction",
           "tableTo": "customer",
           "schemaTo": "crm",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -2986,12 +2791,8 @@
           "tableFrom": "supplier",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -3001,9 +2802,7 @@
         "supplier_code_unique": {
           "name": "supplier_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -3137,12 +2936,8 @@
           "tableFrom": "job_order",
           "tableTo": "customer",
           "schemaTo": "crm",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -3151,12 +2946,8 @@
           "tableFrom": "job_order",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -3166,9 +2957,7 @@
         "job_order_number_unique": {
           "name": "job_order_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "job_order_number"
-          ]
+          "columns": ["job_order_number"]
         }
       },
       "policies": {},
@@ -3335,12 +3124,8 @@
           "tableFrom": "quotation",
           "tableTo": "customer",
           "schemaTo": "crm",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -3349,12 +3134,8 @@
           "tableFrom": "quotation",
           "tableTo": "supplier",
           "schemaTo": "crm",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -3363,12 +3144,8 @@
           "tableFrom": "quotation",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -3378,9 +3155,7 @@
         "quotation_number_unique": {
           "name": "quotation_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "quotation_number"
-          ]
+          "columns": ["quotation_number"]
         }
       },
       "policies": {},
@@ -3481,12 +3256,8 @@
           "tableFrom": "quotation_line",
           "tableTo": "quotation",
           "schemaTo": "sales",
-          "columnsFrom": [
-            "quotation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["quotation_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -3495,12 +3266,8 @@
           "tableFrom": "quotation_line",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -3619,12 +3386,8 @@
           "tableFrom": "item_lead_time",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -3633,12 +3396,8 @@
           "tableFrom": "item_lead_time",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -3648,9 +3407,7 @@
         "item_lead_time_item_unique": {
           "name": "item_lead_time_item_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "item_id"
-          ]
+          "columns": ["item_id"]
         }
       },
       "policies": {},
@@ -3782,12 +3539,8 @@
           "tableFrom": "master_production_schedule",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -3796,12 +3549,8 @@
           "tableFrom": "master_production_schedule",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -3810,12 +3559,8 @@
           "tableFrom": "master_production_schedule",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -3825,9 +3570,7 @@
         "mps_number_unique": {
           "name": "mps_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "mps_number"
-          ]
+          "columns": ["mps_number"]
         }
       },
       "policies": {},
@@ -3921,12 +3664,8 @@
           "tableFrom": "mps_schedule_line",
           "tableTo": "master_production_schedule",
           "schemaTo": "planning",
-          "columnsFrom": [
-            "master_production_schedule_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["master_production_schedule_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -4055,12 +3794,8 @@
           "tableFrom": "material_request",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -4070,9 +3805,7 @@
         "planning_material_request_number_unique": {
           "name": "planning_material_request_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "request_number"
-          ]
+          "columns": ["request_number"]
         }
       },
       "policies": {},
@@ -4175,12 +3908,8 @@
           "tableFrom": "material_request_line",
           "tableTo": "material_request",
           "schemaTo": "planning",
-          "columnsFrom": [
-            "material_request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["material_request_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -4189,12 +3918,8 @@
           "tableFrom": "material_request_line",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -4203,12 +3928,8 @@
           "tableFrom": "material_request_line",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -4311,12 +4032,8 @@
           "tableFrom": "production_plan",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -4326,9 +4043,7 @@
         "production_plan_number_unique": {
           "name": "production_plan_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "plan_number"
-          ]
+          "columns": ["plan_number"]
         }
       },
       "policies": {},
@@ -4441,12 +4156,8 @@
           "tableFrom": "production_plan_item",
           "tableTo": "production_plan",
           "schemaTo": "planning",
-          "columnsFrom": [
-            "production_plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["production_plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -4455,12 +4166,8 @@
           "tableFrom": "production_plan_item",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "product_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -4469,12 +4176,8 @@
           "tableFrom": "production_plan_item",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -4611,12 +4314,8 @@
           "tableFrom": "sales_forecast",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -4625,12 +4324,8 @@
           "tableFrom": "sales_forecast",
           "tableTo": "item_category",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_category_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -4639,12 +4334,8 @@
           "tableFrom": "sales_forecast",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -4654,9 +4345,7 @@
         "sales_forecast_number_unique": {
           "name": "sales_forecast_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "forecast_number"
-          ]
+          "columns": ["forecast_number"]
         }
       },
       "policies": {},
@@ -4767,12 +4456,8 @@
           "tableFrom": "sales_forecast_line",
           "tableTo": "sales_forecast",
           "schemaTo": "planning",
-          "columnsFrom": [
-            "sales_forecast_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sales_forecast_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -4781,12 +4466,8 @@
           "tableFrom": "sales_forecast_line",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -4795,12 +4476,8 @@
           "tableFrom": "sales_forecast_line",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -4882,12 +4559,8 @@
           "tableFrom": "sales_forecast_period_line",
           "tableTo": "sales_forecast",
           "schemaTo": "planning",
-          "columnsFrom": [
-            "sales_forecast_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sales_forecast_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -4956,12 +4629,8 @@
           "tableFrom": "supplier_lead_time",
           "tableTo": "item_lead_time",
           "schemaTo": "planning",
-          "columnsFrom": [
-            "item_lead_time_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_lead_time_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -5128,12 +4797,8 @@
           "tableFrom": "bom",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "product_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -5142,12 +4807,8 @@
           "tableFrom": "bom",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -5156,12 +4817,8 @@
           "tableFrom": "bom",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "default_source_warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_source_warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -5170,12 +4827,8 @@
           "tableFrom": "bom",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "default_target_warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_target_warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -5185,10 +4838,7 @@
         "bom_item_version_unique": {
           "name": "bom_item_version_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "product_item_id",
-            "version"
-          ]
+          "columns": ["product_item_id", "version"]
         }
       },
       "policies": {},
@@ -5302,12 +4952,8 @@
           "tableFrom": "bom_creator",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "product_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -5316,12 +4962,8 @@
           "tableFrom": "bom_creator",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -5331,9 +4973,7 @@
         "bom_creator_number_unique": {
           "name": "bom_creator_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "creator_number"
-          ]
+          "columns": ["creator_number"]
         }
       },
       "policies": {},
@@ -5443,12 +5083,8 @@
           "tableFrom": "bom_creator_item",
           "tableTo": "bom_creator",
           "schemaTo": "technical",
-          "columnsFrom": [
-            "bom_creator_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["bom_creator_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -5457,12 +5093,8 @@
           "tableFrom": "bom_creator_item",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "component_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["component_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -5565,12 +5197,8 @@
           "tableFrom": "bom_line",
           "tableTo": "bom",
           "schemaTo": "technical",
-          "columnsFrom": [
-            "bom_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["bom_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -5579,12 +5207,8 @@
           "tableFrom": "bom_line",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "component_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["component_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -5694,12 +5318,8 @@
           "tableFrom": "technical_document",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -5840,12 +5460,8 @@
           "tableFrom": "material_request",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -5854,12 +5470,8 @@
           "tableFrom": "material_request",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -5868,12 +5480,8 @@
           "tableFrom": "material_request",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -5988,12 +5596,8 @@
           "tableFrom": "downtime_entry",
           "tableTo": "work_center",
           "schemaTo": "production_ops",
-          "columnsFrom": [
-            "work_center_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["work_center_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -6002,12 +5606,8 @@
           "tableFrom": "downtime_entry",
           "tableTo": "employee",
           "schemaTo": "hr",
-          "columnsFrom": [
-            "operator_employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["operator_employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -6080,12 +5680,8 @@
           "tableFrom": "operation",
           "tableTo": "work_center",
           "schemaTo": "production_ops",
-          "columnsFrom": [
-            "default_work_center_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_work_center_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -6095,9 +5691,7 @@
         "operation_code_unique": {
           "name": "operation_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -6301,12 +5895,8 @@
           "tableFrom": "production_step",
           "tableTo": "work_order",
           "schemaTo": "production_ops",
-          "columnsFrom": [
-            "work_order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["work_order_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -6315,12 +5905,8 @@
           "tableFrom": "production_step",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -6329,12 +5915,8 @@
           "tableFrom": "production_step",
           "tableTo": "work_center",
           "schemaTo": "production_ops",
-          "columnsFrom": [
-            "work_center_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["work_center_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -6343,12 +5925,8 @@
           "tableFrom": "production_step",
           "tableTo": "employee",
           "schemaTo": "hr",
-          "columnsFrom": [
-            "operator_employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["operator_employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -6460,12 +6038,8 @@
           "tableFrom": "production_step_material",
           "tableTo": "production_step",
           "schemaTo": "production_ops",
-          "columnsFrom": [
-            "production_step_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["production_step_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -6474,12 +6048,8 @@
           "tableFrom": "production_step_material",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -6488,12 +6058,8 @@
           "tableFrom": "production_step_material",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -6582,12 +6148,8 @@
           "tableFrom": "production_step_time_log",
           "tableTo": "production_step",
           "schemaTo": "production_ops",
-          "columnsFrom": [
-            "production_step_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["production_step_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -6698,12 +6260,8 @@
           "tableFrom": "subcontracting_item",
           "tableTo": "subcontracting_order",
           "schemaTo": "production_ops",
-          "columnsFrom": [
-            "subcontracting_order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["subcontracting_order_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -6712,12 +6270,8 @@
           "tableFrom": "subcontracting_item",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -6726,12 +6280,8 @@
           "tableFrom": "subcontracting_item",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -6876,12 +6426,8 @@
           "tableFrom": "subcontracting_order",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -6890,12 +6436,8 @@
           "tableFrom": "subcontracting_order",
           "tableTo": "supplier",
           "schemaTo": "crm",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -6904,12 +6446,8 @@
           "tableFrom": "subcontracting_order",
           "tableTo": "work_order",
           "schemaTo": "production_ops",
-          "columnsFrom": [
-            "work_order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["work_order_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -6918,12 +6456,8 @@
           "tableFrom": "subcontracting_order",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "service_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["service_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -6933,9 +6467,7 @@
         "subcontracting_order_voucher_number_unique": {
           "name": "subcontracting_order_voucher_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "voucher_number"
-          ]
+          "columns": ["voucher_number"]
         }
       },
       "policies": {},
@@ -7032,12 +6564,8 @@
           "tableFrom": "work_center",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -7047,9 +6575,7 @@
         "work_center_code_unique": {
           "name": "work_center_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -7277,12 +6803,8 @@
           "tableFrom": "work_order",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "product_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -7291,12 +6813,8 @@
           "tableFrom": "work_order",
           "tableTo": "bom",
           "schemaTo": "technical",
-          "columnsFrom": [
-            "bom_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["bom_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -7305,12 +6823,8 @@
           "tableFrom": "work_order",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -7319,12 +6833,8 @@
           "tableFrom": "work_order",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "source_warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["source_warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -7333,12 +6843,8 @@
           "tableFrom": "work_order",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "wip_warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["wip_warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -7347,12 +6853,8 @@
           "tableFrom": "work_order",
           "tableTo": "warehouse",
           "schemaTo": "inventory",
-          "columnsFrom": [
-            "finished_goods_warehouse_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["finished_goods_warehouse_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -7362,9 +6864,7 @@
         "work_order_number_unique": {
           "name": "work_order_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "work_order_number"
-          ]
+          "columns": ["work_order_number"]
         }
       },
       "policies": {},
@@ -7462,12 +6962,8 @@
           "tableFrom": "work_order_operation",
           "tableTo": "work_order",
           "schemaTo": "production_ops",
-          "columnsFrom": [
-            "work_order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["work_order_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -7476,12 +6972,8 @@
           "tableFrom": "work_order_operation",
           "tableTo": "work_center",
           "schemaTo": "production_ops",
-          "columnsFrom": [
-            "work_center_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["work_center_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -7537,9 +7029,7 @@
         "workstation_type_code_unique": {
           "name": "workstation_type_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -7668,12 +7158,8 @@
           "tableFrom": "check_point",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -7814,12 +7300,8 @@
           "tableFrom": "inspection",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -7828,12 +7310,8 @@
           "tableFrom": "inspection",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -7843,9 +7321,7 @@
         "inspection_inspection_number_unique": {
           "name": "inspection_inspection_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "inspection_number"
-          ]
+          "columns": ["inspection_number"]
         }
       },
       "policies": {},
@@ -7934,12 +7410,8 @@
           "tableFrom": "inspection_parameter",
           "tableTo": "inspection",
           "schemaTo": "quality",
-          "columnsFrom": [
-            "inspection_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["inspection_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -8067,12 +7539,8 @@
           "tableFrom": "workflow",
           "tableTo": "check_point",
           "schemaTo": "quality",
-          "columnsFrom": [
-            "check_point_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["check_point_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -8144,12 +7612,8 @@
           "tableFrom": "sla_rule",
           "tableTo": "check_point",
           "schemaTo": "quality",
-          "columnsFrom": [
-            "check_point_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["check_point_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -8268,12 +7732,8 @@
           "tableFrom": "allocation_policy",
           "tableTo": "overhead_pool",
           "schemaTo": "cost",
-          "columnsFrom": [
-            "pool_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["pool_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -8282,12 +7742,8 @@
           "tableFrom": "allocation_policy",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -8297,9 +7753,7 @@
         "allocation_policy_code_unique": {
           "name": "allocation_policy_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -8453,12 +7907,8 @@
           "tableFrom": "allocation_result",
           "tableTo": "allocation_policy",
           "schemaTo": "cost",
-          "columnsFrom": [
-            "policy_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["policy_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -8525,9 +7975,7 @@
         "component_type_code_unique": {
           "name": "component_type_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -8667,12 +8115,8 @@
           "tableFrom": "entry",
           "tableTo": "job_cost_sheet",
           "schemaTo": "cost",
-          "columnsFrom": [
-            "cost_sheet_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cost_sheet_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -8681,12 +8125,8 @@
           "tableFrom": "entry",
           "tableTo": "component_type",
           "schemaTo": "cost",
-          "columnsFrom": [
-            "component_type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["component_type_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -8796,12 +8236,8 @@
           "tableFrom": "job_cost_sheet",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -8811,9 +8247,7 @@
         "job_cost_sheet_job_order_reference_unique": {
           "name": "job_cost_sheet_job_order_reference_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "job_order_reference"
-          ]
+          "columns": ["job_order_reference"]
         }
       },
       "policies": {},
@@ -8952,12 +8386,8 @@
           "tableFrom": "overhead_pool",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -8967,9 +8397,7 @@
         "overhead_pool_code_unique": {
           "name": "overhead_pool_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -9075,12 +8503,8 @@
           "tableFrom": "overhead_pool_entry",
           "tableTo": "overhead_pool",
           "schemaTo": "cost",
-          "columnsFrom": [
-            "pool_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["pool_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -9230,12 +8654,8 @@
           "tableFrom": "delivery_order",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -9245,9 +8665,7 @@
         "delivery_order_delivery_number_unique": {
           "name": "delivery_order_delivery_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "delivery_number"
-          ]
+          "columns": ["delivery_number"]
         }
       },
       "policies": {},
@@ -9359,12 +8777,8 @@
           "tableFrom": "delivery_receipt",
           "tableTo": "delivery_order",
           "schemaTo": "delivery",
-          "columnsFrom": [
-            "delivery_order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["delivery_order_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -9374,9 +8788,7 @@
         "delivery_receipt_receipt_number_unique": {
           "name": "delivery_receipt_receipt_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "receipt_number"
-          ]
+          "columns": ["receipt_number"]
         }
       },
       "policies": {},
@@ -9481,12 +8893,8 @@
           "tableFrom": "installation",
           "tableTo": "delivery_order",
           "schemaTo": "delivery",
-          "columnsFrom": [
-            "delivery_order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["delivery_order_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -9607,12 +9015,8 @@
           "tableFrom": "installation_report",
           "tableTo": "installation",
           "schemaTo": "delivery",
-          "columnsFrom": [
-            "installation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["installation_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -9622,9 +9026,7 @@
         "installation_report_report_number_unique": {
           "name": "installation_report_report_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "report_number"
-          ]
+          "columns": ["report_number"]
         }
       },
       "policies": {},
@@ -9731,12 +9133,8 @@
           "tableFrom": "account_determination",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -9745,12 +9143,8 @@
           "tableFrom": "account_determination",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -9821,9 +9215,7 @@
         "account_type_code_unique": {
           "name": "account_type_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -9921,12 +9313,8 @@
           "tableFrom": "accounting_period",
           "tableTo": "fiscal_year",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "fiscal_year_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["fiscal_year_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -9936,10 +9324,7 @@
         "accounting_period_fy_number_unique": {
           "name": "accounting_period_fy_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "fiscal_year_id",
-            "period_number"
-          ]
+          "columns": ["fiscal_year_id", "period_number"]
         }
       },
       "policies": {},
@@ -10078,12 +9463,8 @@
           "tableFrom": "chart_of_accounts",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -10092,12 +9473,8 @@
           "tableFrom": "chart_of_accounts",
           "tableTo": "account_type",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "account_type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_type_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -10106,12 +9483,8 @@
           "tableFrom": "chart_of_accounts",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -10121,10 +9494,7 @@
         "chart_of_accounts_org_code_unique": {
           "name": "chart_of_accounts_org_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "org_node_id",
-            "code"
-          ]
+          "columns": ["org_node_id", "code"]
         }
       },
       "policies": {},
@@ -10259,12 +9629,8 @@
           "tableFrom": "company_accounting_config",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -10273,12 +9639,8 @@
           "tableFrom": "company_accounting_config",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "default_grni_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_grni_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -10287,12 +9649,8 @@
           "tableFrom": "company_accounting_config",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "default_wip_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_wip_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -10301,12 +9659,8 @@
           "tableFrom": "company_accounting_config",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "default_cogs_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_cogs_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -10315,12 +9669,8 @@
           "tableFrom": "company_accounting_config",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "default_mfg_variance_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_mfg_variance_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -10329,12 +9679,8 @@
           "tableFrom": "company_accounting_config",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "default_payable_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_payable_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -10343,12 +9689,8 @@
           "tableFrom": "company_accounting_config",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "default_receivable_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_receivable_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -10357,12 +9699,8 @@
           "tableFrom": "company_accounting_config",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "default_input_tax_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_input_tax_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -10371,12 +9709,8 @@
           "tableFrom": "company_accounting_config",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "default_output_tax_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_output_tax_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -10385,12 +9719,8 @@
           "tableFrom": "company_accounting_config",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "default_scrap_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_scrap_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -10399,12 +9729,8 @@
           "tableFrom": "company_accounting_config",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "default_stock_adjustment_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_stock_adjustment_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -10413,12 +9739,8 @@
           "tableFrom": "company_accounting_config",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "default_oh_applied_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_oh_applied_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -10428,9 +9750,7 @@
         "company_accounting_config_org_node_id_unique": {
           "name": "company_accounting_config_org_node_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "org_node_id"
-          ]
+          "columns": ["org_node_id"]
         }
       },
       "policies": {},
@@ -10544,12 +9864,8 @@
           "tableFrom": "cost_center",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -10558,12 +9874,8 @@
           "tableFrom": "cost_center",
           "tableTo": "cost_center",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -10573,10 +9885,7 @@
         "cost_center_org_code_unique": {
           "name": "cost_center_org_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "org_node_id",
-            "code"
-          ]
+          "columns": ["org_node_id", "code"]
         }
       },
       "policies": {},
@@ -10683,12 +9992,8 @@
           "tableFrom": "depreciation_entry",
           "tableTo": "fixed_asset",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "asset_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["asset_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -10697,12 +10002,8 @@
           "tableFrom": "depreciation_entry",
           "tableTo": "accounting_period",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "period_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["period_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -10711,12 +10012,8 @@
           "tableFrom": "depreciation_entry",
           "tableTo": "journal_entry",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "journal_entry_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["journal_entry_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -10807,12 +10104,8 @@
           "tableFrom": "fiscal_year",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -10822,10 +10115,7 @@
         "fiscal_year_org_name_unique": {
           "name": "fiscal_year_org_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "org_node_id",
-            "name"
-          ]
+          "columns": ["org_node_id", "name"]
         }
       },
       "policies": {},
@@ -10989,12 +10279,8 @@
           "tableFrom": "fixed_asset",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -11003,12 +10289,8 @@
           "tableFrom": "fixed_asset",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "asset_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["asset_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -11017,12 +10299,8 @@
           "tableFrom": "fixed_asset",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "accumulated_depreciation_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["accumulated_depreciation_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -11031,12 +10309,8 @@
           "tableFrom": "fixed_asset",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "depreciation_expense_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["depreciation_expense_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -11045,12 +10319,8 @@
           "tableFrom": "fixed_asset",
           "tableTo": "cost_center",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "cost_center_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cost_center_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -11060,10 +10330,7 @@
         "fixed_asset_org_code_unique": {
           "name": "fixed_asset_org_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "org_node_id",
-            "asset_code"
-          ]
+          "columns": ["org_node_id", "asset_code"]
         }
       },
       "policies": {},
@@ -11266,12 +10533,8 @@
           "tableFrom": "journal_entry",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -11280,12 +10543,8 @@
           "tableFrom": "journal_entry",
           "tableTo": "fiscal_year",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "fiscal_year_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["fiscal_year_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -11294,12 +10553,8 @@
           "tableFrom": "journal_entry",
           "tableTo": "accounting_period",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "period_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["period_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -11309,16 +10564,12 @@
         "journal_entry_entry_number_unique": {
           "name": "journal_entry_entry_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "entry_number"
-          ]
+          "columns": ["entry_number"]
         },
         "journal_entry_idempotency_key_unique": {
           "name": "journal_entry_idempotency_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "idempotency_key"
-          ]
+          "columns": ["idempotency_key"]
         }
       },
       "policies": {},
@@ -11479,12 +10730,8 @@
           "tableFrom": "journal_line",
           "tableTo": "journal_entry",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "journal_entry_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["journal_entry_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -11493,12 +10740,8 @@
           "tableFrom": "journal_line",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -11507,12 +10750,8 @@
           "tableFrom": "journal_line",
           "tableTo": "cost_center",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "cost_center_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cost_center_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -11653,12 +10892,8 @@
           "tableFrom": "bank_reconciliation",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -11667,12 +10902,8 @@
           "tableFrom": "bank_reconciliation",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "bank_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["bank_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -11682,9 +10913,7 @@
         "bank_reconciliation_reconciliation_number_unique": {
           "name": "bank_reconciliation_reconciliation_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "reconciliation_number"
-          ]
+          "columns": ["reconciliation_number"]
         }
       },
       "policies": {},
@@ -11830,12 +11059,8 @@
           "tableFrom": "bank_transfer",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -11844,12 +11069,8 @@
           "tableFrom": "bank_transfer",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "from_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["from_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -11858,12 +11079,8 @@
           "tableFrom": "bank_transfer",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "to_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["to_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -11873,9 +11090,7 @@
         "bank_transfer_transfer_number_unique": {
           "name": "bank_transfer_transfer_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "transfer_number"
-          ]
+          "columns": ["transfer_number"]
         }
       },
       "policies": {},
@@ -12053,12 +11268,8 @@
           "tableFrom": "collection",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -12067,12 +11278,8 @@
           "tableFrom": "collection",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "received_in_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["received_in_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -12082,9 +11289,7 @@
         "collection_collection_number_unique": {
           "name": "collection_collection_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "collection_number"
-          ]
+          "columns": ["collection_number"]
         }
       },
       "policies": {},
@@ -12277,12 +11482,8 @@
           "tableFrom": "credit_debit_note",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -12291,12 +11492,8 @@
           "tableFrom": "credit_debit_note",
           "tableTo": "sales_invoice",
           "schemaTo": "finance",
-          "columnsFrom": [
-            "sales_invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sales_invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -12305,12 +11502,8 @@
           "tableFrom": "credit_debit_note",
           "tableTo": "purchase_invoice",
           "schemaTo": "finance",
-          "columnsFrom": [
-            "purchase_invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["purchase_invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -12320,9 +11513,7 @@
         "credit_debit_note_note_number_unique": {
           "name": "credit_debit_note_note_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "note_number"
-          ]
+          "columns": ["note_number"]
         }
       },
       "policies": {},
@@ -12444,12 +11635,8 @@
           "tableFrom": "credit_debit_note_line",
           "tableTo": "credit_debit_note",
           "schemaTo": "finance",
-          "columnsFrom": [
-            "note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["note_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -12458,12 +11645,8 @@
           "tableFrom": "credit_debit_note_line",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -12627,12 +11810,8 @@
           "tableFrom": "payment",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -12641,12 +11820,8 @@
           "tableFrom": "payment",
           "tableTo": "supplier",
           "schemaTo": "crm",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -12655,12 +11830,8 @@
           "tableFrom": "payment",
           "tableTo": "purchase_invoice",
           "schemaTo": "finance",
-          "columnsFrom": [
-            "purchase_invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["purchase_invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -12669,12 +11840,8 @@
           "tableFrom": "payment",
           "tableTo": "chart_of_accounts",
           "schemaTo": "accounting",
-          "columnsFrom": [
-            "paid_from_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["paid_from_account_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -12684,9 +11851,7 @@
         "payment_payment_number_unique": {
           "name": "payment_payment_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "payment_number"
-          ]
+          "columns": ["payment_number"]
         }
       },
       "policies": {},
@@ -12884,12 +12049,8 @@
           "tableFrom": "purchase_invoice",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -12898,12 +12059,8 @@
           "tableFrom": "purchase_invoice",
           "tableTo": "supplier",
           "schemaTo": "crm",
-          "columnsFrom": [
-            "supplier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supplier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -12913,17 +12070,12 @@
         "purchase_invoice_system_number_unique": {
           "name": "purchase_invoice_system_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "system_number"
-          ]
+          "columns": ["system_number"]
         },
         "purchase_invoice_supplier_inv_unique": {
           "name": "purchase_invoice_supplier_inv_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "supplier_id",
-            "invoice_number"
-          ]
+          "columns": ["supplier_id", "invoice_number"]
         }
       },
       "policies": {},
@@ -13043,12 +12195,8 @@
           "tableFrom": "purchase_invoice_line",
           "tableTo": "purchase_invoice",
           "schemaTo": "finance",
-          "columnsFrom": [
-            "purchase_invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["purchase_invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -13057,12 +12205,8 @@
           "tableFrom": "purchase_invoice_line",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -13237,12 +12381,8 @@
           "tableFrom": "retention",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -13252,9 +12392,7 @@
         "retention_retention_number_unique": {
           "name": "retention_retention_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "retention_number"
-          ]
+          "columns": ["retention_number"]
         }
       },
       "policies": {},
@@ -13448,12 +12586,8 @@
           "tableFrom": "sales_invoice",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         },
@@ -13462,12 +12596,8 @@
           "tableFrom": "sales_invoice",
           "tableTo": "customer",
           "schemaTo": "crm",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -13477,9 +12607,7 @@
         "sales_invoice_invoice_number_unique": {
           "name": "sales_invoice_invoice_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "invoice_number"
-          ]
+          "columns": ["invoice_number"]
         }
       },
       "policies": {},
@@ -13599,12 +12727,8 @@
           "tableFrom": "sales_invoice_line",
           "tableTo": "sales_invoice",
           "schemaTo": "finance",
-          "columnsFrom": [
-            "sales_invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sales_invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -13613,12 +12737,8 @@
           "tableFrom": "sales_invoice_line",
           "tableTo": "item",
           "schemaTo": "catalog",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -13730,12 +12850,8 @@
           "tableFrom": "commission_entry",
           "tableTo": "employee",
           "schemaTo": "hr",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -13826,12 +12942,8 @@
           "tableFrom": "commission_rule",
           "tableTo": "employee",
           "schemaTo": "hr",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -13942,12 +13054,8 @@
           "tableFrom": "employee",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -13957,9 +13065,7 @@
         "employee_code_unique": {
           "name": "employee_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -14158,12 +13264,8 @@
           "tableFrom": "payroll_entry",
           "tableTo": "employee",
           "schemaTo": "hr",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -14173,11 +13275,7 @@
         "payroll_entry_employee_period_unique": {
           "name": "payroll_entry_employee_period_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "employee_id",
-            "period_year",
-            "period_month"
-          ]
+          "columns": ["employee_id", "period_year", "period_month"]
         }
       },
       "policies": {},
@@ -14276,12 +13374,8 @@
           "tableFrom": "permission",
           "tableTo": "role",
           "schemaTo": "auth",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -14290,12 +13384,8 @@
           "tableFrom": "permission",
           "tableTo": "org_node",
           "schemaTo": "platform",
-          "columnsFrom": [
-            "scope_org_node_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["scope_org_node_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -14364,9 +13454,7 @@
         "role_code_unique": {
           "name": "role_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -14466,12 +13554,8 @@
           "tableFrom": "user",
           "tableTo": "role",
           "schemaTo": "auth",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "cascade"
         }
@@ -14481,9 +13565,7 @@
         "user_username_unique": {
           "name": "user_username_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
+          "columns": ["username"]
         }
       },
       "policies": {},

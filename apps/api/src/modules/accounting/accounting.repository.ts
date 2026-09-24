@@ -9,9 +9,7 @@ import {
   chartOfAccounts,
   companyAccountingConfig,
   costCenter,
-  depreciationEntry,
   fiscalYear,
-  fixedAsset,
   journalEntry,
   journalLine,
 } from './accounting.schema';
@@ -30,12 +28,8 @@ import type {
   CreateChartOfAccountsInput,
   CreateCostCenterInput,
   CreateFiscalYearInput,
-  CreateFixedAssetInput,
   CreateJournalEntryInput,
-  DepreciationEntryRecord,
   FiscalYearRecord,
-  FixedAssetRecord,
-  FixedAssetStatus,
   JournalEntryRecord,
   JournalEntryStatus,
   JournalLineRecord,
@@ -43,32 +37,63 @@ import type {
   UpsertCompanyAccountingConfigInput,
 } from './accounting.types';
 
-const atColumns = { id: accountType.id, code: accountType.code, name: accountType.name, normalBalance: accountType.normalBalance };
+const atColumns = {
+  id: accountType.id,
+  code: accountType.code,
+  name: accountType.name,
+  normalBalance: accountType.normalBalance,
+};
 const coaColumns = {
-  id: chartOfAccounts.id, code: chartOfAccounts.code, name: chartOfAccounts.name, orgNodeId: chartOfAccounts.orgNodeId,
-  accountTypeId: chartOfAccounts.accountTypeId, parentId: chartOfAccounts.parentId,
-  isLeaf: chartOfAccounts.isLeaf, status: chartOfAccounts.status,
+  id: chartOfAccounts.id,
+  code: chartOfAccounts.code,
+  name: chartOfAccounts.name,
+  orgNodeId: chartOfAccounts.orgNodeId,
+  accountTypeId: chartOfAccounts.accountTypeId,
+  parentId: chartOfAccounts.parentId,
+  isLeaf: chartOfAccounts.isLeaf,
+  status: chartOfAccounts.status,
 };
 const fyColumns = {
-  id: fiscalYear.id, orgNodeId: fiscalYear.orgNodeId, name: fiscalYear.name,
-  startDate: fiscalYear.startDate, endDate: fiscalYear.endDate, isClosed: fiscalYear.isClosed,
+  id: fiscalYear.id,
+  orgNodeId: fiscalYear.orgNodeId,
+  name: fiscalYear.name,
+  startDate: fiscalYear.startDate,
+  endDate: fiscalYear.endDate,
+  isClosed: fiscalYear.isClosed,
 };
 const periodColumns = {
-  id: accountingPeriod.id, fiscalYearId: accountingPeriod.fiscalYearId, periodNumber: accountingPeriod.periodNumber,
-  name: accountingPeriod.name, startDate: accountingPeriod.startDate, endDate: accountingPeriod.endDate, status: accountingPeriod.status,
+  id: accountingPeriod.id,
+  fiscalYearId: accountingPeriod.fiscalYearId,
+  periodNumber: accountingPeriod.periodNumber,
+  name: accountingPeriod.name,
+  startDate: accountingPeriod.startDate,
+  endDate: accountingPeriod.endDate,
+  status: accountingPeriod.status,
 };
 const ccColumns = {
-  id: costCenter.id, orgNodeId: costCenter.orgNodeId, code: costCenter.code, name: costCenter.name,
-  parentId: costCenter.parentId, isGroup: costCenter.isGroup, isActive: costCenter.isActive,
+  id: costCenter.id,
+  orgNodeId: costCenter.orgNodeId,
+  code: costCenter.code,
+  name: costCenter.name,
+  parentId: costCenter.parentId,
+  isGroup: costCenter.isGroup,
+  isActive: costCenter.isActive,
 };
 const configColumns = {
-  id: companyAccountingConfig.id, orgNodeId: companyAccountingConfig.orgNodeId, baseCurrency: companyAccountingConfig.baseCurrency,
+  id: companyAccountingConfig.id,
+  orgNodeId: companyAccountingConfig.orgNodeId,
+  baseCurrency: companyAccountingConfig.baseCurrency,
   inventoryValuationMethod: companyAccountingConfig.inventoryValuationMethod,
-  defaultGrniAccountId: companyAccountingConfig.defaultGrniAccountId, defaultWipAccountId: companyAccountingConfig.defaultWipAccountId,
-  defaultCogsAccountId: companyAccountingConfig.defaultCogsAccountId, defaultMfgVarianceAccountId: companyAccountingConfig.defaultMfgVarianceAccountId,
-  defaultPayableAccountId: companyAccountingConfig.defaultPayableAccountId, defaultReceivableAccountId: companyAccountingConfig.defaultReceivableAccountId,
-  defaultInputTaxAccountId: companyAccountingConfig.defaultInputTaxAccountId, defaultOutputTaxAccountId: companyAccountingConfig.defaultOutputTaxAccountId,
-  defaultScrapAccountId: companyAccountingConfig.defaultScrapAccountId, defaultStockAdjustmentAccountId: companyAccountingConfig.defaultStockAdjustmentAccountId,
+  defaultGrniAccountId: companyAccountingConfig.defaultGrniAccountId,
+  defaultWipAccountId: companyAccountingConfig.defaultWipAccountId,
+  defaultCogsAccountId: companyAccountingConfig.defaultCogsAccountId,
+  defaultMfgVarianceAccountId: companyAccountingConfig.defaultMfgVarianceAccountId,
+  defaultPayableAccountId: companyAccountingConfig.defaultPayableAccountId,
+  defaultReceivableAccountId: companyAccountingConfig.defaultReceivableAccountId,
+  defaultInputTaxAccountId: companyAccountingConfig.defaultInputTaxAccountId,
+  defaultOutputTaxAccountId: companyAccountingConfig.defaultOutputTaxAccountId,
+  defaultScrapAccountId: companyAccountingConfig.defaultScrapAccountId,
+  defaultStockAdjustmentAccountId: companyAccountingConfig.defaultStockAdjustmentAccountId,
   defaultOhAppliedAccountId: companyAccountingConfig.defaultOhAppliedAccountId,
   defaultBankAccountId: companyAccountingConfig.defaultBankAccountId,
   defaultCashAccountId: companyAccountingConfig.defaultCashAccountId,
@@ -86,249 +111,587 @@ const configColumns = {
   defaultCostCenterId: companyAccountingConfig.defaultCostCenterId,
 };
 const detColumns = {
-  id: accountDetermination.id, orgNodeId: accountDetermination.orgNodeId, determinationType: accountDetermination.determinationType,
-  referenceId: accountDetermination.referenceId, accountPurpose: accountDetermination.accountPurpose, accountId: accountDetermination.accountId,
+  id: accountDetermination.id,
+  orgNodeId: accountDetermination.orgNodeId,
+  determinationType: accountDetermination.determinationType,
+  referenceId: accountDetermination.referenceId,
+  accountPurpose: accountDetermination.accountPurpose,
+  accountId: accountDetermination.accountId,
 };
 const jeColumns = {
-  id: journalEntry.id, entryNumber: journalEntry.entryNumber, orgNodeId: journalEntry.orgNodeId, reference: journalEntry.reference,
-  description: journalEntry.description, entryDate: journalEntry.entryDate, postedAt: journalEntry.postedAt, status: journalEntry.status,
-  fiscalYearId: journalEntry.fiscalYearId, periodId: journalEntry.periodId, isAutoGenerated: journalEntry.isAutoGenerated,
-  idempotencyKey: journalEntry.idempotencyKey, sourceEventType: journalEntry.sourceEventType,
+  id: journalEntry.id,
+  entryNumber: journalEntry.entryNumber,
+  orgNodeId: journalEntry.orgNodeId,
+  reference: journalEntry.reference,
+  description: journalEntry.description,
+  entryDate: journalEntry.entryDate,
+  postedAt: journalEntry.postedAt,
+  status: journalEntry.status,
+  fiscalYearId: journalEntry.fiscalYearId,
+  periodId: journalEntry.periodId,
+  isAutoGenerated: journalEntry.isAutoGenerated,
+  idempotencyKey: journalEntry.idempotencyKey,
+  sourceEventType: journalEntry.sourceEventType,
   voucherType: journalEntry.voucherType,
 };
 const jlColumns = {
-  id: journalLine.id, journalEntryId: journalLine.journalEntryId, accountId: journalLine.accountId,
-  debitAmount: journalLine.debitAmount, creditAmount: journalLine.creditAmount, description: journalLine.description,
-  partyType: journalLine.partyType, partyId: journalLine.partyId, costCenterId: journalLine.costCenterId, jobOrderId: journalLine.jobOrderId,
+  id: journalLine.id,
+  journalEntryId: journalLine.journalEntryId,
+  accountId: journalLine.accountId,
+  debitAmount: journalLine.debitAmount,
+  creditAmount: journalLine.creditAmount,
+  description: journalLine.description,
+  partyType: journalLine.partyType,
+  partyId: journalLine.partyId,
+  costCenterId: journalLine.costCenterId,
+  jobOrderId: journalLine.jobOrderId,
 };
-const faColumns = {
-  id: fixedAsset.id, assetCode: fixedAsset.assetCode, assetName: fixedAsset.assetName, orgNodeId: fixedAsset.orgNodeId,
-  purchaseDate: fixedAsset.purchaseDate, purchaseCost: fixedAsset.purchaseCost, usefulLifeMonths: fixedAsset.usefulLifeMonths,
-  salvageValue: fixedAsset.salvageValue, depreciationMethod: fixedAsset.depreciationMethod, assetAccountId: fixedAsset.assetAccountId,
-  accumulatedDepreciationAccountId: fixedAsset.accumulatedDepreciationAccountId, depreciationExpenseAccountId: fixedAsset.depreciationExpenseAccountId,
-  costCenterId: fixedAsset.costCenterId, totalDepreciated: fixedAsset.totalDepreciated, status: fixedAsset.status,
-  createdAt: fixedAsset.createdAt, updatedAt: fixedAsset.updatedAt,
-};
-const deColumns = {
-  id: depreciationEntry.id, assetId: depreciationEntry.assetId, periodId: depreciationEntry.periodId, entryDate: depreciationEntry.entryDate,
-  depreciationAmount: depreciationEntry.depreciationAmount, accumulatedAmountAfter: depreciationEntry.accumulatedAmountAfter,
-  journalEntryId: depreciationEntry.journalEntryId, status: depreciationEntry.status, createdAt: depreciationEntry.createdAt,
-};
-
 @Injectable()
 export class AccountingRepository {
   constructor(private readonly database: DatabaseService) {}
 
   // --- Account Types ---
   async listAccountTypes(): Promise<AccountTypeRecord[]> {
-    const rows = await this.database.db.select(atColumns).from(accountType).orderBy(asc(accountType.code));
-    return rows.map((r) => ({ id: r.id, code: r.code, name: r.name, normalBalance: r.normalBalance as NormalBalance }));
+    const rows = await this.database.db
+      .select(atColumns)
+      .from(accountType)
+      .orderBy(asc(accountType.code));
+    return rows.map((r) => ({
+      id: r.id,
+      code: r.code,
+      name: r.name,
+      normalBalance: r.normalBalance as NormalBalance,
+    }));
   }
   async findAccountTypeByCode(code: string): Promise<AccountTypeRecord | null> {
-    const rows = await this.database.db.select(atColumns).from(accountType).where(eq(accountType.code, code)).limit(1);
-    return rows[0] ? { id: rows[0].id, code: rows[0].code, name: rows[0].name, normalBalance: rows[0].normalBalance as NormalBalance } : null;
+    const rows = await this.database.db
+      .select(atColumns)
+      .from(accountType)
+      .where(eq(accountType.code, code))
+      .limit(1);
+    return rows[0]
+      ? {
+          id: rows[0].id,
+          code: rows[0].code,
+          name: rows[0].name,
+          normalBalance: rows[0].normalBalance as NormalBalance,
+        }
+      : null;
   }
   async findAccountTypeById(id: string): Promise<AccountTypeRecord | null> {
-    const rows = await this.database.db.select(atColumns).from(accountType).where(eq(accountType.id, id)).limit(1);
-    return rows[0] ? { id: rows[0].id, code: rows[0].code, name: rows[0].name, normalBalance: rows[0].normalBalance as NormalBalance } : null;
+    const rows = await this.database.db
+      .select(atColumns)
+      .from(accountType)
+      .where(eq(accountType.id, id))
+      .limit(1);
+    return rows[0]
+      ? {
+          id: rows[0].id,
+          code: rows[0].code,
+          name: rows[0].name,
+          normalBalance: rows[0].normalBalance as NormalBalance,
+        }
+      : null;
   }
-  async insertAccountType(input: CreateAccountTypeInput & { id: string }): Promise<AccountTypeRecord> {
+  async insertAccountType(
+    input: CreateAccountTypeInput & { id: string },
+  ): Promise<AccountTypeRecord> {
     const rows = await this.database.db.insert(accountType).values(input).returning(atColumns);
-    return { id: rows[0]!.id, code: rows[0]!.code, name: rows[0]!.name, normalBalance: rows[0]!.normalBalance as NormalBalance };
+    return {
+      id: rows[0]!.id,
+      code: rows[0]!.code,
+      name: rows[0]!.name,
+      normalBalance: rows[0]!.normalBalance as NormalBalance,
+    };
   }
 
   // --- Chart of Accounts ---
   async listAccounts(): Promise<ChartOfAccountsRecord[]> {
-    const rows = await this.database.db.select(coaColumns).from(chartOfAccounts).orderBy(asc(chartOfAccounts.code));
+    const rows = await this.database.db
+      .select(coaColumns)
+      .from(chartOfAccounts)
+      .orderBy(asc(chartOfAccounts.code));
     return rows.map((r) => ({
-      id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, accountTypeId: r.accountTypeId,
-      parentId: r.parentId, isLeaf: r.isLeaf === 'yes', status: r.status as ChartAccountStatus,
+      id: r.id,
+      code: r.code,
+      name: r.name,
+      orgNodeId: r.orgNodeId,
+      accountTypeId: r.accountTypeId,
+      parentId: r.parentId,
+      isLeaf: r.isLeaf === 'yes',
+      status: r.status as ChartAccountStatus,
     }));
   }
   /** Plan item 32: the account's standard role (null = none). */
   async findAccountRole(id: string): Promise<string | null> {
-    const rows = await this.database.db.select({ role: chartOfAccounts.accountRole }).from(chartOfAccounts).where(eq(chartOfAccounts.id, id)).limit(1);
+    const rows = await this.database.db
+      .select({ role: chartOfAccounts.accountRole })
+      .from(chartOfAccounts)
+      .where(eq(chartOfAccounts.id, id))
+      .limit(1);
     return rows[0]?.role ?? null;
   }
 
   async setAccountRole(id: string, role: string | null): Promise<void> {
-    await this.database.db.update(chartOfAccounts).set({ accountRole: role, updatedAt: new Date() }).where(eq(chartOfAccounts.id, id));
+    await this.database.db
+      .update(chartOfAccounts)
+      .set({ accountRole: role, updatedAt: new Date() })
+      .where(eq(chartOfAccounts.id, id));
   }
 
   async findAccountById(id: string): Promise<ChartOfAccountsRecord | null> {
-    const rows = await this.database.db.select(coaColumns).from(chartOfAccounts).where(eq(chartOfAccounts.id, id)).limit(1);
+    const rows = await this.database.db
+      .select(coaColumns)
+      .from(chartOfAccounts)
+      .where(eq(chartOfAccounts.id, id))
+      .limit(1);
     if (!rows[0]) return null;
     const r = rows[0];
-    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, accountTypeId: r.accountTypeId, parentId: r.parentId, isLeaf: r.isLeaf === 'yes', status: r.status as ChartAccountStatus };
+    return {
+      id: r.id,
+      code: r.code,
+      name: r.name,
+      orgNodeId: r.orgNodeId,
+      accountTypeId: r.accountTypeId,
+      parentId: r.parentId,
+      isLeaf: r.isLeaf === 'yes',
+      status: r.status as ChartAccountStatus,
+    };
   }
   async findAccountByCode(orgNodeId: string, code: string): Promise<ChartOfAccountsRecord | null> {
-    const rows = await this.database.db.select(coaColumns).from(chartOfAccounts).where(and(eq(chartOfAccounts.orgNodeId, orgNodeId), eq(chartOfAccounts.code, code))).limit(1);
+    const rows = await this.database.db
+      .select(coaColumns)
+      .from(chartOfAccounts)
+      .where(and(eq(chartOfAccounts.orgNodeId, orgNodeId), eq(chartOfAccounts.code, code)))
+      .limit(1);
     if (!rows[0]) return null;
     const r = rows[0];
-    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, accountTypeId: r.accountTypeId, parentId: r.parentId, isLeaf: r.isLeaf === 'yes', status: r.status as ChartAccountStatus };
+    return {
+      id: r.id,
+      code: r.code,
+      name: r.name,
+      orgNodeId: r.orgNodeId,
+      accountTypeId: r.accountTypeId,
+      parentId: r.parentId,
+      isLeaf: r.isLeaf === 'yes',
+      status: r.status as ChartAccountStatus,
+    };
   }
-  async insertAccount(input: CreateChartOfAccountsInput & { id: string }): Promise<ChartOfAccountsRecord> {
-    const rows = await this.database.db.insert(chartOfAccounts).values({
-      id: input.id, code: input.code, name: input.name, orgNodeId: input.orgNodeId,
-      accountTypeId: input.accountTypeId, parentId: input.parentId ?? null, isLeaf: 'yes',
-    }).returning(coaColumns);
+  async insertAccount(
+    input: CreateChartOfAccountsInput & { id: string },
+  ): Promise<ChartOfAccountsRecord> {
+    const rows = await this.database.db
+      .insert(chartOfAccounts)
+      .values({
+        id: input.id,
+        code: input.code,
+        name: input.name,
+        orgNodeId: input.orgNodeId,
+        accountTypeId: input.accountTypeId,
+        parentId: input.parentId ?? null,
+        isLeaf: 'yes',
+      })
+      .returning(coaColumns);
     const r = rows[0]!;
-    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, accountTypeId: r.accountTypeId, parentId: r.parentId, isLeaf: true, status: 'active' };
+    return {
+      id: r.id,
+      code: r.code,
+      name: r.name,
+      orgNodeId: r.orgNodeId,
+      accountTypeId: r.accountTypeId,
+      parentId: r.parentId,
+      isLeaf: true,
+      status: 'active',
+    };
   }
   async markAsParent(id: string): Promise<void> {
-    await this.database.db.update(chartOfAccounts).set({ isLeaf: 'no', updatedAt: new Date() }).where(eq(chartOfAccounts.id, id));
+    await this.database.db
+      .update(chartOfAccounts)
+      .set({ isLeaf: 'no', updatedAt: new Date() })
+      .where(eq(chartOfAccounts.id, id));
   }
 
   // --- Fiscal Year ---
   async listFiscalYears(orgNodeId?: string): Promise<FiscalYearRecord[]> {
     const rows = orgNodeId
-      ? await this.database.db.select(fyColumns).from(fiscalYear).where(eq(fiscalYear.orgNodeId, orgNodeId)).orderBy(desc(fiscalYear.startDate))
-      : await this.database.db.select(fyColumns).from(fiscalYear).orderBy(desc(fiscalYear.startDate));
-    return rows.map((r) => ({ id: r.id, orgNodeId: r.orgNodeId, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), isClosed: r.isClosed }));
+      ? await this.database.db
+          .select(fyColumns)
+          .from(fiscalYear)
+          .where(eq(fiscalYear.orgNodeId, orgNodeId))
+          .orderBy(desc(fiscalYear.startDate))
+      : await this.database.db
+          .select(fyColumns)
+          .from(fiscalYear)
+          .orderBy(desc(fiscalYear.startDate));
+    return rows.map((r) => ({
+      id: r.id,
+      orgNodeId: r.orgNodeId,
+      name: r.name,
+      startDate: r.startDate.toISOString(),
+      endDate: r.endDate.toISOString(),
+      isClosed: r.isClosed,
+    }));
   }
   async findFiscalYearById(id: string): Promise<FiscalYearRecord | null> {
-    const rows = await this.database.db.select(fyColumns).from(fiscalYear).where(eq(fiscalYear.id, id)).limit(1);
+    const rows = await this.database.db
+      .select(fyColumns)
+      .from(fiscalYear)
+      .where(eq(fiscalYear.id, id))
+      .limit(1);
     if (!rows[0]) return null;
     const r = rows[0];
-    return { id: r.id, orgNodeId: r.orgNodeId, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), isClosed: r.isClosed };
+    return {
+      id: r.id,
+      orgNodeId: r.orgNodeId,
+      name: r.name,
+      startDate: r.startDate.toISOString(),
+      endDate: r.endDate.toISOString(),
+      isClosed: r.isClosed,
+    };
   }
   async findFiscalYearByDate(orgNodeId: string, date: Date): Promise<FiscalYearRecord | null> {
-    const rows = await this.database.db.select(fyColumns).from(fiscalYear)
-      .where(and(eq(fiscalYear.orgNodeId, orgNodeId), sql`${fiscalYear.startDate} <= ${date}`, sql`${fiscalYear.endDate} >= ${date}`)).limit(1);
+    const rows = await this.database.db
+      .select(fyColumns)
+      .from(fiscalYear)
+      .where(
+        and(
+          eq(fiscalYear.orgNodeId, orgNodeId),
+          sql`${fiscalYear.startDate} <= ${date}`,
+          sql`${fiscalYear.endDate} >= ${date}`,
+        ),
+      )
+      .limit(1);
     if (!rows[0]) return null;
     const r = rows[0];
-    return { id: r.id, orgNodeId: r.orgNodeId, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), isClosed: r.isClosed };
+    return {
+      id: r.id,
+      orgNodeId: r.orgNodeId,
+      name: r.name,
+      startDate: r.startDate.toISOString(),
+      endDate: r.endDate.toISOString(),
+      isClosed: r.isClosed,
+    };
   }
   async insertFiscalYear(input: CreateFiscalYearInput & { id: string }): Promise<FiscalYearRecord> {
-    const rows = await this.database.db.insert(fiscalYear).values({
-      id: input.id, orgNodeId: input.orgNodeId, name: input.name,
-      startDate: new Date(input.startDate), endDate: new Date(input.endDate),
-    }).returning(fyColumns);
+    const rows = await this.database.db
+      .insert(fiscalYear)
+      .values({
+        id: input.id,
+        orgNodeId: input.orgNodeId,
+        name: input.name,
+        startDate: new Date(input.startDate),
+        endDate: new Date(input.endDate),
+      })
+      .returning(fyColumns);
     const r = rows[0]!;
-    return { id: r.id, orgNodeId: r.orgNodeId, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), isClosed: r.isClosed };
+    return {
+      id: r.id,
+      orgNodeId: r.orgNodeId,
+      name: r.name,
+      startDate: r.startDate.toISOString(),
+      endDate: r.endDate.toISOString(),
+      isClosed: r.isClosed,
+    };
   }
   async closeFiscalYear(id: string): Promise<void> {
-    await this.database.db.update(fiscalYear).set({ isClosed: true, updatedAt: new Date() }).where(eq(fiscalYear.id, id));
+    await this.database.db
+      .update(fiscalYear)
+      .set({ isClosed: true, updatedAt: new Date() })
+      .where(eq(fiscalYear.id, id));
   }
 
   // --- Accounting Period ---
   async listPeriods(fiscalYearId: string): Promise<AccountingPeriodRecord[]> {
-    const rows = await this.database.db.select(periodColumns).from(accountingPeriod).where(eq(accountingPeriod.fiscalYearId, fiscalYearId)).orderBy(asc(accountingPeriod.periodNumber));
-    return rows.map((r) => ({ id: r.id, fiscalYearId: r.fiscalYearId, periodNumber: r.periodNumber, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), status: r.status as AccountingPeriodStatus }));
+    const rows = await this.database.db
+      .select(periodColumns)
+      .from(accountingPeriod)
+      .where(eq(accountingPeriod.fiscalYearId, fiscalYearId))
+      .orderBy(asc(accountingPeriod.periodNumber));
+    return rows.map((r) => ({
+      id: r.id,
+      fiscalYearId: r.fiscalYearId,
+      periodNumber: r.periodNumber,
+      name: r.name,
+      startDate: r.startDate.toISOString(),
+      endDate: r.endDate.toISOString(),
+      status: r.status as AccountingPeriodStatus,
+    }));
   }
   async findPeriodById(id: string): Promise<AccountingPeriodRecord | null> {
-    const rows = await this.database.db.select(periodColumns).from(accountingPeriod).where(eq(accountingPeriod.id, id)).limit(1);
+    const rows = await this.database.db
+      .select(periodColumns)
+      .from(accountingPeriod)
+      .where(eq(accountingPeriod.id, id))
+      .limit(1);
     if (!rows[0]) return null;
     const r = rows[0];
-    return { id: r.id, fiscalYearId: r.fiscalYearId, periodNumber: r.periodNumber, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), status: r.status as AccountingPeriodStatus };
+    return {
+      id: r.id,
+      fiscalYearId: r.fiscalYearId,
+      periodNumber: r.periodNumber,
+      name: r.name,
+      startDate: r.startDate.toISOString(),
+      endDate: r.endDate.toISOString(),
+      status: r.status as AccountingPeriodStatus,
+    };
   }
   async findPeriodByDate(fiscalYearId: string, date: Date): Promise<AccountingPeriodRecord | null> {
-    const rows = await this.database.db.select(periodColumns).from(accountingPeriod)
-      .where(and(eq(accountingPeriod.fiscalYearId, fiscalYearId), sql`${accountingPeriod.startDate} <= ${date}`, sql`${accountingPeriod.endDate} >= ${date}`)).limit(1);
+    const rows = await this.database.db
+      .select(periodColumns)
+      .from(accountingPeriod)
+      .where(
+        and(
+          eq(accountingPeriod.fiscalYearId, fiscalYearId),
+          sql`${accountingPeriod.startDate} <= ${date}`,
+          sql`${accountingPeriod.endDate} >= ${date}`,
+        ),
+      )
+      .limit(1);
     if (!rows[0]) return null;
     const r = rows[0];
-    return { id: r.id, fiscalYearId: r.fiscalYearId, periodNumber: r.periodNumber, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), status: r.status as AccountingPeriodStatus };
+    return {
+      id: r.id,
+      fiscalYearId: r.fiscalYearId,
+      periodNumber: r.periodNumber,
+      name: r.name,
+      startDate: r.startDate.toISOString(),
+      endDate: r.endDate.toISOString(),
+      status: r.status as AccountingPeriodStatus,
+    };
   }
-  async insertPeriod(input: CreateAccountingPeriodInput & { id: string }): Promise<AccountingPeriodRecord> {
-    const rows = await this.database.db.insert(accountingPeriod).values({
-      id: input.id, fiscalYearId: input.fiscalYearId, periodNumber: input.periodNumber, name: input.name,
-      startDate: new Date(input.startDate), endDate: new Date(input.endDate),
-    }).returning(periodColumns);
+  async insertPeriod(
+    input: CreateAccountingPeriodInput & { id: string },
+  ): Promise<AccountingPeriodRecord> {
+    const rows = await this.database.db
+      .insert(accountingPeriod)
+      .values({
+        id: input.id,
+        fiscalYearId: input.fiscalYearId,
+        periodNumber: input.periodNumber,
+        name: input.name,
+        startDate: new Date(input.startDate),
+        endDate: new Date(input.endDate),
+      })
+      .returning(periodColumns);
     const r = rows[0]!;
-    return { id: r.id, fiscalYearId: r.fiscalYearId, periodNumber: r.periodNumber, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), status: r.status as AccountingPeriodStatus };
+    return {
+      id: r.id,
+      fiscalYearId: r.fiscalYearId,
+      periodNumber: r.periodNumber,
+      name: r.name,
+      startDate: r.startDate.toISOString(),
+      endDate: r.endDate.toISOString(),
+      status: r.status as AccountingPeriodStatus,
+    };
   }
-  async setPeriodStatus(id: string, status: AccountingPeriodStatus): Promise<AccountingPeriodRecord> {
-    const rows = await this.database.db.update(accountingPeriod).set({ status, updatedAt: new Date() }).where(eq(accountingPeriod.id, id)).returning(periodColumns);
+  async setPeriodStatus(
+    id: string,
+    status: AccountingPeriodStatus,
+  ): Promise<AccountingPeriodRecord> {
+    const rows = await this.database.db
+      .update(accountingPeriod)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(accountingPeriod.id, id))
+      .returning(periodColumns);
     const r = rows[0]!;
-    return { id: r.id, fiscalYearId: r.fiscalYearId, periodNumber: r.periodNumber, name: r.name, startDate: r.startDate.toISOString(), endDate: r.endDate.toISOString(), status: r.status as AccountingPeriodStatus };
+    return {
+      id: r.id,
+      fiscalYearId: r.fiscalYearId,
+      periodNumber: r.periodNumber,
+      name: r.name,
+      startDate: r.startDate.toISOString(),
+      endDate: r.endDate.toISOString(),
+      status: r.status as AccountingPeriodStatus,
+    };
   }
 
   // --- Cost Center ---
   async listCostCenters(orgNodeId?: string): Promise<CostCenterRecord[]> {
     const rows = orgNodeId
-      ? await this.database.db.select(ccColumns).from(costCenter).where(eq(costCenter.orgNodeId, orgNodeId)).orderBy(asc(costCenter.code))
+      ? await this.database.db
+          .select(ccColumns)
+          .from(costCenter)
+          .where(eq(costCenter.orgNodeId, orgNodeId))
+          .orderBy(asc(costCenter.code))
       : await this.database.db.select(ccColumns).from(costCenter).orderBy(asc(costCenter.code));
-    return rows.map((r) => ({ id: r.id, orgNodeId: r.orgNodeId, code: r.code, name: r.name, parentId: r.parentId, isGroup: r.isGroup, isActive: r.isActive }));
+    return rows.map((r) => ({
+      id: r.id,
+      orgNodeId: r.orgNodeId,
+      code: r.code,
+      name: r.name,
+      parentId: r.parentId,
+      isGroup: r.isGroup,
+      isActive: r.isActive,
+    }));
   }
   async findCostCenterByCode(orgNodeId: string, code: string): Promise<CostCenterRecord | null> {
-    const rows = await this.database.db.select(ccColumns).from(costCenter).where(and(eq(costCenter.orgNodeId, orgNodeId), eq(costCenter.code, code))).limit(1);
+    const rows = await this.database.db
+      .select(ccColumns)
+      .from(costCenter)
+      .where(and(eq(costCenter.orgNodeId, orgNodeId), eq(costCenter.code, code)))
+      .limit(1);
     return rows[0] ?? null;
   }
   async insertCostCenter(input: CreateCostCenterInput & { id: string }): Promise<CostCenterRecord> {
-    const rows = await this.database.db.insert(costCenter).values({
-      id: input.id, orgNodeId: input.orgNodeId, code: input.code, name: input.name,
-      parentId: input.parentId ?? null, isGroup: input.isGroup ?? false,
-    }).returning(ccColumns);
+    const rows = await this.database.db
+      .insert(costCenter)
+      .values({
+        id: input.id,
+        orgNodeId: input.orgNodeId,
+        code: input.code,
+        name: input.name,
+        parentId: input.parentId ?? null,
+        isGroup: input.isGroup ?? false,
+      })
+      .returning(ccColumns);
     return rows[0]!;
   }
 
   // --- Company Accounting Config ---
   async findCompanyConfig(orgNodeId: string): Promise<CompanyAccountingConfigRecord | null> {
-    const rows = await this.database.db.select(configColumns).from(companyAccountingConfig).where(eq(companyAccountingConfig.orgNodeId, orgNodeId)).limit(1);
+    const rows = await this.database.db
+      .select(configColumns)
+      .from(companyAccountingConfig)
+      .where(eq(companyAccountingConfig.orgNodeId, orgNodeId))
+      .limit(1);
     return rows[0] ?? null;
   }
-  async upsertCompanyConfig(input: UpsertCompanyAccountingConfigInput & { id: string }): Promise<CompanyAccountingConfigRecord> {
+  async upsertCompanyConfig(
+    input: UpsertCompanyAccountingConfigInput & { id: string },
+  ): Promise<CompanyAccountingConfigRecord> {
     const existing = await this.findCompanyConfig(input.orgNodeId);
     if (existing) {
       // Keep the row's own id: the freshly generated one is only for a first insert.
       const { id, accountsFrozenUntil, ...fields } = input;
       void id;
-      const frozen = accountsFrozenUntil === undefined ? {} : { accountsFrozenUntil: accountsFrozenUntil ? new Date(accountsFrozenUntil) : null };
-      const rows = await this.database.db.update(companyAccountingConfig).set({ ...fields, ...frozen, updatedAt: new Date() }).where(eq(companyAccountingConfig.orgNodeId, input.orgNodeId)).returning(configColumns);
+      const frozen =
+        accountsFrozenUntil === undefined
+          ? {}
+          : { accountsFrozenUntil: accountsFrozenUntil ? new Date(accountsFrozenUntil) : null };
+      const rows = await this.database.db
+        .update(companyAccountingConfig)
+        .set({ ...fields, ...frozen, updatedAt: new Date() })
+        .where(eq(companyAccountingConfig.orgNodeId, input.orgNodeId))
+        .returning(configColumns);
       return rows[0]!;
     }
     const { accountsFrozenUntil, ...rest } = input;
-    const rows = await this.database.db.insert(companyAccountingConfig).values({ ...rest, accountsFrozenUntil: accountsFrozenUntil ? new Date(accountsFrozenUntil) : null }).returning(configColumns);
+    const rows = await this.database.db
+      .insert(companyAccountingConfig)
+      .values({
+        ...rest,
+        accountsFrozenUntil: accountsFrozenUntil ? new Date(accountsFrozenUntil) : null,
+      })
+      .returning(configColumns);
     return rows[0]!;
   }
 
   // --- Account Determination ---
   async listAccountDeterminations(orgNodeId: string): Promise<AccountDeterminationRecord[]> {
-    const rows = await this.database.db.select(detColumns).from(accountDetermination).where(eq(accountDetermination.orgNodeId, orgNodeId));
+    const rows = await this.database.db
+      .select(detColumns)
+      .from(accountDetermination)
+      .where(eq(accountDetermination.orgNodeId, orgNodeId));
     return rows;
   }
-  async insertAccountDetermination(input: CreateAccountDeterminationInput & { id: string }): Promise<AccountDeterminationRecord> {
-    const rows = await this.database.db.insert(accountDetermination).values({
-      id: input.id, orgNodeId: input.orgNodeId, determinationType: input.determinationType,
-      referenceId: input.referenceId ?? null, accountPurpose: input.accountPurpose, accountId: input.accountId,
-    }).returning(detColumns);
+  async insertAccountDetermination(
+    input: CreateAccountDeterminationInput & { id: string },
+  ): Promise<AccountDeterminationRecord> {
+    const rows = await this.database.db
+      .insert(accountDetermination)
+      .values({
+        id: input.id,
+        orgNodeId: input.orgNodeId,
+        determinationType: input.determinationType,
+        referenceId: input.referenceId ?? null,
+        accountPurpose: input.accountPurpose,
+        accountId: input.accountId,
+      })
+      .returning(detColumns);
     return rows[0]!;
   }
 
   // --- Journal Entries ---
   async listEntries(): Promise<JournalEntryRecord[]> {
-    const entries = await this.database.db.select(jeColumns).from(journalEntry).orderBy(desc(journalEntry.entryDate));
+    const entries = await this.database.db
+      .select(jeColumns)
+      .from(journalEntry)
+      .orderBy(desc(journalEntry.entryDate));
     const results: JournalEntryRecord[] = [];
     for (const e of entries) {
-      const lines = await this.database.db.select(jlColumns).from(journalLine).where(eq(journalLine.journalEntryId, e.id));
+      const lines = await this.database.db
+        .select(jlColumns)
+        .from(journalLine)
+        .where(eq(journalLine.journalEntryId, e.id));
       results.push({
-        id: e.id, entryNumber: e.entryNumber, orgNodeId: e.orgNodeId, reference: e.reference, description: e.description,
-        entryDate: e.entryDate.toISOString(), postedAt: e.postedAt ? e.postedAt.toISOString() : null, status: e.status as JournalEntryStatus,
-        fiscalYearId: e.fiscalYearId, periodId: e.periodId, isAutoGenerated: e.isAutoGenerated,
-        idempotencyKey: e.idempotencyKey, sourceEventType: e.sourceEventType, voucherType: e.voucherType,
+        id: e.id,
+        entryNumber: e.entryNumber,
+        orgNodeId: e.orgNodeId,
+        reference: e.reference,
+        description: e.description,
+        entryDate: e.entryDate.toISOString(),
+        postedAt: e.postedAt ? e.postedAt.toISOString() : null,
+        status: e.status as JournalEntryStatus,
+        fiscalYearId: e.fiscalYearId,
+        periodId: e.periodId,
+        isAutoGenerated: e.isAutoGenerated,
+        idempotencyKey: e.idempotencyKey,
+        sourceEventType: e.sourceEventType,
+        voucherType: e.voucherType,
         lines: lines.map((l) => ({
-          id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId,
-          debitAmount: l.debitAmount, creditAmount: l.creditAmount, description: l.description,
-          partyType: l.partyType as any, partyId: l.partyId, costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
+          id: l.id,
+          journalEntryId: l.journalEntryId,
+          accountId: l.accountId,
+          debitAmount: l.debitAmount,
+          creditAmount: l.creditAmount,
+          description: l.description,
+          partyType: l.partyType as any,
+          partyId: l.partyId,
+          costCenterId: l.costCenterId,
+          jobOrderId: l.jobOrderId,
         })),
       });
     }
     return results;
   }
   async findEntryById(id: string): Promise<JournalEntryRecord | null> {
-    const rows = await this.database.db.select(jeColumns).from(journalEntry).where(eq(journalEntry.id, id)).limit(1);
+    const rows = await this.database.db
+      .select(jeColumns)
+      .from(journalEntry)
+      .where(eq(journalEntry.id, id))
+      .limit(1);
     if (!rows[0]) return null;
-    const lines = await this.database.db.select(jlColumns).from(journalLine).where(eq(journalLine.journalEntryId, id));
+    const lines = await this.database.db
+      .select(jlColumns)
+      .from(journalLine)
+      .where(eq(journalLine.journalEntryId, id));
     const e = rows[0];
     return {
-      id: e.id, entryNumber: e.entryNumber, orgNodeId: e.orgNodeId, reference: e.reference, description: e.description,
-      entryDate: e.entryDate.toISOString(), postedAt: e.postedAt ? e.postedAt.toISOString() : null, status: e.status as JournalEntryStatus,
-      fiscalYearId: e.fiscalYearId, periodId: e.periodId, isAutoGenerated: e.isAutoGenerated,
-      idempotencyKey: e.idempotencyKey, sourceEventType: e.sourceEventType, voucherType: e.voucherType,
+      id: e.id,
+      entryNumber: e.entryNumber,
+      orgNodeId: e.orgNodeId,
+      reference: e.reference,
+      description: e.description,
+      entryDate: e.entryDate.toISOString(),
+      postedAt: e.postedAt ? e.postedAt.toISOString() : null,
+      status: e.status as JournalEntryStatus,
+      fiscalYearId: e.fiscalYearId,
+      periodId: e.periodId,
+      isAutoGenerated: e.isAutoGenerated,
+      idempotencyKey: e.idempotencyKey,
+      sourceEventType: e.sourceEventType,
+      voucherType: e.voucherType,
       lines: lines.map((l) => ({
-        id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId,
-        debitAmount: l.debitAmount, creditAmount: l.creditAmount, description: l.description,
-        partyType: l.partyType as any, partyId: l.partyId, costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
+        id: l.id,
+        journalEntryId: l.journalEntryId,
+        accountId: l.accountId,
+        debitAmount: l.debitAmount,
+        creditAmount: l.creditAmount,
+        description: l.description,
+        partyType: l.partyType as any,
+        partyId: l.partyId,
+        costCenterId: l.costCenterId,
+        jobOrderId: l.jobOrderId,
       })),
     };
   }
@@ -336,253 +699,303 @@ export class AccountingRepository {
     const rows = await this.database.db.select({ id: journalEntry.id }).from(journalEntry);
     return rows.length;
   }
-  async insertEntry(input: CreateJournalEntryInput & { id: string; entryNumber: string }): Promise<JournalEntryRecord> {
-    const rows = await this.database.db.insert(journalEntry).values({
-      id: input.id, entryNumber: input.entryNumber, orgNodeId: input.orgNodeId, reference: input.reference ?? null,
-      description: input.description, entryDate: input.entryDate ? new Date(input.entryDate) : new Date(),
-      fiscalYearId: input.fiscalYearId ?? null, periodId: input.periodId ?? null,
-      isAutoGenerated: input.isAutoGenerated ?? false, idempotencyKey: input.idempotencyKey ?? null,
-      sourceEventType: input.sourceEventType ?? null,
-      voucherType: input.voucherType ?? voucherTypeForSource(input.sourceEventType),
-    }).returning(jeColumns);
+  async insertEntry(
+    input: CreateJournalEntryInput & { id: string; entryNumber: string },
+  ): Promise<JournalEntryRecord> {
+    const rows = await this.database.db
+      .insert(journalEntry)
+      .values({
+        id: input.id,
+        entryNumber: input.entryNumber,
+        orgNodeId: input.orgNodeId,
+        reference: input.reference ?? null,
+        description: input.description,
+        entryDate: input.entryDate ? new Date(input.entryDate) : new Date(),
+        fiscalYearId: input.fiscalYearId ?? null,
+        periodId: input.periodId ?? null,
+        isAutoGenerated: input.isAutoGenerated ?? false,
+        idempotencyKey: input.idempotencyKey ?? null,
+        sourceEventType: input.sourceEventType ?? null,
+        voucherType: input.voucherType ?? voucherTypeForSource(input.sourceEventType),
+      })
+      .returning(jeColumns);
     const inserted = rows[0]!;
     const lines: JournalLineRecord[] = [];
     for (const line of input.lines) {
-      const lineRows = await this.database.db.insert(journalLine).values({
-        id: (await import('node:crypto')).randomUUID(),
-        journalEntryId: inserted.id, accountId: line.accountId,
-        debitAmount: line.debitAmount ?? '0', creditAmount: line.creditAmount ?? '0',
-        description: line.description ?? null, partyType: line.partyType ?? null, partyId: line.partyId ?? null,
-        costCenterId: line.costCenterId ?? null, jobOrderId: line.jobOrderId ?? null,
-      }).returning(jlColumns);
+      const lineRows = await this.database.db
+        .insert(journalLine)
+        .values({
+          id: (await import('node:crypto')).randomUUID(),
+          journalEntryId: inserted.id,
+          accountId: line.accountId,
+          debitAmount: line.debitAmount ?? '0',
+          creditAmount: line.creditAmount ?? '0',
+          description: line.description ?? null,
+          partyType: line.partyType ?? null,
+          partyId: line.partyId ?? null,
+          costCenterId: line.costCenterId ?? null,
+          jobOrderId: line.jobOrderId ?? null,
+        })
+        .returning(jlColumns);
       const l = lineRows[0]!;
       lines.push({
-        id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId,
-        debitAmount: l.debitAmount, creditAmount: l.creditAmount, description: l.description,
-        partyType: l.partyType as any, partyId: l.partyId, costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
+        id: l.id,
+        journalEntryId: l.journalEntryId,
+        accountId: l.accountId,
+        debitAmount: l.debitAmount,
+        creditAmount: l.creditAmount,
+        description: l.description,
+        partyType: l.partyType as any,
+        partyId: l.partyId,
+        costCenterId: l.costCenterId,
+        jobOrderId: l.jobOrderId,
       });
     }
     return {
-      id: inserted.id, entryNumber: inserted.entryNumber, orgNodeId: inserted.orgNodeId, reference: inserted.reference,
-      description: inserted.description, entryDate: inserted.entryDate.toISOString(),
-      postedAt: inserted.postedAt ? inserted.postedAt.toISOString() : null, status: inserted.status as JournalEntryStatus,
-      fiscalYearId: inserted.fiscalYearId, periodId: inserted.periodId, isAutoGenerated: inserted.isAutoGenerated,
-      idempotencyKey: inserted.idempotencyKey, sourceEventType: inserted.sourceEventType, voucherType: inserted.voucherType,
+      id: inserted.id,
+      entryNumber: inserted.entryNumber,
+      orgNodeId: inserted.orgNodeId,
+      reference: inserted.reference,
+      description: inserted.description,
+      entryDate: inserted.entryDate.toISOString(),
+      postedAt: inserted.postedAt ? inserted.postedAt.toISOString() : null,
+      status: inserted.status as JournalEntryStatus,
+      fiscalYearId: inserted.fiscalYearId,
+      periodId: inserted.periodId,
+      isAutoGenerated: inserted.isAutoGenerated,
+      idempotencyKey: inserted.idempotencyKey,
+      sourceEventType: inserted.sourceEventType,
+      voucherType: inserted.voucherType,
       lines,
     };
   }
   async setEntryStatus(id: string, status: JournalEntryStatus): Promise<JournalEntryRecord> {
     const fields: { status: JournalEntryStatus; postedAt?: Date } = { status };
     if (status === 'posted') fields.postedAt = new Date();
-    const rows = await this.database.db.update(journalEntry).set(fields).where(eq(journalEntry.id, id)).returning(jeColumns);
-    const lines = await this.database.db.select(jlColumns).from(journalLine).where(eq(journalLine.journalEntryId, id));
+    const rows = await this.database.db
+      .update(journalEntry)
+      .set(fields)
+      .where(eq(journalEntry.id, id))
+      .returning(jeColumns);
+    const lines = await this.database.db
+      .select(jlColumns)
+      .from(journalLine)
+      .where(eq(journalLine.journalEntryId, id));
     const e = rows[0]!;
     return {
-      id: e.id, entryNumber: e.entryNumber, orgNodeId: e.orgNodeId, reference: e.reference, description: e.description,
-      entryDate: e.entryDate.toISOString(), postedAt: e.postedAt ? e.postedAt.toISOString() : null, status: e.status as JournalEntryStatus,
-      fiscalYearId: e.fiscalYearId, periodId: e.periodId, isAutoGenerated: e.isAutoGenerated,
-      idempotencyKey: e.idempotencyKey, sourceEventType: e.sourceEventType, voucherType: e.voucherType,
+      id: e.id,
+      entryNumber: e.entryNumber,
+      orgNodeId: e.orgNodeId,
+      reference: e.reference,
+      description: e.description,
+      entryDate: e.entryDate.toISOString(),
+      postedAt: e.postedAt ? e.postedAt.toISOString() : null,
+      status: e.status as JournalEntryStatus,
+      fiscalYearId: e.fiscalYearId,
+      periodId: e.periodId,
+      isAutoGenerated: e.isAutoGenerated,
+      idempotencyKey: e.idempotencyKey,
+      sourceEventType: e.sourceEventType,
+      voucherType: e.voucherType,
       lines: lines.map((l) => ({
-        id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId,
-        debitAmount: l.debitAmount, creditAmount: l.creditAmount, description: l.description,
-        partyType: l.partyType as any, partyId: l.partyId, costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
+        id: l.id,
+        journalEntryId: l.journalEntryId,
+        accountId: l.accountId,
+        debitAmount: l.debitAmount,
+        creditAmount: l.creditAmount,
+        description: l.description,
+        partyType: l.partyType as any,
+        partyId: l.partyId,
+        costCenterId: l.costCenterId,
+        jobOrderId: l.jobOrderId,
       })),
     };
   }
 
-  async listAllPostedLinesWithAccounts(): Promise<Array<{ accountId: string; code: string; name: string; debit: string; credit: string }>> {
-    const rows = await this.database.db.select({
-      accountId: chartOfAccounts.id, code: chartOfAccounts.code, name: chartOfAccounts.name,
-      debit: journalLine.debitAmount, credit: journalLine.creditAmount, entryStatus: journalEntry.status,
-    }).from(journalLine)
+  async listAllPostedLinesWithAccounts(): Promise<
+    Array<{ accountId: string; code: string; name: string; debit: string; credit: string }>
+  > {
+    const rows = await this.database.db
+      .select({
+        accountId: chartOfAccounts.id,
+        code: chartOfAccounts.code,
+        name: chartOfAccounts.name,
+        debit: journalLine.debitAmount,
+        credit: journalLine.creditAmount,
+        entryStatus: journalEntry.status,
+      })
+      .from(journalLine)
       .innerJoin(chartOfAccounts, eq(journalLine.accountId, chartOfAccounts.id))
       .innerJoin(journalEntry, eq(journalLine.journalEntryId, journalEntry.id));
-    return rows.filter((r) => r.entryStatus === 'posted').map(({ accountId, code, name, debit, credit }) => ({ accountId, code, name, debit, credit }));
+    return rows
+      .filter((r) => r.entryStatus === 'posted')
+      .map(({ accountId, code, name, debit, credit }) => ({
+        accountId,
+        code,
+        name,
+        debit,
+        credit,
+      }));
   }
 
   /** Plan item 31: links a reversal entry to the entry it reverses. */
   async markReversal(reversalId: string, originalId: string, reason: string): Promise<void> {
-    await this.database.db.update(journalEntry).set({ reversalOfEntryId: originalId, reversalReason: reason, updatedAt: new Date() }).where(eq(journalEntry.id, reversalId));
+    await this.database.db
+      .update(journalEntry)
+      .set({ reversalOfEntryId: originalId, reversalReason: reason, updatedAt: new Date() })
+      .where(eq(journalEntry.id, reversalId));
   }
 
   /** The reversal link of an entry: which entry reverses it, and which entry it reverses (if any). */
-  async findReversalLinks(id: string): Promise<{ reversedById: string | null; reversalOfId: string | null; reason: string | null }> {
-    const by = await this.database.db.select({ id: journalEntry.id }).from(journalEntry).where(eq(journalEntry.reversalOfEntryId, id)).limit(1);
-    const self = await this.database.db.select({ of: journalEntry.reversalOfEntryId, reason: journalEntry.reversalReason }).from(journalEntry).where(eq(journalEntry.id, id)).limit(1);
-    return { reversedById: by[0]?.id ?? null, reversalOfId: self[0]?.of ?? null, reason: self[0]?.reason ?? null };
+  async findReversalLinks(
+    id: string,
+  ): Promise<{ reversedById: string | null; reversalOfId: string | null; reason: string | null }> {
+    const by = await this.database.db
+      .select({ id: journalEntry.id })
+      .from(journalEntry)
+      .where(eq(journalEntry.reversalOfEntryId, id))
+      .limit(1);
+    const self = await this.database.db
+      .select({ of: journalEntry.reversalOfEntryId, reason: journalEntry.reversalReason })
+      .from(journalEntry)
+      .where(eq(journalEntry.id, id))
+      .limit(1);
+    return {
+      reversedById: by[0]?.id ?? null,
+      reversalOfId: self[0]?.of ?? null,
+      reason: self[0]?.reason ?? null,
+    };
   }
 
   /** Posted entries a source document produced (by its source event type and reference). */
   async listPostedEntryIdsBySource(sourceEventType: string, reference: string): Promise<string[]> {
-    const rows = await this.database.db.select({ id: journalEntry.id }).from(journalEntry)
-      .where(and(eq(journalEntry.sourceEventType, sourceEventType), eq(journalEntry.reference, reference), eq(journalEntry.status, 'posted')));
+    const rows = await this.database.db
+      .select({ id: journalEntry.id })
+      .from(journalEntry)
+      .where(
+        and(
+          eq(journalEntry.sourceEventType, sourceEventType),
+          eq(journalEntry.reference, reference),
+          eq(journalEntry.status, 'posted'),
+        ),
+      );
     return rows.map((r) => r.id);
   }
 
   /** Plan item 36: ids of the company's year-closing entries (kept out of the P&L report). */
-  async listEntryIdsBySourceForCompany(orgNodeId: string, sourceEventType: string): Promise<string[]> {
-    const rows = await this.database.db.select({ id: journalEntry.id }).from(journalEntry)
-      .where(and(eq(journalEntry.orgNodeId, orgNodeId), eq(journalEntry.sourceEventType, sourceEventType)));
+  async listEntryIdsBySourceForCompany(
+    orgNodeId: string,
+    sourceEventType: string,
+  ): Promise<string[]> {
+    const rows = await this.database.db
+      .select({ id: journalEntry.id })
+      .from(journalEntry)
+      .where(
+        and(
+          eq(journalEntry.orgNodeId, orgNodeId),
+          eq(journalEntry.sourceEventType, sourceEventType),
+        ),
+      );
     return rows.map((r) => r.id);
   }
 
   /** Plan item 36: draft entries of a company dated inside [start, end]. */
   async countDraftEntries(orgNodeId: string, start: Date, end: Date): Promise<number> {
-    const rows = await this.database.db.select({ id: journalEntry.id }).from(journalEntry)
-      .where(and(eq(journalEntry.orgNodeId, orgNodeId), eq(journalEntry.status, 'draft'), sql`${journalEntry.entryDate} >= ${start}`, sql`${journalEntry.entryDate} <= ${end}`));
+    const rows = await this.database.db
+      .select({ id: journalEntry.id })
+      .from(journalEntry)
+      .where(
+        and(
+          eq(journalEntry.orgNodeId, orgNodeId),
+          eq(journalEntry.status, 'draft'),
+          sql`${journalEntry.entryDate} >= ${start}`,
+          sql`${journalEntry.entryDate} <= ${end}`,
+        ),
+      );
     return rows.length;
   }
 
   async findEntryByIdempotencyKey(idempotencyKey: string): Promise<JournalEntryRecord | null> {
-    const rows = await this.database.db.select(jeColumns).from(journalEntry).where(eq(journalEntry.idempotencyKey, idempotencyKey)).limit(1);
+    const rows = await this.database.db
+      .select(jeColumns)
+      .from(journalEntry)
+      .where(eq(journalEntry.idempotencyKey, idempotencyKey))
+      .limit(1);
     if (!rows[0]) return null;
-    const lines = await this.database.db.select(jlColumns).from(journalLine).where(eq(journalLine.journalEntryId, rows[0].id));
+    const lines = await this.database.db
+      .select(jlColumns)
+      .from(journalLine)
+      .where(eq(journalLine.journalEntryId, rows[0].id));
     const e = rows[0];
     return {
-      id: e.id, entryNumber: e.entryNumber, orgNodeId: e.orgNodeId, reference: e.reference, description: e.description,
-      entryDate: e.entryDate.toISOString(), postedAt: e.postedAt ? e.postedAt.toISOString() : null, status: e.status as JournalEntryStatus,
-      fiscalYearId: e.fiscalYearId, periodId: e.periodId, isAutoGenerated: e.isAutoGenerated,
-      idempotencyKey: e.idempotencyKey, sourceEventType: e.sourceEventType, voucherType: e.voucherType,
+      id: e.id,
+      entryNumber: e.entryNumber,
+      orgNodeId: e.orgNodeId,
+      reference: e.reference,
+      description: e.description,
+      entryDate: e.entryDate.toISOString(),
+      postedAt: e.postedAt ? e.postedAt.toISOString() : null,
+      status: e.status as JournalEntryStatus,
+      fiscalYearId: e.fiscalYearId,
+      periodId: e.periodId,
+      isAutoGenerated: e.isAutoGenerated,
+      idempotencyKey: e.idempotencyKey,
+      sourceEventType: e.sourceEventType,
+      voucherType: e.voucherType,
       lines: lines.map((l) => ({
-        id: l.id, journalEntryId: l.journalEntryId, accountId: l.accountId,
-        debitAmount: l.debitAmount, creditAmount: l.creditAmount, description: l.description,
-        partyType: l.partyType as any, partyId: l.partyId, costCenterId: l.costCenterId, jobOrderId: l.jobOrderId,
+        id: l.id,
+        journalEntryId: l.journalEntryId,
+        accountId: l.accountId,
+        debitAmount: l.debitAmount,
+        creditAmount: l.creditAmount,
+        description: l.description,
+        partyType: l.partyType as any,
+        partyId: l.partyId,
+        costCenterId: l.costCenterId,
+        jobOrderId: l.jobOrderId,
       })),
     };
   }
 
-  // --- Fixed Assets Management ---
-  async listFixedAssets(orgNodeId?: string): Promise<FixedAssetRecord[]> {
-    const rows = orgNodeId
-      ? await this.database.db.select(faColumns).from(fixedAsset).where(eq(fixedAsset.orgNodeId, orgNodeId)).orderBy(asc(fixedAsset.assetCode))
-      : await this.database.db.select(faColumns).from(fixedAsset).orderBy(asc(fixedAsset.assetCode));
-    return rows.map((r) => ({
-      id: r.id, assetCode: r.assetCode, assetName: r.assetName, orgNodeId: r.orgNodeId,
-      purchaseDate: r.purchaseDate.toISOString(), purchaseCost: r.purchaseCost, usefulLifeMonths: r.usefulLifeMonths,
-      salvageValue: r.salvageValue, depreciationMethod: r.depreciationMethod, assetAccountId: r.assetAccountId,
-      accumulatedDepreciationAccountId: r.accumulatedDepreciationAccountId, depreciationExpenseAccountId: r.depreciationExpenseAccountId,
-      costCenterId: r.costCenterId, totalDepreciated: r.totalDepreciated, status: r.status as FixedAssetStatus,
-      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
-    }));
-  }
-
-  async findFixedAssetById(id: string): Promise<FixedAssetRecord | null> {
-    const rows = await this.database.db.select(faColumns).from(fixedAsset).where(eq(fixedAsset.id, id)).limit(1);
-    if (!rows[0]) return null;
-    const r = rows[0];
-    return {
-      id: r.id, assetCode: r.assetCode, assetName: r.assetName, orgNodeId: r.orgNodeId,
-      purchaseDate: r.purchaseDate.toISOString(), purchaseCost: r.purchaseCost, usefulLifeMonths: r.usefulLifeMonths,
-      salvageValue: r.salvageValue, depreciationMethod: r.depreciationMethod, assetAccountId: r.assetAccountId,
-      accumulatedDepreciationAccountId: r.accumulatedDepreciationAccountId, depreciationExpenseAccountId: r.depreciationExpenseAccountId,
-      costCenterId: r.costCenterId, totalDepreciated: r.totalDepreciated, status: r.status as FixedAssetStatus,
-      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
-    };
-  }
-
-  async findFixedAssetByCode(orgNodeId: string, code: string): Promise<FixedAssetRecord | null> {
-    const rows = await this.database.db.select(faColumns).from(fixedAsset).where(and(eq(fixedAsset.orgNodeId, orgNodeId), eq(fixedAsset.assetCode, code))).limit(1);
-    if (!rows[0]) return null;
-    const r = rows[0];
-    return {
-      id: r.id, assetCode: r.assetCode, assetName: r.assetName, orgNodeId: r.orgNodeId,
-      purchaseDate: r.purchaseDate.toISOString(), purchaseCost: r.purchaseCost, usefulLifeMonths: r.usefulLifeMonths,
-      salvageValue: r.salvageValue, depreciationMethod: r.depreciationMethod, assetAccountId: r.assetAccountId,
-      accumulatedDepreciationAccountId: r.accumulatedDepreciationAccountId, depreciationExpenseAccountId: r.depreciationExpenseAccountId,
-      costCenterId: r.costCenterId, totalDepreciated: r.totalDepreciated, status: r.status as FixedAssetStatus,
-      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
-    };
-  }
-
-  async insertFixedAsset(input: CreateFixedAssetInput & { id: string }): Promise<FixedAssetRecord> {
-    const rows = await this.database.db.insert(fixedAsset).values({
-      id: input.id,
-      assetCode: input.assetCode,
-      assetName: input.assetName,
-      orgNodeId: input.orgNodeId,
-      purchaseDate: new Date(input.purchaseDate),
-      purchaseCost: input.purchaseCost,
-      usefulLifeMonths: input.usefulLifeMonths,
-      salvageValue: input.salvageValue ?? '0',
-      depreciationMethod: 'straight_line',
-      assetAccountId: input.assetAccountId,
-      accumulatedDepreciationAccountId: input.accumulatedDepreciationAccountId,
-      depreciationExpenseAccountId: input.depreciationExpenseAccountId,
-      costCenterId: input.costCenterId ?? null,
-      totalDepreciated: '0',
-      status: 'active',
-    }).returning(faColumns);
-    const r = rows[0]!;
-    return {
-      id: r.id, assetCode: r.assetCode, assetName: r.assetName, orgNodeId: r.orgNodeId,
-      purchaseDate: r.purchaseDate.toISOString(), purchaseCost: r.purchaseCost, usefulLifeMonths: r.usefulLifeMonths,
-      salvageValue: r.salvageValue, depreciationMethod: r.depreciationMethod, assetAccountId: r.assetAccountId,
-      accumulatedDepreciationAccountId: r.accumulatedDepreciationAccountId, depreciationExpenseAccountId: r.depreciationExpenseAccountId,
-      costCenterId: r.costCenterId, totalDepreciated: r.totalDepreciated, status: r.status as FixedAssetStatus,
-      createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
-    };
-  }
-
-  async updateFixedAssetDepreciation(id: string, totalDepreciated: string, status: FixedAssetStatus): Promise<void> {
-    await this.database.db.update(fixedAsset).set({ totalDepreciated, status, updatedAt: new Date() }).where(eq(fixedAsset.id, id));
-  }
-
-  async insertDepreciationEntry(input: {
-    id: string;
-    assetId: string;
-    periodId: string | null;
-    entryDate: Date;
-    depreciationAmount: string;
-    accumulatedAmountAfter: string;
-    journalEntryId: string | null;
-  }): Promise<DepreciationEntryRecord> {
-    const rows = await this.database.db.insert(depreciationEntry).values({
-      id: input.id,
-      assetId: input.assetId,
-      periodId: input.periodId,
-      entryDate: input.entryDate,
-      depreciationAmount: input.depreciationAmount,
-      accumulatedAmountAfter: input.accumulatedAmountAfter,
-      journalEntryId: input.journalEntryId,
-      status: 'posted',
-    }).returning(deColumns);
-    const r = rows[0]!;
-    return {
-      id: r.id, assetId: r.assetId, periodId: r.periodId, entryDate: r.entryDate.toISOString(),
-      depreciationAmount: r.depreciationAmount, accumulatedAmountAfter: r.accumulatedAmountAfter,
-      journalEntryId: r.journalEntryId, status: r.status, createdAt: r.createdAt.toISOString(),
-    };
-  }
-
-  async listDepreciationEntries(assetId: string): Promise<DepreciationEntryRecord[]> {
-    const rows = await this.database.db.select(deColumns).from(depreciationEntry).where(eq(depreciationEntry.assetId, assetId)).orderBy(desc(depreciationEntry.entryDate));
-    return rows.map((r) => ({
-      id: r.id, assetId: r.assetId, periodId: r.periodId, entryDate: r.entryDate.toISOString(),
-      depreciationAmount: r.depreciationAmount, accumulatedAmountAfter: r.accumulatedAmountAfter,
-      journalEntryId: r.journalEntryId, status: r.status, createdAt: r.createdAt.toISOString(),
-    }));
-  }
-
   // --- Reporting Helper Methods ---
-  async listAllPostedLinesWithDetails(filters: { orgNodeId: string; startDate?: string; endDate?: string }): Promise<Array<{
-    accountId: string; code: string; name: string; typeCode: string; normalBalance: string; debit: string; credit: string; entryDate: Date;
-    partyType: string | null; partyId: string | null; journalEntryId: string; entryNumber: string; description: string | null;
-  }>> {
-    const rows = await this.database.db.select({
-      accountId: chartOfAccounts.id,
-      code: chartOfAccounts.code,
-      name: chartOfAccounts.name,
-      typeCode: accountType.code,
-      normalBalance: accountType.normalBalance,
-      debit: journalLine.debitAmount,
-      credit: journalLine.creditAmount,
-      entryDate: journalEntry.entryDate,
-      partyType: journalLine.partyType,
-      partyId: journalLine.partyId,
-      journalEntryId: journalEntry.id,
-      entryNumber: journalEntry.entryNumber,
-      description: journalLine.description,
-    }).from(journalLine)
+  async listAllPostedLinesWithDetails(filters: {
+    orgNodeId: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<
+    Array<{
+      accountId: string;
+      code: string;
+      name: string;
+      typeCode: string;
+      normalBalance: string;
+      debit: string;
+      credit: string;
+      entryDate: Date;
+      partyType: string | null;
+      partyId: string | null;
+      journalEntryId: string;
+      entryNumber: string;
+      description: string | null;
+    }>
+  > {
+    const rows = await this.database.db
+      .select({
+        accountId: chartOfAccounts.id,
+        code: chartOfAccounts.code,
+        name: chartOfAccounts.name,
+        typeCode: accountType.code,
+        normalBalance: accountType.normalBalance,
+        debit: journalLine.debitAmount,
+        credit: journalLine.creditAmount,
+        entryDate: journalEntry.entryDate,
+        partyType: journalLine.partyType,
+        partyId: journalLine.partyId,
+        journalEntryId: journalEntry.id,
+        entryNumber: journalEntry.entryNumber,
+        description: journalLine.description,
+      })
+      .from(journalLine)
       .innerJoin(chartOfAccounts, eq(journalLine.accountId, chartOfAccounts.id))
       .innerJoin(accountType, eq(chartOfAccounts.accountTypeId, accountType.id))
       .innerJoin(journalEntry, eq(journalLine.journalEntryId, journalEntry.id))
@@ -595,24 +1008,39 @@ export class AccountingRepository {
     });
   }
 
-  async getPartnerLedgerLines(partyType: 'customer' | 'supplier', partyId: string): Promise<Array<{
-    id: string; debitAmount: string; creditAmount: string; description: string | null; entryDate: Date; journalEntryId: string; entryNumber: string;
-  }>> {
-    const rows = await this.database.db.select({
-      id: journalLine.id,
-      debitAmount: journalLine.debitAmount,
-      creditAmount: journalLine.creditAmount,
-      description: journalLine.description,
-      entryDate: journalEntry.entryDate,
-      journalEntryId: journalEntry.id,
-      entryNumber: journalEntry.entryNumber,
-    }).from(journalLine)
+  async getPartnerLedgerLines(
+    partyType: 'customer' | 'supplier',
+    partyId: string,
+  ): Promise<
+    Array<{
+      id: string;
+      debitAmount: string;
+      creditAmount: string;
+      description: string | null;
+      entryDate: Date;
+      journalEntryId: string;
+      entryNumber: string;
+    }>
+  > {
+    const rows = await this.database.db
+      .select({
+        id: journalLine.id,
+        debitAmount: journalLine.debitAmount,
+        creditAmount: journalLine.creditAmount,
+        description: journalLine.description,
+        entryDate: journalEntry.entryDate,
+        journalEntryId: journalEntry.id,
+        entryNumber: journalEntry.entryNumber,
+      })
+      .from(journalLine)
       .innerJoin(journalEntry, eq(journalLine.journalEntryId, journalEntry.id))
-      .where(and(
-        eq(journalEntry.status, 'posted'),
-        eq(journalLine.partyType, partyType),
-        eq(journalLine.partyId, partyId),
-      ))
+      .where(
+        and(
+          eq(journalEntry.status, 'posted'),
+          eq(journalLine.partyType, partyType),
+          eq(journalLine.partyId, partyId),
+        ),
+      )
       .orderBy(asc(journalEntry.entryDate));
 
     return rows;

@@ -5,7 +5,12 @@ import { AccountingRepository } from './accounting.repository';
 import { AccountControlsService } from './account-controls.service';
 import { BudgetService } from './budget.service';
 import { isVoucherType, voucherTypeProblem, type VoucherLine } from './voucher-types';
-import { checkDefaultAccount, DEFAULT_ACCOUNTS, type DefaultAccountSpec, type DefaultAccountStatus } from './default-accounts';
+import {
+  checkDefaultAccount,
+  DEFAULT_ACCOUNTS,
+  type DefaultAccountSpec,
+  type DefaultAccountStatus,
+} from './default-accounts';
 import { ACCOUNT_ROLES, isAccountRole, manualLineProblem, type AccountRole } from './account-roles';
 import type {
   AccountBalance,
@@ -18,22 +23,16 @@ import type {
   CompanyAccountingConfigRecord,
   CostCenterRecord,
   CreateAccountDeterminationInput,
-  CreateAccountingPeriodInput,
   CreateAccountTypeInput,
   CreateChartOfAccountsInput,
   CreateCostCenterInput,
   CreateFiscalYearInput,
-  CreateFixedAssetInput,
   CreateJournalEntryInput,
   CreateJournalLineInput,
-  DepreciationEntryRecord,
   FiscalYearRecord,
-  FixedAssetRecord,
-  FixedAssetStatus,
   JournalEntryRecord,
   PartnerLedgerReport,
   PartnerLedgerRow,
-  PostDepreciationResult,
   ProfitAndLossReport,
   TrialBalanceReport,
   UpsertCompanyAccountingConfigInput,
@@ -58,8 +57,14 @@ export class AccountingService {
     const code = input.code.trim().toLowerCase();
     if (!code) throw new AccountingValidationError('code is required');
     const existing = await this.repository.findAccountTypeByCode(code);
-    if (existing) throw new AccountingValidationError(`an account type with code "${code}" already exists`);
-    return this.repository.insertAccountType({ id: randomUUID(), code, name: input.name.trim(), normalBalance: input.normalBalance });
+    if (existing)
+      throw new AccountingValidationError(`an account type with code "${code}" already exists`);
+    return this.repository.insertAccountType({
+      id: randomUUID(),
+      code,
+      name: input.name.trim(),
+      normalBalance: input.normalBalance,
+    });
   }
 
   // --- Chart of Accounts ---
@@ -73,16 +78,23 @@ export class AccountingService {
     if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
 
     const existing = await this.repository.findAccountByCode(input.orgNodeId, code);
-    if (existing) throw new AccountingValidationError(`an account with code "${code}" already exists for this company`);
+    if (existing)
+      throw new AccountingValidationError(
+        `an account with code "${code}" already exists for this company`,
+      );
 
     const accountType = await this.repository.findAccountTypeById(input.accountTypeId);
-    if (!accountType) throw new AccountingNotFoundError(`account type ${input.accountTypeId} does not exist`);
+    if (!accountType)
+      throw new AccountingNotFoundError(`account type ${input.accountTypeId} does not exist`);
 
     if (input.parentId) {
       const parent = await this.repository.findAccountById(input.parentId);
-      if (!parent) throw new AccountingNotFoundError(`parent account ${input.parentId} does not exist`);
+      if (!parent)
+        throw new AccountingNotFoundError(`parent account ${input.parentId} does not exist`);
       if (parent.orgNodeId !== input.orgNodeId) {
-        throw new AccountingValidationError(`parent account "${parent.code}" belongs to a different company`);
+        throw new AccountingValidationError(
+          `parent account "${parent.code}" belongs to a different company`,
+        );
       }
       await this.repository.markAsParent(input.parentId);
     }
@@ -104,10 +116,12 @@ export class AccountingService {
 
   async createFiscalYear(input: CreateFiscalYearInput): Promise<FiscalYearRecord> {
     if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
-    if (!input.name || input.name.trim().length === 0) throw new AccountingValidationError('fiscal year name is required');
+    if (!input.name || input.name.trim().length === 0)
+      throw new AccountingValidationError('fiscal year name is required');
     const start = new Date(input.startDate);
     const end = new Date(input.endDate);
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) throw new AccountingValidationError('invalid start or end date');
+    if (isNaN(start.getTime()) || isNaN(end.getTime()))
+      throw new AccountingValidationError('invalid start or end date');
     if (end <= start) throw new AccountingValidationError('end date must be after start date');
 
     const fy = await this.repository.insertFiscalYear({ id: randomUUID(), ...input });
@@ -140,12 +154,18 @@ export class AccountingService {
     return this.repository.listPeriods(fiscalYearId);
   }
 
-  async setPeriodStatus(id: string, status: AccountingPeriodStatus): Promise<AccountingPeriodRecord> {
+  async setPeriodStatus(
+    id: string,
+    status: AccountingPeriodStatus,
+  ): Promise<AccountingPeriodRecord> {
     const period = await this.repository.findPeriodById(id);
     if (!period) throw new AccountingNotFoundError(`accounting period ${id} does not exist`);
     if (status === 'open') {
       const fy = await this.repository.findFiscalYearById(period.fiscalYearId);
-      if (fy?.isClosed) throw new AccountingValidationError(`مينفعش تفتح فترة "${period.name}" — السنة المالية "${fy.name}" مقفولة`);
+      if (fy?.isClosed)
+        throw new AccountingValidationError(
+          `مينفعش تفتح فترة "${period.name}" — السنة المالية "${fy.name}" مقفولة`,
+        );
     }
     return this.repository.setPeriodStatus(id, status);
   }
@@ -160,9 +180,15 @@ export class AccountingService {
     const code = input.code.trim();
     if (!code) throw new AccountingValidationError('code is required');
     const existing = await this.repository.findCostCenterByCode(input.orgNodeId, code);
-    if (existing) throw new AccountingValidationError(`cost center "${code}" already exists for this company`);
+    if (existing)
+      throw new AccountingValidationError(`cost center "${code}" already exists for this company`);
 
-    return this.repository.insertCostCenter({ id: randomUUID(), ...input, code, name: input.name.trim() });
+    return this.repository.insertCostCenter({
+      id: randomUUID(),
+      ...input,
+      code,
+      name: input.name.trim(),
+    });
   }
 
   // --- Company Accounting Config ---
@@ -170,42 +196,96 @@ export class AccountingService {
     return this.repository.findCompanyConfig(orgNodeId);
   }
 
-  async upsertCompanyConfig(input: UpsertCompanyAccountingConfigInput): Promise<CompanyAccountingConfigRecord> {
+  async upsertCompanyConfig(
+    input: UpsertCompanyAccountingConfigInput,
+  ): Promise<CompanyAccountingConfigRecord> {
     if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
     // Plan item 33: every default account given must exist, belong to this company, be a leaf, and fit its role.
     for (const spec of DEFAULT_ACCOUNTS) {
       const accountId = (input as unknown as Record<string, string | undefined>)[spec.key];
       if (!accountId) continue;
       const account = await this.repository.findAccountById(accountId);
-      const problem = checkDefaultAccount(spec, input.orgNodeId, account, account ? await this.repository.findAccountRole(accountId) : null, accountId);
+      const problem = checkDefaultAccount(
+        spec,
+        input.orgNodeId,
+        account,
+        account ? await this.repository.findAccountRole(accountId) : null,
+        accountId,
+      );
       if (problem) throw new AccountingValidationError(`${spec.label}: ${problem}`);
     }
     // Plan item 38: the two advance accounts (optional, only used when bookAdvancesSeparately is on).
     const advanceSpecs: Array<[string | undefined, DefaultAccountSpec]> = [
-      [input.defaultAdvanceReceivedAccountId, { key: 'defaultAdvanceReceivedAccountId', label: 'دفعات مقدمة من العملاء', roles: ['liability', 'current_liability'], usedBy: 'التحصيل قبل الفاتورة' }],
-      [input.defaultAdvancePaidAccountId, { key: 'defaultAdvancePaidAccountId', label: 'دفعات مقدمة للموردين', roles: ['current_asset'], usedBy: 'الدفع قبل الفاتورة' }],
+      [
+        input.defaultAdvanceReceivedAccountId,
+        {
+          key: 'defaultAdvanceReceivedAccountId',
+          label: 'دفعات مقدمة من العملاء',
+          roles: ['liability', 'current_liability'],
+          usedBy: 'التحصيل قبل الفاتورة',
+        },
+      ],
+      [
+        input.defaultAdvancePaidAccountId,
+        {
+          key: 'defaultAdvancePaidAccountId',
+          label: 'دفعات مقدمة للموردين',
+          roles: ['current_asset'],
+          usedBy: 'الدفع قبل الفاتورة',
+        },
+      ],
     ];
     for (const [accountId, spec] of advanceSpecs) {
       if (!accountId) continue;
       const account = await this.repository.findAccountById(accountId);
-      const problem = checkDefaultAccount(spec, input.orgNodeId, account, account ? await this.repository.findAccountRole(accountId) : null, accountId);
+      const problem = checkDefaultAccount(
+        spec,
+        input.orgNodeId,
+        account,
+        account ? await this.repository.findAccountRole(accountId) : null,
+        accountId,
+      );
       if (problem) throw new AccountingValidationError(`${spec.label}: ${problem}`);
     }
     return this.repository.upsertCompanyConfig({ id: randomUUID(), ...input });
   }
 
   /** Plan item 33: which of the 19 default accounts are set and valid for the company. */
-  async defaultAccountsReadiness(orgNodeId: string): Promise<{ ready: boolean; missing: number; accounts: DefaultAccountStatus[]; enforce: boolean }> {
+  async defaultAccountsReadiness(orgNodeId: string): Promise<{
+    ready: boolean;
+    missing: number;
+    accounts: DefaultAccountStatus[];
+    enforce: boolean;
+  }> {
     const config = await this.repository.findCompanyConfig(orgNodeId);
     const accounts: DefaultAccountStatus[] = [];
     for (const spec of DEFAULT_ACCOUNTS) {
       const accountId = (config?.[spec.key] as string | null | undefined) ?? null;
       const account = accountId ? await this.repository.findAccountById(accountId) : null;
-      const problem = checkDefaultAccount(spec, orgNodeId, account, accountId ? await this.repository.findAccountRole(accountId) : null, accountId);
-      accounts.push({ key: spec.key, label: spec.label, usedBy: spec.usedBy, accountId, accountCode: account?.code ?? null, ok: problem === null, problem });
+      const problem = checkDefaultAccount(
+        spec,
+        orgNodeId,
+        account,
+        accountId ? await this.repository.findAccountRole(accountId) : null,
+        accountId,
+      );
+      accounts.push({
+        key: spec.key,
+        label: spec.label,
+        usedBy: spec.usedBy,
+        accountId,
+        accountCode: account?.code ?? null,
+        ok: problem === null,
+        problem,
+      });
     }
     const missing = accounts.filter((a) => !a.ok).length;
-    return { ready: missing === 0, missing, accounts, enforce: config?.enforceDefaultAccounts ?? false };
+    return {
+      ready: missing === 0,
+      missing,
+      accounts,
+      enforce: config?.enforceDefaultAccounts ?? false,
+    };
   }
 
   // --- Account Determination ---
@@ -213,7 +293,9 @@ export class AccountingService {
     return this.repository.listAccountDeterminations(orgNodeId);
   }
 
-  async createAccountDetermination(input: CreateAccountDeterminationInput): Promise<AccountDeterminationRecord> {
+  async createAccountDetermination(
+    input: CreateAccountDeterminationInput,
+  ): Promise<AccountDeterminationRecord> {
     if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
     return this.repository.insertAccountDetermination({ id: randomUUID(), ...input });
   }
@@ -232,7 +314,9 @@ export class AccountingService {
   async createEntry(input: CreateJournalEntryInput): Promise<JournalEntryRecord> {
     if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
     if (!input.lines || input.lines.length < 2) {
-      throw new AccountingValidationError('a journal entry needs at least two lines (double-entry)');
+      throw new AccountingValidationError(
+        'a journal entry needs at least two lines (double-entry)',
+      );
     }
     if (!input.description || input.description.trim().length === 0) {
       throw new AccountingValidationError('description is required');
@@ -251,7 +335,9 @@ export class AccountingService {
         const period = await this.repository.findPeriodByDate(fy.id, entryDate);
         if (period) {
           if (period.status !== 'open') {
-            throw new AccountingValidationError(`accounting period "${period.name}" is ${period.status}; cannot post into closed periods`);
+            throw new AccountingValidationError(
+              `accounting period "${period.name}" is ${period.status}; cannot post into closed periods`,
+            );
           }
           pId = period.id;
         }
@@ -267,14 +353,25 @@ export class AccountingService {
       if (!Number.isFinite(debit) || debit < 0 || !Number.isFinite(credit) || credit < 0) {
         throw new AccountingValidationError('debit and credit amounts cannot be negative');
       }
-      if (debit > 0 && credit > 0) throw new AccountingValidationError('a single line cannot have both a debit and a credit amount');
-      if (debit === 0 && credit === 0) throw new AccountingValidationError('every line must have either a debit or a credit amount');
+      if (debit > 0 && credit > 0)
+        throw new AccountingValidationError(
+          'a single line cannot have both a debit and a credit amount',
+        );
+      if (debit === 0 && credit === 0)
+        throw new AccountingValidationError(
+          'every line must have either a debit or a credit amount',
+        );
 
       const account = await this.repository.findAccountById(line.accountId);
       if (!account) throw new AccountingNotFoundError(`account ${line.accountId} does not exist`);
-      if (!account.isLeaf) throw new AccountingValidationError(`account ${account.code} is a parent account and cannot receive direct postings`);
+      if (!account.isLeaf)
+        throw new AccountingValidationError(
+          `account ${account.code} is a parent account and cannot receive direct postings`,
+        );
       if (account.orgNodeId !== input.orgNodeId) {
-        throw new AccountingValidationError(`account "${account.code}" belongs to a different company than this journal entry`);
+        throw new AccountingValidationError(
+          `account "${account.code}" belongs to a different company than this journal entry`,
+        );
       }
       // Plan item 32: role behaviour on hand-made entries (system postings keep their own rules).
       if (!input.isAutoGenerated) {
@@ -282,22 +379,31 @@ export class AccountingService {
         const typedRole = role && isAccountRole(role) ? role : null;
         const problem = manualLineProblem({ code: account.code, role: typedRole }, line);
         if (problem) throw new AccountingValidationError(problem);
-        voucherLines.push({ role: typedRole, accountId: account.id, hasParty: Boolean(line.partyType && line.partyId) });
+        voucherLines.push({
+          role: typedRole,
+          accountId: account.id,
+          hasParty: Boolean(line.partyType && line.partyId),
+        });
       }
     }
 
     // Plan item 34: each of the 17 entry types has its own rule (checked on hand-made entries).
     if (!input.isAutoGenerated && input.voucherType && input.voucherType !== 'journal_entry') {
-      if (!isVoucherType(input.voucherType)) throw new AccountingValidationError(`unknown voucherType "${input.voucherType}"`);
+      if (!isVoucherType(input.voucherType))
+        throw new AccountingValidationError(`unknown voucherType "${input.voucherType}"`);
       const config = await this.repository.findCompanyConfig(input.orgNodeId);
       const problem = voucherTypeProblem(input.voucherType, voucherLines, {
-        reference: input.reference, writeOffAccountId: config?.defaultWriteOffAccountId, exchangeAccountId: config?.defaultExchangeGainLossAccountId,
+        reference: input.reference,
+        writeOffAccountId: config?.defaultWriteOffAccountId,
+        exchangeAccountId: config?.defaultExchangeGainLossAccountId,
       });
       if (problem) throw new AccountingValidationError(problem);
     }
 
     // Plan item 40: budgets are checked before anything is written ("stop" throws, "warn" rides back on the entry).
-    const budgetWarnings = this.budgets ? await this.budgets.check(input.orgNodeId, entryDate, input.lines) : [];
+    const budgetWarnings = this.budgets
+      ? await this.budgets.check(input.orgNodeId, entryDate, input.lines)
+      : [];
 
     const sequence = (await this.repository.countEntries()) + 1;
     const year = entryDate.getFullYear();
@@ -317,9 +423,13 @@ export class AccountingService {
   async postEntry(id: string): Promise<JournalEntryRecord> {
     const entry = await this.repository.findEntryById(id);
     if (!entry) throw new AccountingNotFoundError(`journal entry ${id} does not exist`);
-    if (entry.status !== 'draft') throw new AccountingValidationError(`journal entry ${id} is "${entry.status}" and cannot be posted (must be "draft")`);
+    if (entry.status !== 'draft')
+      throw new AccountingValidationError(
+        `journal entry ${id} is "${entry.status}" and cannot be posted (must be "draft")`,
+      );
     // Plan item 36: the period may have been closed (or the books frozen) since the draft was written.
-    if (entry.orgNodeId) await this.assertOpenForPosting(entry.orgNodeId, new Date(entry.entryDate));
+    if (entry.orgNodeId)
+      await this.assertOpenForPosting(entry.orgNodeId, new Date(entry.entryDate));
 
     let totalDebit = 0;
     let totalCredit = 0;
@@ -328,14 +438,22 @@ export class AccountingService {
       totalCredit += Number(line.creditAmount);
     }
     if (Math.abs(totalDebit - totalCredit) > 0.0001) {
-      throw new AccountingValidationError(`journal entry does not balance: total debit ${totalDebit.toFixed(2)} != total credit ${totalCredit.toFixed(2)}`);
+      throw new AccountingValidationError(
+        `journal entry does not balance: total debit ${totalDebit.toFixed(2)} != total credit ${totalCredit.toFixed(2)}`,
+      );
     }
 
     if (this.controls) await this.controls.checkAtPosting(entry);
     // Plan item 40: re-checked at posting — other entries may have used the budget since the draft was written.
-    const budgetWarnings = this.budgets && entry.orgNodeId
-      ? await this.budgets.check(entry.orgNodeId, new Date(entry.entryDate), entry.lines, entry.id)
-      : [];
+    const budgetWarnings =
+      this.budgets && entry.orgNodeId
+        ? await this.budgets.check(
+            entry.orgNodeId,
+            new Date(entry.entryDate),
+            entry.lines,
+            entry.id,
+          )
+        : [];
     const posted = await this.repository.setEntryStatus(id, 'posted');
     return budgetWarnings.length > 0 ? { ...posted, budgetWarnings } : posted;
   }
@@ -343,11 +461,17 @@ export class AccountingService {
   async cancelEntry(id: string): Promise<JournalEntryRecord> {
     const entry = await this.repository.findEntryById(id);
     if (!entry) throw new AccountingNotFoundError(`journal entry ${id} does not exist`);
-    if (entry.status === 'posted') throw new AccountingValidationError(`journal entry ${id} is already posted and cannot be cancelled (reverse it with a new entry instead)`);
+    if (entry.status === 'posted')
+      throw new AccountingValidationError(
+        `journal entry ${id} is already posted and cannot be cancelled (reverse it with a new entry instead)`,
+      );
     // Plan item 31: an entry produced by a source document lives and dies with that document.
     if (entry.isAutoGenerated || entry.sourceEventType) {
       throw new AccountingValidationError(
-        `القيد ${entry.entryNumber} اتعمل تلقائيًا من مستند (${entry.sourceEventType ?? 'auto'} ${entry.reference ?? ''}) — مينفعش يتلغي لوحده، بيتلغي مع مستنده الأصلي بس`.replace(' )', ')'),
+        `القيد ${entry.entryNumber} اتعمل تلقائيًا من مستند (${entry.sourceEventType ?? 'auto'} ${entry.reference ?? ''}) — مينفعش يتلغي لوحده، بيتلغي مع مستنده الأصلي بس`.replace(
+          ' )',
+          ')',
+        ),
       );
     }
     return this.repository.setEntryStatus(id, 'cancelled');
@@ -359,23 +483,41 @@ export class AccountingService {
    */
   private async assertOpenForPosting(orgNodeId: string, date: Date): Promise<void> {
     const config = await this.repository.findCompanyConfig(orgNodeId);
-    if (config?.accountsFrozenUntil && date.getTime() <= new Date(config.accountsFrozenUntil).getTime()) {
-      throw new AccountingValidationError(`الدفاتر مجمّدة لحد ${new Date(config.accountsFrozenUntil).toISOString().slice(0, 10)} — مينفعش قيد بتاريخ ${date.toISOString().slice(0, 10)}`);
+    if (
+      config?.accountsFrozenUntil &&
+      date.getTime() <= new Date(config.accountsFrozenUntil).getTime()
+    ) {
+      throw new AccountingValidationError(
+        `الدفاتر مجمّدة لحد ${new Date(config.accountsFrozenUntil).toISOString().slice(0, 10)} — مينفعش قيد بتاريخ ${date.toISOString().slice(0, 10)}`,
+      );
     }
     const fy = await this.repository.findFiscalYearByDate(orgNodeId, date);
     if (!fy) return;
-    if (fy.isClosed) throw new AccountingValidationError(`السنة المالية "${fy.name}" مقفولة — مينفعش قيود بتاريخ ${date.toISOString().slice(0, 10)}`);
+    if (fy.isClosed)
+      throw new AccountingValidationError(
+        `السنة المالية "${fy.name}" مقفولة — مينفعش قيود بتاريخ ${date.toISOString().slice(0, 10)}`,
+      );
     const period = await this.repository.findPeriodByDate(fy.id, date);
     if (period && period.status !== 'open') {
-      throw new AccountingValidationError(`accounting period "${period.name}" is ${period.status}; cannot post into closed periods`);
+      throw new AccountingValidationError(
+        `accounting period "${period.name}" is ${period.status}; cannot post into closed periods`,
+      );
     }
   }
 
   async getAccountBalances(): Promise<AccountBalance[]> {
     const rows = await this.repository.listAllPostedLinesWithAccounts();
-    const byAccount = new Map<string, { code: string; name: string; debit: number; credit: number }>();
+    const byAccount = new Map<
+      string,
+      { code: string; name: string; debit: number; credit: number }
+    >();
     for (const row of rows) {
-      const existing = byAccount.get(row.accountId) ?? { code: row.code, name: row.name, debit: 0, credit: 0 };
+      const existing = byAccount.get(row.accountId) ?? {
+        code: row.code,
+        name: row.name,
+        debit: 0,
+        credit: 0,
+      };
       existing.debit += Number(row.debit);
       existing.credit += Number(row.credit);
       byAccount.set(row.accountId, existing);
@@ -390,133 +532,30 @@ export class AccountingService {
     }));
   }
 
-  // ==================== FIXED ASSETS & DEPRECIATION LOGIC ====================
-
-  async getFixedAssets(orgNodeId?: string): Promise<FixedAssetRecord[]> {
-    return this.repository.listFixedAssets(orgNodeId);
-  }
-
-  async getFixedAsset(id: string): Promise<FixedAssetRecord> {
-    const asset = await this.repository.findFixedAssetById(id);
-    if (!asset) throw new AccountingNotFoundError(`fixed asset ${id} does not exist`);
-    return asset;
-  }
-
-  async createFixedAsset(input: CreateFixedAssetInput): Promise<FixedAssetRecord> {
-    if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
-    if (!input.assetCode || input.assetCode.trim().length === 0) throw new AccountingValidationError('assetCode is required');
-    if (!input.assetName || input.assetName.trim().length === 0) throw new AccountingValidationError('assetName is required');
-
-    const cost = Number(input.purchaseCost);
-    if (!Number.isFinite(cost) || cost <= 0) throw new AccountingValidationError('purchaseCost must be a positive number');
-
-    const life = input.usefulLifeMonths;
-    if (!Number.isInteger(life) || life <= 0) throw new AccountingValidationError('usefulLifeMonths must be a positive integer');
-
-    const existing = await this.repository.findFixedAssetByCode(input.orgNodeId, input.assetCode.trim());
-    if (existing) throw new AccountingValidationError(`fixed asset with code "${input.assetCode}" already exists for this company`);
-
-    // Plan item 32: when the accounts carry a role it must be the right one (no role = legacy, allowed).
-    const expected: Array<[string, readonly AccountRole[], string]> = [
-      [input.assetAccountId, ['fixed_asset', 'capital_work_in_progress'], 'حساب الأصل'],
-      [input.accumulatedDepreciationAccountId, ['accumulated_depreciation'], 'حساب مجمع الإهلاك'],
-      [input.depreciationExpenseAccountId, ['depreciation'], 'حساب مصروف الإهلاك'],
-    ];
-    for (const [accountId, roles, label] of expected) {
-      const role = await this.repository.findAccountRole(accountId);
-      if (role && !roles.includes(role as AccountRole)) {
-        throw new AccountingValidationError(`${label} نوعه "${ACCOUNT_ROLES[role as AccountRole]?.label ?? role}" — المفروض ${roles.map((r) => ACCOUNT_ROLES[r].label).join(' أو ')}`);
-      }
-    }
-
-    return this.repository.insertFixedAsset({
-      ...input,
-      id: randomUUID(),
-      assetCode: input.assetCode.trim(),
-      assetName: input.assetName.trim(),
-    });
-  }
-
-  async postAssetDepreciation(assetId: string, periodDateStr?: string): Promise<PostDepreciationResult> {
-    const asset = await this.getFixedAsset(assetId);
-    if (asset.status !== 'active') {
-      throw new AccountingValidationError(`fixed asset "${asset.assetName}" is ${asset.status} and cannot be depreciated`);
-    }
-
-    const totalCost = Number(asset.purchaseCost);
-    const salvage = Number(asset.salvageValue ?? '0');
-    const depreciableCost = totalCost - salvage;
-    const currentDepreciated = Number(asset.totalDepreciated ?? '0');
-    const remainingToDepreciate = depreciableCost - currentDepreciated;
-
-    if (remainingToDepreciate <= 0) {
-      await this.repository.updateFixedAssetDepreciation(asset.id, asset.totalDepreciated, 'fully_depreciated');
-      throw new AccountingValidationError(`fixed asset "${asset.assetName}" is already fully depreciated`);
-    }
-
-    const monthlyAmount = depreciableCost / asset.usefulLifeMonths;
-    const actualDepreciationAmount = Math.min(monthlyAmount, remainingToDepreciate);
-    const newTotalDepreciated = (currentDepreciated + actualDepreciationAmount).toFixed(4);
-
-    const entryDate = periodDateStr ? new Date(periodDateStr) : new Date();
-
-    const draftJournal = await this.createEntry({
-      orgNodeId: asset.orgNodeId,
-      description: `[Auto] قسط إهلاك شهري لأصل: ${asset.assetName} (${asset.assetCode})`,
-      reference: `DEP-${asset.assetCode}`,
-      entryDate: entryDate.toISOString(),
-      isAutoGenerated: true,
-      idempotencyKey: `asset-depr-${asset.id}-${entryDate.getFullYear()}-${entryDate.getMonth() + 1}`,
-      sourceEventType: 'asset_depreciation',
-      lines: [
-        {
-          accountId: asset.depreciationExpenseAccountId,
-          debitAmount: actualDepreciationAmount.toFixed(4),
-          creditAmount: '0',
-          description: `[Auto] مصروف إهلاك: ${asset.assetName}`,
-          costCenterId: asset.costCenterId ?? undefined,
-        },
-        {
-          accountId: asset.accumulatedDepreciationAccountId,
-          debitAmount: '0',
-          creditAmount: actualDepreciationAmount.toFixed(4),
-          description: `[Auto] مجمع إهلاك: ${asset.assetName}`,
-        },
-      ],
-    });
-
-    const postedJournal = await this.postEntry(draftJournal.id);
-
-    const deEntry = await this.repository.insertDepreciationEntry({
-      id: randomUUID(),
-      assetId: asset.id,
-      periodId: postedJournal.periodId ?? null,
-      entryDate,
-      depreciationAmount: actualDepreciationAmount.toFixed(4),
-      accumulatedAmountAfter: newTotalDepreciated,
-      journalEntryId: postedJournal.id,
-    });
-
-    const newStatus: FixedAssetStatus = Number(newTotalDepreciated) >= depreciableCost ? 'fully_depreciated' : 'active';
-    await this.repository.updateFixedAssetDepreciation(asset.id, newTotalDepreciated, newStatus);
-
-    const updatedAsset = await this.getFixedAsset(asset.id);
-
-    return {
-      asset: updatedAsset,
-      depreciationEntry: deEntry,
-      journalEntry: postedJournal,
-    };
-  }
-
   // ==================== FINANCIAL REPORTS LOGIC ====================
 
-  async getTrialBalance(orgNodeId: string, start?: string, end?: string): Promise<TrialBalanceReport> {
-    const lines = await this.repository.listAllPostedLinesWithDetails({ orgNodeId, startDate: start, endDate: end });
-    const byAccount = new Map<string, { code: string; name: string; debit: number; credit: number }>();
+  async getTrialBalance(
+    orgNodeId: string,
+    start?: string,
+    end?: string,
+  ): Promise<TrialBalanceReport> {
+    const lines = await this.repository.listAllPostedLinesWithDetails({
+      orgNodeId,
+      startDate: start,
+      endDate: end,
+    });
+    const byAccount = new Map<
+      string,
+      { code: string; name: string; debit: number; credit: number }
+    >();
 
     for (const l of lines) {
-      const current = byAccount.get(l.accountId) ?? { code: l.code, name: l.name, debit: 0, credit: 0 };
+      const current = byAccount.get(l.accountId) ?? {
+        code: l.code,
+        name: l.name,
+        debit: 0,
+        credit: 0,
+      };
       current.debit += Number(l.debit);
       current.credit += Number(l.credit);
       byAccount.set(l.accountId, current);
@@ -550,14 +589,25 @@ export class AccountingService {
     };
   }
 
-  async getProfitAndLoss(orgNodeId: string, start?: string, end?: string, excludeClosingEntries = true): Promise<ProfitAndLossReport> {
-    let lines = await this.repository.listAllPostedLinesWithDetails({ orgNodeId, startDate: start, endDate: end });
+  async getProfitAndLoss(
+    orgNodeId: string,
+    start?: string,
+    end?: string,
+    excludeClosingEntries = true,
+  ): Promise<ProfitAndLossReport> {
+    let lines = await this.repository.listAllPostedLinesWithDetails({
+      orgNodeId,
+      startDate: start,
+      endDate: end,
+    });
     // Plan item 36: the year-closing entry zeroes P&L into retained earnings; the P&L report shows the year as it was.
     if (excludeClosingEntries) {
-      const closing = new Set(await this.repository.listEntryIdsBySourceForCompany(orgNodeId, 'period_closing'));
+      const closing = new Set(
+        await this.repository.listEntryIdsBySourceForCompany(orgNodeId, 'period_closing'),
+      );
       if (closing.size > 0) lines = lines.filter((l) => !closing.has(l.journalEntryId));
     }
-    
+
     let revenueSum = 0;
     let cogsSum = 0;
     let expenseSum = 0;
@@ -593,13 +643,22 @@ export class AccountingService {
       grossProfit: grossProfit.toFixed(4),
       totalExpenses: expenseSum.toFixed(4),
       netProfit: netProfit.toFixed(4),
-      revenueDetails: Array.from(revMap.entries()).map(([name, val]) => ({ accountName: name, balance: val.toFixed(4) })),
-      expenseDetails: Array.from(expMap.entries()).map(([name, val]) => ({ accountName: name, balance: val.toFixed(4) })),
+      revenueDetails: Array.from(revMap.entries()).map(([name, val]) => ({
+        accountName: name,
+        balance: val.toFixed(4),
+      })),
+      expenseDetails: Array.from(expMap.entries()).map(([name, val]) => ({
+        accountName: name,
+        balance: val.toFixed(4),
+      })),
     };
   }
 
   async getBalanceSheet(orgNodeId: string, dateStr: string): Promise<BalanceSheetReport> {
-    const lines = await this.repository.listAllPostedLinesWithDetails({ orgNodeId, endDate: dateStr });
+    const lines = await this.repository.listAllPostedLinesWithDetails({
+      orgNodeId,
+      endDate: dateStr,
+    });
     // Closed years already sit in retained earnings: only the not-yet-closed profit is added below.
     const pnl = await this.getProfitAndLoss(orgNodeId, undefined, dateStr, false);
 
@@ -629,7 +688,10 @@ export class AccountingService {
 
     const currentNetProfit = Number(pnl.netProfit);
     equitySum += currentNetProfit;
-    eqMap.set('صافي أرباح الفترة الحالية', (eqMap.get('صافي أرباح الفترة الحالية') ?? 0) + currentNetProfit);
+    eqMap.set(
+      'صافي أرباح الفترة الحالية',
+      (eqMap.get('صافي أرباح الفترة الحالية') ?? 0) + currentNetProfit,
+    );
 
     const totalLiabilitiesAndEquity = liabilitiesSum + equitySum;
 
@@ -641,13 +703,27 @@ export class AccountingService {
       totalEquity: equitySum.toFixed(4),
       totalLiabilitiesAndEquity: totalLiabilitiesAndEquity.toFixed(4),
       isBalanced: Math.abs(assetsSum - totalLiabilitiesAndEquity) < 0.001,
-      assets: Array.from(assetMap.entries()).map(([name, val]) => ({ accountName: name, balance: val.toFixed(4) })),
-      liabilities: Array.from(liabMap.entries()).map(([name, val]) => ({ accountName: name, balance: val.toFixed(4) })),
-      equity: Array.from(eqMap.entries()).map(([name, val]) => ({ accountName: name, balance: val.toFixed(4) })),
+      assets: Array.from(assetMap.entries()).map(([name, val]) => ({
+        accountName: name,
+        balance: val.toFixed(4),
+      })),
+      liabilities: Array.from(liabMap.entries()).map(([name, val]) => ({
+        accountName: name,
+        balance: val.toFixed(4),
+      })),
+      equity: Array.from(eqMap.entries()).map(([name, val]) => ({
+        accountName: name,
+        balance: val.toFixed(4),
+      })),
     };
   }
 
-  async getPartnerLedger(partyType: 'customer' | 'supplier', partyId: string, start?: string, end?: string): Promise<PartnerLedgerReport> {
+  async getPartnerLedger(
+    partyType: 'customer' | 'supplier',
+    partyId: string,
+    start?: string,
+    end?: string,
+  ): Promise<PartnerLedgerReport> {
     const rawLines = await this.repository.getPartnerLedgerLines(partyType, partyId);
 
     let openingBal = 0;
@@ -661,7 +737,7 @@ export class AccountingService {
       const entryDate = row.entryDate;
       const dr = Number(row.debitAmount);
       const cr = Number(row.creditAmount);
-      const effect = partyType === 'customer' ? (dr - cr) : (cr - dr);
+      const effect = partyType === 'customer' ? dr - cr : cr - dr;
 
       if (start && entryDate < new Date(start)) {
         openingBal += effect;
@@ -699,7 +775,11 @@ export class AccountingService {
 
   // ==================== VAT RETURN & TAX SETTLEMENT ENGINE ====================
 
-  async getVatReport(orgNodeId: string, startDate?: string, endDate?: string): Promise<VatReportSummary> {
+  async getVatReport(
+    orgNodeId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<VatReportSummary> {
     const config = await this.repository.findCompanyConfig(orgNodeId);
     const determinations = await this.repository.listAccountDeterminations(orgNodeId);
 
@@ -709,7 +789,11 @@ export class AccountingService {
     const outputTaxDet = determinations.find((d) => d.accountPurpose === 'output_tax');
     const outputTaxAccountId = outputTaxDet?.accountId ?? config?.defaultOutputTaxAccountId;
 
-    const lines = await this.repository.listAllPostedLinesWithDetails({ orgNodeId, startDate, endDate });
+    const lines = await this.repository.listAllPostedLinesWithDetails({
+      orgNodeId,
+      startDate,
+      endDate,
+    });
 
     let totalInputTax = 0;
     let totalOutputTax = 0;
@@ -754,7 +838,9 @@ export class AccountingService {
     const outputTaxAccountId = outputTaxDet?.accountId ?? config?.defaultOutputTaxAccountId;
 
     if (!inputTaxAccountId || !outputTaxAccountId) {
-      throw new AccountingValidationError('حسابات ضريبة المدخلات وضريبة المخرجات يجب تعيينها أولاً للشركة');
+      throw new AccountingValidationError(
+        'حسابات ضريبة المدخلات وضريبة المخرجات يجب تعيينها أولاً للشركة',
+      );
     }
 
     const outTax = Number(vatSummary.totalOutputTax);
