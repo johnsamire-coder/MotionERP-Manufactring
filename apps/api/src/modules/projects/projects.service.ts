@@ -171,6 +171,14 @@ export class ProjectsService implements OnModuleInit, OnModuleDestroy {
     return due.map((p) => p.code);
   }
 
+  /** Queues any e-mail (used by workflow automations, plan item 50) and tries to send it at once. */
+  async queueEmail(recipients: string[], subject: string, body: string, sourceType: string, sourceId?: string): Promise<typeof emailOutbox.$inferSelect> {
+    this.checkRecipients(recipients);
+    if (recipients.length === 0) throw new ProjectsValidationError('at least one recipient is required');
+    const row = (await this.database.db.insert(emailOutbox).values({ recipients, subject, body, sourceType, sourceId: sourceId ?? null }).returning())[0]!;
+    return this.deliver(row.id);
+  }
+
   async outbox(): Promise<Array<typeof emailOutbox.$inferSelect>> {
     return this.database.db.select().from(emailOutbox).orderBy(desc(emailOutbox.createdAt)).limit(100);
   }

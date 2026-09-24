@@ -66,3 +66,29 @@ export const workflowHistory = workflowSchema.table('workflow_history', {
   comment: text('comment'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index('workflow_history_instance_idx').on(t.instanceId)]);
+
+/** Plan item 50: automatic tasks run when a transition is taken (e-mail, webhook, print). */
+export const workflowTransitionTask = workflowSchema.table('transition_task', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  workflowId: uuid('workflow_id').notNull().references(() => workflowDefinition.id, { onDelete: 'cascade' }),
+  action: text('action').notNull(),
+  taskType: text('task_type').notNull(),
+  config: jsonb('config').$type<Record<string, unknown>>().notNull(),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  check('transition_task_type_valid', sql`${t.taskType} in ('email', 'webhook', 'print')`),
+  index('transition_task_workflow_idx').on(t.workflowId, t.action),
+]);
+
+export const workflowTaskRun = workflowSchema.table('task_run', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  taskId: uuid('task_id').notNull().references(() => workflowTransitionTask.id, { onDelete: 'cascade' }),
+  instanceId: uuid('instance_id').notNull().references(() => workflowInstance.id, { onDelete: 'cascade' }),
+  status: text('status').notNull(),
+  detail: text('detail'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  check('task_run_status_valid', sql`${t.status} in ('ok', 'failed')`),
+  index('task_run_instance_idx').on(t.instanceId),
+]);

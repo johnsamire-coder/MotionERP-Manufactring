@@ -3,6 +3,7 @@ import { and, asc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import { requestContext } from '../../core/request-context/request-context';
 import { AuthService } from '../auth/auth.service';
+import { WorkflowAutomationService } from './workflow-automation.service';
 import { evaluateCondition, validateCondition, type Condition } from './workflow.condition';
 import { WorkflowForbiddenError, WorkflowNotFoundError, WorkflowValidationError } from './workflow.errors';
 import { workflowDefinition, workflowHistory, workflowInstance, workflowState, workflowTransition } from './workflow.schema';
@@ -45,7 +46,11 @@ export function validateDefinition(d: DefinitionInput): void {
 /** Generic workflow engine (plan item 42). */
 @Injectable()
 export class WorkflowService {
-  constructor(private readonly database: DatabaseService, @Optional() private readonly auth?: AuthService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    @Optional() private readonly auth?: AuthService,
+    @Optional() private readonly automation?: WorkflowAutomationService,
+  ) {}
 
   async createDefinition(d: DefinitionInput): Promise<{ id: string }> {
     validateDefinition(d);
@@ -117,7 +122,13 @@ export class WorkflowService {
     const db = this.database.db;
     await db.update(workflowInstance).set({ currentState: t.toState, context: data, updatedAt: new Date() }).where(eq(workflowInstance.id, inst.id));
     await db.insert(workflowHistory).values({ instanceId: inst.id, fromState: inst.currentState, toState: t.toState, action, userId: requestContext.currentUserId() ?? null, comment: input.comment?.trim() || null });
-    return this.view(inst.id);
+    const view = await this.view(inst.id);
+    // Plan item 50: tasks tied to this transition run in the background.
+    this.automation?.dispatch({
+      instanceId: inst.id, workflowId: inst.workflowId, workflowCode: view.workflowCode, documentType: inst.documentType, documentId: inst.documentId,
+      action, fromState: inst.currentState, toState: t.toState, context: data,
+    });
+    return view;
   }
 
   private blockReason(t: typeof workflowTransition.$inferSelect, roles: string[] | null, data: Record<string, unknown>): { kind: 'role' | 'condition'; message: string } | null {

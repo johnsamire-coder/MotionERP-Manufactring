@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, index, pgSchema, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, index, integer, jsonb, pgSchema, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
 export const printingSchema = pgSchema('printing');
 
@@ -38,4 +38,39 @@ export const printLog = printingSchema.table('print_log', {
 }, (t) => [
   index('print_log_document_idx').on(t.documentType, t.documentId),
   check('print_log_doc_type_not_blank', sql`length(${t.documentType}) > 0`),
+]);
+
+/** Plan item 50: network printers reached over RAW / JetDirect (TCP 9100). */
+export const printer = printingSchema.table('printer', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  host: text('host').notNull(),
+  port: integer('port').notNull().default(9100),
+  /** What is sent: "text" = the document as plain UTF-8 text (receipt / line printers). */
+  payloadFormat: text('payload_format').notNull().default('text'),
+  isActive: boolean('is_active').notNull().default(true),
+}, (t) => [
+  unique('printer_name_unique').on(t.name),
+  check('printer_port_range', sql`${t.port} between 1 and 65535`),
+  check('printer_payload_valid', sql`${t.payloadFormat} in ('text')`),
+]);
+
+/** Plan item 50: bulk print jobs rendered in the background. */
+export const printJob = printingSchema.table('print_job', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  documentType: text('document_type').notNull(),
+  documentIds: jsonb('document_ids').$type<string[]>().notNull(),
+  printFormatId: uuid('print_format_id').references(() => printFormat.id, { onDelete: 'set null' }),
+  printerId: uuid('printer_id').references(() => printer.id, { onDelete: 'set null' }),
+  status: text('status').notNull().default('queued'),
+  done: integer('done').notNull().default(0),
+  skipped: jsonb('skipped').$type<Array<{ documentId: string; reason: string }>>().notNull().default(sql`'[]'::jsonb`),
+  output: text('output'),
+  error: text('error'),
+  userId: uuid('user_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+}, (t) => [
+  check('print_job_status_valid', sql`${t.status} in ('queued', 'running', 'done', 'failed')`),
+  index('print_job_status_idx').on(t.status),
 ]);

@@ -694,6 +694,13 @@
       "when": 1790238872241,
       "tag": "0098_swift_sunspot",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1790250782169,
+      "tag": "0099_slippery_devos",
+      "breakpoints": true
     }
   ]
 }
