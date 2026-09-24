@@ -708,6 +708,13 @@
       "when": 1790253704769,
       "tag": "0100_legacy_fixed_assets_to_assets",
       "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "7",
+      "when": 1790256535982,
+      "tag": "0101_default_cost_center_per_company",
+      "breakpoints": true
     }
   ]
 }

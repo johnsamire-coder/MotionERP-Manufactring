@@ -247,7 +247,11 @@ export class AccountingService {
       );
       if (problem) throw new AccountingValidationError(`${spec.label}: ${problem}`);
     }
-    return this.repository.upsertCompanyConfig({ id: randomUUID(), ...input });
+    const saved = await this.repository.upsertCompanyConfig({ id: randomUUID(), ...input });
+    if (saved.defaultCostCenterId || !this.controls) return saved;
+    // A company always has a default cost center (its "MAIN" one unless one was chosen).
+    await this.controls.ensureDefaultCostCenter(input.orgNodeId);
+    return (await this.repository.findCompanyConfig(input.orgNodeId)) ?? saved;
   }
 
   /** Plan item 33: which of the 19 default accounts are set and valid for the company. */
