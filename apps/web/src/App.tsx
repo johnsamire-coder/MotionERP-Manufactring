@@ -73,6 +73,7 @@ import RbacPermissionsPage from './pages/RbacPermissionsPage';
 import UserRestrictionsPage from './app/pages/UserRestrictionsPage';
 import RfqPage from './app/pages/RfqPage';
 import ContactsPage from './app/pages/ContactsPage';
+import SubcontractingPage from './app/pages/SubcontractingPage';
 import { BalanceSheetPage as LedgerReportsPage } from './app/pages/BalanceSheetPage';
 
 // ── 2. شاشات التخطيط والتصنيع (الشغل الأصلي - ERPNext parity) ──
@@ -183,6 +184,7 @@ export const App: React.FC = () => {
         { id: 'bom-update-tool', label: 'أداة تحديث BOM', icon: Wrench },
         { id: 'work-order', label: 'أوامر التشغيل', icon: Factory },
         { id: 'production-ops', label: 'عمليات الورشة وبطاقات العمل', icon: GitBranch },
+        { id: 'subcontracting', label: 'التصنيع بالباطن', icon: Factory },
         { id: 'sales-forecast', label: 'توقعات المبيعات', icon: TrendingUp },
         { id: 'production-plan', label: 'خطة الإنتاج', icon: CalendarRange },
         { id: 'mps', label: 'الجدول الرئيسي للإنتاج (MPS)', icon: CalendarRange },
@@ -383,6 +385,7 @@ export const App: React.FC = () => {
         {currentTab === 'bom-creator' && <BomCreatorPage />}
         {currentTab === 'bom-update-tool' && <BomUpdateToolPage />}
         {currentTab === 'work-order' && <WorkOrderPage />}
+        {currentTab === 'subcontracting' && <SubcontractingPage />}
         {currentTab === 'production-ops' && <ProductionOpsPage />}
         {currentTab === 'sales-forecast' && <SalesForecastPage />}
         {currentTab === 'production-plan' && <ProductionPlanPage />}
