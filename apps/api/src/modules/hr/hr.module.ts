@@ -5,14 +5,16 @@ import { LeaveController } from './leave.controller';
 import { LeaveService } from './leave.service';
 import { FinalSettlementController } from './final-settlement.controller';
 import { FinalSettlementService } from './final-settlement.service';
+import { ProbationController } from './probation.controller';
+import { ProbationService } from './probation.service';
 import { HrController } from './hr.controller';
 import { HrRepository } from './hr.repository';
 import { HrService } from './hr.service';
 
 @Module({
   imports: [AuthModule, OrganizationModule],
-  controllers: [HrController, LeaveController, FinalSettlementController],
-  providers: [HrService, HrRepository, LeaveService, FinalSettlementService],
+  controllers: [HrController, LeaveController, FinalSettlementController, ProbationController],
+  providers: [HrService, HrRepository, LeaveService, FinalSettlementService, ProbationService],
   exports: [HrService],
 })
 export class HrModule {}

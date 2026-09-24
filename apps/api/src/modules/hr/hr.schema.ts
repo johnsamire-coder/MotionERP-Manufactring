@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { type AnyPgColumn, boolean, check, index, integer, numeric, pgSchema, text, timestamp, uniqueIndex, uuid, unique } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, boolean, check, date, index, integer, numeric, pgSchema, text, timestamp, uniqueIndex, uuid, unique } from 'drizzle-orm/pg-core';
 import { orgNode } from '../organization/organization.schema';
 
 export const hrSchema = pgSchema('hr');
@@ -18,12 +18,18 @@ export const employee = hrSchema.table('employee', {
   reportsTo: uuid('reports_to').references((): AnyPgColumn => employee.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   /** Last working day, set when the employee leaves (plan items 10/11). */
   relievingDate: timestamp('relieving_date', { withTimezone: true }),
+  /** Probation (plan item 29): joining day, last probation day, and the day the employee was confirmed. */
+  dateOfJoining: date('date_of_joining', { mode: 'string' }),
+  probationEndDate: date('probation_end_date', { mode: 'string' }),
+  confirmationDate: date('confirmation_date', { mode: 'string' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   unique('employee_code_unique').on(t.code),
   check('employee_not_own_manager', sql`${t.reportsTo} is null or ${t.reportsTo} <> ${t.id}`),
   index('employee_reports_to_idx').on(t.reportsTo),
+  check('employee_probation_after_joining', sql`${t.probationEndDate} is null or (${t.dateOfJoining} is not null and ${t.probationEndDate} >= ${t.dateOfJoining})`),
+  check('employee_confirmation_after_joining', sql`${t.confirmationDate} is null or (${t.dateOfJoining} is not null and ${t.confirmationDate} >= ${t.dateOfJoining})`),
   check('employee_code_format', sql`${t.code} ~ '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'`),
   check('employee_name_not_blank', sql`length(btrim(${t.name})) > 0`),
   check('employee_base_salary_non_negative', sql`${t.baseSalary} >= 0`),
@@ -184,4 +190,18 @@ export const finalSettlementLine = hrSchema.table('final_settlement_line', {
   check('final_settlement_line_direction_valid', sql`${t.direction} in ('payable', 'receivable')`),
   check('final_settlement_line_amount_positive', sql`${t.amount} > 0`),
   index('final_settlement_line_settlement_idx').on(t.settlementId),
+]);
+
+/** Formal probation log (plan item 29): every start, extension and confirmation with its reason. */
+export const probationEvent = hrSchema.table('probation_event', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  employeeId: uuid('employee_id').notNull().references(() => employee.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  eventType: text('event_type').notNull(),
+  eventDate: date('event_date', { mode: 'string' }).notNull(),
+  probationEndDate: date('probation_end_date', { mode: 'string' }),
+  reason: text('reason'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  check('probation_event_type_valid', sql`${t.eventType} in ('started', 'extended', 'confirmed')`),
+  index('probation_event_employee_idx').on(t.employeeId),
 ]);
