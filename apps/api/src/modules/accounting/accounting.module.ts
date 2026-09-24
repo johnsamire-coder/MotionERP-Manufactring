@@ -1,3 +1,5 @@
+import { BudgetController } from './budget.controller';
+import { BudgetService } from './budget.service';
 import { YearEndClosingController } from './year-end-closing.controller';
 import { YearEndClosingService } from './year-end-closing.service';
 import { AccountRolesController } from './account-roles.controller';
@@ -18,8 +20,8 @@ import { AccountingService } from './accounting.service';
 import { PostingEngineService } from './posting-engine.service';
 
 @Module({
-  controllers: [OpeningEntriesController, FiscalYearClosingController, PeriodClosingController, TaxAndCustomsController, AccountingController, JournalReversalController, AccountRolesController, YearEndClosingController],
-  providers: [OpeningEntriesService, FiscalYearClosingService, PeriodClosingService, TaxAndCustomsService, AccountingService, AccountingRepository, PostingEngineService, JournalReversalService, YearEndClosingService],
+  controllers: [OpeningEntriesController, FiscalYearClosingController, PeriodClosingController, TaxAndCustomsController, AccountingController, JournalReversalController, AccountRolesController, YearEndClosingController, BudgetController],
+  providers: [OpeningEntriesService, FiscalYearClosingService, PeriodClosingService, TaxAndCustomsService, AccountingService, AccountingRepository, PostingEngineService, JournalReversalService, YearEndClosingService, BudgetService],
   exports: [AccountingService, PostingEngineService, JournalReversalService],
 })
 export class AccountingModule {}

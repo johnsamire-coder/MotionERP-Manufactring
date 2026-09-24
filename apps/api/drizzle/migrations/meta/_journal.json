@@ -631,6 +631,13 @@
       "when": 1790236576160,
       "tag": "0089_spicy_skullbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1790236787406,
+      "tag": "0090_young_green_goblin",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { AccountingNotFoundError, AccountingValidationError } from './accounting.errors';
 import { AccountingRepository } from './accounting.repository';
+import { BudgetService } from './budget.service';
 import { isVoucherType, voucherTypeProblem, type VoucherLine } from './voucher-types';
 import { checkDefaultAccount, DEFAULT_ACCOUNTS, type DefaultAccountSpec, type DefaultAccountStatus } from './default-accounts';
 import { ACCOUNT_ROLES, isAccountRole, manualLineProblem, type AccountRole } from './account-roles';
@@ -41,7 +42,10 @@ import type {
 
 @Injectable()
 export class AccountingService {
-  constructor(private readonly repository: AccountingRepository) {}
+  constructor(
+    private readonly repository: AccountingRepository,
+    @Optional() private readonly budgets?: BudgetService,
+  ) {}
 
   // --- Account Types ---
   async getAccountTypes(): Promise<AccountTypeRecord[]> {
@@ -288,17 +292,21 @@ export class AccountingService {
       if (problem) throw new AccountingValidationError(problem);
     }
 
+    // Plan item 40: budgets are checked before anything is written ("stop" throws, "warn" rides back on the entry).
+    const budgetWarnings = this.budgets ? await this.budgets.check(input.orgNodeId, entryDate, input.lines) : [];
+
     const sequence = (await this.repository.countEntries()) + 1;
     const year = entryDate.getFullYear();
     const entryNumber = `JE-${year}-${String(sequence).padStart(6, '0')}`;
 
-    return this.repository.insertEntry({
+    const inserted = await this.repository.insertEntry({
       id: randomUUID(),
       entryNumber,
       ...input,
       fiscalYearId: fyId,
       periodId: pId,
     });
+    return budgetWarnings.length > 0 ? { ...inserted, budgetWarnings } : inserted;
   }
 
   async postEntry(id: string): Promise<JournalEntryRecord> {
@@ -318,7 +326,12 @@ export class AccountingService {
       throw new AccountingValidationError(`journal entry does not balance: total debit ${totalDebit.toFixed(2)} != total credit ${totalCredit.toFixed(2)}`);
     }
 
-    return this.repository.setEntryStatus(id, 'posted');
+    // Plan item 40: re-checked at posting — other entries may have used the budget since the draft was written.
+    const budgetWarnings = this.budgets && entry.orgNodeId
+      ? await this.budgets.check(entry.orgNodeId, new Date(entry.entryDate), entry.lines, entry.id)
+      : [];
+    const posted = await this.repository.setEntryStatus(id, 'posted');
+    return budgetWarnings.length > 0 ? { ...posted, budgetWarnings } : posted;
   }
 
   async cancelEntry(id: string): Promise<JournalEntryRecord> {

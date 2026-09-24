@@ -304,3 +304,25 @@ export type DepreciationEntry = typeof depreciationEntry.$inferSelect;
 export type JournalEntryStatus = 'draft' | 'posted' | 'cancelled';
 export type AccountingPeriodStatus = 'open' | 'closed' | 'locked';
 export type FixedAssetStatus = 'active' | 'fully_depreciated' | 'disposed';
+/**
+ * Budget (plan item 40): an annual limit per expense account (optionally per cost center) with an
+ * optional monthly distribution. Checked on every journal entry — creation and posting.
+ */
+export const budget = accountingSchema.table('budget', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgNodeId: uuid('org_node_id').notNull().references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  fiscalYearId: uuid('fiscal_year_id').notNull().references(() => fiscalYear.id, { onDelete: 'cascade' }),
+  accountId: uuid('account_id').notNull().references(() => chartOfAccounts.id, { onDelete: 'restrict' }),
+  costCenterId: uuid('cost_center_id').references(() => costCenter.id, { onDelete: 'restrict' }),
+  amount: numeric('amount', { precision: 18, scale: 4 }).notNull(),
+  /** JSON array of 12 percentages (months from the fiscal-year start) adding up to 100; NULL = annual check only. */
+  monthlyPercentages: text('monthly_percentages'),
+  actionIfExceeded: text('action_if_exceeded').notNull().default('stop'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('budget_fy_account_cc_unique').on(t.fiscalYearId, t.accountId, t.costCenterId).nullsNotDistinct(),
+  check('budget_amount_non_negative', sql`${t.amount} >= 0`),
+  check('budget_action_valid', sql`${t.actionIfExceeded} in ('stop', 'warn', 'ignore')`),
+  index('idx_budget_account').on(t.accountId),
+]);
