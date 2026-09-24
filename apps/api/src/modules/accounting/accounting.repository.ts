@@ -368,6 +368,25 @@ export class AccountingRepository {
     return rows.filter((r) => r.entryStatus === 'posted').map(({ accountId, code, name, debit, credit }) => ({ accountId, code, name, debit, credit }));
   }
 
+  /** Plan item 31: links a reversal entry to the entry it reverses. */
+  async markReversal(reversalId: string, originalId: string, reason: string): Promise<void> {
+    await this.database.db.update(journalEntry).set({ reversalOfEntryId: originalId, reversalReason: reason, updatedAt: new Date() }).where(eq(journalEntry.id, reversalId));
+  }
+
+  /** The reversal link of an entry: which entry reverses it, and which entry it reverses (if any). */
+  async findReversalLinks(id: string): Promise<{ reversedById: string | null; reversalOfId: string | null; reason: string | null }> {
+    const by = await this.database.db.select({ id: journalEntry.id }).from(journalEntry).where(eq(journalEntry.reversalOfEntryId, id)).limit(1);
+    const self = await this.database.db.select({ of: journalEntry.reversalOfEntryId, reason: journalEntry.reversalReason }).from(journalEntry).where(eq(journalEntry.id, id)).limit(1);
+    return { reversedById: by[0]?.id ?? null, reversalOfId: self[0]?.of ?? null, reason: self[0]?.reason ?? null };
+  }
+
+  /** Posted entries a source document produced (by its source event type and reference). */
+  async listPostedEntryIdsBySource(sourceEventType: string, reference: string): Promise<string[]> {
+    const rows = await this.database.db.select({ id: journalEntry.id }).from(journalEntry)
+      .where(and(eq(journalEntry.sourceEventType, sourceEventType), eq(journalEntry.reference, reference), eq(journalEntry.status, 'posted')));
+    return rows.map((r) => r.id);
+  }
+
   async findEntryByIdempotencyKey(idempotencyKey: string): Promise<JournalEntryRecord | null> {
     const rows = await this.database.db.select(jeColumns).from(journalEntry).where(eq(journalEntry.idempotencyKey, idempotencyKey)).limit(1);
     if (!rows[0]) return null;
