@@ -46,3 +46,4 @@ export * from '../../../modules/accounting/tax-customs.schema';
 export * from '../../../modules/audit/audit.schema';
 export * from '../../../modules/inventory/purchase-batch-link.schema';
 export * from '../../../modules/sales/sales-serial-link.schema';
+export * from '../../../modules/workflow/workflow.schema';
