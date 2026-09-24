@@ -69,7 +69,7 @@ export function PurchaseOrderPage(): JSX.Element {
       setError(
         err instanceof ApiError
           ? err.message
-          : 'ظپط´ظ„ طھط­ظ…ظٹظ„ ط¨ظٹط§ظ†ط§طھ ظپظˆط§طھظٹط± ط§ظ„ظ…ط´طھط±ظٹط§طھ',
+          : 'فشل تحميل بيانات فواتير المشتريات',
       );
     } finally {
       setLoading(false);
@@ -135,13 +135,13 @@ export function PurchaseOrderPage(): JSX.Element {
       });
 
       setSuccess(
-        'طھظ… طھط³ط¬ظٹظ„ ظپط§طھظˆط±ط© ط§ظ„ظ…ظˆط±ط¯ ط¨ظ†ط¬ط§ط­ (ظ…ط³ظˆط¯ط© ط¬ط§ظ‡ط²ط© ظ„ظ„ظ…ط·ط§ط¨ظ‚ط© ظˆط§ظ„طھط±ط­ظٹظ„)',
+        'تم تسجيل فاتورة المورد بنجاح (مسودة جاهزة للمطابقة والترحيل)',
       );
       setShowForm(false);
       setInvoiceNumber('');
       await loadAll();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'ظپط´ظ„ طھط³ط¬ظٹظ„ ط§ظ„ظپط§طھظˆط±ط©');
+      setError(err instanceof ApiError ? err.message : 'فشل تسجيل الفاتورة');
     } finally {
       setSubmitting(false);
     }
@@ -151,11 +151,11 @@ export function PurchaseOrderPage(): JSX.Element {
     try {
       await financeApi.postPurchaseInvoice(id);
       setSuccess(
-        'طھظ… طھط±ط­ظٹظ„ ط§ظ„ظپط§طھظˆط±ط© ظˆظ‚ظپظ„ ظˆط³ظٹط· GRNI ظˆط¥ط«ط¨ط§طھ ظ…ط¯ظٹظˆظ†ظٹط© ط§ظ„ظ…ظˆط±ط¯ ظˆط¶ط±ظٹط¨ط© ط§ظ„ظ…ط¯ط®ظ„ط§طھ ط¨ظ†ط¬ط§ط­!',
+        'تم ترحيل الفاتورة وقفل وسيط GRNI وإثبات مديونية المورد وضريبة المدخلات بنجاح!',
       );
       await loadAll();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'ظپط´ظ„ طھط±ط­ظٹظ„ ط§ظ„ظپط§طھظˆط±ط©');
+      setError(err instanceof ApiError ? err.message : 'فشل ترحيل الفاتورة');
     }
   }
 
@@ -165,15 +165,15 @@ export function PurchaseOrderPage(): JSX.Element {
     <section className="module-page">
       <div className="page-intro">
         <div>
-          <span className="eyebrow">ط§ظ„ظ…ط´طھط±ظٹط§طھ ظˆط§ظ„ظ…ظˆط±ط¯ظٹظ†</span>
-          <h1>ظپظˆط§طھظٹط± ط§ظ„ظ…ط´طھط±ظٹط§طھ ظˆظ…ط·ط§ط¨ظ‚ط© GRNI</h1>
+          <span className="eyebrow">المشتريات والموردين</span>
+          <h1>فواتير المشتريات ومطابقة GRNI</h1>
           <p>
-            طھط³ط¬ظٹظ„ ظپظˆط§طھظٹط± ط§ظ„ظ…ظˆط±ط¯ظٹظ† ط§ظ„ط¶ط±ظٹط¨ظٹط© ظˆطھط³ظˆظٹط© ظˆط³ظٹط·
-            ط§ط³طھظ„ط§ظ… ط§ظ„ط¨ط¶ط§ط¹ط© ظˆط¥ط«ط¨ط§طھ ط¶ط±ظٹط¨ط© ط§ظ„ظ‚ظٹظ…ط© ط§ظ„ظ…ط¶ط§ظپط©
+            تسجيل فواتير الموردين الضريبية وتسوية وسيط
+            استلام البضاعة وإثبات ضريبة القيمة المضافة
           </p>
         </div>
         <button className="btn btn--primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'ط¥ظ„ط؛ط§ط،' : '+ طھط³ط¬ظٹظ„ ظپط§طھظˆط±ط© ظ…ظˆط±ط¯'}
+          {showForm ? 'إلغاء' : '+ تسجيل فاتورة مورد'}
         </button>
       </div>
 
@@ -190,10 +190,10 @@ export function PurchaseOrderPage(): JSX.Element {
 
       {showForm && (
         <form className="form-card" onSubmit={handleSubmit} style={{ marginBottom: 24 }}>
-          <h3>طھط³ط¬ظٹظ„ ظپط§طھظˆط±ط© ظ…ط´طھط±ظٹط§طھ ظ…ظˆط±ط¯ ط¬ط¯ظٹط¯ط©</h3>
+          <h3>تسجيل فاتورة مشتريات مورد جديدة</h3>
           <div className="form-grid">
             <label>
-              ط§ظ„ظ…ظˆط±ط¯
+              المورد
               <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} required>
                 {suppliers.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -203,16 +203,16 @@ export function PurchaseOrderPage(): JSX.Element {
               </select>
             </label>
             <label>
-              ط±ظ‚ظ… ظپط§طھظˆط±ط© ط§ظ„ظ…ظˆط±ط¯ ط§ظ„ظˆط±ظ‚ظٹط©
+              رقم فاتورة المورد الورقية
               <input
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
-                placeholder="ظ…ط«ط§ظ„: INV-SUP-8899"
+                placeholder="مثال: INV-SUP-8899"
                 required
               />
             </label>
             <label>
-              طھط§ط±ظٹط® ط§ظ„ظپط§طھظˆط±ط©
+              تاريخ الفاتورة
               <input
                 type="date"
                 value={invoiceDate}
@@ -221,7 +221,7 @@ export function PurchaseOrderPage(): JSX.Element {
               />
             </label>
             <label>
-              طھط§ط±ظٹط® ط§ظ„ط§ط³طھط­ظ‚ط§ظ‚
+              تاريخ الاستحقاق
               <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </label>
           </div>
@@ -235,7 +235,7 @@ export function PurchaseOrderPage(): JSX.Element {
               border: '1px solid #e2e8f0',
             }}
           >
-            <h4>ط£طµظ†ط§ظپ ظˆط®ط§ظ…ط§طھ ط§ظ„ظپط§طھظˆط±ط©</h4>
+            <h4>أصناف وخامات الفاتورة</h4>
             {lines.map((line, idx) => (
               <div
                 key={idx}
@@ -264,7 +264,7 @@ export function PurchaseOrderPage(): JSX.Element {
                   min="0.001"
                   value={line.quantity}
                   onChange={(e) => updateLine(idx, 'quantity', e.target.value)}
-                  placeholder="ط§ظ„ظƒظ…ظٹط©"
+                  placeholder="الكمية"
                   required
                 />
                 <input
@@ -273,7 +273,7 @@ export function PurchaseOrderPage(): JSX.Element {
                   min="0"
                   value={line.unitCost}
                   onChange={(e) => updateLine(idx, 'unitCost', e.target.value)}
-                  placeholder="ط³ط¹ط± ط§ظ„ط´ط±ط§ط،"
+                  placeholder="سعر الشراء"
                   required
                 />
                 <input
@@ -281,7 +281,7 @@ export function PurchaseOrderPage(): JSX.Element {
                   step="any"
                   value={line.taxRate}
                   onChange={(e) => updateLine(idx, 'taxRate', e.target.value)}
-                  placeholder="ط§ظ„ط¶ط±ظٹط¨ط© %"
+                  placeholder="الضريبة %"
                 />
                 <b style={{ color: '#b45309' }}>
                   {(
@@ -289,7 +289,7 @@ export function PurchaseOrderPage(): JSX.Element {
                     Number(line.unitCost || 0) *
                     (1 + Number(line.taxRate || 14) / 100)
                   ).toFixed(2)}{' '}
-                  ط¬.ظ…
+                  ج.م
                 </b>
                 <button
                   type="button"
@@ -301,7 +301,7 @@ export function PurchaseOrderPage(): JSX.Element {
               </div>
             ))}
             <button type="button" className="btn btn--sm" onClick={addLine}>
-              + ط¥ط¶ط§ظپط© ط®ط§ظ…ط©
+              + إضافة خامة
             </button>
           </div>
 
@@ -318,27 +318,27 @@ export function PurchaseOrderPage(): JSX.Element {
           >
             <div>
               <span>
-                ط§ظ„طµط§ظپظٹ:{' '}
-                <b>{netTotal.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ط¬.ظ…</b>
+                الصافي:{' '}
+                <b>{netTotal.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج.م</b>
               </span>{' '}
               |
               <span style={{ margin: '0 12px' }}>
-                ط§ظ„ط¶ط±ظٹط¨ط© (14%):{' '}
-                <b>{taxTotal.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ط¬.ظ…</b>
+                الضريبة (14%):{' '}
+                <b>{taxTotal.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج.م</b>
               </span>
             </div>
             <div style={{ fontSize: 18, fontWeight: 'bold', color: '#b45309' }}>
-              ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ط³طھط­ظ‚ ظ„ظ„ظ…ظˆط±ط¯:{' '}
-              {grandTotal.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ط¬.ظ…
+              الإجمالي المستحق للمورد:{' '}
+              {grandTotal.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج.م
             </div>
           </div>
 
           <div className="form-actions" style={{ marginTop: 16 }}>
             <button type="submit" disabled={submitting} className="btn btn--primary">
-              {submitting ? 'ط¬ط§ط±ظٹ ط§ظ„ط­ظپط¸...' : 'ط­ظپط¸ ط§ظ„ظپط§طھظˆط±ط© ظƒظ…ط³ظˆط¯ط©'}
+              {submitting ? 'جاري الحفظ...' : 'حفظ الفاتورة كمسودة'}
             </button>
             <button type="button" className="btn" onClick={() => setShowForm(false)}>
-              ط¥ظ„ط؛ط§ط،
+              إلغاء
             </button>
           </div>
         </form>
@@ -348,25 +348,25 @@ export function PurchaseOrderPage(): JSX.Element {
         <table className="data-table">
           <thead>
             <tr>
-              <th>ط±ظ‚ظ… ط§ظ„ظپط§طھظˆط±ط© (ط§ظ„ط³ظٹط³طھظ…)</th>
-              <th>ط±ظ‚ظ… ظپط§طھظˆط±ط© ط§ظ„ظ…ظˆط±ط¯</th>
-              <th>ط§ظ„ظ…ظˆط±ط¯</th>
-              <th>ط§ظ„طھط§ط±ظٹط®</th>
-              <th>ط§ظ„طµط§ظپظٹ</th>
-              <th>ط§ظ„ط¶ط±ظٹط¨ط© 14%</th>
-              <th>ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ</th>
-              <th>ط§ظ„ط­ط§ظ„ط©</th>
-              <th>ط§ظ„ط¥ط¬ط±ط§ط،ط§طھ</th>
+              <th>رقم الفاتورة (السيستم)</th>
+              <th>رقم فاتورة المورد</th>
+              <th>المورد</th>
+              <th>التاريخ</th>
+              <th>الصافي</th>
+              <th>الضريبة 14%</th>
+              <th>الإجمالي</th>
+              <th>الحالة</th>
+              <th>الإجراءات</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={9}>ط¬ط§ط±ظٹ ط§ظ„طھط­ظ…ظٹظ„...</td>
+                <td colSpan={9}>جاري التحميل...</td>
               </tr>
             ) : invoices.length === 0 ? (
               <tr>
-                <td colSpan={9}>ظ„ط§ طھظˆط¬ط¯ ظپظˆط§طھظٹط± ظ…ط´طھط±ظٹط§طھ ظ…ط³ط¬ظ„ط©</td>
+                <td colSpan={9}>لا توجد فواتير مشتريات مسجلة</td>
               </tr>
             ) : (
               invoices.map((inv) => (
@@ -379,16 +379,16 @@ export function PurchaseOrderPage(): JSX.Element {
                   </td>
                   <td>{supName(inv.supplierId)}</td>
                   <td>{new Date(inv.invoiceDate).toLocaleDateString('ar-EG')}</td>
-                  <td>{Number(inv.netAmount).toLocaleString('ar-EG')} ط¬.ظ…</td>
-                  <td>{Number(inv.taxAmount).toLocaleString('ar-EG')} ط¬.ظ…</td>
+                  <td>{Number(inv.netAmount).toLocaleString('ar-EG')} ج.م</td>
+                  <td>{Number(inv.taxAmount).toLocaleString('ar-EG')} ج.م</td>
                   <td>
-                    <b>{Number(inv.grandTotal).toLocaleString('ar-EG')} ط¬.ظ…</b>
+                    <b>{Number(inv.grandTotal).toLocaleString('ar-EG')} ج.م</b>
                   </td>
                   <td>
                     <span
                       className={`status-badge status-badge--${inv.status === 'posted' ? 'active' : 'draft'}`}
                     >
-                      {inv.status === 'posted' ? 'ظ…ط±ط­ظ„ ظˆظ…ط·ط§ط¨ظ‚' : 'ظ…ط³ظˆط¯ط©'}
+                      {inv.status === 'posted' ? 'مرحل ومطابق' : 'مسودة'}
                     </span>
                   </td>
                   <td>
@@ -397,7 +397,7 @@ export function PurchaseOrderPage(): JSX.Element {
                         className="btn btn--sm btn--success"
                         onClick={() => handlePost(inv.id)}
                       >
-                        ط§ط¹طھظ…ط§ط¯ ظˆطھط±ط­ظٹظ„
+                        اعتماد وترحيل
                       </button>
                     )}
                   </td>

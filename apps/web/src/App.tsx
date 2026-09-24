@@ -43,29 +43,29 @@ import {
   PackageSearch,
   ClipboardCheck,
   BarChart3,
+  Users,
 } from 'lucide-react';
 
 // ── 1. الموديولات الرئيسية للسيستم ──
-import AccountingPage from './pages/AccountingPage';
-import InventoryPage from './pages/InventoryPage';
-import StockLedgerPage from './pages/StockLedgerPage';
-import StockReconciliationPage from './pages/StockReconciliationPage';
-import SalesInvoicePage from './pages/SalesInvoicePage';
-import PurchaseOrderPage from './pages/PurchaseOrderPage';
-import PaymentEntryPage from './pages/PaymentEntryPage';
-import CostingPage from './pages/CostingPage';
-import BalanceSheetPage from './pages/BalanceSheetPage';
-import QualityPage from './pages/QualityPage';
-import StockEntryPage from './pages/StockEntryPage';
-import ProductionOpsPage from './pages/ProductionOpsPage';
-import BomCreatorPage from './pages/BomCreatorPage';
+import { AccountingPage } from './app/pages/AccountingPage';
+import { InventoryPage } from './app/pages/InventoryPage';
+import { StockLedgerPage } from './app/pages/StockLedgerPage';
+import { StockReconciliationPage } from './app/pages/StockReconciliationPage';
+import { SalesInvoicePage } from './app/pages/SalesInvoicePage';
+import { PurchaseOrderPage } from './app/pages/PurchaseOrderPage';
+import { PaymentEntryPage } from './app/pages/PaymentEntryPage';
+import { CostingPage } from './app/pages/CostingPage';
+import { BalanceSheetPage } from './app/pages/BalanceSheetPage';
+import { QualityPage } from './app/pages/QualityPage';
+import { StockEntryPage } from './app/pages/StockEntryPage';
+import { ProductionOpsPage } from './app/pages/ProductionOpsPage';
+import { BomCreatorPage } from './app/pages/BomCreatorPage';
 import MedicalTraceabilityPage from './pages/MedicalTraceabilityPage';
 import MedicalRecallPage from './pages/MedicalRecallPage';
 import JobCostSheetPage from './pages/JobCostSheetPage';
 import StandardVsActualPage from './pages/StandardVsActualPage';
 import MaterialVariancePage from './pages/MaterialVariancePage';
 import OrderProfitabilityPage from './pages/OrderProfitabilityPage';
-import OverheadDashboardPage from './pages/OverheadDashboardPage';
 import TaxAndCustomsPage from './pages/TaxAndCustomsPage';
 import YearEndClosingPage from './app/pages/YearEndClosingPage';
 import AuditTrailPage from './pages/AuditTrailPage';
@@ -74,7 +74,23 @@ import UserRestrictionsPage from './app/pages/UserRestrictionsPage';
 import RfqPage from './app/pages/RfqPage';
 import ContactsPage from './app/pages/ContactsPage';
 import SubcontractingPage from './app/pages/SubcontractingPage';
-import { BalanceSheetPage as LedgerReportsPage } from './app/pages/BalanceSheetPage';
+import { OverheadAllocationPage } from './app/pages/OverheadAllocationPage';
+import { ProfitAndLossPage } from './app/pages/ProfitAndLossPage';
+import { ExpensesPage } from './app/pages/ExpensesPage';
+import { SalesPage } from './app/pages/SalesPage';
+import { QuotationPage } from './app/pages/QuotationPage';
+import { DeliveryPage } from './app/pages/DeliveryPage';
+import { ItemPricePage } from './app/pages/ItemPricePage';
+import { PurchaseReceiptPage } from './app/pages/PurchaseReceiptPage';
+import { HrPage } from './app/pages/HrPage';
+import { AttendancePage } from './app/pages/AttendancePage';
+import { LeaveApplicationPage } from './app/pages/LeaveApplicationPage';
+import { OrganizationPage } from './app/pages/OrganizationPage';
+import { SetupPage } from './app/pages/SetupPage';
+import { TechnicalPage } from './app/pages/TechnicalPage';
+import { MaterialPage } from './app/pages/MaterialPage';
+import { AuthPage } from './app/pages/AuthPage';
+import { PageErrorBoundary } from './app/components/PageErrorBoundary';
 
 // ── 2. شاشات التخطيط والتصنيع (الشغل الأصلي - ERPNext parity) ──
 import { ManufacturingPage } from './app/pages/ManufacturingPage';
@@ -148,7 +164,11 @@ export const App: React.FC = () => {
     {
       title: '1. المبيعات والعملاء (Sales & CRM)',
       items: [
-        { id: 'sales-invoices', label: 'فواتير المبيعات', icon: ShoppingCart, badge: 'المبيعات' },
+        { id: 'sales-main', label: 'العملاء وأوامر البيع', icon: ShoppingCart },
+        { id: 'quotations', label: 'عروض الأسعار', icon: ClipboardList },
+        { id: 'sales-invoices', label: 'فواتير المبيعات', icon: ShoppingCart },
+        { id: 'delivery', label: 'التسليم والتركيب', icon: PackageCheck },
+        { id: 'item-prices', label: 'أسعار الأصناف', icon: Percent },
         { id: 'contacts', label: 'جهات الاتصال والعناوين', icon: ClipboardList },
       ],
     },
@@ -157,6 +177,7 @@ export const App: React.FC = () => {
       items: [
         { id: 'purchase-orders', label: 'فواتير المشتريات والـ GRNI', icon: ShoppingBag },
         { id: 'rfq', label: 'طلبات عروض الأسعار (RFQ)', icon: ClipboardList },
+        { id: 'purchase-receipts', label: 'أذون استلام المشتريات', icon: PackageCheck },
       ],
     },
     {
@@ -166,8 +187,14 @@ export const App: React.FC = () => {
         { id: 'stock-entries', label: 'أذون وحركات التحويل', icon: PackageCheck },
         { id: 'stock-ledger', label: 'السجل المالي للمخزون', icon: FileSpreadsheet },
         { id: 'stock-reconcile', label: 'الجرد الفعلي والتسويات', icon: Scale },
-        { id: 'medical-trace', label: 'تتبع اللوطات والسيريال', icon: Activity },
-        { id: 'medical-recall', label: 'غرفة الاستدعاء الطبي', icon: AlertOctagon, alert: true },
+        { id: 'medical-trace', label: 'تتبع اللوطات والسيريال', icon: Activity, badge: 'تجريبي' },
+        {
+          id: 'medical-recall',
+          label: 'غرفة الاستدعاء الطبي',
+          icon: AlertOctagon,
+          badge: 'تجريبي',
+        },
+        { id: 'material-issues', label: 'صرف الخامات للإنتاج', icon: PackageSearch },
       ],
     },
     {
@@ -182,6 +209,7 @@ export const App: React.FC = () => {
         { id: 'bom-main', label: 'قوائم المكونات BOM', icon: ListChecks },
         { id: 'bom-creator', label: 'منشئ الـ BOM والتكلفة', icon: ClipboardList },
         { id: 'bom-update-tool', label: 'أداة تحديث BOM', icon: Wrench },
+        { id: 'technical', label: 'المستندات الفنية', icon: FileSpreadsheet },
         { id: 'work-order', label: 'أوامر التشغيل', icon: Factory },
         { id: 'production-ops', label: 'عمليات الورشة وبطاقات العمل', icon: GitBranch },
         { id: 'subcontracting', label: 'التصنيع بالباطن', icon: Factory },
@@ -211,12 +239,22 @@ export const App: React.FC = () => {
     {
       title: '6. التكاليف والربحية (Costing & Variances)',
       items: [
-        { id: 'job-cost', label: 'كارت التكلفة الفعلي', icon: Calculator },
-        { id: 'std-vs-actual', label: 'المعياري vs الفعلي', icon: ArrowLeftRight },
-        { id: 'material-variance', label: 'انحرافات المواد 4-Level', icon: Percent },
-        { id: 'order-profitability', label: 'ربحية أوامر الشغل', icon: TrendingUp },
-        { id: 'overhead-dashboard', label: 'مجمعات الـ Overhead', icon: Cpu },
-        { id: 'costing-general', label: 'تحليلات التكاليف العامة', icon: ClipboardList },
+        { id: 'costing-general', label: 'تكلفة وربحية أوامر الشغل', icon: ClipboardList },
+        { id: 'overhead-dashboard', label: 'مجمعات وتوزيع الأعباء', icon: Cpu },
+        { id: 'job-cost', label: 'كارت التكلفة الفعلي', icon: Calculator, badge: 'تجريبي' },
+        { id: 'std-vs-actual', label: 'المعياري vs الفعلي', icon: ArrowLeftRight, badge: 'تجريبي' },
+        {
+          id: 'material-variance',
+          label: 'انحرافات المواد 4-Level',
+          icon: Percent,
+          badge: 'تجريبي',
+        },
+        {
+          id: 'order-profitability',
+          label: 'ربحية أوامر الشغل',
+          icon: TrendingUp,
+          badge: 'تجريبي',
+        },
       ],
     },
     {
@@ -225,17 +263,39 @@ export const App: React.FC = () => {
         { id: 'accounting-main', label: 'شجرة الحسابات والقيود', icon: BookOpen },
         { id: 'payments', label: 'سندات الصرف والقبض', icon: CreditCard },
         { id: 'balance-sheet', label: 'الميزانية والأصول الثابتة', icon: Scale },
-        { id: 'ledger-reports', label: 'تقارير الدفاتر وسجل الأصول', icon: Scale },
-        { id: 'tax-customs', label: 'الضرائب والجمارك نموذج 41', icon: Landmark },
+        { id: 'profit-loss', label: 'قائمة الدخل', icon: TrendingUp },
+        { id: 'expenses', label: 'المصروفات على أوامر الشغل', icon: CreditCard },
+        { id: 'tax-customs', label: 'الضرائب والجمارك نموذج 41', icon: Landmark, badge: 'تجريبي' },
       ],
     },
     {
       title: '8. الإقفال والرقابة (Governance & Security)',
       items: [
         { id: 'closing-periods', label: 'إقفال الفترات والسنوات', icon: Lock },
-        { id: 'audit-trail', label: 'سجل التدقيق الرقابي (Audit)', icon: ShieldAlert },
-        { id: 'rbac-matrix', label: 'مصفوفة الصلاحيات (RBAC)', icon: Key },
+        { id: 'users-roles', label: 'المستخدمين والأدوار', icon: Key },
         { id: 'user-restrictions', label: 'تقييد المستخدمين (فرع / مخزن)', icon: Lock },
+        {
+          id: 'audit-trail',
+          label: 'سجل التدقيق الرقابي (Audit)',
+          icon: ShieldAlert,
+          badge: 'تجريبي',
+        },
+        { id: 'rbac-matrix', label: 'مصفوفة الصلاحيات (RBAC)', icon: Key, badge: 'تجريبي' },
+      ],
+    },
+    {
+      title: '9. الموارد البشرية (HR)',
+      items: [
+        { id: 'hr-main', label: 'الموظفين والعمولات والمرتبات', icon: Users },
+        { id: 'attendance', label: 'الحضور والانصراف', icon: Timer },
+        { id: 'leave', label: 'طلبات الإجازات', icon: CalendarRange },
+      ],
+    },
+    {
+      title: '10. الإعدادات (Setup)',
+      items: [
+        { id: 'organization', label: 'الهيكل التنظيمي', icon: GitBranch },
+        { id: 'setup-mfg', label: 'مراكز العمل والعمليات', icon: Wrench },
       ],
     },
   ];
@@ -365,67 +425,83 @@ export const App: React.FC = () => {
 
       {/* ── مساحة عرض الشاشة المختارة (Main Workspace) ── */}
       <main className="flex-1 overflow-y-auto bg-slate-100">
-        {/* 1. المبيعات والمشتريات */}
-        {currentTab === 'sales-invoices' && <SalesInvoicePage />}
-        {currentTab === 'purchase-orders' && <PurchaseOrderPage />}
-        {currentTab === 'rfq' && <RfqPage />}
-        {currentTab === 'contacts' && <ContactsPage />}
+        <PageErrorBoundary key={currentTab}>
+          {/* 1. المبيعات والمشتريات */}
+          {currentTab === 'sales-invoices' && <SalesInvoicePage />}
+          {currentTab === 'purchase-orders' && <PurchaseOrderPage />}
+          {currentTab === 'rfq' && <RfqPage />}
+          {currentTab === 'sales-main' && <SalesPage />}
+          {currentTab === 'quotations' && <QuotationPage />}
+          {currentTab === 'delivery' && <DeliveryPage />}
+          {currentTab === 'item-prices' && <ItemPricePage />}
+          {currentTab === 'purchase-receipts' && <PurchaseReceiptPage />}
+          {currentTab === 'material-issues' && <MaterialPage />}
+          {currentTab === 'technical' && <TechnicalPage />}
+          {currentTab === 'profit-loss' && <ProfitAndLossPage />}
+          {currentTab === 'expenses' && <ExpensesPage />}
+          {currentTab === 'users-roles' && <AuthPage />}
+          {currentTab === 'hr-main' && <HrPage />}
+          {currentTab === 'attendance' && <AttendancePage />}
+          {currentTab === 'leave' && <LeaveApplicationPage />}
+          {currentTab === 'organization' && <OrganizationPage />}
+          {currentTab === 'setup-mfg' && <SetupPage />}
+          {currentTab === 'contacts' && <ContactsPage />}
 
-        {/* 2. المخازن والتتبع الطبي */}
-        {currentTab === 'inventory-main' && <InventoryPage />}
-        {currentTab === 'stock-entries' && <StockEntryPage />}
-        {currentTab === 'stock-ledger' && <StockLedgerPage />}
-        {currentTab === 'stock-reconcile' && <StockReconciliationPage />}
-        {currentTab === 'medical-trace' && <MedicalTraceabilityPage />}
-        {currentTab === 'medical-recall' && <MedicalRecallPage />}
+          {/* 2. المخازن والتتبع الطبي */}
+          {currentTab === 'inventory-main' && <InventoryPage />}
+          {currentTab === 'stock-entries' && <StockEntryPage />}
+          {currentTab === 'stock-ledger' && <StockLedgerPage />}
+          {currentTab === 'stock-reconcile' && <StockReconciliationPage />}
+          {currentTab === 'medical-trace' && <MedicalTraceabilityPage />}
+          {currentTab === 'medical-recall' && <MedicalRecallPage />}
 
-        {/* 3. التخطيط والتصنيع */}
-        {currentTab === 'mfg-dashboard' && <ManufacturingPage />}
-        {currentTab === 'bom-main' && <BomPage />}
-        {currentTab === 'bom-creator' && <BomCreatorPage />}
-        {currentTab === 'bom-update-tool' && <BomUpdateToolPage />}
-        {currentTab === 'work-order' && <WorkOrderPage />}
-        {currentTab === 'subcontracting' && <SubcontractingPage />}
-        {currentTab === 'production-ops' && <ProductionOpsPage />}
-        {currentTab === 'sales-forecast' && <SalesForecastPage />}
-        {currentTab === 'production-plan' && <ProductionPlanPage />}
-        {currentTab === 'mps' && <MpsPage />}
-        {currentTab === 'item-lead-time' && <ItemLeadTimePage />}
-        {currentTab === 'material-request' && <MaterialRequestPage />}
-        {currentTab === 'downtime-entry' && <DowntimeEntryPage />}
-        {currentTab === 'quality-qc' && <QualityPage />}
+          {/* 3. التخطيط والتصنيع */}
+          {currentTab === 'mfg-dashboard' && <ManufacturingPage />}
+          {currentTab === 'bom-main' && <BomPage />}
+          {currentTab === 'bom-creator' && <BomCreatorPage />}
+          {currentTab === 'bom-update-tool' && <BomUpdateToolPage />}
+          {currentTab === 'work-order' && <WorkOrderPage />}
+          {currentTab === 'subcontracting' && <SubcontractingPage />}
+          {currentTab === 'production-ops' && <ProductionOpsPage />}
+          {currentTab === 'sales-forecast' && <SalesForecastPage />}
+          {currentTab === 'production-plan' && <ProductionPlanPage />}
+          {currentTab === 'mps' && <MpsPage />}
+          {currentTab === 'item-lead-time' && <ItemLeadTimePage />}
+          {currentTab === 'material-request' && <MaterialRequestPage />}
+          {currentTab === 'downtime-entry' && <DowntimeEntryPage />}
+          {currentTab === 'quality-qc' && <QualityPage />}
 
-        {/* 4. التقارير */}
-        {currentTab === 'report-bom-search' && <ReportBomSearchPage />}
-        {currentTab === 'report-work-order-summary' && <ReportWorkOrderSummaryPage />}
-        {currentTab === 'report-downtime-analysis' && <ReportDowntimeAnalysisPage />}
-        {currentTab === 'report-job-card-summary' && <ReportJobCardSummaryPage />}
-        {currentTab === 'report-production-analytics' && <ReportProductionAnalyticsPage />}
-        {currentTab === 'report-bom-operations-time' && <ReportBomOperationsTimePage />}
-        {currentTab === 'report-consumed-materials' && <ReportConsumedMaterialsPage />}
-        {currentTab === 'report-production-planning' && <ReportProductionPlanningPage />}
-        {currentTab === 'report-forecasting' && <ReportForecastingPage />}
+          {/* 4. التقارير */}
+          {currentTab === 'report-bom-search' && <ReportBomSearchPage />}
+          {currentTab === 'report-work-order-summary' && <ReportWorkOrderSummaryPage />}
+          {currentTab === 'report-downtime-analysis' && <ReportDowntimeAnalysisPage />}
+          {currentTab === 'report-job-card-summary' && <ReportJobCardSummaryPage />}
+          {currentTab === 'report-production-analytics' && <ReportProductionAnalyticsPage />}
+          {currentTab === 'report-bom-operations-time' && <ReportBomOperationsTimePage />}
+          {currentTab === 'report-consumed-materials' && <ReportConsumedMaterialsPage />}
+          {currentTab === 'report-production-planning' && <ReportProductionPlanningPage />}
+          {currentTab === 'report-forecasting' && <ReportForecastingPage />}
 
-        {/* 5. التكاليف والربحية */}
-        {currentTab === 'job-cost' && <JobCostSheetPage />}
-        {currentTab === 'std-vs-actual' && <StandardVsActualPage />}
-        {currentTab === 'material-variance' && <MaterialVariancePage />}
-        {currentTab === 'order-profitability' && <OrderProfitabilityPage />}
-        {currentTab === 'overhead-dashboard' && <OverheadDashboardPage />}
-        {currentTab === 'costing-general' && <CostingPage />}
+          {/* 5. التكاليف والربحية */}
+          {currentTab === 'job-cost' && <JobCostSheetPage />}
+          {currentTab === 'std-vs-actual' && <StandardVsActualPage />}
+          {currentTab === 'material-variance' && <MaterialVariancePage />}
+          {currentTab === 'order-profitability' && <OrderProfitabilityPage />}
+          {currentTab === 'overhead-dashboard' && <OverheadAllocationPage />}
+          {currentTab === 'costing-general' && <CostingPage />}
 
-        {/* 6. المحاسبة والضرائب */}
-        {currentTab === 'accounting-main' && <AccountingPage />}
-        {currentTab === 'payments' && <PaymentEntryPage />}
-        {currentTab === 'balance-sheet' && <BalanceSheetPage />}
-        {currentTab === 'ledger-reports' && <LedgerReportsPage />}
-        {currentTab === 'tax-customs' && <TaxAndCustomsPage />}
+          {/* 6. المحاسبة والضرائب */}
+          {currentTab === 'accounting-main' && <AccountingPage />}
+          {currentTab === 'payments' && <PaymentEntryPage />}
+          {currentTab === 'balance-sheet' && <BalanceSheetPage />}
+          {currentTab === 'tax-customs' && <TaxAndCustomsPage />}
 
-        {/* 7. الإقفال والرقابة */}
-        {currentTab === 'closing-periods' && <YearEndClosingPage />}
-        {currentTab === 'audit-trail' && <AuditTrailPage />}
-        {currentTab === 'rbac-matrix' && <RbacPermissionsPage />}
-        {currentTab === 'user-restrictions' && <UserRestrictionsPage />}
+          {/* 7. الإقفال والرقابة */}
+          {currentTab === 'closing-periods' && <YearEndClosingPage />}
+          {currentTab === 'audit-trail' && <AuditTrailPage />}
+          {currentTab === 'rbac-matrix' && <RbacPermissionsPage />}
+          {currentTab === 'user-restrictions' && <UserRestrictionsPage />}
+        </PageErrorBoundary>
       </main>
 
       {loginOpen && (
