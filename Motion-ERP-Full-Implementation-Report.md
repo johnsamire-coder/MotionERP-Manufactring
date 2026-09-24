@@ -2430,4 +2430,76 @@ POST /api/v1/inventory/movements
 > الوصول لـ demo.erpnext.com متسألش عنه لأن المالك كان نايم، وهيتسأل في آخر رسالة.
 
 ## 5. التأكيد الختامي
-هيتكتب في آخر المهمة: `git log --oneline` لكل المهمة، ونتيجة `typecheck` نضيفة.
+
+**الحصيلة:**
+- **اتنفّذ:** 1–4، و5.0–5.2، و6–23، و25، و27–29، و31–44، و46–50.
+- **موجود بالفعل (اتسدّت الفجوات بس):** 14، و15، و18، وجزء من 41 (منع الحساب الأب).
+- **مستني قرار المالك:**
+  - 5.3 (تفعيل الدخول الإجباري)
+  - 26 (كيانات Contact/Address، والوثيقة طالبة السؤال)
+  - 30 (البصمة، ومؤجّل بقرارك)
+- **موجود جزئيًا والإكمال محتاج لمس التصنيع:** 24 و45.
+
+**`typecheck` (`pnpm run typecheck`):** نضيف في الـ 3 باكدجات (shared وapi وweb).
+**اختبارات الـ API:** 351 نجحوا.
+
+**`git log --oneline` لكل المهمة** (الفرع `claude/claude-code-setup-4lb6jo`):
+
+```
+7c03582 feat(inventory): block backdated stock movements (plan item 1)
+2ba8370 feat(inventory): per-batch costing + item batch/serial/expiry flags (plan item 2a)
+111d56d feat(inventory): serial numbers on stock movements (plan item 2b)
+e74222d feat(inventory): movement purpose + transfers for manufacture (plan item 3)
+505b454 feat(inventory): block plain reconciliation for batch/serial items (plan item 4)
+2b434ca feat(auth): login tokens, global authentication guard and login dialog (plan item 5.0)
+ad38c99 feat(auth): per-user restrictions by org node / warehouse (plan item 5.1)
+f0aaf48 feat(inventory): enforce per-user warehouse / org-node restrictions (plan item 5.2)
+0cbcb6d feat(sales): composite customer credit limit with approval warning (plan item 6)
+e37982c feat(sales): request for quotation to several suppliers with comparison (plan item 7)
+7fac697 feat(crm): supplier hold with three levels and automatic release (plan item 8)
+b5933ab feat(quality): inspection templates with real readings and computed result (plan item 9)
+ae8fa0a feat(hr): manager hierarchy and leaving guard for managers (plan item 10)
+3cd9fd4 feat(hr): disable the employee's login when their service ends (plan item 11)
+f384757 feat(purchasing): three over-allowances for order, receipt and billing (plan item 12)
+aae4810 feat(inventory): seven reservation types, bin view, and restore reservation id (plan item 13)
+5ce158d feat(inventory): received-not-billed report reconciled with GRNI ledger (plan item 14)
+cab064a fix(inventory): landed cost now reaches per-batch cost (plan item 15)
+ffc765e feat(sales): pricing rules with price and product discounts (plan item 16)
+0a34cb3 feat(crm): opportunity stage between lead and quotation (plan item 17)
+a6a08ab fix(finance): clear 400 for a repeated supplier invoice number (plan item 18)
+3701a3b feat(finance): hold a single purchase invoice for payment (plan item 19)
+4b132b5 feat(hr): leave types, allocations and bulk allocation by filters (plan item 20)
+09c26d5 feat(hr): full and final settlement on leaving (plan item 21)
+e68290a feat(inventory): reorder level per item and warehouse (plan item 22)
+b0d2166 feat(inventory): tree warehouses with group warehouses and rolled-up stock (plan item 23)
+fb9c052 feat(crm): lead, contact activity, prospect and conversion to customer (plan items 24-25)
+9534713 docs(report): items 24-25
+3c5c027 feat(inventory): pick list with automatic FIFO / earliest-expiry batch picking (plan item 27)
+b8f379d feat(crm): customer and supplier group trees with inherited credit limit (plan item 28)
+9e32f32 feat(hr): formal probation with confirmation date (plan item 29)
+b2f268f docs: module reports for inventory, CRM/sales/purchasing, HR, quality/auth (items 1-29)
+5990cdb feat(accounting): frozen journal entries — reversal only, document entries only via their document (plan item 31)
+5983428 feat(accounting): standard account roles with per-role behaviour (plan item 32)
+3a420c9 feat(accounting): 19 company default accounts with validation, readiness and optional enforcement (plan item 33)
+f9e1446 feat(accounting): 17 journal entry types with per-type rules (plan item 34)
+dfb0cab feat(inventory): stock vs ledger reconciliation with a correction entry (plan item 35)
+e48e970 feat(accounting): real year-end closing into retained earnings and hard backdating guards (plan item 36)
+212be52 feat(finance): periodic ledger health check between document books and the general ledger (plan item 37)
+848b2c4 feat(finance): book customer / supplier advances in their own accounts with allocation (plan item 38)
+94c2fa8 feat(finance): allocate a payment over several invoices and installments with a latest-data check (plan item 39)
+4d45f74 feat(accounting): budget control on every journal entry (plan item 40)
+783a991 feat(accounting): cost center rule, balance side, frozen accounts and accounting dimensions (plan item 41)
+59242c4 docs: accounting module report (items 31-41)
+97beefb feat(workflow): generic workflow engine with roles and dynamic conditions (plan item 42)
+c48c2c7 feat(support): helpdesk with working-hours SLA, holidays, split and auto-close (plan item 43)
+70cad7d feat(projects): projects with four progress methods, profitability and e-mailed status reports (plan item 44)
+b3db06d docs(report): item 45 partially exists in production_ops (manufacturing, not touched)
+7708db1 feat(assets): fixed assets with CWIP, four depreciation methods and a self-rebuilding schedule (plan item 46)
+54ef427 feat(printing): letterheads, multiple print formats and no printing of drafts or cancelled documents (plan item 47)
+e477723 feat(regional-eg): separate regional layer for Egyptian e-invoicing (ETA) (plan item 48)
+612bdef feat(assets): asset movements, insurance and composite assets (plan item 49)
+dd7f30a feat(printing,workflow): background bulk printing, network printers and transition tasks (plan item 50)
+```
+
+(الـ commit الأخير ده بيضيف القسم ده نفسه.)
+
