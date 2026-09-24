@@ -3,6 +3,7 @@ import { IsString, ValidateIf } from 'class-validator';
 import { AccountingNotFoundError, AccountingValidationError } from './accounting.errors';
 import { AccountingExceptionFilter } from './accounting.exception-filter';
 import { AccountingRepository } from './accounting.repository';
+import { VOUCHER_TYPES, type VoucherType } from './voucher-types';
 import { ACCOUNT_ROLES, isAccountRole, type AccountRole, type AccountRoleSpec } from './account-roles';
 
 export class SetAccountRoleDto {
@@ -18,6 +19,12 @@ export class AccountRolesController {
   @Get('account-roles')
   roles(): { roles: Array<{ role: AccountRole } & AccountRoleSpec> } {
     return { roles: (Object.keys(ACCOUNT_ROLES) as AccountRole[]).map((role) => ({ role, ...ACCOUNT_ROLES[role] })) };
+  }
+
+  /** Plan item 34: the 17 journal entry types and the rule each enforces. */
+  @Get('voucher-types')
+  voucherTypes(): { voucherTypes: Array<{ voucherType: VoucherType; label: string; rule: string }> } {
+    return { voucherTypes: (Object.keys(VOUCHER_TYPES) as VoucherType[]).map((voucherType) => ({ voucherType, ...VOUCHER_TYPES[voucherType] })) };
   }
 
   @Patch('accounts/:id/role')

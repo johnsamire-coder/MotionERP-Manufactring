@@ -1,4 +1,5 @@
 import { Type } from 'class-transformer';
+import type { VoucherType } from './voucher-types';
 import { ArrayMinSize, IsArray, IsBoolean, IsDateString, IsIn, IsInt, IsNumberString, IsOptional, IsPositive, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
 
 export class CreateAccountTypeDto {
@@ -54,6 +55,7 @@ export class CreateJournalEntryDto {
   @IsString() @MaxLength(500) description!: string;
   @IsOptional() @IsString() @MaxLength(200) reference?: string;
   @IsOptional() @IsDateString() entryDate?: string;
+  @IsOptional() @IsIn(['journal_entry', 'inter_company_journal_entry', 'bank_entry', 'cash_entry', 'credit_card_entry', 'debit_note', 'credit_note', 'contra_entry', 'excise_entry', 'write_off_entry', 'opening_entry', 'depreciation_entry', 'exchange_rate_revaluation', 'exchange_gain_or_loss', 'deferred_revenue', 'deferred_expense', 'reversal_of_itc']) voucherType?: VoucherType;
   @IsArray() @ArrayMinSize(2) @ValidateNested({ each: true }) @Type(() => CreateJournalLineDto) lines!: CreateJournalLineDto[];
 }
 

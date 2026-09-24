@@ -185,10 +185,13 @@ export const journalEntry = accountingSchema.table('journal_entry', {
   /** Plan item 31: a posted entry is never cancelled — it is reversed once by a mirror entry that points back here. */
   reversalOfEntryId: uuid('reversal_of_entry_id').references((): AnyPgColumn => journalEntry.id, { onDelete: 'restrict' }),
   reversalReason: text('reversal_reason'),
+  /** Plan item 34: one of the 17 journal entry types (voucher-types.ts). */
+  voucherType: text('voucher_type').notNull().default('journal_entry'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   unique('journal_entry_reversal_of_unique').on(t.reversalOfEntryId),
+  check('journal_entry_voucher_type_valid', sql`${t.voucherType} in ('journal_entry', 'inter_company_journal_entry', 'bank_entry', 'cash_entry', 'credit_card_entry', 'debit_note', 'credit_note', 'contra_entry', 'excise_entry', 'write_off_entry', 'opening_entry', 'depreciation_entry', 'exchange_rate_revaluation', 'exchange_gain_or_loss', 'deferred_revenue', 'deferred_expense', 'reversal_of_itc')`),
   check('journal_entry_not_own_reversal', sql`${t.reversalOfEntryId} is null or ${t.reversalOfEntryId} <> ${t.id}`),
   check('journal_entry_status_valid', sql`${t.status} in ('draft', 'posted', 'cancelled')`),
   index('idx_journal_entry_reference').on(t.reference),
