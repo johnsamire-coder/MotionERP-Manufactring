@@ -42,6 +42,9 @@ export interface WarehouseRecord {
   name: string;
   orgNodeId: string;
   status: WarehouseStatus;
+  /** Plan item 23: parent in the warehouse tree, and whether this is a group (no stock of its own). */
+  parentWarehouseId?: string | null;
+  isGroup?: boolean;
   createdAt: string;
   updatedAt: string;
 }

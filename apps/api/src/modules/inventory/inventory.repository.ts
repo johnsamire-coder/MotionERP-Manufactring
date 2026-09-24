@@ -45,6 +45,7 @@ import type {
 const warehouseColumns = {
   id: warehouse.id, code: warehouse.code, name: warehouse.name,
   orgNodeId: warehouse.orgNodeId, status: warehouse.status,
+  parentWarehouseId: warehouse.parentWarehouseId, isGroup: warehouse.isGroup,
   createdAt: warehouse.createdAt, updatedAt: warehouse.updatedAt,
 };
 const movementColumns = {
@@ -107,6 +108,7 @@ export class InventoryRepository {
     const rows = await this.database.db.select(warehouseColumns).from(warehouse).orderBy(asc(warehouse.code));
     return rows.map((r) => ({
       id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, status: r.status as WarehouseStatus,
+      parentWarehouseId: r.parentWarehouseId, isGroup: r.isGroup,
       createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
     }));
   }
@@ -114,20 +116,32 @@ export class InventoryRepository {
     const rows = await this.database.db.select(warehouseColumns).from(warehouse).where(eq(warehouse.id, id)).limit(1);
     if (!rows[0]) return null;
     const r = rows[0];
-    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, status: r.status as WarehouseStatus, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString() };
+    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, status: r.status as WarehouseStatus, parentWarehouseId: r.parentWarehouseId, isGroup: r.isGroup, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString() };
   }
   async findWarehouseByCode(code: string): Promise<WarehouseRecord | null> {
     const rows = await this.database.db.select(warehouseColumns).from(warehouse).where(eq(warehouse.code, code)).limit(1);
     if (!rows[0]) return null;
     const r = rows[0];
-    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, status: r.status as WarehouseStatus, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString() };
+    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, status: r.status as WarehouseStatus, parentWarehouseId: r.parentWarehouseId, isGroup: r.isGroup, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString() };
   }
   async insertWarehouse(input: CreateWarehouseInput & { id: string }): Promise<WarehouseRecord> {
     const rows = await this.database.db.insert(warehouse).values({
       id: input.id, code: input.code, name: input.name, orgNodeId: input.orgNodeId,
     }).returning(warehouseColumns);
     const r = rows[0]!;
-    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, status: r.status as WarehouseStatus, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString() };
+    return { id: r.id, code: r.code, name: r.name, orgNodeId: r.orgNodeId, status: r.status as WarehouseStatus, parentWarehouseId: r.parentWarehouseId, isGroup: r.isGroup, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString() };
+  }
+
+  async setWarehouseTree(id: string, fields: { parentWarehouseId?: string | null; isGroup?: boolean }): Promise<void> {
+    await this.database.db.update(warehouse).set({ ...fields, updatedAt: new Date() }).where(eq(warehouse.id, id));
+  }
+
+  /** Whether any stock ever touched the warehouse (movements or balance rows). */
+  async warehouseHasStockHistory(id: string): Promise<boolean> {
+    const m = await this.database.db.select({ id: stockMovement.id }).from(stockMovement).where(eq(stockMovement.warehouseId, id)).limit(1);
+    if (m.length > 0) return true;
+    const b = await this.database.db.select({ id: stockBalance.id }).from(stockBalance).where(eq(stockBalance.warehouseId, id)).limit(1);
+    return b.length > 0;
   }
 
   // --- Stock Balances & Movements ---

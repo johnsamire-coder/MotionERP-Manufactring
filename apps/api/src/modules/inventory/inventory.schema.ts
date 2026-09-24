@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { type AnyPgColumn, check, index, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, boolean, check, index, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { item } from '../catalog/catalog.schema';
 import { orgNode } from '../organization/organization.schema';
 import { chartOfAccounts } from '../accounting/accounting.schema';
@@ -16,10 +16,15 @@ export const warehouse = inventorySchema.table('warehouse', {
     .notNull()
     .references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   status: text('status').notNull().default('active'),
+  // Warehouse tree (plan item 23): a group warehouse only groups children and never holds stock.
+  parentWarehouseId: uuid('parent_warehouse_id').references((): AnyPgColumn => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  isGroup: boolean('is_group').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   unique('warehouse_code_unique').on(t.code),
+  check('warehouse_not_own_parent', sql`${t.parentWarehouseId} is null or ${t.parentWarehouseId} <> ${t.id}`),
+  index('warehouse_parent_idx').on(t.parentWarehouseId),
   check('warehouse_code_format', sql`${t.code} ~ '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$'`),
   check('warehouse_name_not_blank', sql`length(btrim(${t.name})) > 0`),
   check('warehouse_status_valid', sql`${t.status} in ('active', 'inactive', 'archived')`),

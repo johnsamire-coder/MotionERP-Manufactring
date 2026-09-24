@@ -139,6 +139,9 @@ export class InventoryService {
       throw new InventoryNotFoundError(`warehouse ${input.warehouseId} does not exist`);
     }
     await this.assertWarehouseAllowed(input.warehouseId);
+    if (warehouseRecord.isGroup) {
+      throw new InventoryValidationError(`warehouse ${warehouseRecord.code} is a group warehouse and cannot hold stock (plan item 23)`);
+    }
     const orderSource = await this.checkReceiptAgainstOrder(input, quantityNum, warehouseRecord.orgNodeId);
 
     // Backdating guard: a movement may not be dated before the latest recorded
@@ -526,6 +529,9 @@ export class InventoryService {
     const warehouseRecord = await this.repository.findWarehouseById(input.warehouseId);
     if (!warehouseRecord) {
       throw new InventoryNotFoundError(`warehouse ${input.warehouseId} does not exist`);
+    }
+    if (warehouseRecord.isGroup) {
+      throw new InventoryValidationError(`warehouse ${warehouseRecord.code} is a group warehouse and cannot hold stock (plan item 23)`);
     }
 
     const reservationType = input.reservationType ?? 'sales_order';

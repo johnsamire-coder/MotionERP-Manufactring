@@ -12,14 +12,16 @@ import { GrniReportRepository } from './grni-report.repository';
 import { GrniReportService } from './grni-report.service';
 import { ReorderController } from './reorder.controller';
 import { ReorderService } from './reorder.service';
+import { WarehouseTreeController } from './warehouse-tree.controller';
+import { WarehouseTreeService } from './warehouse-tree.service';
 import { InventoryController } from './inventory.controller';
 import { InventoryRepository } from './inventory.repository';
 import { InventoryService } from './inventory.service';
 
 @Module({
   imports: [AccountingModule, CatalogModule, AuthModule, OrganizationModule, SalesModule, SettingsModule],
-  controllers: [PurchaseBatchLinkController, InventoryController, ReorderController],
-  providers: [PurchaseBatchLinkService, InventoryService, InventoryRepository, InventoryAccessService, GrniReportService, GrniReportRepository, ReorderService],
+  controllers: [PurchaseBatchLinkController, InventoryController, ReorderController, WarehouseTreeController],
+  providers: [PurchaseBatchLinkService, InventoryService, InventoryRepository, InventoryAccessService, GrniReportService, GrniReportRepository, ReorderService, WarehouseTreeService],
   exports: [InventoryService],
 })
 export class InventoryModule {}
