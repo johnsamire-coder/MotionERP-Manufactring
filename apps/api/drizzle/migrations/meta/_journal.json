@@ -673,6 +673,13 @@
       "when": 1790238156818,
       "tag": "0095_broken_vindicator",
       "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "7",
+      "when": 1790238339409,
+      "tag": "0096_nostalgic_wallow",
+      "breakpoints": true
     }
   ]
 }
