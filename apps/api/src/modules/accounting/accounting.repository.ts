@@ -129,6 +129,16 @@ export class AccountingRepository {
       parentId: r.parentId, isLeaf: r.isLeaf === 'yes', status: r.status as ChartAccountStatus,
     }));
   }
+  /** Plan item 32: the account's standard role (null = none). */
+  async findAccountRole(id: string): Promise<string | null> {
+    const rows = await this.database.db.select({ role: chartOfAccounts.accountRole }).from(chartOfAccounts).where(eq(chartOfAccounts.id, id)).limit(1);
+    return rows[0]?.role ?? null;
+  }
+
+  async setAccountRole(id: string, role: string | null): Promise<void> {
+    await this.database.db.update(chartOfAccounts).set({ accountRole: role, updatedAt: new Date() }).where(eq(chartOfAccounts.id, id));
+  }
+
   async findAccountById(id: string): Promise<ChartOfAccountsRecord | null> {
     const rows = await this.database.db.select(coaColumns).from(chartOfAccounts).where(eq(chartOfAccounts.id, id)).limit(1);
     if (!rows[0]) return null;

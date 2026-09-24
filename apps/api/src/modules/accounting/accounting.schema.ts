@@ -40,12 +40,15 @@ export const chartOfAccounts = accountingSchema.table('chart_of_accounts', {
   parentId: uuid('parent_id').references((): AnyPgColumn => chartOfAccounts.id, { onDelete: 'set null' }),
   isLeaf: text('is_leaf').notNull().default('yes'),
   status: text('status').notNull().default('active'),
+  /** Standard account role (plan item 32), see account-roles.ts. NULL = plain account, no special behaviour. */
+  accountRole: text('account_role'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   unique('chart_of_accounts_org_code_unique').on(t.orgNodeId, t.code),
   check('chart_of_accounts_is_leaf_valid', sql`${t.isLeaf} in ('yes', 'no')`),
   check('chart_of_accounts_status_valid', sql`${t.status} in ('active', 'inactive')`),
+  check('chart_of_accounts_role_valid', sql`${t.accountRole} is null or ${t.accountRole} in ('accumulated_depreciation', 'asset_received_but_not_billed', 'bank', 'cash', 'chargeable', 'capital_work_in_progress', 'cost_of_goods_sold', 'current_asset', 'current_liability', 'depreciation', 'direct_expense', 'direct_income', 'equity', 'expense_account', 'expenses_included_in_asset_valuation', 'expenses_included_in_valuation', 'fixed_asset', 'income_account', 'indirect_expense', 'indirect_income', 'liability', 'payable', 'receivable', 'round_off', 'service_received_but_not_billed', 'stock', 'stock_adjustment', 'stock_received_but_not_billed', 'tax', 'temporary')`),
   index('idx_chart_of_accounts_parent').on(t.parentId),
   index('idx_chart_of_accounts_type').on(t.accountTypeId),
   index('idx_chart_of_accounts_org_node').on(t.orgNodeId),

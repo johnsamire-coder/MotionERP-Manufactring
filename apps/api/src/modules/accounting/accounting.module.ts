@@ -1,3 +1,4 @@
+import { AccountRolesController } from './account-roles.controller';
 import { JournalReversalController } from './journal-reversal.controller';
 import { JournalReversalService } from './journal-reversal.service';
 import { OpeningEntriesService } from './opening-entries.service';
@@ -15,7 +16,7 @@ import { AccountingService } from './accounting.service';
 import { PostingEngineService } from './posting-engine.service';
 
 @Module({
-  controllers: [OpeningEntriesController, FiscalYearClosingController, PeriodClosingController, TaxAndCustomsController, AccountingController, JournalReversalController],
+  controllers: [OpeningEntriesController, FiscalYearClosingController, PeriodClosingController, TaxAndCustomsController, AccountingController, JournalReversalController, AccountRolesController],
   providers: [OpeningEntriesService, FiscalYearClosingService, PeriodClosingService, TaxAndCustomsService, AccountingService, AccountingRepository, PostingEngineService, JournalReversalService],
   exports: [AccountingService, PostingEngineService, JournalReversalService],
 })

@@ -32,6 +32,7 @@ describe('AccountingService — Fixed Assets & Monthly Depreciation Engine', () 
 
     accountingRepo = {
       findFixedAssetByCode: jest.fn().mockResolvedValue(null),
+      findAccountRole: jest.fn().mockResolvedValue(null),
       findFixedAssetById: jest.fn().mockImplementation(async (id: string) => {
         return mockAssets.get(id) ?? null;
       }),
