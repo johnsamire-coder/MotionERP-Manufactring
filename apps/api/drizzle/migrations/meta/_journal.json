@@ -666,6 +666,13 @@
       "when": 1790237866119,
       "tag": "0094_low_viper",
       "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1790238156818,
+      "tag": "0095_broken_vindicator",
+      "breakpoints": true
     }
   ]
 }

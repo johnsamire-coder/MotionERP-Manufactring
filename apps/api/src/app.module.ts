@@ -18,6 +18,7 @@ import { QualityModule } from './modules/quality/quality.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { PlanningModule } from './modules/planning/planning.module';
 import { TechnicalModule } from './modules/technical/technical.module';
+import { AssetsModule } from './modules/assets/assets.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { SupportModule } from './modules/support/support.module';
 import { WorkflowModule } from './modules/workflow/workflow.module';
@@ -28,7 +29,7 @@ import { ManufacturingToolsModule } from './modules/manufacturing_tools/manufact
     AuditModule,
     CoreModule, OrganizationModule, SettingsModule, CatalogModule, InventoryModule, CrmModule,
     SalesModule, PlanningModule, TechnicalModule, ManufacturingToolsModule, ProductionModule, ProductionOpsModule,
-    QualityModule, CostModule, DeliveryModule, AccountingModule, FinanceModule, HrModule, AuthModule, WorkflowModule, SupportModule, ProjectsModule,
+    QualityModule, CostModule, DeliveryModule, AccountingModule, FinanceModule, HrModule, AuthModule, WorkflowModule, SupportModule, ProjectsModule, AssetsModule,
   ],
 })
 export class AppModule {}
