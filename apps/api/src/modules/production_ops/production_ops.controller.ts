@@ -20,6 +20,8 @@ import {
   CreateDowntimeEntryDto,
   AddStepMaterialsDto,
   CreateSubcontractingOrderDto,
+  LinkSubcontractingInvoiceDto,
+  ReceiveSubcontractingDto,
 } from './production_ops.dto';
 import { ProductionOpsExceptionFilter } from './production_ops.exception-filter';
 import { ProductionOpsService } from './production_ops.service';
@@ -203,6 +205,22 @@ export class ProductionOpsController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<{ subcontractingOrder: SubcontractingOrderRecord }> {
     return { subcontractingOrder: await this.service.postSubcontractingOrder(id) };
+  }
+  /** Plan item 45: receive the processed goods back (all remaining, or the given lines). */
+  @Post('subcontracting/:id/receive') @HttpCode(200) async receiveSubcontractingOrder(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ReceiveSubcontractingDto,
+  ): Promise<{ subcontractingOrder: SubcontractingOrderRecord }> {
+    return { subcontractingOrder: await this.service.receiveSubcontractingOrder(id, dto) };
+  }
+  /** Plan item 45: link the subcontractor's purchase invoice. */
+  @Post('subcontracting/:id/invoice') @HttpCode(200) async linkSubcontractingInvoice(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: LinkSubcontractingInvoiceDto,
+  ): Promise<{ subcontractingOrder: SubcontractingOrderRecord }> {
+    return {
+      subcontractingOrder: await this.service.linkSubcontractingInvoice(id, dto.purchaseInvoiceId),
+    };
   }
   @Post('subcontracting/:id/cancel') @HttpCode(200) async cancelSubcontractingOrder(
     @Param('id', ParseUUIDPipe) id: string,

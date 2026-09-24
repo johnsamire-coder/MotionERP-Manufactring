@@ -3,6 +3,7 @@ import { Injectable, Optional } from '@nestjs/common';
 import { SalesService } from '../sales/sales.service';
 import { TechnicalService } from '../technical/technical.service';
 import { InventoryService } from '../inventory/inventory.service';
+import { FinanceService } from '../finance/finance.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { ProductionOpsNotFoundError, ProductionOpsValidationError } from './production_ops.errors';
 import { ProductionOpsRepository } from './production_ops.repository';
@@ -24,6 +25,7 @@ import type {
   CreateDowntimeEntryInput,
   DowntimeEntryRecord,
   WorkOrderOperationRecord,
+  SubcontractingItemRecord,
   SubcontractingOrderRecord,
   CreateSubcontractingOrderInput,
   CreateSubcontractingItemInput,
@@ -37,6 +39,7 @@ export class ProductionOpsService {
     private readonly technicalService: TechnicalService,
     @Optional() private readonly inventoryService?: InventoryService,
     @Optional() private readonly accountingService?: AccountingService,
+    @Optional() private readonly financeService?: FinanceService,
   ) {}
 
   private async getJobOrderOrThrow(jobOrderReference: string): Promise<JobOrderRecord> {
@@ -370,10 +373,110 @@ export class ProductionOpsService {
 
     return this.repository.setSubcontractingOrderStatus(id, 'posted');
   }
+  /**
+   * Plan item 45: receives the processed goods back from the subcontractor. Each unit comes in at
+   * the line's merged valuation rate (material sent + service), as a production receipt, so it
+   * credits the WIP that posting debited. Partial receipts are allowed; the order is "completed"
+   * once every line is fully received.
+   */
+  async receiveSubcontractingOrder(
+    id: string,
+    input: {
+      warehouseId: string;
+      receiptDate?: string;
+      lines?: Array<{ subcontractingItemId: string; quantity: string }>;
+    },
+  ): Promise<SubcontractingOrderRecord> {
+    const order = await this.getSubcontractingOrder(id);
+    if (order.status !== 'posted' && order.status !== 'partially_received')
+      throw new ProductionOpsValidationError(
+        `order ${order.voucherNumber} is "${order.status}" — only a posted order can be received`,
+      );
+    const remaining = (i: SubcontractingItemRecord): number =>
+      Number(i.quantity) - Number(i.receivedQty);
+    const wanted =
+      input.lines ??
+      order.items
+        .filter((i) => remaining(i) > 0)
+        .map((i) => ({ subcontractingItemId: i.id, quantity: String(remaining(i)) }));
+    if (wanted.length === 0)
+      throw new ProductionOpsValidationError('nothing left to receive on this order');
+    for (const w of wanted) {
+      const line = order.items.find((i) => i.id === w.subcontractingItemId);
+      if (!line)
+        throw new ProductionOpsValidationError(
+          `line ${w.subcontractingItemId} is not on order ${order.voucherNumber}`,
+        );
+      const qty = Number(w.quantity);
+      if (!(qty > 0)) throw new ProductionOpsValidationError('received quantity must be positive');
+      if (qty > remaining(line) + 1e-9)
+        throw new ProductionOpsValidationError(
+          `only ${remaining(line)} left to receive on this line (asked ${qty})`,
+        );
+    }
+    for (const w of wanted) {
+      const line = order.items.find((i) => i.id === w.subcontractingItemId)!;
+      if (this.inventoryService) {
+        await this.inventoryService.createMovement({
+          itemId: line.itemId,
+          warehouseId: input.warehouseId,
+          movementType: 'receipt',
+          quantity: w.quantity,
+          unitCost: line.newValuationRate,
+          movementDate: input.receiptDate,
+          sourceModule: 'production',
+          sourceId: order.id,
+          note: `استلام من مقاول الباطن لسند ${order.voucherNumber}`,
+        });
+      }
+      await this.repository.addSubcontractingReceived(line.id, w.quantity);
+    }
+    const after = await this.getSubcontractingOrder(id);
+    const done = after.items.every((i) => remaining(i) <= 1e-9);
+    return this.repository.setSubcontractingOrderStatus(
+      id,
+      done ? 'completed' : 'partially_received',
+    );
+  }
+
+  /**
+   * Plan item 45: links the subcontractor's purchase invoice (finance) to the order — same
+   * supplier, not cancelled, and not already linked to another order.
+   */
+  async linkSubcontractingInvoice(
+    id: string,
+    purchaseInvoiceId: string,
+  ): Promise<SubcontractingOrderRecord> {
+    const order = await this.getSubcontractingOrder(id);
+    if (order.status === 'draft' || order.status === 'cancelled')
+      throw new ProductionOpsValidationError(
+        `order ${order.voucherNumber} is "${order.status}" — post it before linking an invoice`,
+      );
+    if (!this.financeService)
+      throw new ProductionOpsValidationError('finance module is not available');
+    let invoice: Awaited<ReturnType<FinanceService['getPurchaseInvoice']>>;
+    try {
+      invoice = await this.financeService.getPurchaseInvoice(purchaseInvoiceId);
+    } catch {
+      throw new ProductionOpsNotFoundError(`purchase invoice ${purchaseInvoiceId} does not exist`);
+    }
+    if (invoice.supplierId !== order.supplierId)
+      throw new ProductionOpsValidationError(
+        'the invoice is from another supplier than the subcontractor of this order',
+      );
+    if (invoice.status === 'cancelled')
+      throw new ProductionOpsValidationError('the invoice is cancelled');
+    const other = await this.repository.findSubcontractingOrderIdByInvoice(purchaseInvoiceId);
+    if (other && other !== id)
+      throw new ProductionOpsValidationError('this invoice is already linked to another order');
+    await this.repository.setSubcontractingInvoice(id, purchaseInvoiceId);
+    return this.getSubcontractingOrder(id);
+  }
+
   async cancelSubcontractingOrder(id: string): Promise<SubcontractingOrderRecord> {
     const order = await this.getSubcontractingOrder(id);
-    if (order.status === 'posted')
-      throw new ProductionOpsValidationError(`order ${id} is already posted`);
+    if (order.status !== 'draft' && order.status !== 'cancelled')
+      throw new ProductionOpsValidationError(`order ${id} is already ${order.status}`);
     return this.repository.setSubcontractingOrderStatus(id, 'cancelled');
   }
 }

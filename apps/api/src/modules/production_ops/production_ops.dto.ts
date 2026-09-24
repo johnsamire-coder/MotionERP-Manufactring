@@ -132,3 +132,21 @@ export class CreateSubcontractingOrderDto {
   @Type(() => CreateSubcontractingItemDto)
   items!: CreateSubcontractingItemDto[];
 }
+
+/** Plan item 45: receiving the processed goods back from the subcontractor. */
+export class ReceiveSubcontractingLineDto {
+  @IsUUID() subcontractingItemId!: string;
+  @IsNumberString() quantity!: string;
+}
+export class ReceiveSubcontractingDto {
+  @IsUUID() warehouseId!: string;
+  @IsOptional() @IsDateString() receiptDate?: string;
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReceiveSubcontractingLineDto)
+  lines?: ReceiveSubcontractingLineDto[];
+}
+export class LinkSubcontractingInvoiceDto {
+  @IsUUID() purchaseInvoiceId!: string;
+}

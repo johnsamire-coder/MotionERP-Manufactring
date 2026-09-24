@@ -304,7 +304,9 @@ export const subcontractingOrder = productionOpsSchema.table(
       .notNull()
       .references(() => chartOfAccounts.id, { onDelete: 'restrict' }), // حساب استحقاق خدمات مقاولي الباطن
 
-    status: text('status').notNull().default('draft'), // draft | posted | cancelled
+    status: text('status').notNull().default('draft'), // draft | posted | partially_received | completed | cancelled
+    /** Plan item 45: the subcontractor's purchase invoice for the service (finance UUID, D2). */
+    purchaseInvoiceId: uuid('purchase_invoice_id'),
     notes: text('notes'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -312,7 +314,7 @@ export const subcontractingOrder = productionOpsSchema.table(
   (t) => [
     check(
       'subcontracting_order_status_valid',
-      sql`${t.status} in ('draft', 'posted', 'cancelled')`,
+      sql`${t.status} in ('draft', 'posted', 'partially_received', 'completed', 'cancelled')`,
     ),
     check('subcontracting_service_cost_positive', sql`${t.totalServiceCost} > 0`),
     index('idx_subcontract_supplier').on(t.supplierId),
@@ -340,6 +342,8 @@ export const subcontractingItem = productionOpsSchema.table(
       .default('0.0000'), // تكلفة الخامات المرسلة
     serviceRate: numeric('service_rate', { precision: 14, scale: 4 }).notNull(), // سعر مصنعية القطعة الواحدة للمقاول
     newValuationRate: numeric('new_valuation_rate', { precision: 18, scale: 6 }).notNull(), // التكلفة المدمجة النهائية للقطعة
+    /** Plan item 45: quantity already received back from the subcontractor. */
+    receivedQty: numeric('received_qty', { precision: 24, scale: 6 }).notNull().default('0'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

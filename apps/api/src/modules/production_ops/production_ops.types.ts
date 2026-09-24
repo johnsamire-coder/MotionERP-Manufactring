@@ -3,7 +3,8 @@ export type ProductionStepStatus = 'pending' | 'in_progress' | 'done';
 export type WorkOrderStatus = 'not_started' | 'in_progress' | 'completed' | 'stopped' | 'closed';
 export type WorkstationTypeStatus = 'active' | 'inactive';
 export type OperationStatus = 'active' | 'inactive';
-export type SubcontractingOrderStatus = 'draft' | 'posted' | 'cancelled';
+export type SubcontractingOrderStatus =
+  'draft' | 'posted' | 'partially_received' | 'completed' | 'cancelled';
 export type MaterialTransferMode = 'transfer' | 'move';
 
 export interface WorkCenterRecord {
@@ -206,6 +207,7 @@ export interface SubcontractingItemRecord {
   rawMaterialCost: string;
   serviceRate: string;
   newValuationRate: string;
+  receivedQty: string;
   createdAt: string;
 }
 export interface SubcontractingOrderRecord {
@@ -218,6 +220,7 @@ export interface SubcontractingOrderRecord {
   totalServiceCost: string;
   serviceAccountId: string;
   status: SubcontractingOrderStatus;
+  purchaseInvoiceId: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;

@@ -158,6 +158,7 @@ const scoColumns = {
   totalServiceCost: subcontractingOrder.totalServiceCost,
   serviceAccountId: subcontractingOrder.serviceAccountId,
   status: subcontractingOrder.status,
+  purchaseInvoiceId: subcontractingOrder.purchaseInvoiceId,
   notes: subcontractingOrder.notes,
   createdAt: subcontractingOrder.createdAt,
   updatedAt: subcontractingOrder.updatedAt,
@@ -172,6 +173,7 @@ const sciColumns = {
   rawMaterialCost: subcontractingItem.rawMaterialCost,
   serviceRate: subcontractingItem.serviceRate,
   newValuationRate: subcontractingItem.newValuationRate,
+  receivedQty: subcontractingItem.receivedQty,
   createdAt: subcontractingItem.createdAt,
 };
 
@@ -646,6 +648,7 @@ export class ProductionOpsRepository {
         totalServiceCost: r.totalServiceCost,
         serviceAccountId: r.serviceAccountId,
         status: r.status as SubcontractingOrderStatus,
+        purchaseInvoiceId: r.purchaseInvoiceId,
         notes: r.notes,
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.updatedAt.toISOString(),
@@ -658,6 +661,7 @@ export class ProductionOpsRepository {
           rawMaterialCost: i.rawMaterialCost,
           serviceRate: i.serviceRate,
           newValuationRate: i.newValuationRate,
+          receivedQty: i.receivedQty,
           createdAt: i.createdAt.toISOString(),
         })),
       });
@@ -687,6 +691,7 @@ export class ProductionOpsRepository {
       totalServiceCost: r.totalServiceCost,
       serviceAccountId: r.serviceAccountId,
       status: r.status as SubcontractingOrderStatus,
+      purchaseInvoiceId: r.purchaseInvoiceId,
       notes: r.notes,
       createdAt: r.createdAt.toISOString(),
       updatedAt: r.updatedAt.toISOString(),
@@ -699,9 +704,34 @@ export class ProductionOpsRepository {
         rawMaterialCost: i.rawMaterialCost,
         serviceRate: i.serviceRate,
         newValuationRate: i.newValuationRate,
+        receivedQty: i.receivedQty,
         createdAt: i.createdAt.toISOString(),
       })),
     };
+  }
+
+  /** Plan item 45: adds a received quantity to one order line. */
+  async addSubcontractingReceived(itemRowId: string, quantity: string): Promise<void> {
+    await this.database.db
+      .update(subcontractingItem)
+      .set({ receivedQty: sql`${subcontractingItem.receivedQty} + ${quantity}::numeric` })
+      .where(eq(subcontractingItem.id, itemRowId));
+  }
+
+  async setSubcontractingInvoice(id: string, purchaseInvoiceId: string): Promise<void> {
+    await this.database.db
+      .update(subcontractingOrder)
+      .set({ purchaseInvoiceId, updatedAt: new Date() })
+      .where(eq(subcontractingOrder.id, id));
+  }
+
+  async findSubcontractingOrderIdByInvoice(purchaseInvoiceId: string): Promise<string | null> {
+    const rows = await this.database.db
+      .select({ id: subcontractingOrder.id })
+      .from(subcontractingOrder)
+      .where(eq(subcontractingOrder.purchaseInvoiceId, purchaseInvoiceId))
+      .limit(1);
+    return rows[0]?.id ?? null;
   }
 
   async countSubcontractingOrders(): Promise<number> {
@@ -771,6 +801,7 @@ export class ProductionOpsRepository {
         rawMaterialCost: lci.rawMaterialCost,
         serviceRate: lci.serviceRate,
         newValuationRate: lci.newValuationRate,
+        receivedQty: lci.receivedQty,
         createdAt: lci.createdAt.toISOString(),
       });
     }
@@ -785,6 +816,7 @@ export class ProductionOpsRepository {
       totalServiceCost: insertedOrder.totalServiceCost,
       serviceAccountId: insertedOrder.serviceAccountId,
       status: insertedOrder.status as SubcontractingOrderStatus,
+      purchaseInvoiceId: insertedOrder.purchaseInvoiceId,
       notes: insertedOrder.notes,
       createdAt: insertedOrder.createdAt.toISOString(),
       updatedAt: insertedOrder.updatedAt.toISOString(),
