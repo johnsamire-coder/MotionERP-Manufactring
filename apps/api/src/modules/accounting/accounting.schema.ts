@@ -140,6 +140,8 @@ export const companyAccountingConfig = accountingSchema.table('company_accountin
   defaultDepreciationExpenseAccountId: uuid('default_depreciation_expense_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
   /** Plan item 33: when true, a stock movement whose accounts cannot be resolved is refused up front (instead of posting nothing). */
   enforceDefaultAccounts: boolean('enforce_default_accounts').notNull().default(false),
+  /** Plan item 36: no journal entry may be dated on or before this day (ERPNext "Accounts Frozen Till"). */
+  accountsFrozenUntil: timestamp('accounts_frozen_until', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [

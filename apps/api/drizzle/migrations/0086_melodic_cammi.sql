@@ -1,0 +1,1 @@
+ALTER TABLE "accounting"."company_accounting_config" ADD COLUMN "accounts_frozen_until" timestamp with time zone;

@@ -137,6 +137,10 @@ export class AccountingService {
   async setPeriodStatus(id: string, status: AccountingPeriodStatus): Promise<AccountingPeriodRecord> {
     const period = await this.repository.findPeriodById(id);
     if (!period) throw new AccountingNotFoundError(`accounting period ${id} does not exist`);
+    if (status === 'open') {
+      const fy = await this.repository.findFiscalYearById(period.fiscalYearId);
+      if (fy?.isClosed) throw new AccountingValidationError(`مينفعش تفتح فترة "${period.name}" — السنة المالية "${fy.name}" مقفولة`);
+    }
     return this.repository.setPeriodStatus(id, status);
   }
 
@@ -235,6 +239,8 @@ export class AccountingService {
       }
     }
 
+    await this.assertOpenForPosting(input.orgNodeId, entryDate);
+
     const voucherLines: VoucherLine[] = [];
     for (const line of input.lines) {
       const debit = Number(line.debitAmount ?? '0');
@@ -288,6 +294,8 @@ export class AccountingService {
     const entry = await this.repository.findEntryById(id);
     if (!entry) throw new AccountingNotFoundError(`journal entry ${id} does not exist`);
     if (entry.status !== 'draft') throw new AccountingValidationError(`journal entry ${id} is "${entry.status}" and cannot be posted (must be "draft")`);
+    // Plan item 36: the period may have been closed (or the books frozen) since the draft was written.
+    if (entry.orgNodeId) await this.assertOpenForPosting(entry.orgNodeId, new Date(entry.entryDate));
 
     let totalDebit = 0;
     let totalCredit = 0;
@@ -313,6 +321,24 @@ export class AccountingService {
       );
     }
     return this.repository.setEntryStatus(id, 'cancelled');
+  }
+
+  /**
+   * Plan item 36 — backdating is refused in code, not by convention: nothing may be written
+   * into a closed fiscal year, a period that is not open, or on/before the company's frozen date.
+   */
+  private async assertOpenForPosting(orgNodeId: string, date: Date): Promise<void> {
+    const config = await this.repository.findCompanyConfig(orgNodeId);
+    if (config?.accountsFrozenUntil && date.getTime() <= new Date(config.accountsFrozenUntil).getTime()) {
+      throw new AccountingValidationError(`الدفاتر مجمّدة لحد ${new Date(config.accountsFrozenUntil).toISOString().slice(0, 10)} — مينفعش قيد بتاريخ ${date.toISOString().slice(0, 10)}`);
+    }
+    const fy = await this.repository.findFiscalYearByDate(orgNodeId, date);
+    if (!fy) return;
+    if (fy.isClosed) throw new AccountingValidationError(`السنة المالية "${fy.name}" مقفولة — مينفعش قيود بتاريخ ${date.toISOString().slice(0, 10)}`);
+    const period = await this.repository.findPeriodByDate(fy.id, date);
+    if (period && period.status !== 'open') {
+      throw new AccountingValidationError(`accounting period "${period.name}" is ${period.status}; cannot post into closed periods`);
+    }
   }
 
   async getAccountBalances(): Promise<AccountBalance[]> {
@@ -494,8 +520,13 @@ export class AccountingService {
     };
   }
 
-  async getProfitAndLoss(orgNodeId: string, start?: string, end?: string): Promise<ProfitAndLossReport> {
-    const lines = await this.repository.listAllPostedLinesWithDetails({ orgNodeId, startDate: start, endDate: end });
+  async getProfitAndLoss(orgNodeId: string, start?: string, end?: string, excludeClosingEntries = true): Promise<ProfitAndLossReport> {
+    let lines = await this.repository.listAllPostedLinesWithDetails({ orgNodeId, startDate: start, endDate: end });
+    // Plan item 36: the year-closing entry zeroes P&L into retained earnings; the P&L report shows the year as it was.
+    if (excludeClosingEntries) {
+      const closing = new Set(await this.repository.listEntryIdsBySourceForCompany(orgNodeId, 'period_closing'));
+      if (closing.size > 0) lines = lines.filter((l) => !closing.has(l.journalEntryId));
+    }
     
     let revenueSum = 0;
     let cogsSum = 0;
@@ -539,7 +570,8 @@ export class AccountingService {
 
   async getBalanceSheet(orgNodeId: string, dateStr: string): Promise<BalanceSheetReport> {
     const lines = await this.repository.listAllPostedLinesWithDetails({ orgNodeId, endDate: dateStr });
-    const pnl = await this.getProfitAndLoss(orgNodeId, undefined, dateStr);
+    // Closed years already sit in retained earnings: only the not-yet-closed profit is added below.
+    const pnl = await this.getProfitAndLoss(orgNodeId, undefined, dateStr, false);
 
     let assetsSum = 0;
     let liabilitiesSum = 0;

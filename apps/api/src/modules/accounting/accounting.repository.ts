@@ -79,6 +79,7 @@ const configColumns = {
   defaultExchangeGainLossAccountId: companyAccountingConfig.defaultExchangeGainLossAccountId,
   defaultDepreciationExpenseAccountId: companyAccountingConfig.defaultDepreciationExpenseAccountId,
   enforceDefaultAccounts: companyAccountingConfig.enforceDefaultAccounts,
+  accountsFrozenUntil: companyAccountingConfig.accountsFrozenUntil,
 };
 const detColumns = {
   id: accountDetermination.id, orgNodeId: accountDetermination.orgNodeId, determinationType: accountDetermination.determinationType,
@@ -266,12 +267,14 @@ export class AccountingRepository {
     const existing = await this.findCompanyConfig(input.orgNodeId);
     if (existing) {
       // Keep the row's own id: the freshly generated one is only for a first insert.
-      const { id, ...fields } = input;
+      const { id, accountsFrozenUntil, ...fields } = input;
       void id;
-      const rows = await this.database.db.update(companyAccountingConfig).set({ ...fields, updatedAt: new Date() }).where(eq(companyAccountingConfig.orgNodeId, input.orgNodeId)).returning(configColumns);
+      const frozen = accountsFrozenUntil === undefined ? {} : { accountsFrozenUntil: accountsFrozenUntil ? new Date(accountsFrozenUntil) : null };
+      const rows = await this.database.db.update(companyAccountingConfig).set({ ...fields, ...frozen, updatedAt: new Date() }).where(eq(companyAccountingConfig.orgNodeId, input.orgNodeId)).returning(configColumns);
       return rows[0]!;
     }
-    const rows = await this.database.db.insert(companyAccountingConfig).values(input).returning(configColumns);
+    const { accountsFrozenUntil, ...rest } = input;
+    const rows = await this.database.db.insert(companyAccountingConfig).values({ ...rest, accountsFrozenUntil: accountsFrozenUntil ? new Date(accountsFrozenUntil) : null }).returning(configColumns);
     return rows[0]!;
   }
 
@@ -410,6 +413,20 @@ export class AccountingRepository {
     const rows = await this.database.db.select({ id: journalEntry.id }).from(journalEntry)
       .where(and(eq(journalEntry.sourceEventType, sourceEventType), eq(journalEntry.reference, reference), eq(journalEntry.status, 'posted')));
     return rows.map((r) => r.id);
+  }
+
+  /** Plan item 36: ids of the company's year-closing entries (kept out of the P&L report). */
+  async listEntryIdsBySourceForCompany(orgNodeId: string, sourceEventType: string): Promise<string[]> {
+    const rows = await this.database.db.select({ id: journalEntry.id }).from(journalEntry)
+      .where(and(eq(journalEntry.orgNodeId, orgNodeId), eq(journalEntry.sourceEventType, sourceEventType)));
+    return rows.map((r) => r.id);
+  }
+
+  /** Plan item 36: draft entries of a company dated inside [start, end]. */
+  async countDraftEntries(orgNodeId: string, start: Date, end: Date): Promise<number> {
+    const rows = await this.database.db.select({ id: journalEntry.id }).from(journalEntry)
+      .where(and(eq(journalEntry.orgNodeId, orgNodeId), eq(journalEntry.status, 'draft'), sql`${journalEntry.entryDate} >= ${start}`, sql`${journalEntry.entryDate} <= ${end}`));
+    return rows.length;
   }
 
   async findEntryByIdempotencyKey(idempotencyKey: string): Promise<JournalEntryRecord | null> {

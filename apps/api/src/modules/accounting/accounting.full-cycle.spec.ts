@@ -126,6 +126,7 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
         if (found) found.status = status;
         return found;
       }),
+      listEntryIdsBySourceForCompany: jest.fn().mockResolvedValue([]),
       listAllPostedLinesWithDetails: jest.fn().mockImplementation(async () => {
         const lines: any[] = [];
         for (const j of journals.filter((e) => e.status === 'posted')) {

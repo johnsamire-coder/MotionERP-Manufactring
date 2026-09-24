@@ -9,6 +9,7 @@ describe('AccountingService — Financial Reports Engine (Trial Balance, P&L, Ba
 
   beforeEach(() => {
     accountingRepo = {
+      listEntryIdsBySourceForCompany: jest.fn().mockResolvedValue([]),
       listAllPostedLinesWithDetails: jest.fn().mockImplementation(async () => [
         // --- Assets (Debits) ---
         {

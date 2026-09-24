@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import type { VoucherType } from './voucher-types';
-import { ArrayMinSize, IsArray, IsBoolean, IsDateString, IsIn, IsInt, IsNumberString, IsOptional, IsPositive, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsBoolean, IsDateString, IsIn, IsInt, IsNumberString, IsOptional, IsPositive, IsString, IsUUID, MaxLength, ValidateIf, ValidateNested } from 'class-validator';
 
 export class CreateAccountTypeDto {
   @IsString() @MaxLength(64) code!: string;
@@ -83,6 +83,7 @@ export class UpsertCompanyAccountingConfigDto {
   @IsOptional() @IsUUID() defaultExchangeGainLossAccountId?: string;
   @IsOptional() @IsUUID() defaultDepreciationExpenseAccountId?: string;
   @IsOptional() @IsBoolean() enforceDefaultAccounts?: boolean;
+  @IsOptional() @ValidateIf((_, v) => v !== null) @IsDateString() accountsFrozenUntil?: string | null;
 }
 
 export class FinancialReportQueryDto {
