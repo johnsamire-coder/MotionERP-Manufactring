@@ -61,6 +61,6 @@ export class AccrualsController {
   @Post('provisions/utilize')
   async utilizeProvision(@Body() dto: UtilizeProvisionDto, @Req() req: RequestWithUser) {
     const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
-    return this.accrualsService.utilizeProvision(dto.id, dto.amount, userId);
+    return this.accrualsService.utilizeProvision(dto.id, dto.amount, dto.creditAccountId, userId);
   }
 }

@@ -736,6 +736,13 @@
       "when": 1790258443210,
       "tag": "0104_subcontracting_receipt_invoice",
       "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "7",
+      "when": 1790287688171,
+      "tag": "0105_tax_customs_posting_accounts",
+      "breakpoints": true
     }
   ]
 }

@@ -10,6 +10,9 @@ import { JournalReversalService } from './journal-reversal.service';
 import { TaxAndCustomsService } from './tax-customs.service';
 import { TaxAndCustomsController } from './tax-customs.controller';
 import { Module } from '@nestjs/common';
+import { AccrualsController } from './accruals.controller';
+import { AccrualsRepository } from './accruals.repository';
+import { AccrualsService } from './accruals.service';
 import { AccountingController } from './accounting.controller';
 import { AccountingRepository } from './accounting.repository';
 import { AccountingService } from './accounting.service';
@@ -17,6 +20,7 @@ import { PostingEngineService } from './posting-engine.service';
 
 @Module({
   controllers: [
+    AccrualsController,
     TaxAndCustomsController,
     AccountingController,
     JournalReversalController,
@@ -26,6 +30,8 @@ import { PostingEngineService } from './posting-engine.service';
     AccountControlsController,
   ],
   providers: [
+    AccrualsService,
+    AccrualsRepository,
     TaxAndCustomsService,
     AccountingService,
     AccountingRepository,

@@ -5,6 +5,7 @@
 import { Controller, Get, Post, Body, Query, Req } from '@nestjs/common';
 import { TaxAndCustomsService } from './tax-customs.service';
 import {
+  CapitalizeCustomsCostDto,
   CreateTaxSettlementDto,
   SettleAndPayVatDto,
   CreateWhtEntryDto,
@@ -63,10 +64,7 @@ export class TaxAndCustomsController {
   }
 
   @Post('customs/capitalize')
-  async capitalizeCustoms(
-    @Body() dto: { declarationId: string; targetWarehouseId: string },
-    @Req() req: RequestWithUser,
-  ) {
+  async capitalizeCustoms(@Body() dto: CapitalizeCustomsCostDto, @Req() req: RequestWithUser) {
     const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
     return this.taxService.capitalizeCustomsToInventory(dto, userId);
   }

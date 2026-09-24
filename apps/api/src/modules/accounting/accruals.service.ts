@@ -2,24 +2,19 @@
 // Motion ERP — Accrual, Prepaid & Provision Service (Updated)
 // Step 77
 // ============================================================
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-  Inject,
-  Optional,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { AccrualsRepository } from './accruals.repository';
 import { CreateAccrualDto, CreatePrepaidDto, CreateWarrantyProvisionDto } from './accruals.dto';
 import { AccruedExpense, PrepaidExpense, WarrantyProvision } from './accrual.schema';
-import { PostingEngineService } from './posting-engine.service';
-import { manualJournalPoster, type PostedJournal } from './manual-journal';
+import { AccountingService } from './accounting.service';
+import type { JournalEntryRecord } from './accounting.types';
+import { postManualJournal } from './manual-journal';
 
 @Injectable()
 export class AccrualsService {
   constructor(
     private readonly repo: AccrualsRepository,
-    @Optional() @Inject(PostingEngineService) private readonly postingEngine?: PostingEngineService,
+    private readonly accounting: AccountingService,
   ) {}
 
   // ── 1. Accrued Expenses ─────────────────────
@@ -39,95 +34,68 @@ export class AccrualsService {
     });
   }
 
+  /** Posts the accrual once: Dr expense / Cr accrued liability, dated on the accrual date. */
   async postAccrual(
     id: string,
-    userId: string,
-  ): Promise<{ accrual: AccruedExpense; journalEntry: PostedJournal }> {
+    _userId: string,
+  ): Promise<{ accrual: AccruedExpense; journalEntry: JournalEntryRecord }> {
     const accrual = await this.repo.findAccrualById(id);
     if (!accrual) throw new NotFoundException(`Accrual entry ${id} not found`);
-    if (accrual.status !== 'accrued') {
-      throw new BadRequestException(`Cannot post accrual with status '${accrual.status}'`);
+    if (accrual.status !== 'accrued' || accrual.journalEntryId) {
+      throw new BadRequestException(
+        `Accrual ${accrual.voucherNumber} is "${accrual.status}"${accrual.journalEntryId ? ' and already posted' : ''}`,
+      );
     }
-
-    const amountNum = parseFloat(accrual.amount);
-
-    const journalPayload = {
-      companyId: accrual.orgNodeId, // Mapping OrgNode as target
-      postingDate: accrual.accrualDate.toISOString().split('T')[0],
-      referenceType: 'accrual_entry',
-      referenceId: accrual.id,
-      description: accrual.description,
-      createdBy: userId,
+    const amount = Number(accrual.amount);
+    const journal = await postManualJournal(this.accounting, {
+      orgNodeId: accrual.orgNodeId,
+      entryDate: accrual.accrualDate.toISOString(),
+      description: `استحقاق مصروف ${accrual.voucherNumber}: ${accrual.description}`,
+      reference: accrual.voucherNumber,
+      sourceEventType: 'accrual_entry',
+      idempotencyKey: `accrual-${accrual.id}`,
       lines: [
-        {
-          accountId: accrual.expenseAccountId,
-          debit: amountNum,
-          credit: 0,
-          description: `Debit accrued expense ${accrual.voucherNumber}`,
-        },
-        {
-          accountId: accrual.accruedLiabilityAccountId,
-          debit: 0,
-          credit: amountNum,
-          description: `Credit accrued liability ${accrual.voucherNumber}`,
-        },
+        { accountId: accrual.expenseAccountId, debit: amount, credit: 0 },
+        { accountId: accrual.accruedLiabilityAccountId, debit: 0, credit: amount },
       ],
-    };
-
-    const poster = manualJournalPoster(this.postingEngine);
-    const journalResult: PostedJournal = poster
-      ? await poster.createManualJournalEntry(journalPayload)
-      : { id: `mock-journal-${Date.now()}`, ...journalPayload };
-
-    const updated = await this.repo.updateAccrualStatus(id, 'accrued', {
-      journalEntryId: journalResult.id,
     });
-    return { accrual: updated, journalEntry: journalResult };
+    const updated = await this.repo.updateAccrualStatus(id, 'accrued', {
+      journalEntryId: journal.id,
+    });
+    return { accrual: updated, journalEntry: journal };
   }
 
+  /** Reverses a posted accrual on the given date: Dr accrued liability / Cr expense. */
   async reverseAccrual(
     id: string,
     reversalDate: string,
-    userId: string,
-  ): Promise<{ accrual: AccruedExpense; reversalJournal: PostedJournal }> {
+    _userId: string,
+  ): Promise<{ accrual: AccruedExpense; reversalJournal: JournalEntryRecord }> {
     const accrual = await this.repo.findAccrualById(id);
     if (!accrual) throw new NotFoundException(`Accrual entry ${id} not found`);
-
-    const amountNum = parseFloat(accrual.amount);
-
-    const reversalPayload = {
-      companyId: accrual.orgNodeId,
-      postingDate: reversalDate,
-      referenceType: 'accrual_reversal',
-      referenceId: accrual.id,
-      description: `Reversal of ${accrual.voucherNumber}`,
-      createdBy: userId,
+    if (accrual.status !== 'accrued' || !accrual.journalEntryId) {
+      throw new BadRequestException(
+        `Only a posted accrual can be reversed (${accrual.voucherNumber} is "${accrual.status}"${accrual.journalEntryId ? '' : ', not posted'})`,
+      );
+    }
+    const amount = Number(accrual.amount);
+    const journal = await postManualJournal(this.accounting, {
+      orgNodeId: accrual.orgNodeId,
+      entryDate: new Date(reversalDate).toISOString(),
+      description: `عكس استحقاق ${accrual.voucherNumber}`,
+      reference: accrual.voucherNumber,
+      sourceEventType: 'accrual_reversal',
+      idempotencyKey: `accrual-reversal-${accrual.id}`,
       lines: [
-        {
-          accountId: accrual.accruedLiabilityAccountId,
-          debit: amountNum,
-          credit: 0,
-          description: `Debit accrued liability reversal`,
-        },
-        {
-          accountId: accrual.expenseAccountId,
-          debit: 0,
-          credit: amountNum,
-          description: `Credit accrued expense reversal`,
-        },
+        { accountId: accrual.accruedLiabilityAccountId, debit: amount, credit: 0 },
+        { accountId: accrual.expenseAccountId, debit: 0, credit: amount },
       ],
-    };
-
-    const poster = manualJournalPoster(this.postingEngine);
-    const journalResult: PostedJournal = poster
-      ? await poster.createManualJournalEntry(reversalPayload)
-      : { id: `mock-rev-journal-${Date.now()}`, ...reversalPayload };
-
+    });
     const updated = await this.repo.updateAccrualStatus(id, 'reversed', {
-      reversalJournalEntryId: journalResult.id,
+      reversalJournalEntryId: journal.id,
       reversalDate: new Date(reversalDate),
     });
-    return { accrual: updated, reversalJournal: journalResult };
+    return { accrual: updated, reversalJournal: journal };
   }
 
   // ── 2. Prepaid Expenses ─────────────────────
@@ -152,66 +120,66 @@ export class AccrualsService {
     });
   }
 
+  /**
+   * Amortizes part of a prepaid expense: Dr expense / Cr prepaid asset, for no more than what is
+   * left (the journal and the remaining balance always agree).
+   */
   async amortizeMonth(
     id: string,
     amount: number,
-    userId: string,
-  ): Promise<{ prepaid: PrepaidExpense; journalEntry: PostedJournal }> {
+    _userId: string,
+  ): Promise<{ prepaid: PrepaidExpense; journalEntry: JournalEntryRecord }> {
     const prepaid = await this.repo.findPrepaidById(id);
     if (!prepaid) throw new NotFoundException(`Prepaid expense ${id} not found`);
-
-    const consumedNum = parseFloat(prepaid.consumedAmount);
-    const totalNum = parseFloat(prepaid.totalAmount);
-
-    const newConsumed = Math.min(consumedNum + amount, totalNum);
-    const newRemaining = totalNum - newConsumed;
-    const newStatus = newRemaining <= 0.0001 ? 'fully_consumed' : 'active';
-
-    const journalPayload = {
-      companyId: prepaid.orgNodeId,
-      postingDate: new Date().toISOString().split('T')[0],
-      referenceType: 'prepaid_amortization',
-      referenceId: prepaid.id,
-      description: `Amortization: ${prepaid.description}`,
-      createdBy: userId,
+    if (prepaid.status !== 'active')
+      throw new BadRequestException(`Prepaid ${prepaid.voucherNumber} is "${prepaid.status}"`);
+    const consumed = Number(prepaid.consumedAmount);
+    const total = Number(prepaid.totalAmount);
+    const step = Math.min(amount, total - consumed);
+    if (!(step > 0)) throw new BadRequestException('Nothing left to amortize');
+    const newConsumed = consumed + step;
+    const newRemaining = total - newConsumed;
+    const journal = await postManualJournal(this.accounting, {
+      orgNodeId: prepaid.orgNodeId,
+      entryDate: new Date().toISOString(),
+      description: `إطفاء مصروف مدفوع مقدمًا ${prepaid.voucherNumber}: ${prepaid.description}`,
+      reference: prepaid.voucherNumber,
+      sourceEventType: 'prepaid_amortization',
+      idempotencyKey: `prepaid-${prepaid.id}-${newConsumed.toFixed(4)}`,
       lines: [
-        {
-          accountId: prepaid.expenseAccountId,
-          debit: amount,
-          credit: 0,
-          description: `Amortization expense for ${prepaid.voucherNumber}`,
-        },
-        {
-          accountId: prepaid.prepaidAssetAccountId,
-          debit: 0,
-          credit: amount,
-          description: `Credit prepaid asset for ${prepaid.voucherNumber}`,
-        },
+        { accountId: prepaid.expenseAccountId, debit: step, credit: 0 },
+        { accountId: prepaid.prepaidAssetAccountId, debit: 0, credit: step },
       ],
-    };
-
-    const poster = manualJournalPoster(this.postingEngine);
-    const journalResult: PostedJournal = poster
-      ? await poster.createManualJournalEntry(journalPayload)
-      : { id: `mock-amort-journal-${Date.now()}`, ...journalPayload };
-
+    });
     const updated = await this.repo.updatePrepaidAmortization(
       id,
       newConsumed.toFixed(4),
       newRemaining.toFixed(4),
-      newStatus,
+      newRemaining <= 0.0001 ? 'fully_consumed' : 'active',
     );
-    return { prepaid: updated, journalEntry: journalResult };
+    return { prepaid: updated, journalEntry: journal };
   }
 
   // ── 3. Warranty Provisions ──────────────────
+  /** Recognises a warranty provision: Dr warranty expense / Cr provision liability. */
   async createProvision(
     dto: CreateWarrantyProvisionDto,
     _userId: string,
   ): Promise<WarrantyProvision> {
     const calculatedAmount = (dto.baseAmount * dto.provisionRate) / 100;
     const provisionNumber = `PRV-${Date.now().toString().slice(-6)}`;
-
+    const journal = await postManualJournal(this.accounting, {
+      orgNodeId: dto.orgNodeId,
+      entryDate: new Date(dto.provisionDate).toISOString(),
+      description: `مخصص ضمان ${provisionNumber}: ${dto.description}`,
+      reference: provisionNumber,
+      sourceEventType: 'warranty_provision',
+      idempotencyKey: `provision-${provisionNumber}`,
+      lines: [
+        { accountId: dto.warrantyExpenseAccountId, debit: calculatedAmount, credit: 0 },
+        { accountId: dto.provisionLiabilityAccountId, debit: 0, credit: calculatedAmount },
+      ],
+    });
     return this.repo.createProvision({
       provisionNumber,
       orgNodeId: dto.orgNodeId,
@@ -227,58 +195,47 @@ export class AccrualsService {
       warrantyExpiryDate: dto.warrantyExpiryDate ? new Date(dto.warrantyExpiryDate) : null,
       status: 'active',
       description: dto.description,
-      notes: dto.notes || null,
+      notes: [dto.notes, `journal ${journal.entryNumber}`].filter(Boolean).join(' — '),
     });
   }
 
+  /**
+   * Uses the provision for a real warranty cost: Dr provision liability / Cr the account the cost
+   * came from (cash, bank or stock used for the repair), for no more than what is left.
+   */
   async utilizeProvision(
     id: string,
     amount: number,
-    userId: string,
-  ): Promise<{ provision: WarrantyProvision; utilizationJournal: PostedJournal }> {
+    creditAccountId: string,
+    _userId: string,
+  ): Promise<{ provision: WarrantyProvision; utilizationJournal: JournalEntryRecord }> {
     const prv = await this.repo.findProvisionById(id);
     if (!prv) throw new NotFoundException(`Provision ${id} not found`);
-
-    const utilizedNum = parseFloat(prv.utilizedAmount);
-    const provisionAmount = parseFloat(prv.provisionAmount);
-
-    const newUtilized = Math.min(utilizedNum + amount, provisionAmount);
-    const newRemaining = provisionAmount - newUtilized;
-    const newStatus = newRemaining <= 0.0001 ? 'fully_utilized' : 'active';
-
-    const journalPayload = {
-      companyId: prv.orgNodeId,
-      postingDate: new Date().toISOString().split('T')[0],
-      referenceType: 'provision_utilization',
-      referenceId: prv.id,
-      description: `Utilization of ${prv.provisionNumber}`,
-      createdBy: userId,
+    if (prv.status !== 'active')
+      throw new BadRequestException(`Provision ${prv.provisionNumber} is "${prv.status}"`);
+    const utilized = Number(prv.utilizedAmount);
+    const total = Number(prv.provisionAmount);
+    const step = Math.min(amount, total - utilized);
+    if (!(step > 0)) throw new BadRequestException('Nothing left on this provision');
+    const newUtilized = utilized + step;
+    const newRemaining = total - newUtilized;
+    const journal = await postManualJournal(this.accounting, {
+      orgNodeId: prv.orgNodeId,
+      entryDate: new Date().toISOString(),
+      description: `استخدام مخصص الضمان ${prv.provisionNumber}`,
+      reference: prv.provisionNumber,
+      sourceEventType: 'provision_utilization',
+      idempotencyKey: `provision-use-${prv.id}-${newUtilized.toFixed(4)}`,
       lines: [
-        {
-          accountId: prv.provisionLiabilityAccountId,
-          debit: amount,
-          credit: 0,
-          description: `Debit provision liability`,
-        },
-        {
-          accountId: prv.warrantyExpenseAccountId,
-          debit: 0,
-          credit: amount,
-          description: `Credit consumed warranty cost`,
-        },
+        { accountId: prv.provisionLiabilityAccountId, debit: step, credit: 0 },
+        { accountId: creditAccountId, debit: 0, credit: step },
       ],
-    };
-
-    const poster = manualJournalPoster(this.postingEngine);
-    const journalResult: PostedJournal = poster
-      ? await poster.createManualJournalEntry(journalPayload)
-      : { id: `mock-prv-util-${Date.now()}`, ...journalPayload };
-
-    const updated = await this.repo.updateProvisionStatus(id, newStatus, {
-      utilizedAmount: newUtilized.toFixed(4),
-      remainingAmount: newRemaining.toFixed(4),
     });
-
-    return { provision: updated, utilizationJournal: journalResult };
+    const updated = await this.repo.updateProvisionStatus(
+      id,
+      newRemaining <= 0.0001 ? 'fully_utilized' : 'active',
+      { utilizedAmount: newUtilized.toFixed(4), remainingAmount: newRemaining.toFixed(4) },
+    );
+    return { provision: updated, utilizationJournal: journal };
   }
 }

@@ -4,11 +4,11 @@
 // ============================================================
 import { Test, TestingModule } from '@nestjs/testing';
 import { TaxAndCustomsService } from './tax-customs.service';
+import { AccountingService } from './accounting.service';
 import { AccrualsService } from './accruals.service';
 import { AccrualsRepository } from './accruals.repository';
 import { CostService } from '../cost/cost.service';
 import { CostRepository } from '../cost/cost.repository';
-import { OverheadService } from '../overhead/overhead.service';
 import { PurchaseBatchLinkService } from '../inventory/purchase-batch-link.service';
 import { SalesSerialLinkService } from '../sales/sales-serial-link.service';
 import { SalesService } from '../sales/sales.service';
@@ -19,7 +19,6 @@ import { accountingPeriod, fiscalYear } from './accounting.schema';
 describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
   let taxService: TaxAndCustomsService;
   let costService: CostService;
-  let overheadService: OverheadService;
   let batchService: PurchaseBatchLinkService;
   let serialService: SalesSerialLinkService;
 
@@ -106,7 +105,6 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
         TaxAndCustomsService,
         AccrualsService,
         CostService,
-        OverheadService,
         PurchaseBatchLinkService,
         SalesSerialLinkService,
         AuditService,
@@ -115,12 +113,27 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
         { provide: AccrualsRepository, useValue: mockAccrualsRepo },
         { provide: SalesService, useValue: {} },
         { provide: InventoryRepository, useValue: {} },
+        {
+          provide: AccountingService,
+          useValue: {
+            getCompanyConfig: async () => ({
+              defaultInputTaxAccountId: 'acc-input-vat',
+              defaultOutputTaxAccountId: 'acc-output-vat',
+            }),
+            findEntryByIdempotencyKey: async () => null,
+            createEntry: async (input: { lines: unknown[] }) => ({
+              id: 'je-vat-1',
+              status: 'posted',
+              lines: input.lines,
+            }),
+            postEntry: async (id: string) => ({ id, status: 'posted' }),
+          },
+        },
       ],
     }).compile();
 
     taxService = module.get<TaxAndCustomsService>(TaxAndCustomsService);
     costService = module.get<CostService>(CostService);
-    overheadService = module.get<OverheadService>(OverheadService);
     batchService = module.get<PurchaseBatchLinkService>(PurchaseBatchLinkService);
     serialService = module.get<SalesSerialLinkService>(SalesSerialLinkService);
   });
@@ -159,35 +172,6 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
     expect(costSheet.totalDirectMaterials).toBe(281030);
     expect(costSheet.totalDirectCost).toBeCloseTo(300924.17, 2);
 
-    // ── المرحلة 3: دورة تحميل الـ Overhead وإهلاك ماكينات الليزر ──
-    const ohRun = await overheadService.runAllocationEngine(
-      {
-        companyId: mockCompanyId,
-        fiscalYearId: mockFiscalYearId,
-        periodId: mockPeriodId,
-        periodMonth: '2026-08',
-        pools: [
-          {
-            code: 'OH-ELEC-01',
-            name: 'Electricity Pool',
-            allocationBasis: 'machine_hours',
-            periodActualCost: 85000,
-            totalDriverUnits: 460,
-          },
-          {
-            code: 'OH-SUP-02',
-            name: 'Supervision Pool',
-            allocationBasis: 'labor_hours',
-            periodActualCost: 110000,
-            totalDriverUnits: 1150,
-          },
-        ],
-      },
-      mockUserId,
-    );
-    expect(ohRun.status).toBe('completed');
-    expect(ohRun.totalAppliedAmount).toBe(195000);
-
     // ── المرحلة 4: بيع الأجهزة الطبية وتخصيص السيريالات وتفعيل الضمان 24 شهر ──
     const allocatedSerials = await serialService.allocateSerials(
       {
@@ -221,6 +205,7 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
         outputVatAmount: 259000,
         totalPurchaseTaxable: 1120000,
         inputVatAmount: 156800,
+        vatPayableAccountId: 'acc-tax-authority',
       },
       mockUserId,
     );

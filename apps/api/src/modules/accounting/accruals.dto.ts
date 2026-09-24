@@ -60,4 +60,6 @@ export class CreateWarrantyProvisionDto {
 export class UtilizeProvisionDto {
   @IsUUID() id!: string;
   @IsNumber() @Min(0.01) amount!: number;
+  /** Where the warranty cost came from (cash, bank or stock account). */
+  @IsUUID() creditAccountId!: string;
 }

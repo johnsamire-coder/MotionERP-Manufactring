@@ -54,6 +54,9 @@ export const taxSettlement = taxSchema.table('tax_settlement', {
   paymentReference: text('payment_reference'),
   paymentDate: date('payment_date'),
   journalEntryId: uuid('journal_entry_id'),
+  /** The tax authority account the net VAT is settled into (and paid from). */
+  vatPayableAccountId: uuid('vat_payable_account_id'),
+  paymentJournalEntryId: uuid('payment_journal_entry_id'),
 
   // Audit
   createdBy: uuid('created_by').notNull(),
@@ -127,6 +130,8 @@ export const customsDeclaration = taxSchema.table('customs_declaration', {
   status: customsStatusEnum('status').default('draft').notNull(),
   landedCostVoucherId: uuid('landed_cost_voucher_id'),
   journalEntryId: uuid('journal_entry_id'),
+  /** Duties wait here until they are capitalized onto the imported receipts. */
+  clearingAccountId: uuid('clearing_account_id'),
 
   // Audit
   createdBy: uuid('created_by').notNull(),

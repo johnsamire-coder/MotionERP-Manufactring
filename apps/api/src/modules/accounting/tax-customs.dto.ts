@@ -3,6 +3,8 @@
 // Step 79 | Complete Verified Exports
 // ============================================================
 import {
+  ArrayMinSize,
+  IsArray,
   IsUUID,
   IsString,
   IsDateString,
@@ -24,6 +26,9 @@ export class CreateTaxSettlementDto {
   @IsNumber() @Min(0) outputVatAmount!: number;
   @IsNumber() @Min(0) totalPurchaseTaxable!: number;
   @IsNumber() @Min(0) inputVatAmount!: number;
+  /** Tax authority account: credited with the net VAT due (debited when it is a refund). */
+  @IsUUID() vatPayableAccountId!: string;
+  @IsOptional() @IsDateString() settlementDate?: string;
 }
 
 export class SettleAndPayVatDto {
@@ -77,11 +82,16 @@ export class CreateCustomsDeclarationDto {
   @IsOptional() @IsNumber() @Min(0) developmentFee?: number;
   @IsNumber() @Min(0) vatPaidAtCustoms!: number;
   @IsOptional() @IsNumber() @Min(0) clearanceExpenses?: number;
+  /** Duties, fees and clearance wait on this account until capitalized onto the receipts. */
+  @IsUUID() customsClearingAccountId!: string;
+  /** Bank or cash account the customs were paid from. */
+  @IsUUID() paidFromAccountId!: string;
 }
 
 export class CapitalizeCustomsCostDto {
   @IsUUID() declarationId!: string;
-  @IsUUID() targetWarehouseId!: string;
+  /** The stock receipts of the imported goods; the duties are spread over them by value. */
+  @IsArray() @ArrayMinSize(1) @IsUUID('all', { each: true }) receiptMovementIds!: string[];
 }
 
 // ── Query DTOs ───────────────────────────────

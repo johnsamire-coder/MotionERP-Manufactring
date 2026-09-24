@@ -6,7 +6,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { CostService } from './cost.service';
 import { CostRepository } from './cost.repository';
-import { OverheadService } from '../overhead/overhead.service';
 
 // استيراد الاعتماديات الخارجية المطلوبة لبناء الـ CostService
 import { SalesService } from '../sales/sales.service';
@@ -14,7 +13,6 @@ import { InventoryRepository } from '../inventory/inventory.repository';
 
 describe('Manufacturing Costing, Variance & Overhead Allocation Engine', () => {
   let costService: CostService;
-  let overheadService: OverheadService;
 
   const mockCompanyId = '11111111-1111-1111-1111-111111111111';
   const mockFiscalYearId = '22222222-2222-2222-2222-222222222222';
@@ -54,7 +52,6 @@ describe('Manufacturing Costing, Variance & Overhead Allocation Engine', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CostService,
-        OverheadService,
         { provide: 'DRIZZLE', useValue: mockDb },
         { provide: CostRepository, useValue: mockCostRepo },
         // حقن الاعتماديات الخارجية كـ Mock Objects لتفادي أخطاء NestJS Injector
@@ -64,7 +61,6 @@ describe('Manufacturing Costing, Variance & Overhead Allocation Engine', () => {
     }).compile();
 
     costService = module.get<CostService>(CostService);
-    overheadService = module.get<OverheadService>(OverheadService);
   });
 
   // ────────────────────────────────────────────
@@ -123,79 +119,6 @@ describe('Manufacturing Costing, Variance & Overhead Allocation Engine', () => {
     expect(variance4Level.netTotalMaterialVariance).toBe(sumOfVariances);
   });
 
-  // ────────────────────────────────────────────
-  // Test 4: Overhead Allocation Engine & Balanced Journal
-  // ────────────────────────────────────────────
-  it('4. should execute overhead allocation run, calculate pool driver rates, and generate balanced journal entry', async () => {
-    const allocationRun = await overheadService.runAllocationEngine(
-      {
-        companyId: mockCompanyId,
-        fiscalYearId: mockFiscalYearId,
-        periodId: mockPeriodId,
-        periodMonth: '2026-08',
-        pools: [
-          {
-            code: 'OH-ELEC-01',
-            name: 'Electricity & Power Pool',
-            allocationBasis: 'machine_hours',
-            periodActualCost: 85000,
-            totalDriverUnits: 460,
-          },
-          {
-            code: 'OH-SUP-02',
-            name: 'Supervision & QC Pool',
-            allocationBasis: 'labor_hours',
-            periodActualCost: 110000,
-            totalDriverUnits: 1150,
-          },
-        ],
-      },
-      mockUserId,
-    );
-
-    expect(allocationRun.status).toBe('completed');
-    expect(allocationRun.totalAppliedAmount).toBe(195000);
-    expect(allocationRun.poolsProcessedCount).toBe(2);
-
-    const elecPool = allocationRun.allocationResults.find((p) => p.poolCode === 'OH-ELEC-01');
-    expect(parseFloat(elecPool!.calculatedRate)).toBeCloseTo(85000 / 460, 2);
-
-    expect(allocationRun.journalEntry.lines).toHaveLength(2);
-    expect(allocationRun.journalEntry.lines![0]!.debit).toBe(195000);
-    expect(allocationRun.journalEntry.lines![1]!.credit).toBe(195000);
-  });
-
-  // ────────────────────────────────────────────
-  // Test 5: Machinery Depreciation Integration
-  // ────────────────────────────────────────────
-  it('5. should integrate machinery depreciation to overhead pool and reject zero/negative amounts', async () => {
-    const deprResult = await overheadService.integrateMachineryDepreciation(
-      {
-        companyId: mockCompanyId,
-        fiscalYearId: mockFiscalYearId,
-        periodId: mockPeriodId,
-        periodMonth: '2026-08',
-        totalMachineryDepreciation: 65000,
-      },
-      mockUserId,
-    );
-
-    expect(deprResult.status).toBe('integrated_to_overhead');
-    expect(deprResult.integratedAmount).toBe(65000);
-    expect(deprResult.journalEntry.lines![0]!.debit).toBe(65000);
-    expect(deprResult.journalEntry.lines![1]!.credit).toBe(65000);
-
-    await expect(
-      overheadService.integrateMachineryDepreciation(
-        {
-          companyId: mockCompanyId,
-          fiscalYearId: mockFiscalYearId,
-          periodId: mockPeriodId,
-          periodMonth: '2026-08',
-          totalMachineryDepreciation: 0,
-        },
-        mockUserId,
-      ),
-    ).rejects.toThrow(BadRequestException);
-  });
+  // Tests 4–5 covered the removed fixed-figure overhead service; the real overhead allocation
+  // is CostService.executeAllocation (cost pools and policies).
 });

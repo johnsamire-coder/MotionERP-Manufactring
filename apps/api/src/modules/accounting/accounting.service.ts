@@ -191,6 +191,11 @@ export class AccountingService {
     });
   }
 
+  /** The entry already written for a document (auto-generated entries carry an idempotency key). */
+  async findEntryByIdempotencyKey(key: string): Promise<JournalEntryRecord | null> {
+    return this.repository.findEntryByIdempotencyKey(key);
+  }
+
   // --- Company Accounting Config ---
   async getCompanyConfig(orgNodeId: string): Promise<CompanyAccountingConfigRecord | null> {
     return this.repository.findCompanyConfig(orgNodeId);
