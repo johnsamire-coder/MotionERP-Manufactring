@@ -46,4 +46,8 @@ export class AppConfigService {
   get authEnforce(): boolean {
     return this.config.get('AUTH_ENFORCE', { infer: true });
   }
+
+  get ledgerHealthIntervalMinutes(): number {
+    return this.config.get('LEDGER_HEALTH_INTERVAL_MINUTES', { infer: true });
+  }
 }

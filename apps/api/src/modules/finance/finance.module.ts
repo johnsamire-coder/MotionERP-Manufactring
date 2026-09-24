@@ -1,3 +1,5 @@
+import { LedgerHealthController } from './ledger-health.controller';
+import { LedgerHealthService } from './ledger-health.service';
 import { Module } from '@nestjs/common';
 import { SalesModule } from '../sales/sales.module';
 import { CrmModule } from '../crm/crm.module';
@@ -13,8 +15,8 @@ import { AccountingRepository } from '../accounting/accounting.repository';
 
 @Module({
   imports: [SalesModule, AccountingModule, CrmModule, InventoryModule, SettingsModule],
-  controllers: [FinanceController, PurchaseInvoiceHoldController],
-  providers: [FinanceService, FinanceRepository, AccountingRepository, PurchaseInvoiceHoldService],
+  controllers: [FinanceController, PurchaseInvoiceHoldController, LedgerHealthController],
+  providers: [FinanceService, FinanceRepository, AccountingRepository, PurchaseInvoiceHoldService, LedgerHealthService],
   exports: [FinanceService],
 })
 export class FinanceModule {}

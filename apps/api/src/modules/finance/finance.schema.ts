@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, index, numeric, pgSchema, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { check, index, numeric, pgSchema, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { orgNode } from '../organization/organization.schema';
 import { supplier, customer } from '../crm/crm.schema';
 import { item } from '../catalog/catalog.schema';
@@ -334,3 +334,26 @@ export type CreditDebitNoteType = 'credit_note' | 'debit_note';
 export type CreditDebitNoteStatus = 'draft' | 'posted' | 'cancelled';
 export type BankTransferStatus = 'draft' | 'posted' | 'cancelled';
 export type BankReconciliationStatus = 'draft' | 'reconciled' | 'cancelled';
+/**
+ * Ledger health (plan item 37): discrepancies found between the document books (invoices,
+ * payments, notes, transfers, collections) and the general ledger. One open row per issue;
+ * a later run that no longer finds it stamps resolved_at.
+ */
+export const ledgerHealth = financeSchema.table('ledger_health', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  issueKey: text('issue_key').notNull(),
+  checkType: text('check_type').notNull(),
+  documentType: text('document_type'),
+  documentId: uuid('document_id'),
+  documentNumber: text('document_number'),
+  journalEntryId: uuid('journal_entry_id'),
+  orgNodeId: uuid('org_node_id'),
+  details: text('details').notNull(),
+  detectedAt: timestamp('detected_at', { withTimezone: true }).notNull().defaultNow(),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+}, (t) => [
+  check('ledger_health_check_type_valid', sql`${t.checkType} in ('debit_credit_mismatch', 'missing_gl_entry', 'orphan_gl_entry')`),
+  uniqueIndex('ledger_health_open_issue_unique').on(t.issueKey).where(sql`${t.resolvedAt} is null`),
+  index('ledger_health_detected_idx').on(t.detectedAt),
+]);
