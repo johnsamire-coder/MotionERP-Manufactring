@@ -30,6 +30,7 @@ describe('Accounting Foundation & Costing Core (Unit/Logic Tests)', () => {
       findCostCenterById: jest.fn(),
       findCostCenterByCode: jest.fn(),
       insertCostCenter: jest.fn().mockImplementation((input) => input),
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn(),
       upsertCompanyConfig: jest.fn().mockImplementation((input) => input),
       listAccountDeterminations: jest.fn(),

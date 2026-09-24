@@ -23,6 +23,7 @@ describe('Manufacturing Costing — WIP Accounting & FG Receipt Posting', () => 
 
   beforeEach(() => {
     accountingRepo = {
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn().mockResolvedValue({
         orgNodeId: mockOrgNodeId,
         defaultGrniAccountId: mockGrniAccount,

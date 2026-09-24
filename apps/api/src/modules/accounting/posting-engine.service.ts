@@ -106,6 +106,7 @@ export class PostingEngineService {
     movementType: PostingMovementType,
     sourceModule?: string | null,
   ): Promise<void> {
+    orgNodeId = await this.repository.findAccountingOrgNode(orgNodeId);
     const config = await this.repository.findCompanyConfig(orgNodeId);
     if (!config?.enforceDefaultAccounts) return;
     const accounts = await this.resolveStockMovementAccounts(
@@ -141,9 +142,11 @@ export class PostingEngineService {
       return existing;
     }
 
-    // 2. Resolve Accounts
+    // 2. Resolve Accounts — in the books of the warehouse's company (a branch without its own
+    // accounting config posts to the nearest ancestor that has one).
+    const booksOrgNodeId = await this.repository.findAccountingOrgNode(payload.orgNodeId);
     const accounts = await this.resolveStockMovementAccounts(
-      payload.orgNodeId,
+      booksOrgNodeId,
       payload.warehouseId,
       payload.movementType,
       payload.sourceModule,
@@ -191,7 +194,7 @@ export class PostingEngineService {
 
     // 3. Create Balanced Double-Entry Journal Entry
     const draftEntry = await this.accountingService.createEntry({
-      orgNodeId: payload.orgNodeId,
+      orgNodeId: booksOrgNodeId,
       description: desc,
       reference: payload.movementId,
       entryDate: payload.movementDate,

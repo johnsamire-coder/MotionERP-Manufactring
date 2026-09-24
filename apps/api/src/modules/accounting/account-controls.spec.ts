@@ -20,6 +20,7 @@ describe('Account controls (plan item 41)', () => {
     const centers: Array<{ id: string; orgNodeId: string; code: string; name: string }> = [];
     let config: { orgNodeId: string; defaultCostCenterId?: string | null } | null = null;
     const repo = {
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn(async () => config),
       findCostCenterByCode: jest.fn(
         async (o: string, code: string) =>

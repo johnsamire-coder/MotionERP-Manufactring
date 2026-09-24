@@ -24,6 +24,7 @@ describe('AccountingService — VAT Return & Tax Settlement Engine', () => {
     journalCounter = 0;
 
     accountingRepo = {
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn().mockResolvedValue({
         orgNodeId: mockOrgNodeId,
         defaultInputTaxAccountId: mockInputTaxAccountId,

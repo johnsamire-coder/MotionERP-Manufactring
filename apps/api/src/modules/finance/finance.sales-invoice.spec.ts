@@ -80,6 +80,7 @@ describe('FinanceService — Sales Invoices & AR / Revenue Accounting Posting', 
     salesService = {} as unknown as SalesService;
 
     accountingRepo = {
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn().mockResolvedValue({
         orgNodeId: mockOrgNodeId,
         defaultReceivableAccountId: mockArAccountId,

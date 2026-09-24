@@ -83,6 +83,7 @@ describe('FinanceService — Credit Notes, Debit Notes & Returns Accounting Engi
     salesService = {} as unknown as SalesService;
 
     accountingRepo = {
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn().mockResolvedValue({
         orgNodeId: mockOrgNodeId,
         defaultReceivableAccountId: mockArAccountId,

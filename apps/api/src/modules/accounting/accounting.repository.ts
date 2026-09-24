@@ -548,6 +548,26 @@ export class AccountingRepository {
   }
 
   // --- Company Accounting Config ---
+  /**
+   * The org node whose books a node posts to: the node itself or its nearest ancestor that has a
+   * company accounting config (a branch warehouse posts to its company). Falls back to the node.
+   */
+  async findAccountingOrgNode(orgNodeId: string): Promise<string> {
+    const result = await this.database.db.execute<{ id: string }>(sql`
+      with recursive up as (
+        select id, parent_id, 0 as depth from platform.org_node where id = ${orgNodeId}
+        union all
+        select n.id, n.parent_id, up.depth + 1
+        from platform.org_node n join up on n.id = up.parent_id
+        where up.depth < 50
+      )
+      select up.id from up
+      join accounting.company_accounting_config c on c.org_node_id = up.id
+      order by up.depth
+      limit 1`);
+    return result.rows[0]?.id ?? orgNodeId;
+  }
+
   async findCompanyConfig(orgNodeId: string): Promise<CompanyAccountingConfigRecord | null> {
     const rows = await this.database.db
       .select(configColumns)

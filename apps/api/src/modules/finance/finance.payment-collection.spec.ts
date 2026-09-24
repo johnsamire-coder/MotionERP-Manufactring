@@ -108,6 +108,7 @@ describe('FinanceService — Payments, Collections & Bank GL Posting', () => {
     } as unknown as SalesService;
 
     accountingRepo = {
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn().mockResolvedValue({
         orgNodeId: mockOrgNodeId,
         defaultPayableAccountId: mockApAccountId,

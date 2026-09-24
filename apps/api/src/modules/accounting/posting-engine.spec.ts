@@ -29,6 +29,7 @@ describe('PostingEngineService — Automated Financial Posting Engine', () => {
     idempotencyMap = new Map();
 
     accountingRepo = {
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn().mockResolvedValue({
         orgNodeId: mockOrgNodeId,
         defaultGrniAccountId: mockGrniAccountId,
@@ -229,5 +230,25 @@ describe('PostingEngineService — Automated Financial Posting Engine', () => {
     const result = await postingEngine.postStockMovement(payload);
     expect(result).toBeNull();
     expect(accountingService.createEntry).not.toHaveBeenCalled();
+  });
+
+  it('6. Branch warehouse: posts in the books of the nearest company that has an accounting config', async () => {
+    (accountingRepo.findAccountingOrgNode as jest.Mock).mockImplementation(async (id: string) =>
+      id === 'org-branch-cairo' ? mockOrgNodeId : id,
+    );
+    const entry = await postingEngine.postStockMovement({
+      movementId: 'mov-branch-1',
+      itemId: 'item-sheet-metal',
+      warehouseId: mockWarehouseId,
+      orgNodeId: 'org-branch-cairo',
+      movementType: 'receipt',
+      quantity: '2',
+      unitCost: '10.000000',
+      totalValue: '20.0000',
+    });
+    expect(entry).not.toBeNull();
+    expect(accountingService.createEntry).toHaveBeenCalledWith(
+      expect.objectContaining({ orgNodeId: mockOrgNodeId }),
+    );
   });
 });

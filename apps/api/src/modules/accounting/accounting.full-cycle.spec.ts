@@ -73,6 +73,7 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
 
     // 1. Accounting Repo Mock
     accountingRepo = {
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn().mockResolvedValue({
         orgNodeId,
         defaultGrniAccountId: grniAccount,
