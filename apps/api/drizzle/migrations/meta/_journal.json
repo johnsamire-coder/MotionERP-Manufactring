@@ -540,6 +540,13 @@
       "when": 1790233023131,
       "tag": "0076_stormy_donald_blake",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1790233330760,
+      "tag": "0077_puzzling_white_tiger",
+      "breakpoints": true
     }
   ]
 }

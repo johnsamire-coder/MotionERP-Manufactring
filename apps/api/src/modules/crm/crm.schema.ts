@@ -119,3 +119,66 @@ export const opportunityItem = crmSchema.table('opportunity_item', {
   check('opportunity_item_quantity_positive', sql`${t.quantity} > 0`),
   index('opportunity_item_opportunity_idx').on(t.opportunityId),
 ]);
+
+/**
+ * Lead → Contact → Prospect → Customer (plan item 25). A lead is a person we may sell to;
+ * "contact" is proven by at least one logged activity (call / visit / email) before the lead
+ * may be marked interested; a prospect groups the interested leads of one company; converting
+ * creates the real customer. Contact/Address as standalone entities is plan item 26 (owner's call).
+ */
+export const prospect = crmSchema.table('prospect', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  prospectNumber: text('prospect_number').notNull(),
+  companyName: text('company_name').notNull(),
+  industry: text('industry'),
+  orgNodeId: uuid('org_node_id').notNull().references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  status: text('status').notNull().default('open'),
+  customerId: uuid('customer_id').references(() => customer.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  note: text('note'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('prospect_number_unique').on(t.prospectNumber),
+  check('prospect_status_valid', sql`${t.status} in ('open', 'converted', 'lost')`),
+  check('prospect_converted_has_customer', sql`${t.status} <> 'converted' or ${t.customerId} is not null`),
+  check('prospect_company_not_blank', sql`length(btrim(${t.companyName})) > 0`),
+]);
+
+export const lead = crmSchema.table('lead', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  leadNumber: text('lead_number').notNull(),
+  personName: text('person_name').notNull(),
+  companyName: text('company_name'),
+  phone: text('phone'),
+  email: text('email'),
+  source: text('source'),
+  orgNodeId: uuid('org_node_id').notNull().references(() => orgNode.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  status: text('status').notNull().default('new'),
+  prospectId: uuid('prospect_id').references(() => prospect.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  customerId: uuid('customer_id').references(() => customer.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  lostReason: text('lost_reason'),
+  lastContactedAt: timestamp('last_contacted_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('lead_number_unique').on(t.leadNumber),
+  check('lead_status_valid', sql`${t.status} in ('new', 'contacted', 'interested', 'prospect', 'converted', 'lost', 'do_not_contact')`),
+  check('lead_lost_needs_reason', sql`${t.status} <> 'lost' or ${t.lostReason} is not null`),
+  check('lead_converted_has_customer', sql`${t.status} <> 'converted' or ${t.customerId} is not null`),
+  check('lead_person_not_blank', sql`length(btrim(${t.personName})) > 0`),
+  index('lead_prospect_idx').on(t.prospectId),
+  index('lead_email_idx').on(t.email),
+  index('lead_phone_idx').on(t.phone),
+]);
+
+export const leadActivity = crmSchema.table('lead_activity', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  leadId: uuid('lead_id').notNull().references(() => lead.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
+  activityType: text('activity_type').notNull(),
+  activityDate: timestamp('activity_date', { withTimezone: true }).notNull().defaultNow(),
+  note: text('note'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  check('lead_activity_type_valid', sql`${t.activityType} in ('call', 'visit', 'email', 'note')`),
+  index('lead_activity_lead_idx').on(t.leadId),
+]);
