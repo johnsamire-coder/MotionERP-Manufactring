@@ -12,6 +12,8 @@ import { GrniReportRepository } from './grni-report.repository';
 import { GrniReportService } from './grni-report.service';
 import { ReorderController } from './reorder.controller';
 import { ReorderService } from './reorder.service';
+import { PickListController } from './pick-list.controller';
+import { PickListService } from './pick-list.service';
 import { WarehouseTreeController } from './warehouse-tree.controller';
 import { WarehouseTreeService } from './warehouse-tree.service';
 import { InventoryController } from './inventory.controller';
@@ -20,8 +22,8 @@ import { InventoryService } from './inventory.service';
 
 @Module({
   imports: [AccountingModule, CatalogModule, AuthModule, OrganizationModule, SalesModule, SettingsModule],
-  controllers: [PurchaseBatchLinkController, InventoryController, ReorderController, WarehouseTreeController],
-  providers: [PurchaseBatchLinkService, InventoryService, InventoryRepository, InventoryAccessService, GrniReportService, GrniReportRepository, ReorderService, WarehouseTreeService],
+  controllers: [PurchaseBatchLinkController, InventoryController, ReorderController, WarehouseTreeController, PickListController],
+  providers: [PurchaseBatchLinkService, InventoryService, InventoryRepository, InventoryAccessService, GrniReportService, GrniReportRepository, ReorderService, WarehouseTreeService, PickListService],
   exports: [InventoryService],
 })
 export class InventoryModule {}

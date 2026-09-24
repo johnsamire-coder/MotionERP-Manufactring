@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { type AnyPgColumn, boolean, check, index, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, boolean, check, index, integer, numeric, pgSchema, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
 import { item } from '../catalog/catalog.schema';
 import { orgNode } from '../organization/organization.schema';
 import { chartOfAccounts } from '../accounting/accounting.schema';
@@ -312,3 +312,39 @@ export type ItemBatchStatus = 'active' | 'expired' | 'quarantined' | 'recalled';
 export type SerialNumberStatus = 'active' | 'delivered' | 'under_maintenance' | 'decommissioned';
 export type LandedCostStatus = 'draft' | 'posted' | 'cancelled';
 export type LandedCostDistributeMethod = 'by_amount' | 'by_quantity';
+/**
+ * Pick list (plan item 27): where to take stock from, proposed automatically — batches by
+ * earliest expiry then oldest (FIFO), never an expired or blocked batch, within the warehouse
+ * (or a group warehouse's whole subtree, item 23). Completing it issues or transfers the stock.
+ */
+export const pickList = inventorySchema.table('pick_list', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  pickListNumber: text('pick_list_number').notNull(),
+  purpose: text('purpose').notNull().default('delivery'),
+  status: text('status').notNull().default('draft'),
+  scopeWarehouseId: uuid('scope_warehouse_id').references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  targetWarehouseId: uuid('target_warehouse_id').references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  reference: text('reference'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('pick_list_number_unique').on(t.pickListNumber),
+  check('pick_list_purpose_valid', sql`${t.purpose} in ('delivery', 'material_transfer')`),
+  check('pick_list_status_valid', sql`${t.status} in ('draft', 'completed', 'cancelled')`),
+  check('pick_list_transfer_has_target', sql`${t.purpose} <> 'material_transfer' or ${t.targetWarehouseId} is not null`),
+]);
+
+export const pickListLine = inventorySchema.table('pick_list_line', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  pickListId: uuid('pick_list_id').notNull().references(() => pickList.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
+  itemId: uuid('item_id').notNull(),
+  warehouseId: uuid('warehouse_id').notNull().references(() => warehouse.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  batchId: uuid('batch_id').references(() => itemBatch.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  quantity: numeric('quantity', { precision: 24, scale: 6 }).notNull(),
+  pickedQuantity: numeric('picked_quantity', { precision: 24, scale: 6 }),
+  lineNumber: integer('line_number').notNull(),
+}, (t) => [
+  check('pick_list_line_quantity_positive', sql`${t.quantity} > 0`),
+  check('pick_list_line_picked_range', sql`${t.pickedQuantity} is null or (${t.pickedQuantity} >= 0 and ${t.pickedQuantity} <= ${t.quantity})`),
+  index('pick_list_line_list_idx').on(t.pickListId),
+]);

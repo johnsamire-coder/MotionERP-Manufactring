@@ -547,6 +547,13 @@
       "when": 1790233330760,
       "tag": "0077_puzzling_white_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1790233575242,
+      "tag": "0078_big_apocalypse",
+      "breakpoints": true
     }
   ]
 }
