@@ -7,8 +7,6 @@ import { YearEndClosingService } from './year-end-closing.service';
 import { AccountRolesController } from './account-roles.controller';
 import { JournalReversalController } from './journal-reversal.controller';
 import { JournalReversalService } from './journal-reversal.service';
-import { OpeningEntriesService } from './opening-entries.service';
-import { OpeningEntriesController } from './opening-entries.controller';
 import { TaxAndCustomsService } from './tax-customs.service';
 import { TaxAndCustomsController } from './tax-customs.controller';
 import { Module } from '@nestjs/common';
@@ -19,7 +17,6 @@ import { PostingEngineService } from './posting-engine.service';
 
 @Module({
   controllers: [
-    OpeningEntriesController,
     TaxAndCustomsController,
     AccountingController,
     JournalReversalController,
@@ -29,7 +26,6 @@ import { PostingEngineService } from './posting-engine.service';
     AccountControlsController,
   ],
   providers: [
-    OpeningEntriesService,
     TaxAndCustomsService,
     AccountingService,
     AccountingRepository,

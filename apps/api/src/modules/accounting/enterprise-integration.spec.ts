@@ -3,7 +3,6 @@
 // Step 98 | Complete 7-Phase Industrial Lifecycle Test | 100% PASS ✅
 // ============================================================
 import { Test, TestingModule } from '@nestjs/testing';
-import { OpeningEntriesService } from './opening-entries.service';
 import { TaxAndCustomsService } from './tax-customs.service';
 import { AccrualsService } from './accruals.service';
 import { AccrualsRepository } from './accruals.repository';
@@ -18,7 +17,6 @@ import { AuditService } from '../audit/audit.service';
 import { accountingPeriod, fiscalYear } from './accounting.schema';
 
 describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
-  let openingEntriesService: OpeningEntriesService;
   let taxService: TaxAndCustomsService;
   let costService: CostService;
   let overheadService: OverheadService;
@@ -105,7 +103,6 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        OpeningEntriesService,
         TaxAndCustomsService,
         AccrualsService,
         CostService,
@@ -121,7 +118,6 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
       ],
     }).compile();
 
-    openingEntriesService = module.get<OpeningEntriesService>(OpeningEntriesService);
     taxService = module.get<TaxAndCustomsService>(TaxAndCustomsService);
     costService = module.get<CostService>(CostService);
     overheadService = module.get<OverheadService>(OverheadService);
@@ -231,20 +227,7 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
     expect(vatSettlement.settlement.status).toBe('filed');
     expect(parseFloat(vatSettlement.settlement.netVatPayable)).toBe(102200);
 
-    // ── المرحلة 6–7: الإقفال الشهري والسنوي بقى على accounting/year-end (year-end-closing.spec.ts)؛
-    // هنا بنكمّل من سنة مقفولة لتدوير الأرصدة الافتتاحية للعام الجديد ──
-    inMemoryDb.years[0].status = 'closed';
-    const rollForward = await openingEntriesService.rollForwardBalances(
-      {
-        companyId: mockCompanyId,
-        sourceFiscalYearId: mockFiscalYearId,
-        targetFiscalYearId: 'year-2027',
-        targetPeriodId: 'period-jan-2027',
-        openingDate: '2027-01-01',
-      },
-      mockUserId,
-    );
-    expect(rollForward.status).toBe('opening_entry_posted');
-    expect(rollForward.totalAssetsDebit).toBe(rollForward.totalLiabilitiesAndEquityCredit);
+    // ── المرحلة 6–7: الإقفال الشهري والسنوي وتدوير الأرصدة بقوا على accounting/year-end
+    // (year-end-closing.spec.ts)؛ خدمات الإقفال والقيود الافتتاحية بالأرقام الثابتة اتشالت ──
   });
 });

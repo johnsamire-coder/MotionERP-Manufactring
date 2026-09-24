@@ -5,7 +5,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { OpeningEntriesService } from './opening-entries.service';
 import { AuditService } from '../audit/audit.service';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -13,13 +12,11 @@ import { accountingPeriod, fiscalYear } from './accounting.schema';
 import { auditLog } from '../audit/audit.schema';
 
 describe('Financial Governance, Period Closing & RBAC Security Engine', () => {
-  let openingEntriesService: OpeningEntriesService;
   let auditService: AuditService;
   let permissionsGuard: PermissionsGuard;
   let rolesGuard: RolesGuard;
   let reflector: Reflector;
 
-  const mockCompanyId = '11111111-1111-1111-1111-111111111111';
   const mockFiscalYearId = '22222222-2222-2222-2222-222222222222';
   const mockPeriodId = '33333333-3333-3333-3333-333333333333';
   const mockUserId = '99999999-9999-9999-9999-999999999999';
@@ -95,7 +92,6 @@ describe('Financial Governance, Period Closing & RBAC Security Engine', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        OpeningEntriesService,
         AuditService,
         PermissionsGuard,
         RolesGuard,
@@ -104,40 +100,14 @@ describe('Financial Governance, Period Closing & RBAC Security Engine', () => {
       ],
     }).compile();
 
-    openingEntriesService = module.get<OpeningEntriesService>(OpeningEntriesService);
     auditService = module.get<AuditService>(AuditService);
     permissionsGuard = module.get<PermissionsGuard>(PermissionsGuard);
     rolesGuard = module.get<RolesGuard>(RolesGuard);
     reflector = module.get<Reflector>(Reflector);
   });
 
-  // Tests 1–2 covered the removed fixed-figure period/fiscal-year closing services. Real closing
+  // Tests 1–3 covered the removed fixed-figure closing and opening-entry services. Real closing
   // (periods/:id/status and accounting/year-end) is covered by year-end-closing.spec.ts.
-
-  // ────────────────────────────────────────────
-  // Test 3: Opening Entries & Balance Roll-Forward
-  // ────────────────────────────────────────────
-  it('3. should generate a balanced opening journal entry rolling forward assets and liabilities to new year', async () => {
-    yearsDb[0].status = 'closed'; // السنة السابقة مغلقة
-
-    const rollForwardResult = await openingEntriesService.rollForwardBalances(
-      {
-        companyId: mockCompanyId,
-        sourceFiscalYearId: mockFiscalYearId,
-        targetFiscalYearId: 'target-year-2027',
-        targetPeriodId: 'target-period-jan-2027',
-        openingDate: '2027-01-01',
-      },
-      mockUserId,
-    );
-
-    expect(rollForwardResult.status).toBe('opening_entry_posted');
-    expect(rollForwardResult.totalAssetsDebit).toBe(
-      rollForwardResult.totalLiabilitiesAndEquityCredit,
-    );
-    expect(rollForwardResult.totalAssetsDebit).toBe(5560000);
-    expect(rollForwardResult.linesCount).toBe(11);
-  });
 
   // ────────────────────────────────────────────
   // Test 4: Tamper-proof Audit Trail Logging
