@@ -84,6 +84,9 @@ export class UpsertCompanyAccountingConfigDto {
   @IsOptional() @IsUUID() defaultDepreciationExpenseAccountId?: string;
   @IsOptional() @IsBoolean() enforceDefaultAccounts?: boolean;
   @IsOptional() @ValidateIf((_, v) => v !== null) @IsDateString() accountsFrozenUntil?: string | null;
+  @IsOptional() @IsBoolean() bookAdvancesSeparately?: boolean;
+  @IsOptional() @IsUUID() defaultAdvanceReceivedAccountId?: string;
+  @IsOptional() @IsUUID() defaultAdvancePaidAccountId?: string;
 }
 
 export class FinancialReportQueryDto {

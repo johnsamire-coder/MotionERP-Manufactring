@@ -22,6 +22,8 @@ export const collection = financeSchema.table('collection', {
   referenceNumber: text('reference_number'),
   notes: text('notes'),
   status: text('status').notNull().default('completed'),
+  /** Plan item 38: the part booked as a customer advance (collected beyond what is invoiced). */
+  advanceAmount: numeric('advance_amount', { precision: 12, scale: 4 }).notNull().default('0'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
@@ -200,6 +202,8 @@ export const payment = financeSchema.table('payment', {
   referenceNumber: text('reference_number'),
   notes: text('notes'),
   status: text('status').notNull().default('draft'),
+  /** Plan item 38: the part booked as a supplier advance (paid with no invoice). */
+  advanceAmount: numeric('advance_amount', { precision: 12, scale: 4 }).notNull().default('0'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
@@ -356,4 +360,24 @@ export const ledgerHealth = financeSchema.table('ledger_health', {
   check('ledger_health_check_type_valid', sql`${t.checkType} in ('debit_credit_mismatch', 'missing_gl_entry', 'orphan_gl_entry')`),
   uniqueIndex('ledger_health_open_issue_unique').on(t.issueKey).where(sql`${t.resolvedAt} is null`),
   index('ledger_health_detected_idx').on(t.detectedAt),
+]);
+
+/** Plan item 38: an advance (customer collection / supplier payment) applied to an invoice, with its reclass entry. */
+export const advanceAllocation = financeSchema.table('advance_allocation', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  partyType: text('party_type').notNull(),
+  collectionId: uuid('collection_id').references(() => collection.id, { onDelete: 'restrict' }),
+  paymentId: uuid('payment_id').references(() => payment.id, { onDelete: 'restrict' }),
+  salesInvoiceId: uuid('sales_invoice_id').references(() => salesInvoice.id, { onDelete: 'restrict' }),
+  purchaseInvoiceId: uuid('purchase_invoice_id').references(() => purchaseInvoice.id, { onDelete: 'restrict' }),
+  amount: numeric('amount', { precision: 12, scale: 4 }).notNull(),
+  journalEntryId: uuid('journal_entry_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  check('advance_allocation_party_valid', sql`${t.partyType} in ('customer', 'supplier')`),
+  check('advance_allocation_amount_positive', sql`${t.amount} > 0`),
+  check('advance_allocation_customer_shape', sql`${t.partyType} <> 'customer' or (${t.collectionId} is not null and ${t.salesInvoiceId} is not null)`),
+  check('advance_allocation_supplier_shape', sql`${t.partyType} <> 'supplier' or (${t.paymentId} is not null and ${t.purchaseInvoiceId} is not null)`),
+  index('advance_allocation_collection_idx').on(t.collectionId),
+  index('advance_allocation_payment_idx').on(t.paymentId),
 ]);

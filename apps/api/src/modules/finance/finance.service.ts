@@ -3,6 +3,7 @@ import { Injectable, Optional } from '@nestjs/common';
 import { CrmService } from '../crm/crm.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { PurchaseAllowanceService } from '../settings/purchase-allowance.service';
+import { AdvanceService } from './advance.service';
 import { PurchaseInvoiceHoldService } from './purchase-invoice-hold.service';
 import { SalesService } from '../sales/sales.service';
 import { AccountingService } from '../accounting/accounting.service';
@@ -40,6 +41,7 @@ export class FinanceService {
     @Optional() private readonly inventoryService?: InventoryService,
     @Optional() private readonly allowances?: PurchaseAllowanceService,
     @Optional() private readonly invoiceHolds?: PurchaseInvoiceHoldService,
+    @Optional() private readonly advances?: AdvanceService,
   ) {}
 
   /** Plan item 19: no payment against a purchase invoice that is individually on hold. */
@@ -125,6 +127,15 @@ export class FinanceService {
       const arAccountId = arDet?.accountId ?? config?.defaultReceivableAccountId;
 
       if (arAccountId) {
+        // Plan item 38: with separate advance booking, what is collected beyond the posted invoices is an advance (liability).
+        const advAccounts = this.advances ? await this.advances.accounts(jobOrder.orgNodeId) : null;
+        const split = advAccounts?.receivedAccountId && this.advances
+          ? await this.advances.splitCollection(input.jobOrderReference, amount)
+          : { settle: amount, advance: 0 };
+        const creditLines = [
+          { accountId: arAccountId, amount: split.settle, description: `[Auto] AR Clearance for Collection ${collectionNumber}` },
+          { accountId: advAccounts?.receivedAccountId ?? arAccountId, amount: split.advance, description: `[Auto] Customer advance for Collection ${collectionNumber}` },
+        ].filter((l) => l.amount > 0);
         const draftEntry = await this.accountingService.createEntry({
           orgNodeId: jobOrder.orgNodeId,
           description: `Customer Collection ${collectionNumber} for JO ${input.jobOrderReference}`,
@@ -140,16 +151,17 @@ export class FinanceService {
               creditAmount: '0',
               description: `[Auto] Deposit for Collection ${collectionNumber}`,
             },
-            {
-              accountId: arAccountId,
+            ...creditLines.map((l) => ({
+              accountId: l.accountId,
               debitAmount: '0',
-              creditAmount: Number(input.amount).toFixed(4),
-              description: `[Auto] AR Clearance for Collection ${collectionNumber}`,
-              partyType: 'customer',
+              creditAmount: l.amount.toFixed(4),
+              description: l.description,
+              partyType: 'customer' as const,
               partyId: jobOrder.customerId ?? undefined,
-            } as any,
+            })),
           ],
         });
+        if (split.advance > 0) await this.advances!.setCollectionAdvance(collectionRecord.id, split.advance);
 
         await this.accountingService.postEntry(draftEntry.id);
       }
@@ -296,6 +308,10 @@ export class FinanceService {
       const apAccountId = apDet?.accountId ?? config?.defaultPayableAccountId;
 
       if (grniAccountId && apAccountId) {
+        // A taxed invoice without an input-tax account would post an unbalanced entry (500) — say what is missing instead.
+        if (Number(invoice.taxAmount) > 0 && !taxAccountId) {
+          throw new FinanceValidationError(`الفاتورة عليها ضريبة ${invoice.taxAmount} ومفيش حساب ضريبة مدخلات للشركة — حدده في إعدادات الشركة المحاسبية`);
+        }
         const lines = [
           {
             accountId: grniAccountId,
@@ -433,6 +449,10 @@ export class FinanceService {
       const taxAccountId = taxDet?.accountId ?? config?.defaultOutputTaxAccountId;
 
       if (arAccountId && revAccountId) {
+        // A taxed invoice without an output-tax account would post an unbalanced entry (500) — say what is missing instead.
+        if (Number(invoice.taxAmount) > 0 && !taxAccountId) {
+          throw new FinanceValidationError(`الفاتورة عليها ضريبة ${invoice.taxAmount} ومفيش حساب ضريبة مخرجات للشركة — حدده في إعدادات الشركة المحاسبية`);
+        }
         const lines = [
           {
             accountId: arAccountId,
@@ -530,9 +550,13 @@ export class FinanceService {
       const determinations = await this.accountingRepo.listAccountDeterminations(p.orgNodeId);
 
       const apDet = determinations.find((d) => d.accountPurpose === 'payable');
-      const apAccountId = apDet?.accountId ?? config?.defaultPayableAccountId;
+      // Plan item 38: a payment with no invoice is a supplier advance (asset) when the company books advances separately.
+      const advAccounts = !p.purchaseInvoiceId && this.advances ? await this.advances.accounts(p.orgNodeId) : null;
+      const isAdvance = Boolean(advAccounts?.paidAccountId);
+      const apAccountId = isAdvance ? advAccounts!.paidAccountId! : (apDet?.accountId ?? config?.defaultPayableAccountId);
 
       if (apAccountId) {
+        if (isAdvance) await this.advances!.setPaymentAdvance(p.id, Number(p.amount));
         const draftEntry = await this.accountingService.createEntry({
           orgNodeId: p.orgNodeId,
           description: `Supplier Payment ${p.paymentNumber}`,

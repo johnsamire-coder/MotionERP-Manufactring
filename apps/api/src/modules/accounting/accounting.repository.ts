@@ -80,6 +80,9 @@ const configColumns = {
   defaultDepreciationExpenseAccountId: companyAccountingConfig.defaultDepreciationExpenseAccountId,
   enforceDefaultAccounts: companyAccountingConfig.enforceDefaultAccounts,
   accountsFrozenUntil: companyAccountingConfig.accountsFrozenUntil,
+  bookAdvancesSeparately: companyAccountingConfig.bookAdvancesSeparately,
+  defaultAdvanceReceivedAccountId: companyAccountingConfig.defaultAdvanceReceivedAccountId,
+  defaultAdvancePaidAccountId: companyAccountingConfig.defaultAdvancePaidAccountId,
 };
 const detColumns = {
   id: accountDetermination.id, orgNodeId: accountDetermination.orgNodeId, determinationType: accountDetermination.determinationType,

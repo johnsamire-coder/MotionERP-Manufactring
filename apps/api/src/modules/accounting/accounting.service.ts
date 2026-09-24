@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { AccountingNotFoundError, AccountingValidationError } from './accounting.errors';
 import { AccountingRepository } from './accounting.repository';
 import { isVoucherType, voucherTypeProblem, type VoucherLine } from './voucher-types';
-import { checkDefaultAccount, DEFAULT_ACCOUNTS, type DefaultAccountStatus } from './default-accounts';
+import { checkDefaultAccount, DEFAULT_ACCOUNTS, type DefaultAccountSpec, type DefaultAccountStatus } from './default-accounts';
 import { ACCOUNT_ROLES, isAccountRole, manualLineProblem, type AccountRole } from './account-roles';
 import type {
   AccountBalance,
@@ -169,6 +169,17 @@ export class AccountingService {
     // Plan item 33: every default account given must exist, belong to this company, be a leaf, and fit its role.
     for (const spec of DEFAULT_ACCOUNTS) {
       const accountId = (input as unknown as Record<string, string | undefined>)[spec.key];
+      if (!accountId) continue;
+      const account = await this.repository.findAccountById(accountId);
+      const problem = checkDefaultAccount(spec, input.orgNodeId, account, account ? await this.repository.findAccountRole(accountId) : null, accountId);
+      if (problem) throw new AccountingValidationError(`${spec.label}: ${problem}`);
+    }
+    // Plan item 38: the two advance accounts (optional, only used when bookAdvancesSeparately is on).
+    const advanceSpecs: Array<[string | undefined, DefaultAccountSpec]> = [
+      [input.defaultAdvanceReceivedAccountId, { key: 'defaultAdvanceReceivedAccountId', label: 'دفعات مقدمة من العملاء', roles: ['liability', 'current_liability'], usedBy: 'التحصيل قبل الفاتورة' }],
+      [input.defaultAdvancePaidAccountId, { key: 'defaultAdvancePaidAccountId', label: 'دفعات مقدمة للموردين', roles: ['current_asset'], usedBy: 'الدفع قبل الفاتورة' }],
+    ];
+    for (const [accountId, spec] of advanceSpecs) {
       if (!accountId) continue;
       const account = await this.repository.findAccountById(accountId);
       const problem = checkDefaultAccount(spec, input.orgNodeId, account, account ? await this.repository.findAccountRole(accountId) : null, accountId);

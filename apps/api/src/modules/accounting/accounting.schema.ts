@@ -142,6 +142,10 @@ export const companyAccountingConfig = accountingSchema.table('company_accountin
   enforceDefaultAccounts: boolean('enforce_default_accounts').notNull().default(false),
   /** Plan item 36: no journal entry may be dated on or before this day (ERPNext "Accounts Frozen Till"). */
   accountsFrozenUntil: timestamp('accounts_frozen_until', { withTimezone: true }),
+  /** Plan item 38: book customer / supplier advances in their own accounts until allocated to an invoice. */
+  bookAdvancesSeparately: boolean('book_advances_separately').notNull().default(false),
+  defaultAdvanceReceivedAccountId: uuid('default_advance_received_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
+  defaultAdvancePaidAccountId: uuid('default_advance_paid_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
