@@ -50,4 +50,8 @@ export class AppConfigService {
   get ledgerHealthIntervalMinutes(): number {
     return this.config.get('LEDGER_HEALTH_INTERVAL_MINUTES', { infer: true });
   }
+
+  get supportSweepIntervalMinutes(): number {
+    return this.config.get('SUPPORT_SWEEP_INTERVAL_MINUTES', { infer: true });
+  }
 }

@@ -19,6 +19,8 @@ export const envSchema = z.object({
   AUTH_ENFORCE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
   /** Plan item 37: minutes between automatic ledger-health runs (0 = only on demand). */
   LEDGER_HEALTH_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(0),
+  /** Plan item 43: minutes between helpdesk sweeps (missed SLAs, auto-close); 0 = on demand only. */
+  SUPPORT_SWEEP_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(0),
 }).refine((env) => env.NODE_ENV !== 'production' || !!env.AUTH_JWT_SECRET, {
   message: 'AUTH_JWT_SECRET is required in production',
   path: ['AUTH_JWT_SECRET'],
