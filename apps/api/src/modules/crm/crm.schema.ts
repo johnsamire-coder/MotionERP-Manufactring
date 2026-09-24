@@ -11,6 +11,7 @@ import {
   pgSchema,
   uuid,
   unique,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { orgNode } from '../organization/organization.schema';
 
@@ -317,5 +318,81 @@ export const partyGroup = crmSchema.table(
     ),
     check('party_group_name_not_blank', sql`length(btrim(${t.name})) > 0`),
     index('party_group_parent_idx').on(t.parentGroupId),
+  ],
+);
+
+/**
+ * Plan item 26: contacts and addresses as their own records, linked to any party (customer,
+ * supplier, lead) through party_link — the party is a type + UUID, validated in the service
+ * (no cross-table FK), so one person or address can serve several parties.
+ */
+export const contact = crmSchema.table(
+  'contact',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    firstName: text('first_name').notNull(),
+    lastName: text('last_name'),
+    designation: text('designation'),
+    email: text('email'),
+    phone: text('phone'),
+    mobile: text('mobile'),
+    status: text('status').notNull().default('active'),
+    notes: text('notes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check('contact_status_valid', sql`${t.status} in ('active', 'inactive')`),
+    index('contact_email_idx').on(t.email),
+  ],
+);
+
+export const address = crmSchema.table(
+  'address',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    title: text('title').notNull(),
+    addressType: text('address_type').notNull().default('billing'),
+    line1: text('line1').notNull(),
+    line2: text('line2'),
+    city: text('city').notNull(),
+    governorate: text('governorate'),
+    country: text('country').notNull().default('Egypt'),
+    postalCode: text('postal_code'),
+    phone: text('phone'),
+    email: text('email'),
+    status: text('status').notNull().default('active'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check(
+      'address_type_valid',
+      sql`${t.addressType} in ('billing', 'shipping', 'office', 'warehouse', 'site', 'other')`,
+    ),
+    check('address_status_valid', sql`${t.status} in ('active', 'inactive')`),
+  ],
+);
+
+export const partyLink = crmSchema.table(
+  'party_link',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    ownerType: text('owner_type').notNull(),
+    ownerId: uuid('owner_id').notNull(),
+    partyType: text('party_type').notNull(),
+    partyId: uuid('party_id').notNull(),
+    isPrimary: boolean('is_primary').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('party_link_unique').on(t.ownerType, t.ownerId, t.partyType, t.partyId),
+    check('party_link_owner_type_valid', sql`${t.ownerType} in ('contact', 'address')`),
+    check('party_link_party_type_valid', sql`${t.partyType} in ('customer', 'supplier', 'lead')`),
+    index('party_link_party_idx').on(t.partyType, t.partyId),
+    // At most one primary contact and one primary address per party.
+    uniqueIndex('party_link_one_primary')
+      .on(t.ownerType, t.partyType, t.partyId)
+      .where(sql`${t.isPrimary}`),
   ],
 );

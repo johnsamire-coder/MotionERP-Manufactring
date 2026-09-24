@@ -715,6 +715,13 @@
       "when": 1790256535982,
       "tag": "0101_default_cost_center_per_company",
       "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1790257482597,
+      "tag": "0102_crm_contact_address",
+      "breakpoints": true
     }
   ]
 }

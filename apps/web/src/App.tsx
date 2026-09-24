@@ -72,6 +72,7 @@ import AuditTrailPage from './pages/AuditTrailPage';
 import RbacPermissionsPage from './pages/RbacPermissionsPage';
 import UserRestrictionsPage from './app/pages/UserRestrictionsPage';
 import RfqPage from './app/pages/RfqPage';
+import ContactsPage from './app/pages/ContactsPage';
 import { BalanceSheetPage as LedgerReportsPage } from './app/pages/BalanceSheetPage';
 
 // ── 2. شاشات التخطيط والتصنيع (الشغل الأصلي - ERPNext parity) ──
@@ -147,6 +148,7 @@ export const App: React.FC = () => {
       title: '1. المبيعات والعملاء (Sales & CRM)',
       items: [
         { id: 'sales-invoices', label: 'فواتير المبيعات', icon: ShoppingCart, badge: 'المبيعات' },
+        { id: 'contacts', label: 'جهات الاتصال والعناوين', icon: ClipboardList },
       ],
     },
     {
@@ -365,6 +367,7 @@ export const App: React.FC = () => {
         {currentTab === 'sales-invoices' && <SalesInvoicePage />}
         {currentTab === 'purchase-orders' && <PurchaseOrderPage />}
         {currentTab === 'rfq' && <RfqPage />}
+        {currentTab === 'contacts' && <ContactsPage />}
 
         {/* 2. المخازن والتتبع الطبي */}
         {currentTab === 'inventory-main' && <InventoryPage />}

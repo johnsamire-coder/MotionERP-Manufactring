@@ -1,3 +1,5 @@
+import { ContactController } from './contact.controller';
+import { ContactService } from './contact.service';
 import { Module } from '@nestjs/common';
 import { CrmController } from './crm.controller';
 import { CrmRepository } from './crm.repository';
@@ -12,8 +14,15 @@ import { OpportunityRepository } from './opportunity.repository';
 import { OpportunityService } from './opportunity.service';
 
 @Module({
-  controllers: [CrmController, OpportunityController, LeadController, PartyGroupController],
+  controllers: [
+    ContactController,
+    CrmController,
+    OpportunityController,
+    LeadController,
+    PartyGroupController,
+  ],
   providers: [
+    ContactService,
     CrmService,
     CrmRepository,
     OpportunityService,
@@ -22,6 +31,6 @@ import { OpportunityService } from './opportunity.service';
     LeadRepository,
     PartyGroupService,
   ],
-  exports: [CrmService, OpportunityService, PartyGroupService],
+  exports: [ContactService, CrmService, OpportunityService, PartyGroupService],
 })
 export class CrmModule {}
