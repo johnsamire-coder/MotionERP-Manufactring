@@ -26,6 +26,11 @@ export const envSchema = z.object({
   SMTP_FROM: z.string().default('erp@motion.local'),
   /** Plan item 44: minutes between project status-report runs; 0 = on demand only. */
   PROJECT_REPORT_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(0),
+  /** Plan item 48: Egyptian e-invoicing (ETA) credentials — unset = documents are prepared but not submitted. */
+  ETA_ID_SRV_URL: z.string().url().optional(),
+  ETA_API_URL: z.string().url().optional(),
+  ETA_CLIENT_ID: z.string().optional(),
+  ETA_CLIENT_SECRET: z.string().optional(),
 }).refine((env) => env.NODE_ENV !== 'production' || !!env.AUTH_JWT_SECRET, {
   message: 'AUTH_JWT_SECRET is required in production',
   path: ['AUTH_JWT_SECRET'],

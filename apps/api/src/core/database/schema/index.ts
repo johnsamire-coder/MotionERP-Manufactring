@@ -51,3 +51,4 @@ export * from '../../../modules/support/support.schema';
 export * from '../../../modules/projects/projects.schema';
 export * from '../../../modules/assets/assets.schema';
 export * from '../../../modules/printing/printing.schema';
+export * from '../../../modules/regional/egypt/egypt.schema';

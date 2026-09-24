@@ -66,4 +66,13 @@ export class AppConfigService {
   get projectReportIntervalMinutes(): number {
     return this.config.get('PROJECT_REPORT_INTERVAL_MINUTES', { infer: true });
   }
+
+  /** ETA (Egyptian e-invoice) connection, or null when not configured. */
+  get eta(): { idSrvUrl: string; apiUrl: string; clientId: string; clientSecret: string } | null {
+    const idSrvUrl = this.config.get('ETA_ID_SRV_URL', { infer: true });
+    const apiUrl = this.config.get('ETA_API_URL', { infer: true });
+    const clientId = this.config.get('ETA_CLIENT_ID', { infer: true });
+    const clientSecret = this.config.get('ETA_CLIENT_SECRET', { infer: true });
+    return idSrvUrl && apiUrl && clientId && clientSecret ? { idSrvUrl, apiUrl, clientId, clientSecret } : null;
+  }
 }
