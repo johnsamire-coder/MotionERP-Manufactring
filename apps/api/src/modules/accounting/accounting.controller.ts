@@ -114,6 +114,11 @@ export class AccountingController {
     return { config: await this.service.getCompanyConfig(orgNodeId) };
   }
 
+  @Get('company-config/:orgNodeId/readiness')
+  async companyReadiness(@Param('orgNodeId', ParseUUIDPipe) orgNodeId: string) {
+    return this.service.defaultAccountsReadiness(orgNodeId);
+  }
+
   @Post('company-config')
   @HttpCode(200)
   async upsertCompanyConfig(@Body() dto: UpsertCompanyAccountingConfigDto) {

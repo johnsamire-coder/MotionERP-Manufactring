@@ -49,6 +49,8 @@ export interface CompanyAccountingConfigRecord {
   defaultInputTaxAccountId: string | null; defaultOutputTaxAccountId: string | null;
   defaultScrapAccountId: string | null; defaultStockAdjustmentAccountId: string | null;
   defaultOhAppliedAccountId: string | null;
+  defaultBankAccountId?: string | null; defaultCashAccountId?: string | null; defaultIncomeAccountId?: string | null; defaultInventoryAccountId?: string | null; defaultRoundOffAccountId?: string | null; defaultWriteOffAccountId?: string | null; defaultExchangeGainLossAccountId?: string | null; defaultDepreciationExpenseAccountId?: string | null;
+  enforceDefaultAccounts?: boolean;
 }
 export interface UpsertCompanyAccountingConfigInput {
   orgNodeId: string; baseCurrency?: string; inventoryValuationMethod?: string;
@@ -58,6 +60,8 @@ export interface UpsertCompanyAccountingConfigInput {
   defaultInputTaxAccountId?: string; defaultOutputTaxAccountId?: string;
   defaultScrapAccountId?: string; defaultStockAdjustmentAccountId?: string;
   defaultOhAppliedAccountId?: string;
+  defaultBankAccountId?: string; defaultCashAccountId?: string; defaultIncomeAccountId?: string; defaultInventoryAccountId?: string; defaultRoundOffAccountId?: string; defaultWriteOffAccountId?: string; defaultExchangeGainLossAccountId?: string; defaultDepreciationExpenseAccountId?: string;
+  enforceDefaultAccounts?: boolean;
 }
 
 // --- Account Determination ---

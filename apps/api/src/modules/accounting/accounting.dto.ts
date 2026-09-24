@@ -72,6 +72,15 @@ export class UpsertCompanyAccountingConfigDto {
   @IsOptional() @IsUUID() defaultScrapAccountId?: string;
   @IsOptional() @IsUUID() defaultStockAdjustmentAccountId?: string;
   @IsOptional() @IsUUID() defaultOhAppliedAccountId?: string;
+  @IsOptional() @IsUUID() defaultBankAccountId?: string;
+  @IsOptional() @IsUUID() defaultCashAccountId?: string;
+  @IsOptional() @IsUUID() defaultIncomeAccountId?: string;
+  @IsOptional() @IsUUID() defaultInventoryAccountId?: string;
+  @IsOptional() @IsUUID() defaultRoundOffAccountId?: string;
+  @IsOptional() @IsUUID() defaultWriteOffAccountId?: string;
+  @IsOptional() @IsUUID() defaultExchangeGainLossAccountId?: string;
+  @IsOptional() @IsUUID() defaultDepreciationExpenseAccountId?: string;
+  @IsOptional() @IsBoolean() enforceDefaultAccounts?: boolean;
 }
 
 export class FinancialReportQueryDto {

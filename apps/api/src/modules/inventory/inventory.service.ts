@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, Optional } from '@nestjs/common';
+import { AccountingValidationError } from '../accounting/accounting.errors';
 import { PostingEngineService } from '../accounting/posting-engine.service';
 import { CatalogNotFoundError } from '../catalog/catalog.errors';
 import { CatalogService } from '../catalog/catalog.service';
@@ -143,6 +144,7 @@ export class InventoryService {
       throw new InventoryValidationError(`warehouse ${warehouseRecord.code} is a group warehouse and cannot hold stock (plan item 23)`);
     }
     const orderSource = await this.checkReceiptAgainstOrder(input, quantityNum, warehouseRecord.orgNodeId);
+    await this.assertPostingReady(warehouseRecord.orgNodeId, input.warehouseId, input.movementType, orderSource?.sourceModule ?? input.sourceModule);
 
     // Backdating guard: a movement may not be dated before the latest recorded
     // movement of the same item/warehouse, unless explicitly allowed with a reason.
@@ -310,6 +312,17 @@ export class InventoryService {
     }
 
     return serialPlan ? { ...movement, serialNos: serialPlan.map((p) => p.serialNo) } : movement;
+  }
+
+  /** Plan item 33: refuse the movement before saving it when the company enforces its default accounts and they are missing. */
+  private async assertPostingReady(orgNodeId: string, warehouseId: string, movementType: MovementType, sourceModule?: string | null): Promise<void> {
+    if (!this.postingEngine?.assertCanPost) return;
+    try {
+      await this.postingEngine.assertCanPost(orgNodeId, warehouseId, movementType, sourceModule);
+    } catch (err) {
+      if (err instanceof AccountingValidationError) throw new InventoryValidationError(err.message);
+      throw err;
+    }
   }
 
   private async getItemTracking(itemId: string): Promise<ItemRecord | null> {
@@ -768,6 +781,7 @@ export class InventoryService {
       };
     }
 
+    await this.assertPostingReady(warehouseRecord.orgNodeId, input.warehouseId, 'adjustment', 'inventory');
     const isSurplus = diff > 0;
     const diffQtyAbs = Math.abs(diff);
     const signedQty = diff.toFixed(6);

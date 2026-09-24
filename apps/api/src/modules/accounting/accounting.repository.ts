@@ -69,6 +69,15 @@ const configColumns = {
   defaultInputTaxAccountId: companyAccountingConfig.defaultInputTaxAccountId, defaultOutputTaxAccountId: companyAccountingConfig.defaultOutputTaxAccountId,
   defaultScrapAccountId: companyAccountingConfig.defaultScrapAccountId, defaultStockAdjustmentAccountId: companyAccountingConfig.defaultStockAdjustmentAccountId,
   defaultOhAppliedAccountId: companyAccountingConfig.defaultOhAppliedAccountId,
+  defaultBankAccountId: companyAccountingConfig.defaultBankAccountId,
+  defaultCashAccountId: companyAccountingConfig.defaultCashAccountId,
+  defaultIncomeAccountId: companyAccountingConfig.defaultIncomeAccountId,
+  defaultInventoryAccountId: companyAccountingConfig.defaultInventoryAccountId,
+  defaultRoundOffAccountId: companyAccountingConfig.defaultRoundOffAccountId,
+  defaultWriteOffAccountId: companyAccountingConfig.defaultWriteOffAccountId,
+  defaultExchangeGainLossAccountId: companyAccountingConfig.defaultExchangeGainLossAccountId,
+  defaultDepreciationExpenseAccountId: companyAccountingConfig.defaultDepreciationExpenseAccountId,
+  enforceDefaultAccounts: companyAccountingConfig.enforceDefaultAccounts,
 };
 const detColumns = {
   id: accountDetermination.id, orgNodeId: accountDetermination.orgNodeId, determinationType: accountDetermination.determinationType,
@@ -254,7 +263,10 @@ export class AccountingRepository {
   async upsertCompanyConfig(input: UpsertCompanyAccountingConfigInput & { id: string }): Promise<CompanyAccountingConfigRecord> {
     const existing = await this.findCompanyConfig(input.orgNodeId);
     if (existing) {
-      const rows = await this.database.db.update(companyAccountingConfig).set({ ...input, updatedAt: new Date() }).where(eq(companyAccountingConfig.orgNodeId, input.orgNodeId)).returning(configColumns);
+      // Keep the row's own id: the freshly generated one is only for a first insert.
+      const { id, ...fields } = input;
+      void id;
+      const rows = await this.database.db.update(companyAccountingConfig).set({ ...fields, updatedAt: new Date() }).where(eq(companyAccountingConfig.orgNodeId, input.orgNodeId)).returning(configColumns);
       return rows[0]!;
     }
     const rows = await this.database.db.insert(companyAccountingConfig).values(input).returning(configColumns);

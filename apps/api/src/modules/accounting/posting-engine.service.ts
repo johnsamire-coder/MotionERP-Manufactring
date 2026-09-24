@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { AccountingValidationError } from './accounting.errors';
 import { AccountingRepository } from './accounting.repository';
 import { AccountingService } from './accounting.service';
 import type { JournalEntryRecord } from './accounting.types';
@@ -33,7 +34,8 @@ export class PostingEngineService {
     const defaultInvDet = determinations.find(
       (d) => d.determinationType === 'default' && d.accountPurpose === 'inventory',
     );
-    const inventoryAccountId = whDet?.accountId ?? defaultInvDet?.accountId ?? null;
+    // Plan item 33: the company's default inventory account is the last fallback.
+    const inventoryAccountId = whDet?.accountId ?? defaultInvDet?.accountId ?? config?.defaultInventoryAccountId ?? null;
 
     if (!inventoryAccountId) {
       this.logger.warn(`No inventory asset account mapped for orgNodeId=${orgNodeId}, warehouseId=${warehouseId}`);
@@ -78,6 +80,21 @@ export class PostingEngineService {
     }
 
     return { inventoryAccountId, contraAccountId };
+  }
+
+  /**
+   * Plan item 33: when the company enforces its default accounts, a movement whose accounts
+   * cannot be resolved is refused BEFORE anything is saved (otherwise it would post nothing).
+   */
+  async assertCanPost(orgNodeId: string, warehouseId: string, movementType: PostingMovementType, sourceModule?: string | null): Promise<void> {
+    const config = await this.repository.findCompanyConfig(orgNodeId);
+    if (!config?.enforceDefaultAccounts) return;
+    const accounts = await this.resolveStockMovementAccounts(orgNodeId, warehouseId, movementType, sourceModule);
+    if (!accounts) {
+      throw new AccountingValidationError(
+        `الشركة مفعّلة "الحسابات الافتراضية الإجبارية" والحركة دي (${movementType}${sourceModule ? ` / ${sourceModule}` : ''}) ملهاش حسابات — كمّل الحسابات من شاشة إعدادات الشركة (GET accounting/company-config/${orgNodeId}/readiness)`,
+      );
+    }
   }
 
   /**

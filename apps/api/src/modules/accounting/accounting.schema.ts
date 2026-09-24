@@ -129,6 +129,17 @@ export const companyAccountingConfig = accountingSchema.table('company_accountin
   defaultScrapAccountId: uuid('default_scrap_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
   defaultStockAdjustmentAccountId: uuid('default_stock_adjustment_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
   defaultOhAppliedAccountId: uuid('default_oh_applied_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
+  // Plan item 33: the rest of the 19 company default accounts.
+  defaultBankAccountId: uuid('default_bank_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
+  defaultCashAccountId: uuid('default_cash_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
+  defaultIncomeAccountId: uuid('default_income_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
+  defaultInventoryAccountId: uuid('default_inventory_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
+  defaultRoundOffAccountId: uuid('default_round_off_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
+  defaultWriteOffAccountId: uuid('default_write_off_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
+  defaultExchangeGainLossAccountId: uuid('default_exchange_gain_loss_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
+  defaultDepreciationExpenseAccountId: uuid('default_depreciation_expense_account_id').references(() => chartOfAccounts.id, { onDelete: 'set null' }),
+  /** Plan item 33: when true, a stock movement whose accounts cannot be resolved is refused up front (instead of posting nothing). */
+  enforceDefaultAccounts: boolean('enforce_default_accounts').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [

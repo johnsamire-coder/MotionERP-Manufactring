@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { AccountingNotFoundError, AccountingValidationError } from './accounting.errors';
 import { AccountingRepository } from './accounting.repository';
+import { checkDefaultAccount, DEFAULT_ACCOUNTS, type DefaultAccountStatus } from './default-accounts';
 import { ACCOUNT_ROLES, isAccountRole, manualLineProblem, type AccountRole } from './account-roles';
 import type {
   AccountBalance,
@@ -160,7 +161,29 @@ export class AccountingService {
 
   async upsertCompanyConfig(input: UpsertCompanyAccountingConfigInput): Promise<CompanyAccountingConfigRecord> {
     if (!input.orgNodeId) throw new AccountingValidationError('orgNodeId is required');
+    // Plan item 33: every default account given must exist, belong to this company, be a leaf, and fit its role.
+    for (const spec of DEFAULT_ACCOUNTS) {
+      const accountId = (input as unknown as Record<string, string | undefined>)[spec.key];
+      if (!accountId) continue;
+      const account = await this.repository.findAccountById(accountId);
+      const problem = checkDefaultAccount(spec, input.orgNodeId, account, account ? await this.repository.findAccountRole(accountId) : null, accountId);
+      if (problem) throw new AccountingValidationError(`${spec.label}: ${problem}`);
+    }
     return this.repository.upsertCompanyConfig({ id: randomUUID(), ...input });
+  }
+
+  /** Plan item 33: which of the 19 default accounts are set and valid for the company. */
+  async defaultAccountsReadiness(orgNodeId: string): Promise<{ ready: boolean; missing: number; accounts: DefaultAccountStatus[]; enforce: boolean }> {
+    const config = await this.repository.findCompanyConfig(orgNodeId);
+    const accounts: DefaultAccountStatus[] = [];
+    for (const spec of DEFAULT_ACCOUNTS) {
+      const accountId = (config?.[spec.key] as string | null | undefined) ?? null;
+      const account = accountId ? await this.repository.findAccountById(accountId) : null;
+      const problem = checkDefaultAccount(spec, orgNodeId, account, accountId ? await this.repository.findAccountRole(accountId) : null, accountId);
+      accounts.push({ key: spec.key, label: spec.label, usedBy: spec.usedBy, accountId, accountCode: account?.code ?? null, ok: problem === null, problem });
+    }
+    const missing = accounts.filter((a) => !a.ok).length;
+    return { ready: missing === 0, missing, accounts, enforce: config?.enforceDefaultAccounts ?? false };
   }
 
   // --- Account Determination ---
