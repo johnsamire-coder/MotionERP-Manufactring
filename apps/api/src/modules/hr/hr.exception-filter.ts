@@ -1,7 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { HrNotFoundError, HrValidationError } from './hr.errors';
 
-interface HttpResponse { status(code: number): HttpResponse; json(body: unknown): void; }
+interface HttpResponse {
+  status(code: number): HttpResponse;
+  json(body: unknown): void;
+}
 
 @Catch(HrNotFoundError, HrValidationError)
 export class HrExceptionFilter implements ExceptionFilter {

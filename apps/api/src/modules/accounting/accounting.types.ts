@@ -1,153 +1,237 @@
+import type { VoucherType } from './voucher-types';
 export type NormalBalance = 'debit' | 'credit';
 export type ChartAccountStatus = 'active' | 'inactive';
 export type JournalEntryStatus = 'draft' | 'posted' | 'cancelled';
 export type AccountingPeriodStatus = 'open' | 'closed' | 'locked';
-export type FixedAssetStatus = 'active' | 'fully_depreciated' | 'disposed';
 
-export interface AccountTypeRecord { id: string; code: string; name: string; normalBalance: NormalBalance; }
-export interface CreateAccountTypeInput { code: string; name: string; normalBalance: NormalBalance; }
+export interface AccountTypeRecord {
+  id: string;
+  code: string;
+  name: string;
+  normalBalance: NormalBalance;
+}
+export interface CreateAccountTypeInput {
+  code: string;
+  name: string;
+  normalBalance: NormalBalance;
+}
 
 export interface ChartOfAccountsRecord {
-  id: string; code: string; name: string; orgNodeId: string | null; accountTypeId: string; parentId: string | null;
-  isLeaf: boolean; status: ChartAccountStatus;
+  id: string;
+  code: string;
+  name: string;
+  orgNodeId: string | null;
+  accountTypeId: string;
+  parentId: string | null;
+  isLeaf: boolean;
+  status: ChartAccountStatus;
 }
 export interface CreateChartOfAccountsInput {
-  code: string; name: string; orgNodeId: string; accountTypeId: string; parentId?: string;
+  code: string;
+  name: string;
+  orgNodeId: string;
+  accountTypeId: string;
+  parentId?: string;
 }
 
 // --- Fiscal Year ---
 export interface FiscalYearRecord {
-  id: string; orgNodeId: string; name: string; startDate: string; endDate: string; isClosed: boolean;
+  id: string;
+  orgNodeId: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  isClosed: boolean;
 }
 export interface CreateFiscalYearInput {
-  orgNodeId: string; name: string; startDate: string; endDate: string;
+  orgNodeId: string;
+  name: string;
+  startDate: string;
+  endDate: string;
 }
 
 // --- Accounting Period ---
 export interface AccountingPeriodRecord {
-  id: string; fiscalYearId: string; periodNumber: number; name: string;
-  startDate: string; endDate: string; status: AccountingPeriodStatus;
+  id: string;
+  fiscalYearId: string;
+  periodNumber: number;
+  name: string;
+  startDate: string;
+  endDate: string;
+  status: AccountingPeriodStatus;
 }
 export interface CreateAccountingPeriodInput {
-  fiscalYearId: string; periodNumber: number; name: string; startDate: string; endDate: string;
+  fiscalYearId: string;
+  periodNumber: number;
+  name: string;
+  startDate: string;
+  endDate: string;
 }
 
 // --- Cost Center ---
 export interface CostCenterRecord {
-  id: string; orgNodeId: string; code: string; name: string; parentId: string | null; isGroup: boolean; isActive: boolean;
+  id: string;
+  orgNodeId: string;
+  code: string;
+  name: string;
+  parentId: string | null;
+  isGroup: boolean;
+  isActive: boolean;
 }
 export interface CreateCostCenterInput {
-  orgNodeId: string; code: string; name: string; parentId?: string; isGroup?: boolean;
+  orgNodeId: string;
+  code: string;
+  name: string;
+  parentId?: string;
+  isGroup?: boolean;
 }
 
 // --- Company Accounting Config ---
 export interface CompanyAccountingConfigRecord {
-  id: string; orgNodeId: string; baseCurrency: string; inventoryValuationMethod: string;
-  defaultGrniAccountId: string | null; defaultWipAccountId: string | null;
-  defaultCogsAccountId: string | null; defaultMfgVarianceAccountId: string | null;
-  defaultPayableAccountId: string | null; defaultReceivableAccountId: string | null;
-  defaultInputTaxAccountId: string | null; defaultOutputTaxAccountId: string | null;
-  defaultScrapAccountId: string | null; defaultStockAdjustmentAccountId: string | null;
+  id: string;
+  orgNodeId: string;
+  baseCurrency: string;
+  inventoryValuationMethod: string;
+  defaultGrniAccountId: string | null;
+  defaultWipAccountId: string | null;
+  defaultCogsAccountId: string | null;
+  defaultMfgVarianceAccountId: string | null;
+  defaultPayableAccountId: string | null;
+  defaultReceivableAccountId: string | null;
+  defaultInputTaxAccountId: string | null;
+  defaultOutputTaxAccountId: string | null;
+  defaultScrapAccountId: string | null;
+  defaultStockAdjustmentAccountId: string | null;
   defaultOhAppliedAccountId: string | null;
+  defaultBankAccountId?: string | null;
+  defaultCashAccountId?: string | null;
+  defaultIncomeAccountId?: string | null;
+  defaultInventoryAccountId?: string | null;
+  defaultRoundOffAccountId?: string | null;
+  defaultWriteOffAccountId?: string | null;
+  defaultExchangeGainLossAccountId?: string | null;
+  defaultDepreciationExpenseAccountId?: string | null;
+  enforceDefaultAccounts?: boolean;
+  accountsFrozenUntil?: Date | null;
+  bookAdvancesSeparately?: boolean;
+  defaultAdvanceReceivedAccountId?: string | null;
+  defaultAdvancePaidAccountId?: string | null;
+  defaultCostCenterId?: string | null;
 }
 export interface UpsertCompanyAccountingConfigInput {
-  orgNodeId: string; baseCurrency?: string; inventoryValuationMethod?: string;
-  defaultGrniAccountId?: string; defaultWipAccountId?: string;
-  defaultCogsAccountId?: string; defaultMfgVarianceAccountId?: string;
-  defaultPayableAccountId?: string; defaultReceivableAccountId?: string;
-  defaultInputTaxAccountId?: string; defaultOutputTaxAccountId?: string;
-  defaultScrapAccountId?: string; defaultStockAdjustmentAccountId?: string;
+  orgNodeId: string;
+  baseCurrency?: string;
+  inventoryValuationMethod?: string;
+  defaultGrniAccountId?: string;
+  defaultWipAccountId?: string;
+  defaultCogsAccountId?: string;
+  defaultMfgVarianceAccountId?: string;
+  defaultPayableAccountId?: string;
+  defaultReceivableAccountId?: string;
+  defaultInputTaxAccountId?: string;
+  defaultOutputTaxAccountId?: string;
+  defaultScrapAccountId?: string;
+  defaultStockAdjustmentAccountId?: string;
   defaultOhAppliedAccountId?: string;
+  defaultBankAccountId?: string;
+  defaultCashAccountId?: string;
+  defaultIncomeAccountId?: string;
+  defaultInventoryAccountId?: string;
+  defaultRoundOffAccountId?: string;
+  defaultWriteOffAccountId?: string;
+  defaultExchangeGainLossAccountId?: string;
+  defaultDepreciationExpenseAccountId?: string;
+  enforceDefaultAccounts?: boolean;
+  accountsFrozenUntil?: string | null;
+  bookAdvancesSeparately?: boolean;
+  defaultAdvanceReceivedAccountId?: string;
+  defaultAdvancePaidAccountId?: string;
+  defaultCostCenterId?: string;
 }
 
 // --- Account Determination ---
 export interface AccountDeterminationRecord {
-  id: string; orgNodeId: string; determinationType: string; referenceId: string | null;
-  accountPurpose: string; accountId: string;
+  id: string;
+  orgNodeId: string;
+  determinationType: string;
+  referenceId: string | null;
+  accountPurpose: string;
+  accountId: string;
 }
 export interface CreateAccountDeterminationInput {
-  orgNodeId: string; determinationType: 'item_category' | 'warehouse' | 'default';
-  referenceId?: string; accountPurpose: string; accountId: string;
+  orgNodeId: string;
+  determinationType: 'item_category' | 'warehouse' | 'default';
+  referenceId?: string;
+  accountPurpose: string;
+  accountId: string;
 }
 
 // --- Journal Entries & Lines ---
 export interface JournalLineRecord {
-  id: string; journalEntryId: string; accountId: string; debitAmount: string; creditAmount: string; description: string | null;
-  partyType?: string | null; partyId?: string | null; costCenterId?: string | null; jobOrderId?: string | null;
+  id: string;
+  journalEntryId: string;
+  accountId: string;
+  debitAmount: string;
+  creditAmount: string;
+  description: string | null;
+  partyType?: string | null;
+  partyId?: string | null;
+  costCenterId?: string | null;
+  jobOrderId?: string | null;
 }
 export interface JournalEntryRecord {
-  id: string; entryNumber: string; orgNodeId: string | null; reference: string | null; description: string;
-  entryDate: string; postedAt: string | null; status: JournalEntryStatus;
-  fiscalYearId?: string | null; periodId?: string | null; isAutoGenerated?: boolean;
-  idempotencyKey?: string | null; sourceEventType?: string | null;
+  id: string;
+  entryNumber: string;
+  orgNodeId: string | null;
+  reference: string | null;
+  description: string;
+  entryDate: string;
+  postedAt: string | null;
+  status: JournalEntryStatus;
+  fiscalYearId?: string | null;
+  periodId?: string | null;
+  isAutoGenerated?: boolean;
+  idempotencyKey?: string | null;
+  sourceEventType?: string | null;
+  voucherType?: string;
+  /** Plan item 40: budget warnings (action "warn") raised by this entry. */
+  budgetWarnings?: string[];
   lines: JournalLineRecord[];
 }
 export interface CreateJournalLineInput {
-  accountId: string; debitAmount?: string; creditAmount?: string; description?: string;
-  partyType?: 'customer' | 'supplier'; partyId?: string; costCenterId?: string; jobOrderId?: string;
+  accountId: string;
+  debitAmount?: string;
+  creditAmount?: string;
+  description?: string;
+  partyType?: 'customer' | 'supplier';
+  partyId?: string;
+  costCenterId?: string;
+  jobOrderId?: string;
+  /** Plan item 41: accounting dimension values carried by the line. */
+  dimensions?: Array<{ dimensionId: string; valueId: string }>;
 }
 export interface CreateJournalEntryInput {
-  orgNodeId: string; description: string; reference?: string; entryDate?: string;
-  fiscalYearId?: string; periodId?: string; isAutoGenerated?: boolean;
-  idempotencyKey?: string; sourceEventType?: string;
+  orgNodeId: string;
+  description: string;
+  reference?: string;
+  entryDate?: string;
+  fiscalYearId?: string;
+  periodId?: string;
+  isAutoGenerated?: boolean;
+  idempotencyKey?: string;
+  sourceEventType?: string;
+  /** Plan item 34 — defaults to journal_entry (or a type derived from the source event). */
+  voucherType?: VoucherType;
   lines: CreateJournalLineInput[];
 }
 
 export interface AccountBalance {
-  accountId: string; accountCode: string; accountName: string; totalDebit: string; totalCredit: string; balance: string;
-}
-
-// --- Fixed Assets & Depreciation Types ---
-export interface FixedAssetRecord {
-  id: string;
-  assetCode: string;
-  assetName: string;
-  orgNodeId: string;
-  purchaseDate: string;
-  purchaseCost: string;
-  usefulLifeMonths: number;
-  salvageValue: string;
-  depreciationMethod: string;
-  assetAccountId: string;
-  accumulatedDepreciationAccountId: string;
-  depreciationExpenseAccountId: string;
-  costCenterId: string | null;
-  totalDepreciated: string;
-  status: FixedAssetStatus;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateFixedAssetInput {
-  orgNodeId: string;
-  assetCode: string;
-  assetName: string;
-  purchaseDate: string;
-  purchaseCost: string;
-  usefulLifeMonths: number;
-  salvageValue?: string;
-  assetAccountId: string;
-  accumulatedDepreciationAccountId: string;
-  depreciationExpenseAccountId: string;
-  costCenterId?: string;
-}
-
-export interface DepreciationEntryRecord {
-  id: string;
-  assetId: string;
-  periodId: string | null;
-  entryDate: string;
-  depreciationAmount: string;
-  accumulatedAmountAfter: string;
-  journalEntryId: string | null;
-  status: string;
-  createdAt: string;
-}
-
-export interface PostDepreciationResult {
-  asset: FixedAssetRecord;
-  depreciationEntry: DepreciationEntryRecord;
-  journalEntry: JournalEntryRecord;
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  totalDebit: string;
+  totalCredit: string;
+  balance: string;
 }
 
 // --- VAT Return & Tax Settlement Types ---
@@ -156,8 +240,8 @@ export interface VatReportSummary {
   startDate?: string;
   endDate?: string;
   totalOutputTax: string; // ضريبة المبيعات المحصلة
-  totalInputTax: string;  // ضريبة المشتريات المدفوعة
-  netTaxPayable: string;  // صافي الضريبة المستحقة لمصلحة الضرائب
+  totalInputTax: string; // ضريبة المشتريات المدفوعة
+  netTaxPayable: string; // صافي الضريبة المستحقة لمصلحة الضرائب
   status: 'payable' | 'refundable';
 }
 

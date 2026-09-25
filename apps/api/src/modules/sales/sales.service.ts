@@ -1,16 +1,70 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
+import { PricingService } from './pricing.service';
+import { OpportunityService } from '../crm/opportunity.service';
 import { CrmService } from '../crm/crm.service';
 import { SalesNotFoundError, SalesValidationError } from './sales.errors';
 import { SalesRepository } from './sales.repository';
-import type { CreateJobOrderInput, CreateQuotationInput, JobOrderRecord, QuotationRecord } from './sales.types';
+import type {
+  CreateJobOrderInput,
+  CreateQuotationInput,
+  JobOrderRecord,
+  QuotationRecord,
+} from './sales.types';
 
 @Injectable()
 export class SalesService {
   constructor(
     private readonly repository: SalesRepository,
     private readonly crmService: CrmService,
+    @Optional() private readonly pricing?: PricingService,
+    @Optional() private readonly opportunities?: OpportunityService,
   ) {}
+
+  /**
+   * Plan item 17: turns an opportunity into a formal outgoing quotation (its items at the given or
+   * expected prices, optionally through the pricing rules) and moves the opportunity to "quoted".
+   */
+  async createQuotationFromOpportunity(
+    opportunityId: string,
+    input: {
+      orgNodeId?: string;
+      validUntil?: string;
+      applyPricingRules?: boolean;
+      prices?: Record<string, string>;
+    },
+  ): Promise<QuotationRecord> {
+    if (!this.opportunities) throw new SalesValidationError('opportunities are not available');
+    const opp = await this.opportunities.get(opportunityId).catch(() => null);
+    if (!opp) throw new SalesNotFoundError(`opportunity ${opportunityId} does not exist`);
+    if (opp.stage !== 'open' && opp.stage !== 'qualified') {
+      throw new SalesValidationError(
+        `opportunity ${opp.opportunityNumber} is "${opp.stage}" and cannot be quoted`,
+      );
+    }
+    if (opp.items.length === 0)
+      throw new SalesValidationError(`opportunity ${opp.opportunityNumber} has no items to quote`);
+    const lines = opp.items.map((i) => {
+      const price = input.prices?.[i.itemId] ?? i.expectedRate ?? undefined;
+      if (price === undefined && !input.applyPricingRules) {
+        throw new SalesValidationError(
+          `no price for item ${i.itemId}: give prices, expected rates, or applyPricingRules`,
+        );
+      }
+      return { itemId: i.itemId, quantity: i.quantity, unitPrice: price ?? '' };
+    });
+    const quotation = await this.createQuotation({
+      direction: 'outgoing',
+      customerId: opp.customerId,
+      orgNodeId: input.orgNodeId,
+      validUntil: input.validUntil,
+      note: `من فرصة البيع ${opp.opportunityNumber}: ${opp.title}`,
+      lines,
+      applyPricingRules: input.applyPricingRules,
+    });
+    await this.opportunities.markQuoted(opp.id, quotation.id);
+    return quotation;
+  }
 
   async getQuotations(direction?: 'outgoing' | 'incoming'): Promise<QuotationRecord[]> {
     return this.repository.listQuotations(direction);
@@ -24,19 +78,58 @@ export class SalesService {
 
   async createQuotation(input: CreateQuotationInput): Promise<QuotationRecord> {
     if (input.direction === 'outgoing' && (!input.customerId || input.supplierId)) {
-      throw new SalesValidationError('an outgoing quotation needs exactly a customerId (no supplierId)');
+      throw new SalesValidationError(
+        'an outgoing quotation needs exactly a customerId (no supplierId)',
+      );
     }
     if (input.direction === 'incoming' && (!input.supplierId || input.customerId)) {
-      throw new SalesValidationError('an incoming quotation needs exactly a supplierId (no customerId)');
+      throw new SalesValidationError(
+        'an incoming quotation needs exactly a supplierId (no customerId)',
+      );
     }
     if (!input.lines || input.lines.length === 0) {
       throw new SalesValidationError('a quotation must have at least one line');
     }
+    if (input.applyPricingRules && this.pricing) {
+      // Plan item 16: rules re-price each line; product rules append free lines at rate 0.
+      const priced = await this.pricing.apply(
+        input.direction === 'outgoing' ? 'selling' : 'buying',
+        input.lines.map((l) => ({
+          itemId: l.itemId,
+          quantity: l.quantity,
+          unitPrice: l.unitPrice,
+        })),
+        input.customerId ?? input.supplierId,
+        input.quotationDate ? new Date(input.quotationDate) : new Date(),
+      );
+      input = {
+        ...input,
+        lines: [
+          ...priced.lines.map((l) => ({
+            itemId: l.itemId,
+            quantity: l.quantity,
+            unitPrice: l.rate,
+          })),
+          ...priced.freeLines.map((f) => ({
+            itemId: f.itemId,
+            quantity: f.quantity,
+            unitPrice: '0',
+          })),
+        ],
+      };
+    }
     for (const line of input.lines) {
       const qty = Number(line.quantity);
       const price = Number(line.unitPrice);
-      if (!Number.isFinite(qty) || qty <= 0) throw new SalesValidationError('line quantity must be positive');
-      if (!Number.isFinite(price) || price < 0) throw new SalesValidationError('line unit price cannot be negative');
+      if (!Number.isFinite(qty) || qty <= 0)
+        throw new SalesValidationError('line quantity must be positive');
+      if (!Number.isFinite(price) || price < 0)
+        throw new SalesValidationError('line unit price cannot be negative');
+    }
+    if (input.supplierId) {
+      // Supplier hold (plan item 8): a fully held supplier cannot quote us.
+      const blocked = await this.crmService.supplierBlockReason(input.supplierId, 'quotation');
+      if (blocked) throw new SalesValidationError(blocked);
     }
     if (input.customerId) {
       const customer = await this.crmService.getCustomer(input.customerId);
@@ -49,10 +142,17 @@ export class SalesService {
     const quotationNumber = `${prefix}-${year}-${String(sequence).padStart(6, '0')}`;
 
     return this.repository.insertQuotation({
-      id: randomUUID(), quotationNumber, direction: input.direction,
-      customerId: input.customerId, supplierId: input.supplierId, orgNodeId: input.orgNodeId,
-      quotationDate: input.quotationDate, validUntil: input.validUntil,
-      currency: input.currency, note: input.note, lines: input.lines,
+      id: randomUUID(),
+      quotationNumber,
+      direction: input.direction,
+      customerId: input.customerId,
+      supplierId: input.supplierId,
+      orgNodeId: input.orgNodeId,
+      quotationDate: input.quotationDate,
+      validUntil: input.validUntil,
+      currency: input.currency,
+      note: input.note,
+      lines: input.lines,
     });
   }
 
@@ -60,7 +160,9 @@ export class SalesService {
     const quotation = await this.repository.findQuotationById(id);
     if (!quotation) throw new SalesNotFoundError(`quotation ${id} does not exist`);
     if (quotation.status !== 'draft') {
-      throw new SalesValidationError(`quotation ${id} is "${quotation.status}" and cannot be sent (must be "draft")`);
+      throw new SalesValidationError(
+        `quotation ${id} is "${quotation.status}" and cannot be sent (must be "draft")`,
+      );
     }
     return this.repository.setQuotationStatus(id, 'sent');
   }
@@ -74,17 +176,23 @@ export class SalesService {
    * inherits the quotation's org_node_id automatically, so the company/activity
    * it belongs to never has to be re-entered by hand.
    */
-  async approveQuotation(id: string, customerPoReference?: string): Promise<{ quotation: QuotationRecord; jobOrder?: JobOrderRecord }> {
+  async approveQuotation(
+    id: string,
+    customerPoReference?: string,
+  ): Promise<{ quotation: QuotationRecord; jobOrder?: JobOrderRecord }> {
     const quotation = await this.repository.findQuotationById(id);
     if (!quotation) throw new SalesNotFoundError(`quotation ${id} does not exist`);
     if (quotation.status !== 'sent' && quotation.status !== 'draft') {
-      throw new SalesValidationError(`quotation ${id} is "${quotation.status}" and cannot be approved`);
+      throw new SalesValidationError(
+        `quotation ${id} is "${quotation.status}" and cannot be approved`,
+      );
     }
 
     let createdJobOrder: JobOrderRecord | undefined;
     if (quotation.direction === 'outgoing') {
       if (quotation.customerId) await this.crmService.promoteToActive(quotation.customerId);
       const updated = await this.repository.setQuotationStatus(id, 'approved', customerPoReference);
+      if (this.opportunities) await this.opportunities.markWonByQuotation(id); // plan item 17
       createdJobOrder = await this.createJobOrder({
         source: 'quotation',
         quotationReference: updated.quotationNumber,
@@ -109,7 +217,9 @@ export class SalesService {
 
   // ---- Job Order ----
 
-  async getJobOrders(): Promise<JobOrderRecord[]> { return this.repository.listJobOrders(); }
+  async getJobOrders(): Promise<JobOrderRecord[]> {
+    return this.repository.listJobOrders();
+  }
 
   async getJobOrder(id: string): Promise<JobOrderRecord> {
     const found = await this.repository.findJobOrderById(id);
@@ -119,15 +229,21 @@ export class SalesService {
 
   async createJobOrder(input: CreateJobOrderInput): Promise<JobOrderRecord> {
     if (input.source === 'internal' && input.customerId) {
-      throw new SalesValidationError('an internal job order (company stock) must not have a customerId');
+      throw new SalesValidationError(
+        'an internal job order (company stock) must not have a customerId',
+      );
     }
     const sequence = (await this.repository.countJobOrders()) + 1;
     const year = new Date().getFullYear();
     const jobOrderNumber = `JO-${year}-${String(sequence).padStart(6, '0')}`;
     return this.repository.insertJobOrder({
-      id: randomUUID(), jobOrderNumber, source: input.source,
-      quotationReference: input.quotationReference, customerId: input.customerId,
-      orgNodeId: input.orgNodeId, note: input.note,
+      id: randomUUID(),
+      jobOrderNumber,
+      source: input.source,
+      quotationReference: input.quotationReference,
+      customerId: input.customerId,
+      orgNodeId: input.orgNodeId,
+      note: input.note,
     });
   }
 
@@ -136,7 +252,9 @@ export class SalesService {
     const found = await this.repository.findJobOrderById(id);
     if (!found) throw new SalesNotFoundError(`job order ${id} does not exist`);
     if (found.status !== 'draft') {
-      throw new SalesValidationError(`job order ${id} is "${found.status}"; financial review only applies to a "draft" order`);
+      throw new SalesValidationError(
+        `job order ${id} is "${found.status}"; financial review only applies to a "draft" order`,
+      );
     }
     return this.repository.setJobOrderFinancialReview(id, true);
   }
@@ -146,10 +264,14 @@ export class SalesService {
     const found = await this.repository.findJobOrderById(id);
     if (!found) throw new SalesNotFoundError(`job order ${id} does not exist`);
     if (found.status !== 'draft') {
-      throw new SalesValidationError(`job order ${id} is "${found.status}" and cannot be approved (must be "draft")`);
+      throw new SalesValidationError(
+        `job order ${id} is "${found.status}" and cannot be approved (must be "draft")`,
+      );
     }
     if (!found.financialReviewPassed) {
-      throw new SalesValidationError(`job order ${id} cannot be approved before financial review passes`);
+      throw new SalesValidationError(
+        `job order ${id} cannot be approved before financial review passes`,
+      );
     }
     return this.repository.setJobOrderStatus(id, 'approved');
   }
@@ -158,7 +280,9 @@ export class SalesService {
     const found = await this.repository.findJobOrderById(id);
     if (!found) throw new SalesNotFoundError(`job order ${id} does not exist`);
     if (found.status === 'completed') {
-      throw new SalesValidationError(`job order ${id} is already completed and cannot be cancelled`);
+      throw new SalesValidationError(
+        `job order ${id} is already completed and cannot be cancelled`,
+      );
     }
     return this.repository.setJobOrderStatus(id, 'cancelled');
   }

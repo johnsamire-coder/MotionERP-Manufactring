@@ -40,13 +40,17 @@ export class FinanceController {
 
   // --- Collections ---
   @Get('collections')
-  async collections(@Query('jobOrderReference') jobOrderReference?: string): Promise<{ collections: CollectionRecord[] }> {
+  async collections(
+    @Query('jobOrderReference') jobOrderReference?: string,
+  ): Promise<{ collections: CollectionRecord[] }> {
     return { collections: await this.service.getCollections(jobOrderReference) };
   }
 
   @Post('collections')
   @HttpCode(201)
-  async recordCollection(@Body() dto: CreateCollectionDto): Promise<{ collection: CollectionRecord }> {
+  async recordCollection(
+    @Body() dto: CreateCollectionDto,
+  ): Promise<{ collection: CollectionRecord }> {
     const created = await this.service.recordCollection({
       jobOrderReference: dto.jobOrderReference,
       collectionDate: dto.collectionDate,
@@ -62,7 +66,9 @@ export class FinanceController {
 
   // --- Retentions ---
   @Get('retentions')
-  async retentions(@Query('jobOrderReference') jobOrderReference?: string): Promise<{ retentions: RetentionRecord[] }> {
+  async retentions(
+    @Query('jobOrderReference') jobOrderReference?: string,
+  ): Promise<{ retentions: RetentionRecord[] }> {
     return { retentions: await this.service.getRetentions(jobOrderReference) };
   }
 
@@ -99,26 +105,34 @@ export class FinanceController {
   }
 
   @Get('purchase-invoices/:id')
-  async purchaseInvoice(@Param('id', ParseUUIDPipe) id: string): Promise<{ purchaseInvoice: PurchaseInvoiceRecord }> {
+  async purchaseInvoice(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ purchaseInvoice: PurchaseInvoiceRecord }> {
     return { purchaseInvoice: await this.service.getPurchaseInvoice(id) };
   }
 
   @Post('purchase-invoices')
   @HttpCode(201)
-  async createPurchaseInvoice(@Body() dto: CreatePurchaseInvoiceDto): Promise<{ purchaseInvoice: PurchaseInvoiceRecord }> {
+  async createPurchaseInvoice(
+    @Body() dto: CreatePurchaseInvoiceDto,
+  ): Promise<{ purchaseInvoice: PurchaseInvoiceRecord }> {
     const created = await this.service.createPurchaseInvoice(dto);
     return { purchaseInvoice: created };
   }
 
   @Post('purchase-invoices/:id/post')
   @HttpCode(200)
-  async postPurchaseInvoice(@Param('id', ParseUUIDPipe) id: string): Promise<{ purchaseInvoice: PurchaseInvoiceRecord }> {
+  async postPurchaseInvoice(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ purchaseInvoice: PurchaseInvoiceRecord }> {
     return { purchaseInvoice: await this.service.postPurchaseInvoice(id) };
   }
 
   @Post('purchase-invoices/:id/cancel')
   @HttpCode(200)
-  async cancelPurchaseInvoice(@Param('id', ParseUUIDPipe) id: string): Promise<{ purchaseInvoice: PurchaseInvoiceRecord }> {
+  async cancelPurchaseInvoice(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ purchaseInvoice: PurchaseInvoiceRecord }> {
     return { purchaseInvoice: await this.service.cancelPurchaseInvoice(id) };
   }
 
@@ -132,26 +146,34 @@ export class FinanceController {
   }
 
   @Get('sales-invoices/:id')
-  async salesInvoice(@Param('id', ParseUUIDPipe) id: string): Promise<{ salesInvoice: SalesInvoiceRecord }> {
+  async salesInvoice(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ salesInvoice: SalesInvoiceRecord }> {
     return { salesInvoice: await this.service.getSalesInvoice(id) };
   }
 
   @Post('sales-invoices')
   @HttpCode(201)
-  async createSalesInvoice(@Body() dto: CreateSalesInvoiceDto): Promise<{ salesInvoice: SalesInvoiceRecord }> {
+  async createSalesInvoice(
+    @Body() dto: CreateSalesInvoiceDto,
+  ): Promise<{ salesInvoice: SalesInvoiceRecord }> {
     const created = await this.service.createSalesInvoice(dto);
     return { salesInvoice: created };
   }
 
   @Post('sales-invoices/:id/post')
   @HttpCode(200)
-  async postSalesInvoice(@Param('id', ParseUUIDPipe) id: string): Promise<{ salesInvoice: SalesInvoiceRecord }> {
+  async postSalesInvoice(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ salesInvoice: SalesInvoiceRecord }> {
     return { salesInvoice: await this.service.postSalesInvoice(id) };
   }
 
   @Post('sales-invoices/:id/cancel')
   @HttpCode(200)
-  async cancelSalesInvoice(@Param('id', ParseUUIDPipe) id: string): Promise<{ salesInvoice: SalesInvoiceRecord }> {
+  async cancelSalesInvoice(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ salesInvoice: SalesInvoiceRecord }> {
     return { salesInvoice: await this.service.cancelSalesInvoice(id) };
   }
 
@@ -195,59 +217,79 @@ export class FinanceController {
     @Query('partyType') partyType?: 'customer' | 'supplier',
     @Query('partyId') partyId?: string,
   ): Promise<{ creditDebitNotes: CreditDebitNoteRecord[] }> {
-    return { creditDebitNotes: await this.service.getCreditDebitNotes(orgNodeId, partyType, partyId) };
+    return {
+      creditDebitNotes: await this.service.getCreditDebitNotes(orgNodeId, partyType, partyId),
+    };
   }
 
   @Get('credit-debit-notes/:id')
-  async creditDebitNote(@Param('id', ParseUUIDPipe) id: string): Promise<{ creditDebitNote: CreditDebitNoteRecord }> {
+  async creditDebitNote(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ creditDebitNote: CreditDebitNoteRecord }> {
     return { creditDebitNote: await this.service.getCreditDebitNote(id) };
   }
 
   @Post('credit-debit-notes')
   @HttpCode(201)
-  async createCreditDebitNote(@Body() dto: CreateCreditDebitNoteDto): Promise<{ creditDebitNote: CreditDebitNoteRecord }> {
+  async createCreditDebitNote(
+    @Body() dto: CreateCreditDebitNoteDto,
+  ): Promise<{ creditDebitNote: CreditDebitNoteRecord }> {
     const created = await this.service.createCreditDebitNote(dto);
     return { creditDebitNote: created };
   }
 
   @Post('credit-debit-notes/:id/post')
   @HttpCode(200)
-  async postCreditDebitNote(@Param('id', ParseUUIDPipe) id: string): Promise<{ creditDebitNote: CreditDebitNoteRecord }> {
+  async postCreditDebitNote(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ creditDebitNote: CreditDebitNoteRecord }> {
     return { creditDebitNote: await this.service.postCreditDebitNote(id) };
   }
 
   @Post('credit-debit-notes/:id/cancel')
   @HttpCode(200)
-  async cancelCreditDebitNote(@Param('id', ParseUUIDPipe) id: string): Promise<{ creditDebitNote: CreditDebitNoteRecord }> {
+  async cancelCreditDebitNote(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ creditDebitNote: CreditDebitNoteRecord }> {
     return { creditDebitNote: await this.service.cancelCreditDebitNote(id) };
   }
 
   // --- Bank Transfers Endpoints ---
   @Get('bank-transfers')
-  async bankTransfers(@Query('orgNodeId') orgNodeId?: string): Promise<{ bankTransfers: BankTransferRecord[] }> {
+  async bankTransfers(
+    @Query('orgNodeId') orgNodeId?: string,
+  ): Promise<{ bankTransfers: BankTransferRecord[] }> {
     return { bankTransfers: await this.service.getBankTransfers(orgNodeId) };
   }
 
   @Get('bank-transfers/:id')
-  async bankTransfer(@Param('id', ParseUUIDPipe) id: string): Promise<{ bankTransfer: BankTransferRecord }> {
+  async bankTransfer(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ bankTransfer: BankTransferRecord }> {
     return { bankTransfer: await this.service.getBankTransfer(id) };
   }
 
   @Post('bank-transfers')
   @HttpCode(201)
-  async createBankTransfer(@Body() dto: CreateBankTransferDto): Promise<{ bankTransfer: BankTransferRecord }> {
+  async createBankTransfer(
+    @Body() dto: CreateBankTransferDto,
+  ): Promise<{ bankTransfer: BankTransferRecord }> {
     return { bankTransfer: await this.service.createBankTransfer(dto) };
   }
 
   @Post('bank-transfers/:id/post')
   @HttpCode(200)
-  async postBankTransfer(@Param('id', ParseUUIDPipe) id: string): Promise<{ bankTransfer: BankTransferRecord }> {
+  async postBankTransfer(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ bankTransfer: BankTransferRecord }> {
     return { bankTransfer: await this.service.postBankTransfer(id) };
   }
 
   @Post('bank-transfers/:id/cancel')
   @HttpCode(200)
-  async cancelBankTransfer(@Param('id', ParseUUIDPipe) id: string): Promise<{ bankTransfer: BankTransferRecord }> {
+  async cancelBankTransfer(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ bankTransfer: BankTransferRecord }> {
     return { bankTransfer: await this.service.cancelBankTransfer(id) };
   }
 
@@ -257,12 +299,16 @@ export class FinanceController {
     @Query('orgNodeId') orgNodeId?: string,
     @Query('bankAccountId') bankAccountId?: string,
   ): Promise<{ bankReconciliations: BankReconciliationRecord[] }> {
-    return { bankReconciliations: await this.service.getBankReconciliations(orgNodeId, bankAccountId) };
+    return {
+      bankReconciliations: await this.service.getBankReconciliations(orgNodeId, bankAccountId),
+    };
   }
 
   @Post('bank-reconciliations')
   @HttpCode(201)
-  async createBankReconciliation(@Body() dto: CreateBankReconciliationDto): Promise<{ bankReconciliation: BankReconciliationRecord }> {
+  async createBankReconciliation(
+    @Body() dto: CreateBankReconciliationDto,
+  ): Promise<{ bankReconciliation: BankReconciliationRecord }> {
     return { bankReconciliation: await this.service.createBankReconciliation(dto) };
   }
 }

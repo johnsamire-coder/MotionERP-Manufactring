@@ -23,8 +23,8 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
   let inventoryRepo: InventoryRepository;
   let qualityService: QualityService;
   let qualityRepo: QualityRepository;
-  let costService: CostService;
-  let costRepo: CostRepository;
+  let _costService: CostService;
+  let _costRepo: CostRepository;
 
   // Master IDs
   const orgNodeId = 'org-medical-factory-egypt';
@@ -53,7 +53,10 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
   // State
   const journals: any[] = [];
   let journalSeq = 0;
-  const balances: Map<string, { onHand: number; averageCost: number; totalValue: number; reserved: number }> = new Map();
+  const balances: Map<
+    string,
+    { onHand: number; averageCost: number; totalValue: number; reserved: number }
+  > = new Map();
   const invoices: Map<string, any> = new Map();
   const batches: Map<string, any> = new Map();
   const serials: Map<string, any> = new Map();
@@ -70,6 +73,7 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
 
     // 1. Accounting Repo Mock
     accountingRepo = {
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn().mockResolvedValue({
         orgNodeId,
         defaultGrniAccountId: grniAccount,
@@ -81,8 +85,20 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
         defaultOutputTaxAccountId: outputVatAccount,
       }),
       listAccountDeterminations: jest.fn().mockResolvedValue([
-        { orgNodeId, determinationType: 'warehouse', referenceId: rawWarehouseId, accountPurpose: 'inventory', accountId: rawInvAccount },
-        { orgNodeId, determinationType: 'warehouse', referenceId: fgWarehouseId, accountPurpose: 'inventory', accountId: fgInvAccount },
+        {
+          orgNodeId,
+          determinationType: 'warehouse',
+          referenceId: rawWarehouseId,
+          accountPurpose: 'inventory',
+          accountId: rawInvAccount,
+        },
+        {
+          orgNodeId,
+          determinationType: 'warehouse',
+          referenceId: fgWarehouseId,
+          accountPurpose: 'inventory',
+          accountId: fgInvAccount,
+        },
         { orgNodeId, accountPurpose: 'purchase', accountId: grniAccount },
         { orgNodeId, accountPurpose: 'wip', accountId: wipAccount },
         { orgNodeId, accountPurpose: 'cogs', accountId: cogsAccount },
@@ -126,12 +142,19 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
         if (found) found.status = status;
         return found;
       }),
+      listEntryIdsBySourceForCompany: jest.fn().mockResolvedValue([]),
       listAllPostedLinesWithDetails: jest.fn().mockImplementation(async () => {
         const lines: any[] = [];
         for (const j of journals.filter((e) => e.status === 'posted')) {
           for (const l of j.lines) {
             let typeCode = 'asset';
-            if (l.accountId === apAccount || l.accountId === grniAccount || l.accountId === outputVatAccount || l.accountId === taxAuthorityAccount) typeCode = 'liability';
+            if (
+              l.accountId === apAccount ||
+              l.accountId === grniAccount ||
+              l.accountId === outputVatAccount ||
+              l.accountId === taxAuthorityAccount
+            )
+              typeCode = 'liability';
             if (l.accountId === revenueAccount) typeCode = 'revenue';
             if (l.accountId === cogsAccount) typeCode = 'cogs';
             if (l.accountId === wipAccount) typeCode = 'wip';
@@ -141,7 +164,8 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
               code: l.accountId.split('-')[0],
               name: l.accountId,
               typeCode,
-              normalBalance: typeCode === 'liability' || typeCode === 'revenue' ? 'credit' : 'debit',
+              normalBalance:
+                typeCode === 'liability' || typeCode === 'revenue' ? 'credit' : 'debit',
               debit: l.debitAmount,
               credit: l.creditAmount,
               entryDate: j.entryDate,
@@ -177,6 +201,7 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
         };
       }),
       insertMovement: jest.fn().mockImplementation(async (input) => input),
+      findLatestMovementDate: jest.fn().mockResolvedValue(null),
       applyDelta: jest.fn().mockImplementation(async (itemId, whId, delta) => {
         const key = `${itemId}-${whId}`;
         const cur = balances.get(key) ?? { onHand: 0, averageCost: 0, totalValue: 0, reserved: 0 };
@@ -209,6 +234,7 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
     // 3. Finance Repo Mock
     financeRepo = {
       countPurchaseInvoices: jest.fn().mockImplementation(async () => invoices.size),
+      findPurchaseInvoiceBySupplierNumber: jest.fn().mockResolvedValue(null),
       insertPurchaseInvoice: jest.fn().mockImplementation(async (input) => {
         invoices.set(input.id, { ...input, status: 'draft' });
         return { ...input, status: 'draft' };
@@ -247,12 +273,19 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
     } as unknown as FinanceRepository;
 
     salesService = {
-      getJobOrders: jest.fn().mockResolvedValue([
-        { id: 'jo-100', jobOrderNumber: 'JO-2026-MED-001', orgNodeId, customerId },
-      ]),
+      getJobOrders: jest
+        .fn()
+        .mockResolvedValue([
+          { id: 'jo-100', jobOrderNumber: 'JO-2026-MED-001', orgNodeId, customerId },
+        ]),
     } as unknown as SalesService;
 
-    financeService = new FinanceService(financeRepo, salesService, accountingService, accountingRepo);
+    financeService = new FinanceService(
+      financeRepo,
+      salesService,
+      accountingService,
+      accountingRepo,
+    );
 
     // 4. Quality Repo Mock
     qualityRepo = {
@@ -300,7 +333,9 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
     // Verify GL Posting: [Dr Raw Inventory (5,000) / Cr GRNI (5,000)]
     const je1 = journals[0];
     expect(je1.status).toBe('posted');
-    expect(je1.lines.find((l: any) => l.accountId === rawInvAccount)?.debitAmount).toBe('5000.0000');
+    expect(je1.lines.find((l: any) => l.accountId === rawInvAccount)?.debitAmount).toBe(
+      '5000.0000',
+    );
     expect(je1.lines.find((l: any) => l.accountId === grniAccount)?.creditAmount).toBe('5000.0000');
 
     // ==========================================
@@ -320,7 +355,9 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
     // Verify GL Posting: [Dr GRNI (5,000) + Dr Input Tax (700) / Cr AP (5,700)]
     const je2 = journals[1];
     expect(je2.lines.find((l: any) => l.accountId === grniAccount)?.debitAmount).toBe('5000.0000');
-    expect(je2.lines.find((l: any) => l.accountId === inputVatAccount)?.debitAmount).toBe('700.0000');
+    expect(je2.lines.find((l: any) => l.accountId === inputVatAccount)?.debitAmount).toBe(
+      '700.0000',
+    );
     expect(je2.lines.find((l: any) => l.accountId === apAccount)?.creditAmount).toBe('5700.0000');
 
     // ==========================================
@@ -357,7 +394,9 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
     // Verify GL Posting: [Dr WIP (1,000) / Cr Raw Inventory (1,000)]
     const je4 = journals[3];
     expect(je4.lines.find((l: any) => l.accountId === wipAccount)?.debitAmount).toBe('1000.0000');
-    expect(je4.lines.find((l: any) => l.accountId === rawInvAccount)?.creditAmount).toBe('1000.0000');
+    expect(je4.lines.find((l: any) => l.accountId === rawInvAccount)?.creditAmount).toBe(
+      '1000.0000',
+    );
 
     // ==========================================
     // STEP 5: Quality Inspection on Finished Goods
@@ -369,9 +408,12 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
       referenceId: 'step-assembly-1',
       parameters: [{ parameterName: 'سماكة الدهان والأبعاد الطبية', targetValue: 'مطابق 100%' }],
     });
-    const evaluatedInsp = await qualityService.evaluateInspection(inspection.id, 'Eng. Quality Inspector', 'مطابق للمواصفات', [
-      { parameterId: 'param-1', actualValue: 'مطابق 100%', status: 'pass' },
-    ]);
+    const evaluatedInsp = await qualityService.evaluateInspection(
+      inspection.id,
+      'Eng. Quality Inspector',
+      'مطابق للمواصفات',
+      [{ parameterId: 'param-1', actualValue: 'مطابق 100%', status: 'pass' }],
+    );
     expect(evaluatedInsp.status).toBe('passed');
 
     // ==========================================
@@ -407,7 +449,9 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
     // Verify GL Posting: [Dr COGS (3,500) / Cr FG Inventory (3,500)]
     const je6 = journals[5];
     expect(je6.lines.find((l: any) => l.accountId === cogsAccount)?.debitAmount).toBe('3500.0000');
-    expect(je6.lines.find((l: any) => l.accountId === fgInvAccount)?.creditAmount).toBe('3500.0000');
+    expect(je6.lines.find((l: any) => l.accountId === fgInvAccount)?.creditAmount).toBe(
+      '3500.0000',
+    );
 
     // ==========================================
     // STEP 8: Issue Sales Invoice to Customer (Hospital)
@@ -425,8 +469,12 @@ describe('Motion ERP — Grand Milestone 50: Complete End-to-End Operational & F
     // Verify GL Posting: [Dr AR (11,400) / Cr Revenue (10,000) + Cr Output VAT (1,400)]
     const je7 = journals[6];
     expect(je7.lines.find((l: any) => l.accountId === arAccount)?.debitAmount).toBe('11400.0000');
-    expect(je7.lines.find((l: any) => l.accountId === revenueAccount)?.creditAmount).toBe('10000.0000');
-    expect(je7.lines.find((l: any) => l.accountId === outputVatAccount)?.creditAmount).toBe('1400.0000');
+    expect(je7.lines.find((l: any) => l.accountId === revenueAccount)?.creditAmount).toBe(
+      '10000.0000',
+    );
+    expect(je7.lines.find((l: any) => l.accountId === outputVatAccount)?.creditAmount).toBe(
+      '1400.0000',
+    );
 
     // ==========================================
     // STEP 9: Collect Customer Payment into CIB Bank Account

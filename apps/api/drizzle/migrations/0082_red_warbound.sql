@@ -1,0 +1,1 @@
+ALTER TABLE "accounting"."chart_of_accounts" ADD COLUMN "account_role" text;

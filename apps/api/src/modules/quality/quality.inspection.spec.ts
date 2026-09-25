@@ -57,31 +57,45 @@ describe('QualityService — Medical Grade Quality Inspection & SLA Workflows', 
       findInspectionById: jest.fn().mockImplementation(async (id: string) => {
         return mockInspections.get(id) ?? null;
       }),
-      updateInspectionStatus: jest.fn().mockImplementation(
-        async (id: string, status: any, inspectedBy: string, notes?: string, paramResults?: any[]) => {
-          const insp = mockInspections.get(id);
-          if (insp) {
-            insp.status = status;
-            insp.inspectedBy = inspectedBy;
-            insp.inspectedAt = new Date().toISOString();
-            if (notes) insp.notes = notes;
-            if (paramResults) {
-              for (const pr of paramResults) {
-                const param = insp.parameters.find((p) => p.id === pr.parameterId);
-                if (param) {
-                  param.actualValue = pr.actualValue;
-                  param.status = pr.status;
+      updateInspectionStatus: jest
+        .fn()
+        .mockImplementation(
+          async (
+            id: string,
+            status: any,
+            inspectedBy: string,
+            notes?: string,
+            paramResults?: any[],
+          ) => {
+            const insp = mockInspections.get(id);
+            if (insp) {
+              insp.status = status;
+              insp.inspectedBy = inspectedBy;
+              insp.inspectedAt = new Date().toISOString();
+              if (notes) insp.notes = notes;
+              if (paramResults) {
+                for (const pr of paramResults) {
+                  const param = insp.parameters.find((p) => p.id === pr.parameterId);
+                  if (param) {
+                    param.actualValue = pr.actualValue;
+                    param.status = pr.status;
+                  }
                 }
               }
             }
-          }
-          return insp;
-        },
-      ),
+            return insp;
+          },
+        ),
 
-      findCheckPointById: jest.fn().mockImplementation(async (id: string) => mockCheckPoints.get(id) ?? null),
+      findCheckPointById: jest
+        .fn()
+        .mockImplementation(async (id: string) => mockCheckPoints.get(id) ?? null),
       findWorkflowByCheckPoint: jest.fn().mockImplementation(async (cpId: string) => {
-        return Array.from(mockWorkflows.values()).find((w) => w.checkPointId === cpId && w.status === 'pending') ?? null;
+        return (
+          Array.from(mockWorkflows.values()).find(
+            (w) => w.checkPointId === cpId && w.status === 'pending',
+          ) ?? null
+        );
       }),
       insertWorkflow: jest.fn().mockImplementation(async (input) => {
         const wf: QualityWorkflowRecord = {
@@ -100,16 +114,18 @@ describe('QualityService — Medical Grade Quality Inspection & SLA Workflows', 
         mockWorkflows.set(input.id, wf);
         return wf;
       }),
-      updateWorkflowStatus: jest.fn().mockImplementation(async (id: string, status: any, userId: string, note?: string) => {
-        const wf = mockWorkflows.get(id);
-        if (wf) {
-          wf.status = status;
-          wf.actionTakenAt = new Date();
-          wf.actionTakenById = userId;
-          wf.resultNote = note ?? null;
-        }
-        return wf;
-      }),
+      updateWorkflowStatus: jest
+        .fn()
+        .mockImplementation(async (id: string, status: any, userId: string, note?: string) => {
+          const wf = mockWorkflows.get(id);
+          if (wf) {
+            wf.status = status;
+            wf.actionTakenAt = new Date();
+            wf.actionTakenById = userId;
+            wf.resultNote = note ?? null;
+          }
+          return wf;
+        }),
     } as unknown as QualityRepository;
 
     qualityService = new QualityService(qualityRepo);
@@ -212,7 +228,11 @@ describe('QualityService — Medical Grade Quality Inspection & SLA Workflows', 
     expect(wf.graceUntil.getTime()).toBeGreaterThan(wf.targetAt.getTime());
 
     // Approve Checkpoint
-    const approvedWf = await qualityService.approveCheckPoint(wf.id, 'qc-lead-user', 'تم اعتماد خطوة الليزر');
+    const approvedWf = await qualityService.approveCheckPoint(
+      wf.id,
+      'qc-lead-user',
+      'تم اعتماد خطوة الليزر',
+    );
     expect(approvedWf.status).toBe('approved');
     expect(approvedWf.resultNote).toBe('تم اعتماد خطوة الليزر');
   });

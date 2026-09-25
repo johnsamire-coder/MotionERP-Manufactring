@@ -2,25 +2,40 @@
 // Motion ERP — Egyptian Tax Authority & Customs DTOs
 // Step 79 | Complete Verified Exports
 // ============================================================
-import { IsUUID, IsString, IsDateString, IsNumber, IsOptional, IsEnum, IsInt, Min, Max } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsUUID,
+  IsString,
+  IsDateString,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  IsInt,
+  Min,
+  Max,
+} from 'class-validator';
 
 // ── 1. VAT Settlement DTOs ───────────────────
 export class CreateTaxSettlementDto {
-  @IsUUID()   companyId!: string;
-  @IsUUID()   fiscalYearId!: string;
-  @IsUUID()   periodId!: string;
+  @IsUUID() companyId!: string;
+  @IsUUID() fiscalYearId!: string;
+  @IsUUID() periodId!: string;
   @IsString() taxPeriod!: string; // "2026-08"
   @IsNumber() @Min(0) totalSalesTaxable!: number;
   @IsNumber() @Min(0) outputVatAmount!: number;
   @IsNumber() @Min(0) totalPurchaseTaxable!: number;
   @IsNumber() @Min(0) inputVatAmount!: number;
+  /** Tax authority account: credited with the net VAT due (debited when it is a refund). */
+  @IsUUID() vatPayableAccountId!: string;
+  @IsOptional() @IsDateString() settlementDate?: string;
 }
 
 export class SettleAndPayVatDto {
-  @IsUUID()   settlementId!: string;
+  @IsUUID() settlementId!: string;
   @IsDateString() paymentDate!: string;
   @IsString() paymentReference!: string;
-  @IsUUID()   bankAccountId!: string;
+  @IsUUID() bankAccountId!: string;
 }
 
 // ── 2. Withholding Tax (Form 41) DTOs ────────
@@ -30,12 +45,12 @@ export enum WhtDirection {
 }
 
 export class CreateWhtEntryDto {
-  @IsUUID()   companyId!: string;
-  @IsUUID()   fiscalYearId!: string;
-  @IsInt()    @Min(1) @Max(4) quarter!: number;
+  @IsUUID() companyId!: string;
+  @IsUUID() fiscalYearId!: string;
+  @IsInt() @Min(1) @Max(4) quarter!: number;
   @IsDateString() entryDate!: string;
   @IsEnum(WhtDirection) direction!: WhtDirection;
-  @IsUUID()   partnerId!: string;
+  @IsUUID() partnerId!: string;
   @IsString() partnerName!: string;
   @IsString() taxRegistrationNum!: string;
   @IsOptional() @IsUUID() invoiceId?: string;
@@ -45,16 +60,16 @@ export class CreateWhtEntryDto {
 }
 
 export class DeclareForm41QuarterDto {
-  @IsUUID()   companyId!: string;
-  @IsInt()    @Min(1) @Max(4) quarter!: number;
+  @IsUUID() companyId!: string;
+  @IsInt() @Min(1) @Max(4) quarter!: number;
   @IsString() year!: string;
 }
 
 // ── 3. Customs Declaration DTOs ──────────────
 export class CreateCustomsDeclarationDto {
-  @IsUUID()   companyId!: string;
-  @IsUUID()   fiscalYearId!: string;
-  @IsUUID()   periodId!: string;
+  @IsUUID() companyId!: string;
+  @IsUUID() fiscalYearId!: string;
+  @IsUUID() periodId!: string;
   @IsString() declarationNumber!: string; // رقم الإفراج 46 ك.م
   @IsDateString() declarationDate!: string;
   @IsString() portName!: string;
@@ -67,11 +82,16 @@ export class CreateCustomsDeclarationDto {
   @IsOptional() @IsNumber() @Min(0) developmentFee?: number;
   @IsNumber() @Min(0) vatPaidAtCustoms!: number;
   @IsOptional() @IsNumber() @Min(0) clearanceExpenses?: number;
+  /** Duties, fees and clearance wait on this account until capitalized onto the receipts. */
+  @IsUUID() customsClearingAccountId!: string;
+  /** Bank or cash account the customs were paid from. */
+  @IsUUID() paidFromAccountId!: string;
 }
 
 export class CapitalizeCustomsCostDto {
-  @IsUUID()   declarationId!: string;
-  @IsUUID()   targetWarehouseId!: string;
+  @IsUUID() declarationId!: string;
+  /** The stock receipts of the imported goods; the duties are spread over them by value. */
+  @IsArray() @ArrayMinSize(1) @IsUUID('all', { each: true }) receiptMovementIds!: string[];
 }
 
 // ── Query DTOs ───────────────────────────────

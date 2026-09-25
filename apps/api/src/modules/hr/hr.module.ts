@@ -1,11 +1,20 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
+import { OrganizationModule } from '../organization/organization.module';
+import { LeaveController } from './leave.controller';
+import { LeaveService } from './leave.service';
+import { FinalSettlementController } from './final-settlement.controller';
+import { FinalSettlementService } from './final-settlement.service';
+import { ProbationController } from './probation.controller';
+import { ProbationService } from './probation.service';
 import { HrController } from './hr.controller';
 import { HrRepository } from './hr.repository';
 import { HrService } from './hr.service';
 
 @Module({
-  controllers: [HrController],
-  providers: [HrService, HrRepository],
+  imports: [AuthModule, OrganizationModule],
+  controllers: [HrController, LeaveController, FinalSettlementController, ProbationController],
+  providers: [HrService, HrRepository, LeaveService, FinalSettlementService, ProbationService],
   exports: [HrService],
 })
 export class HrModule {}

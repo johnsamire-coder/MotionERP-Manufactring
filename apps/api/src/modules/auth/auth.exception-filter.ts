@@ -1,7 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { AuthNotFoundError, AuthValidationError } from './auth.errors';
 
-interface HttpResponse { status(code: number): HttpResponse; json(body: unknown): void; }
+interface HttpResponse {
+  status(code: number): HttpResponse;
+  json(body: unknown): void;
+}
 
 @Catch(AuthNotFoundError, AuthValidationError)
 export class AuthExceptionFilter implements ExceptionFilter {

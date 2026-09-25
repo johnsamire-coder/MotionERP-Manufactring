@@ -1,9 +1,23 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { UseFilters } from '@nestjs/common';
-import { CreateItemLeadTimeDto, CreateMaterialRequestDto, CreateMpsDto, CreateProductionPlanDto, CreateSalesForecastDto, SetPeriodLinesDto } from './planning.dto';
+import {
+  CreateItemLeadTimeDto,
+  CreateMaterialRequestDto,
+  CreateMpsDto,
+  CreateProductionPlanDto,
+  CreateSalesForecastDto,
+  SetPeriodLinesDto,
+} from './planning.dto';
 import { PlanningExceptionFilter } from './planning.exception-filter';
 import { PlanningService } from './planning.service';
-import type { ItemLeadTimeRecord, MasterProductionScheduleRecord, MaterialRequestRecord, ProductionPlanRecord, SalesForecastPeriodLineRecord, SalesForecastRecord } from './planning.types';
+import type {
+  ItemLeadTimeRecord,
+  MasterProductionScheduleRecord,
+  MaterialRequestRecord,
+  ProductionPlanRecord,
+  SalesForecastPeriodLineRecord,
+  SalesForecastRecord,
+} from './planning.types';
 
 @Controller({ path: 'planning', version: '1' })
 @UseFilters(PlanningExceptionFilter)
@@ -16,22 +30,39 @@ export class PlanningController {
   }
 
   @Get('sales-forecasts/:id')
-  async salesForecastById(@Param('id', ParseUUIDPipe) id: string): Promise<{ salesForecast: SalesForecastRecord }> {
+  async salesForecastById(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ salesForecast: SalesForecastRecord }> {
     return { salesForecast: await this.service.getSalesForecast(id) };
   }
 
-  @Post('sales-forecasts') @HttpCode(201)
-  async createSalesForecast(@Body() dto: CreateSalesForecastDto): Promise<{ salesForecast: SalesForecastRecord }> {
+  @Post('sales-forecasts')
+  @HttpCode(201)
+  async createSalesForecast(
+    @Body() dto: CreateSalesForecastDto,
+  ): Promise<{ salesForecast: SalesForecastRecord }> {
     const created = await this.service.createSalesForecast({
-      orgNodeId: dto.orgNodeId, itemCategoryId: dto.itemCategoryId, warehouseId: dto.warehouseId,
-      fromDate: dto.fromDate, toDate: dto.toDate, forecastPeriodicity: dto.forecastPeriodicity,
-      lines: dto.lines.map((l) => ({ itemId: l.itemId, warehouseId: l.warehouseId, forecastQuantity: l.forecastQuantity, plannedQuantity: l.plannedQuantity })),
+      orgNodeId: dto.orgNodeId,
+      itemCategoryId: dto.itemCategoryId,
+      warehouseId: dto.warehouseId,
+      fromDate: dto.fromDate,
+      toDate: dto.toDate,
+      forecastPeriodicity: dto.forecastPeriodicity,
+      lines: dto.lines.map((l) => ({
+        itemId: l.itemId,
+        warehouseId: l.warehouseId,
+        forecastQuantity: l.forecastQuantity,
+        plannedQuantity: l.plannedQuantity,
+      })),
     });
     return { salesForecast: created };
   }
 
-  @Post('sales-forecasts/:id/submit') @HttpCode(200)
-  async submitSalesForecast(@Param('id', ParseUUIDPipe) id: string): Promise<{ salesForecast: SalesForecastRecord }> {
+  @Post('sales-forecasts/:id/submit')
+  @HttpCode(200)
+  async submitSalesForecast(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ salesForecast: SalesForecastRecord }> {
     return { salesForecast: await this.service.submitSalesForecast(id) };
   }
 
@@ -41,21 +72,39 @@ export class PlanningController {
   }
 
   @Get('material-requests/:id')
-  async materialRequestById(@Param('id', ParseUUIDPipe) id: string): Promise<{ materialRequest: MaterialRequestRecord }> {
+  async materialRequestById(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ materialRequest: MaterialRequestRecord }> {
     return { materialRequest: await this.service.getMaterialRequest(id) };
   }
 
-  @Post('material-requests') @HttpCode(201)
-  async createMaterialRequest(@Body() dto: CreateMaterialRequestDto): Promise<{ materialRequest: MaterialRequestRecord }> {
+  @Post('material-requests')
+  @HttpCode(201)
+  async createMaterialRequest(
+    @Body() dto: CreateMaterialRequestDto,
+  ): Promise<{ materialRequest: MaterialRequestRecord }> {
     const created = await this.service.createMaterialRequest({
-      orgNodeId: dto.orgNodeId, purpose: dto.purpose, requiredByDate: dto.requiredByDate, jobOrderReference: dto.jobOrderReference,
-      lines: dto.lines.map((l) => ({ itemId: l.itemId, warehouseId: l.warehouseId, quantity: l.quantity, scheduleDate: l.scheduleDate })),
+      orgNodeId: dto.orgNodeId,
+      purpose: dto.purpose,
+      requiredByDate: dto.requiredByDate,
+      jobOrderReference: dto.jobOrderReference,
+      customerId: dto.customerId,
+      supplierId: dto.supplierId,
+      lines: dto.lines.map((l) => ({
+        itemId: l.itemId,
+        warehouseId: l.warehouseId,
+        quantity: l.quantity,
+        scheduleDate: l.scheduleDate,
+      })),
     });
     return { materialRequest: created };
   }
 
-  @Post('material-requests/:id/submit') @HttpCode(200)
-  async submitMaterialRequest(@Param('id', ParseUUIDPipe) id: string): Promise<{ materialRequest: MaterialRequestRecord }> {
+  @Post('material-requests/:id/submit')
+  @HttpCode(200)
+  async submitMaterialRequest(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ materialRequest: MaterialRequestRecord }> {
     return { materialRequest: await this.service.submitMaterialRequest(id) };
   }
 
@@ -65,26 +114,45 @@ export class PlanningController {
   }
 
   @Get('production-plans/:id')
-  async productionPlanById(@Param('id', ParseUUIDPipe) id: string): Promise<{ productionPlan: ProductionPlanRecord }> {
+  async productionPlanById(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ productionPlan: ProductionPlanRecord }> {
     return { productionPlan: await this.service.getProductionPlan(id) };
   }
 
-  @Post('production-plans') @HttpCode(201)
-  async createProductionPlan(@Body() dto: CreateProductionPlanDto): Promise<{ productionPlan: ProductionPlanRecord }> {
+  @Post('production-plans')
+  @HttpCode(201)
+  async createProductionPlan(
+    @Body() dto: CreateProductionPlanDto,
+  ): Promise<{ productionPlan: ProductionPlanRecord }> {
     const created = await this.service.createProductionPlan({
-      orgNodeId: dto.orgNodeId, planBy: dto.planBy, fromDate: dto.fromDate, toDate: dto.toDate,
-      items: dto.items.map((it) => ({ productItemId: it.productItemId, bomId: it.bomId, qtyToPlan: it.qtyToPlan, warehouseId: it.warehouseId })),
+      orgNodeId: dto.orgNodeId,
+      planBy: dto.planBy,
+      fromDate: dto.fromDate,
+      toDate: dto.toDate,
+      items: dto.items.map((it) => ({
+        productItemId: it.productItemId,
+        bomId: it.bomId,
+        qtyToPlan: it.qtyToPlan,
+        warehouseId: it.warehouseId,
+      })),
     });
     return { productionPlan: created };
   }
 
-  @Post('production-plans/:id/submit') @HttpCode(200)
-  async submitProductionPlan(@Param('id', ParseUUIDPipe) id: string): Promise<{ productionPlan: ProductionPlanRecord }> {
+  @Post('production-plans/:id/submit')
+  @HttpCode(200)
+  async submitProductionPlan(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ productionPlan: ProductionPlanRecord }> {
     return { productionPlan: await this.service.submitProductionPlan(id) };
   }
 
-  @Post('production-plans/:id/create-work-orders') @HttpCode(200)
-  async createWorkOrdersFromPlan(@Param('id', ParseUUIDPipe) id: string): Promise<{ productionPlan: ProductionPlanRecord }> {
+  @Post('production-plans/:id/create-work-orders')
+  @HttpCode(200)
+  async createWorkOrdersFromPlan(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ productionPlan: ProductionPlanRecord }> {
     return { productionPlan: await this.service.createWorkOrdersFromPlan(id) };
   }
 
@@ -94,17 +162,30 @@ export class PlanningController {
   }
 
   @Get('item-lead-times/:id')
-  async itemLeadTimeById(@Param('id', ParseUUIDPipe) id: string): Promise<{ itemLeadTime: ItemLeadTimeRecord }> {
+  async itemLeadTimeById(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ itemLeadTime: ItemLeadTimeRecord }> {
     return { itemLeadTime: await this.service.getItemLeadTime(id) };
   }
 
-  @Post('item-lead-times') @HttpCode(201)
-  async createItemLeadTime(@Body() dto: CreateItemLeadTimeDto): Promise<{ itemLeadTime: ItemLeadTimeRecord }> {
+  @Post('item-lead-times')
+  @HttpCode(201)
+  async createItemLeadTime(
+    @Body() dto: CreateItemLeadTimeDto,
+  ): Promise<{ itemLeadTime: ItemLeadTimeRecord }> {
     const created = await this.service.createItemLeadTime({
-      itemId: dto.itemId, orgNodeId: dto.orgNodeId,
-      manufacturingTimeHours: dto.manufacturingTimeHours, isManufacturingLeadTime: dto.isManufacturingLeadTime, manufacturingBufferDays: dto.manufacturingBufferDays,
-      purchaseTimeDays: dto.purchaseTimeDays, isPurchaseLeadTime: dto.isPurchaseLeadTime, purchaseBufferDays: dto.purchaseBufferDays,
-      supplierLeadTimes: dto.supplierLeadTimes?.map((s) => ({ supplierName: s.supplierName, leadTimeDays: s.leadTimeDays })),
+      itemId: dto.itemId,
+      orgNodeId: dto.orgNodeId,
+      manufacturingTimeHours: dto.manufacturingTimeHours,
+      isManufacturingLeadTime: dto.isManufacturingLeadTime,
+      manufacturingBufferDays: dto.manufacturingBufferDays,
+      purchaseTimeDays: dto.purchaseTimeDays,
+      isPurchaseLeadTime: dto.isPurchaseLeadTime,
+      purchaseBufferDays: dto.purchaseBufferDays,
+      supplierLeadTimes: dto.supplierLeadTimes?.map((s) => ({
+        supplierName: s.supplierName,
+        leadTimeDays: s.leadTimeDays,
+      })),
     });
     return { itemLeadTime: created };
   }
@@ -115,38 +196,73 @@ export class PlanningController {
   }
 
   @Get('master-production-schedules/:id')
-  async mpsById(@Param('id', ParseUUIDPipe) id: string): Promise<{ masterProductionSchedule: MasterProductionScheduleRecord }> {
+  async mpsById(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ masterProductionSchedule: MasterProductionScheduleRecord }> {
     return { masterProductionSchedule: await this.service.getMps(id) };
   }
 
-  @Post('master-production-schedules') @HttpCode(201)
-  async createMps(@Body() dto: CreateMpsDto): Promise<{ masterProductionSchedule: MasterProductionScheduleRecord }> {
+  @Post('master-production-schedules')
+  @HttpCode(201)
+  async createMps(
+    @Body() dto: CreateMpsDto,
+  ): Promise<{ masterProductionSchedule: MasterProductionScheduleRecord }> {
     const created = await this.service.createMps({
-      itemId: dto.itemId, orgNodeId: dto.orgNodeId, warehouseId: dto.warehouseId, fromDate: dto.fromDate, toDate: dto.toDate,
-      totalForecastQuantity: dto.totalForecastQuantity, plannedQuantity: dto.plannedQuantity,
-      scheduleLines: dto.scheduleLines.map((l) => ({ period: l.period, startDate: l.startDate, endDate: l.endDate, forecastQuantity: l.forecastQuantity, plannedQuantity: l.plannedQuantity })),
+      itemId: dto.itemId,
+      orgNodeId: dto.orgNodeId,
+      warehouseId: dto.warehouseId,
+      fromDate: dto.fromDate,
+      toDate: dto.toDate,
+      totalForecastQuantity: dto.totalForecastQuantity,
+      plannedQuantity: dto.plannedQuantity,
+      scheduleLines: dto.scheduleLines.map((l) => ({
+        period: l.period,
+        startDate: l.startDate,
+        endDate: l.endDate,
+        forecastQuantity: l.forecastQuantity,
+        plannedQuantity: l.plannedQuantity,
+      })),
     });
     return { masterProductionSchedule: created };
   }
 
-  @Post('master-production-schedules/:id/submit') @HttpCode(200)
-  async submitMps(@Param('id', ParseUUIDPipe) id: string): Promise<{ masterProductionSchedule: MasterProductionScheduleRecord }> {
+  @Post('master-production-schedules/:id/submit')
+  @HttpCode(200)
+  async submitMps(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ masterProductionSchedule: MasterProductionScheduleRecord }> {
     return { masterProductionSchedule: await this.service.submitMps(id) };
   }
 
-  @Post('master-production-schedules/:id/get-projected-quantity') @HttpCode(200)
-  async mpsProjectedQuantity(@Param('id', ParseUUIDPipe) id: string): Promise<{ masterProductionSchedule: MasterProductionScheduleRecord }> {
+  @Post('master-production-schedules/:id/get-projected-quantity')
+  @HttpCode(200)
+  async mpsProjectedQuantity(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ masterProductionSchedule: MasterProductionScheduleRecord }> {
     return { masterProductionSchedule: await this.service.getProjectedQuantity(id) };
   }
 
   @Get('sales-forecasts/:id/period-lines')
-  async periodLines(@Param('id', ParseUUIDPipe) id: string): Promise<{ periodLines: SalesForecastPeriodLineRecord[] }> {
+  async periodLines(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ periodLines: SalesForecastPeriodLineRecord[] }> {
     return { periodLines: await this.service.getPeriodLines(id) };
   }
 
-  @Post('sales-forecasts/:id/period-lines') @HttpCode(200)
-  async setPeriodLines(@Param('id', ParseUUIDPipe) id: string, @Body() dto: SetPeriodLinesDto): Promise<{ periodLines: SalesForecastPeriodLineRecord[] }> {
-    const periodLines = await this.service.setPeriodLines(id, dto.lines.map((l) => ({ periodName: l.periodName, forecastQuantity: l.forecastQuantity, plannedQuantity: l.plannedQuantity })));
+  @Post('sales-forecasts/:id/period-lines')
+  @HttpCode(200)
+  async setPeriodLines(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetPeriodLinesDto,
+  ): Promise<{ periodLines: SalesForecastPeriodLineRecord[] }> {
+    const periodLines = await this.service.setPeriodLines(
+      id,
+      dto.lines.map((l) => ({
+        periodName: l.periodName,
+        forecastQuantity: l.forecastQuantity,
+        plannedQuantity: l.plannedQuantity,
+      })),
+    );
     return { periodLines };
   }
 }

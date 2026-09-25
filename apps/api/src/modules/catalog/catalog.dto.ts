@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsIn,
   IsInt,
   IsNumberString,
@@ -11,7 +12,14 @@ import {
   Min,
 } from 'class-validator';
 
-const ITEM_TYPES = ['raw_material', 'finished_product', 'semi_finished_product', 'consumable', 'spare_part', 'service'] as const;
+const ITEM_TYPES = [
+  'raw_material',
+  'finished_product',
+  'semi_finished_product',
+  'consumable',
+  'spare_part',
+  'service',
+] as const;
 
 export class CreateUomDto {
   @Matches(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/)
@@ -134,6 +142,23 @@ export class CreateItemDto {
 
   @IsUUID()
   baseUnitId!: string;
+
+  @IsOptional()
+  @IsBoolean()
+  hasBatchNo?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  hasSerialNo?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  hasExpiryDate?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  shelfLifeInDays?: number | null;
 }
 
 export class UpdateItemDto {
@@ -167,6 +192,23 @@ export class UpdateItemDto {
   @IsOptional()
   @IsUUID()
   baseUnitId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  hasBatchNo?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  hasSerialNo?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  hasExpiryDate?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  shelfLifeInDays?: number | null;
 }
 
 // --- UOM Conversion DTOs ---

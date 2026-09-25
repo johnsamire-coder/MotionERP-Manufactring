@@ -115,10 +115,36 @@
       "subtitle": "تخطيط متطلبات المواد وتوليد أوامر التشغيل",
       "get_items": "سحب الأصناف تلقائياً",
       "material_requirements": "تفجير الـ BOM ومطابقة أرصدة المخزن"
+    },
+    "material_request": {
+      "eyebrow": "تخطيط المواد",
+      "title": "طلب مواد",
+      "description": "طلب صرف أو نقل أو شراء خامات، كمدخل لخطة الإنتاج",
+      "listTitle": "قائمة طلبات المواد",
+      "createRequest": "إنشاء طلب جديد",
+      "requestNumber": "رقم الطلب",
+      "activity": "النشاط (الشركة/الفرع)",
+      "purpose": "الغرض",
+      "purchase": "شراء",
+      "materialTransfer": "نقل خامة",
+      "materialIssue": "صرف خامة",
+      "manufacture": "تصنيع",
+      "customerProvided": "خامة من العميل",
+      "subcontracting": "تصنيع بالباطن",
+      "customer": "العميل (مورّد الخامة)",
+      "subcontractor": "المقاول (اختياري)",
+      "jobOrderReference": "مرجع أمر الشغل (اختياري)",
+      "requiredByDate": "مطلوب قبل (اختياري)",
+      "addLine": "إضافة صنف",
+      "item": "الصنف",
+      "quantity": "الكمية",
+      "status": "الحالة",
+      "submit": "اعتماد",
+      "noRequests": "مفيش طلبات لسه"
     }
   },
   "app": {
-    "name": "Motion ERP",
+    "name": "موشن ERP",
     "language": "اللغة",
     "languageName": {
       "ar": "العربية",

@@ -1,5 +1,15 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsIn, IsNumberString, IsOptional, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
 
 const DIRECTIONS = ['outgoing', 'incoming'] as const;
 
@@ -22,6 +32,7 @@ export class CreateQuotationDto {
   @ValidateNested({ each: true })
   @Type(() => QuotationLineDto)
   lines!: QuotationLineDto[];
+  @IsOptional() @IsBoolean() applyPricingRules?: boolean;
 }
 
 export class ApproveQuotationDto {
@@ -34,4 +45,12 @@ export class CreateJobOrderDto {
   @IsOptional() @IsUUID() customerId?: string;
   @IsOptional() @IsUUID() orgNodeId?: string;
   @IsOptional() @IsString() note?: string;
+}
+
+export class QuotationFromOpportunityDto {
+  @IsOptional() @IsUUID() orgNodeId?: string;
+  @IsOptional() @IsString() validUntil?: string;
+  @IsOptional() @IsBoolean() applyPricingRules?: boolean;
+  /** itemId → unit price; falls back to the opportunity's expected rate. */
+  @IsOptional() prices?: Record<string, string>;
 }

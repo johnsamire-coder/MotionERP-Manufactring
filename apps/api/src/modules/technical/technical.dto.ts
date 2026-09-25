@@ -1,5 +1,16 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsIn, IsInt, IsNumberString, IsOptional, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
 const DOC_TYPES = ['shop_drawing', 'cutting_list', 'other'] as const;
 const CONSUME_BASED_ON = ['bom', 'material_transferred_for_manufacture'] as const;
 export class CreateTechnicalDocumentDto {
@@ -23,7 +34,9 @@ export class CreateBomDto {
   @IsOptional() @IsBoolean() isPhantomBom?: boolean;
   @IsOptional() @IsBoolean() allowAlternativeItem?: boolean;
   @IsOptional() @IsBoolean() qualityInspectionRequired?: boolean;
-  @IsOptional() @IsIn(CONSUME_BASED_ON) consumeComponentsBasedOn?: (typeof CONSUME_BASED_ON)[number];
+  @IsOptional()
+  @IsIn(CONSUME_BASED_ON)
+  consumeComponentsBasedOn?: (typeof CONSUME_BASED_ON)[number];
   @IsOptional() @IsUUID() defaultSourceWarehouseId?: string;
   @IsOptional() @IsUUID() defaultTargetWarehouseId?: string;
   @IsArray()

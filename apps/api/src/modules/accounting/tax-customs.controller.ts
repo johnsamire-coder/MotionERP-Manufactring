@@ -5,6 +5,7 @@
 import { Controller, Get, Post, Body, Query, Req } from '@nestjs/common';
 import { TaxAndCustomsService } from './tax-customs.service';
 import {
+  CapitalizeCustomsCostDto,
   CreateTaxSettlementDto,
   SettleAndPayVatDto,
   CreateWhtEntryDto,
@@ -13,19 +14,20 @@ import {
   QueryWhtEntriesDto,
   QueryCustomsDto,
 } from './tax-customs.dto';
+import type { RequestWithUser } from '../auth/request-with-user';
 
 @Controller({ path: 'accounting/tax-customs', version: '1' })
 export class TaxAndCustomsController {
   constructor(private readonly taxService: TaxAndCustomsService) {}
 
   @Post('vat/settle')
-  async settleVat(@Body() dto: CreateTaxSettlementDto, @Req() req: any) {
+  async settleVat(@Body() dto: CreateTaxSettlementDto, @Req() req: RequestWithUser) {
     const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
     return this.taxService.createTaxSettlement(dto, userId);
   }
 
   @Post('vat/pay')
-  async payVat(@Body() dto: SettleAndPayVatDto, @Req() req: any) {
+  async payVat(@Body() dto: SettleAndPayVatDto, @Req() req: RequestWithUser) {
     const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
     return this.taxService.payTaxSettlement(dto, userId);
   }
@@ -36,7 +38,7 @@ export class TaxAndCustomsController {
   }
 
   @Post('wht')
-  async createWht(@Body() dto: CreateWhtEntryDto, @Req() req: any) {
+  async createWht(@Body() dto: CreateWhtEntryDto, @Req() req: RequestWithUser) {
     const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
     return this.taxService.createWhtEntry(dto, userId);
   }
@@ -56,13 +58,13 @@ export class TaxAndCustomsController {
   }
 
   @Post('customs')
-  async createCustoms(@Body() dto: CreateCustomsDeclarationDto, @Req() req: any) {
+  async createCustoms(@Body() dto: CreateCustomsDeclarationDto, @Req() req: RequestWithUser) {
     const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
     return this.taxService.createCustomsDeclaration(dto, userId);
   }
 
   @Post('customs/capitalize')
-  async capitalizeCustoms(@Body() dto: { declarationId: string; targetWarehouseId: string }, @Req() req: any) {
+  async capitalizeCustoms(@Body() dto: CapitalizeCustomsCostDto, @Req() req: RequestWithUser) {
     const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
     return this.taxService.capitalizeCustomsToInventory(dto, userId);
   }

@@ -72,20 +72,22 @@ describe('CostService — Job Order Costing, Profitability & Variance Engine', (
       findComponentTypeByCode: jest.fn().mockImplementation(async (code: string) => {
         return Array.from(mockComponentTypes.values()).find((ct) => ct.code === code) ?? null;
       }),
-      insertCostEntry: jest.fn().mockImplementation(async (input: CreateCostEntryInput & { id: string }) => {
-        const entry: CostEntryRecord = {
-          id: input.id,
-          costSheetId: input.costSheetId,
-          componentTypeId: input.componentTypeId,
-          entryType: input.entryType,
-          amount: input.amount,
-          currencyCode: input.currencyCode,
-          description: input.description ?? null,
-          sourceReference: input.sourceReference ?? null,
-        };
-        mockEntries.push(entry);
-        return entry;
-      }),
+      insertCostEntry: jest
+        .fn()
+        .mockImplementation(async (input: CreateCostEntryInput & { id: string }) => {
+          const entry: CostEntryRecord = {
+            id: input.id,
+            costSheetId: input.costSheetId,
+            componentTypeId: input.componentTypeId,
+            entryType: input.entryType,
+            amount: input.amount,
+            currencyCode: input.currencyCode,
+            description: input.description ?? null,
+            sourceReference: input.sourceReference ?? null,
+          };
+          mockEntries.push(entry);
+          return entry;
+        }),
       getCostSummary: jest.fn().mockImplementation(async (costSheetId: string) => {
         const summaryMap = new Map<string, { estimated: number; actual: number }>();
 
@@ -104,6 +106,12 @@ describe('CostService — Job Order Costing, Profitability & Variance Engine', (
           actual: vals.actual.toFixed(4),
         }));
       }),
+      findEntryBySource: jest
+        .fn()
+        .mockImplementation(
+          async (sheetId: string, src: string) =>
+            mockEntries.find((e) => e.costSheetId === sheetId && e.sourceReference === src) ?? null,
+        ),
     } as unknown as CostRepository;
 
     costService = new CostService(costRepo, salesService);
@@ -205,5 +213,21 @@ describe('CostService — Job Order Costing, Profitability & Variance Engine', (
         currencyCode: 'EGP',
       }),
     ).rejects.toThrow(CostValidationError);
+  });
+
+  it('records a material issue as actual material cost once, keyed by its source', async () => {
+    const first = await costService.recordActualMaterialCost(
+      mockJobOrderNumber,
+      '358.8627',
+      'material-request:r1',
+    );
+    const again = await costService.recordActualMaterialCost(
+      mockJobOrderNumber,
+      '358.8627',
+      'material-request:r1',
+    );
+    expect(again.id).toBe(first.id);
+    const summary = await costService.getCostSummary(mockJobOrderNumber);
+    expect(summary.actualTotal).toBe('358.8627');
   });
 });

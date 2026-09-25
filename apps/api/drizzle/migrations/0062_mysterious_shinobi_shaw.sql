@@ -1,0 +1,2 @@
+ALTER TABLE "crm"."customer" ADD COLUMN "credit_limit" numeric(18, 4);--> statement-breakpoint
+ALTER TABLE "crm"."customer" ADD CONSTRAINT "customer_credit_limit_non_negative" CHECK ("crm"."customer"."credit_limit" is null or "crm"."customer"."credit_limit" >= 0);

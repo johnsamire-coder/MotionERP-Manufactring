@@ -2,15 +2,26 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, Optional } from '@nestjs/common';
 import { SalesService } from '../sales/sales.service';
 import { InventoryRepository } from '../inventory/inventory.repository';
+import { AccountingService } from '../accounting/accounting.service';
+import { postManualJournal } from '../accounting/manual-journal';
 import type { JobOrderRecord } from '../sales/sales.types';
 import { CostNotFoundError, CostValidationError } from './cost.errors';
 import { CostRepository } from './cost.repository';
 import type {
-  AllocationBase, AllocationExecutionSummary, AllocationPolicyRecord,
-  AllocationResultRecord, CostComponentTypeRecord, CostEntryRecord, CostSummary,
-  CreateAllocationPolicyInput, CreateCostComponentTypeInput, CreateCostEntryInput,
-  CreateJobCostSheetInput, CreateOverheadPoolInput, JobCostSheetRecord,
-  OverheadPoolEntryRecord, OverheadPoolRecord,
+  AllocationBase,
+  AllocationExecutionSummary,
+  AllocationPolicyRecord,
+  AllocationResultRecord,
+  CostComponentTypeRecord,
+  CostEntryRecord,
+  CostSummary,
+  CreateAllocationPolicyInput,
+  CreateCostComponentTypeInput,
+  CreateCostEntryInput,
+  CreateOverheadPoolInput,
+  JobCostSheetRecord,
+  OverheadPoolEntryRecord,
+  OverheadPoolRecord,
 } from './cost.types';
 
 @Injectable()
@@ -19,37 +30,71 @@ export class CostService {
     private readonly repo: CostRepository,
     private readonly salesService: SalesService,
     @Optional() private readonly inventoryRepo?: InventoryRepository,
+    @Optional() private readonly accounting?: AccountingService,
   ) {}
 
   /* --- Component Types --- */
   async createComponentType(input: CreateCostComponentTypeInput): Promise<CostComponentTypeRecord> {
     const code = input.code.trim().toLowerCase();
-    if (!code || !/^[a-z_][a-z0-9_]*$/.test(code)) throw new CostValidationError('Invalid component type code format');
+    if (!code || !/^[a-z_][a-z0-9_]*$/.test(code))
+      throw new CostValidationError('Invalid component type code format');
     if (!input.name.trim()) throw new CostValidationError('Name is required');
-    if (await this.repo.findComponentTypeByCode(code)) throw new CostValidationError(`Component type "${code}" already exists`);
-    return this.repo.insertComponentType({ id: randomUUID(), code, name: input.name.trim(), description: input.description });
+    if (await this.repo.findComponentTypeByCode(code))
+      throw new CostValidationError(`Component type "${code}" already exists`);
+    return this.repo.insertComponentType({
+      id: randomUUID(),
+      code,
+      name: input.name.trim(),
+      description: input.description,
+    });
   }
 
   /* --- Cost Sheets --- */
   private async getJobOrderOrThrow(ref: string): Promise<JobOrderRecord> {
     const all = await this.salesService.getJobOrders();
-    const found = all.find(jo => jo.jobOrderNumber === ref);
+    const found = all.find((jo) => jo.jobOrderNumber === ref);
     if (!found) throw new CostNotFoundError(`job order "${ref}" does not exist`);
     return found;
   }
 
-  async getOrCreateCostSheet(jobOrderReference: string, currencyCode?: string): Promise<JobCostSheetRecord> {
+  async getOrCreateCostSheet(
+    jobOrderReference: string,
+    currencyCode?: string,
+  ): Promise<JobCostSheetRecord> {
     const jo = await this.getJobOrderOrThrow(jobOrderReference);
     let sheet = await this.repo.findCostSheetByJobOrder(jobOrderReference);
-    if (!sheet) sheet = await this.repo.insertCostSheet({ id: randomUUID(), jobOrderReference, currencyCode, orgNodeId: jo.orgNodeId });
+    if (!sheet)
+      sheet = await this.repo.insertCostSheet({
+        id: randomUUID(),
+        jobOrderReference,
+        currencyCode,
+        orgNodeId: jo.orgNodeId,
+      });
     return sheet;
   }
 
   async addCostEntry(input: CreateCostEntryInput): Promise<CostEntryRecord> {
-    if (!(await this.repo.findComponentTypeById(input.componentTypeId))) throw new CostNotFoundError(`Component type ${input.componentTypeId} not found`);
+    if (!(await this.repo.findComponentTypeById(input.componentTypeId)))
+      throw new CostNotFoundError(`Component type ${input.componentTypeId} not found`);
     const amt = Number(input.amount);
     if (!Number.isFinite(amt) || amt <= 0) throw new CostValidationError('Amount must be positive');
     return this.repo.insertCostEntry({ id: randomUUID(), ...input });
+  }
+
+  /**
+   * Records the actual material cost of a document (e.g. a material issue to production) on the job
+   * order's cost sheet, once: a repeat with the same source reference returns the existing entry.
+   */
+  async recordActualMaterialCost(
+    jobOrderReference: string,
+    amount: string,
+    sourceReference: string,
+    description?: string,
+  ): Promise<CostEntryRecord> {
+    const sheet = await this.getOrCreateCostSheet(jobOrderReference);
+    const existing = await this.repo.findEntryBySource(sheet.id, sourceReference);
+    if (existing) return existing;
+    return this.addMaterialCost(jobOrderReference, amount, description, sourceReference);
   }
 
   /**
@@ -59,54 +104,94 @@ export class CostService {
   async getCostSummary(jobOrderReference: string): Promise<CostSummary> {
     const sheet = await this.getOrCreateCostSheet(jobOrderReference);
     const entries = await this.repo.getCostSummary(sheet.id);
-    let est = 0, act = 0;
-    const detailed = entries.map(e => {
-      const es = Number(e.estimated), ac = Number(e.actual);
-      est += es; act += ac;
-      return { componentType: e.componentType, estimated: es.toFixed(4), actual: ac.toFixed(4), variance: (ac - es).toFixed(4) };
+    let est = 0,
+      act = 0;
+    const detailed = entries.map((e) => {
+      const es = Number(e.estimated),
+        ac = Number(e.actual);
+      est += es;
+      act += ac;
+      return {
+        componentType: e.componentType,
+        estimated: es.toFixed(4),
+        actual: ac.toFixed(4),
+        variance: (ac - es).toFixed(4),
+      };
     });
-    return { jobOrderReference, currencyCode: sheet.currencyCode, estimatedTotal: est.toFixed(4), actualTotal: act.toFixed(4), variance: (act - est).toFixed(4), margin: est > 0 ? ((est - act) / est * 100).toFixed(2) : '0.00', entries: detailed };
+    return {
+      jobOrderReference,
+      currencyCode: sheet.currencyCode,
+      estimatedTotal: est.toFixed(4),
+      actualTotal: act.toFixed(4),
+      variance: (act - est).toFixed(4),
+      margin: est > 0 ? (((est - act) / est) * 100).toFixed(2) : '0.00',
+      entries: detailed,
+    };
   }
 
-  async addMaterialCost(ref: string, amount: string, desc?: string, src?: string): Promise<CostEntryRecord> {
+  async addMaterialCost(
+    ref: string,
+    amount: string,
+    desc?: string,
+    src?: string,
+  ): Promise<CostEntryRecord> {
     const ct = await this.repo.findComponentTypeByCode('material');
     if (!ct) throw new CostNotFoundError('Material component type not found');
     const sheet = await this.getOrCreateCostSheet(ref);
-    return this.addCostEntry({ costSheetId: sheet.id, componentTypeId: ct.id, entryType: 'actual', amount, currencyCode: sheet.currencyCode, description: desc, sourceReference: src });
+    return this.addCostEntry({
+      costSheetId: sheet.id,
+      componentTypeId: ct.id,
+      entryType: 'actual',
+      amount,
+      currencyCode: sheet.currencyCode,
+      description: desc,
+      sourceReference: src,
+    });
   }
 
-  async addLaborCost(ref: string, amount: string, desc?: string, src?: string): Promise<CostEntryRecord> {
+  async addLaborCost(
+    ref: string,
+    amount: string,
+    desc?: string,
+    src?: string,
+  ): Promise<CostEntryRecord> {
     const ct = await this.repo.findComponentTypeByCode('labor');
     if (!ct) throw new CostNotFoundError('Labor component type not found');
     const sheet = await this.getOrCreateCostSheet(ref);
-    return this.addCostEntry({ costSheetId: sheet.id, componentTypeId: ct.id, entryType: 'actual', amount, currencyCode: sheet.currencyCode, description: desc, sourceReference: src });
-  }
-
-  /* --- Automated BOM Standard Costing (New Parity Feature) --- */
-  async calculateBomStandardCost(bomId: string, warehouseId: string): Promise<string> {
-    if (!this.inventoryRepo) {
-      throw new CostValidationError('Inventory repository is required to calculate BOM standard cost');
-    }
-    const result = await this.repo.getCostSummary(bomId);
-    let totalStandardCost = 0;
-    return totalStandardCost.toFixed(4);
+    return this.addCostEntry({
+      costSheetId: sheet.id,
+      componentTypeId: ct.id,
+      entryType: 'actual',
+      amount,
+      currencyCode: sheet.currencyCode,
+      description: desc,
+      sourceReference: src,
+    });
   }
 
   /* --- OVERHEAD POOLS --- */
-  async getPools(): Promise<OverheadPoolRecord[]> { return this.repo.listPools(); }
+  async getPools(): Promise<OverheadPoolRecord[]> {
+    return this.repo.listPools();
+  }
 
   async createPool(input: CreateOverheadPoolInput): Promise<OverheadPoolRecord> {
     const code = input.code.trim();
     if (!code) throw new CostValidationError('Pool code is required');
-    if (await this.repo.findPoolByCode(code)) throw new CostValidationError(`Pool "${code}" already exists`);
-    if (new Date(input.periodStart) >= new Date(input.periodEnd)) throw new CostValidationError('periodStart must be before periodEnd');
+    if (await this.repo.findPoolByCode(code))
+      throw new CostValidationError(`Pool "${code}" already exists`);
+    if (new Date(input.periodStart) >= new Date(input.periodEnd))
+      throw new CostValidationError('periodStart must be before periodEnd');
     return this.repo.insertPool({ id: randomUUID(), ...input });
   }
 
-  async addPoolEntry(poolId: string, input: { accountId?: string; description: string; amount: string; sourceReference?: string }): Promise<OverheadPoolEntryRecord> {
+  async addPoolEntry(
+    poolId: string,
+    input: { accountId?: string; description: string; amount: string; sourceReference?: string },
+  ): Promise<OverheadPoolEntryRecord> {
     const pool = await this.repo.findPoolById(poolId);
     if (!pool) throw new CostNotFoundError(`Pool ${poolId} not found`);
-    if (pool.status !== 'draft' && pool.status !== 'active') throw new CostValidationError('Can only add entries to draft or active pools');
+    if (pool.status !== 'draft' && pool.status !== 'active')
+      throw new CostValidationError('Can only add entries to draft or active pools');
     const amt = Number(input.amount);
     if (!Number.isFinite(amt) || amt <= 0) throw new CostValidationError('Amount must be positive');
     const entry = await this.repo.insertPoolEntry({ id: randomUUID(), poolId, ...input });
@@ -126,18 +211,25 @@ export class CostService {
   }
 
   /* --- ALLOCATION POLICIES --- */
-  async getPolicies(): Promise<AllocationPolicyRecord[]> { return this.repo.listPolicies(); }
+  async getPolicies(): Promise<AllocationPolicyRecord[]> {
+    return this.repo.listPolicies();
+  }
 
   async createPolicy(input: CreateAllocationPolicyInput): Promise<AllocationPolicyRecord> {
     const code = input.code.trim();
     if (!code) throw new CostValidationError('Policy code is required');
-    if (await this.repo.findPolicyByCode(code)) throw new CostValidationError(`Policy "${code}" already exists`);
+    if (await this.repo.findPolicyByCode(code))
+      throw new CostValidationError(`Policy "${code}" already exists`);
     const pool = await this.repo.findPoolById(input.poolId);
     if (!pool) throw new CostNotFoundError(`Pool ${input.poolId} not found`);
     const pct = Number(input.percentage ?? '100');
-    if (pct <= 0 || pct > 100) throw new CostValidationError('Percentage must be between 1 and 100');
+    if (pct <= 0 || pct > 100)
+      throw new CostValidationError('Percentage must be between 1 and 100');
     const currentTotal = await this.repo.getTotalPercentageForPool(input.poolId);
-    if (currentTotal + pct > 100) throw new CostValidationError(`Total percentage for this pool would exceed 100% (current: ${currentTotal}%, adding: ${pct}%)`);
+    if (currentTotal + pct > 100)
+      throw new CostValidationError(
+        `Total percentage for this pool would exceed 100% (current: ${currentTotal}%, adding: ${pct}%)`,
+      );
     return this.repo.insertPolicy({ id: randomUUID(), ...input, percentage: String(pct) });
   }
 
@@ -149,42 +241,103 @@ export class CostService {
 
     const pool = await this.repo.findPoolById(policy.poolId);
     if (!pool) throw new CostNotFoundError(`Pool ${policy.poolId} not found`);
-    if (pool.status !== 'active') throw new CostValidationError('Pool must be "active" to allocate (current: ' + pool.status + ')');
+    if (pool.status !== 'active')
+      throw new CostValidationError(
+        'Pool must be "active" to allocate (current: ' + pool.status + ')',
+      );
 
     const totalAmount = Number(pool.totalAmount);
     const percentage = Number(policy.percentage);
-    const amountToAllocate = totalAmount * percentage / 100;
+    const amountToAllocate = (totalAmount * percentage) / 100;
 
-    const baseData = await this.getBaseQuantities(policy.allocationBase, pool.periodStart, pool.periodEnd);
-    if (baseData.length === 0) throw new CostValidationError(`No work orders found for base "${policy.allocationBase}" in period ${pool.periodStart} to ${pool.periodEnd}`);
+    const baseData = await this.getBaseQuantities(
+      policy.allocationBase,
+      pool.periodStart,
+      pool.periodEnd,
+    );
+    if (baseData.length === 0)
+      throw new CostValidationError(
+        `No work orders found for base "${policy.allocationBase}" in period ${pool.periodStart} to ${pool.periodEnd}`,
+      );
 
     const totalBase = baseData.reduce((s, w) => s + w.quantity, 0);
-    if (totalBase === 0) throw new CostValidationError('Total base quantity is zero — cannot divide');
+    if (totalBase === 0)
+      throw new CostValidationError('Total base quantity is zero — cannot divide');
 
     const rate = amountToAllocate / totalBase;
 
     await this.repo.deleteResultsByPolicy(policyId);
 
+    // Posting (when the policy names its applied-overhead account): Dr WIP / Cr applied overhead,
+    // checked before anything is written so a failed run leaves the pool as it was.
+    let posting: { orgNodeId: string; wipAccountId: string; appliedAccountId: string } | null =
+      null;
+    if (policy.appliedAccountId) {
+      const orgNodeId = pool.orgNodeId ?? policy.orgNodeId;
+      if (!orgNodeId || !this.accounting)
+        throw new CostValidationError('the pool has no company to post the allocation to');
+      const config = await this.accounting.getCompanyConfig(orgNodeId);
+      if (!config?.defaultWipAccountId)
+        throw new CostValidationError(
+          'حدّد حساب "إنتاج تحت التشغيل" في إعدادات الشركة المحاسبية عشان توزيع الأعباء يترحّل',
+        );
+      posting = {
+        orgNodeId,
+        wipAccountId: config.defaultWipAccountId,
+        appliedAccountId: policy.appliedAccountId,
+      };
+    }
+
     const results: AllocationResultRecord[] = [];
     for (const wo of baseData) {
       const allocated = wo.quantity * rate;
       const r = await this.repo.insertAllocationResult({
-        id: randomUUID(), policyId, workOrderId: wo.workOrderId,
-        jobOrderReference: wo.jobOrderReference, allocatedAmount: allocated.toFixed(4),
-        baseQuantity: wo.quantity.toFixed(4), baseRate: rate.toFixed(6),
-        periodStart: pool.periodStart, periodEnd: pool.periodEnd,
+        id: randomUUID(),
+        policyId,
+        workOrderId: wo.workOrderId,
+        jobOrderReference: wo.jobOrderReference,
+        allocatedAmount: allocated.toFixed(4),
+        baseQuantity: wo.quantity.toFixed(4),
+        baseRate: rate.toFixed(6),
+        periodStart: pool.periodStart,
+        periodEnd: pool.periodEnd,
       });
       results.push(r);
+    }
+
+    let journalEntryId: string | null = null;
+    if (posting) {
+      const journal = await postManualJournal(this.accounting!, {
+        orgNodeId: posting.orgNodeId,
+        entryDate: new Date(pool.periodEnd).toISOString(),
+        description: `تحميل أعباء صناعية: ${pool.name} (${policy.name})`,
+        reference: policy.code,
+        sourceEventType: 'overhead_allocation',
+        idempotencyKey: `overhead-${policy.id}-${pool.id}`,
+        lines: [
+          { accountId: posting.wipAccountId, debit: amountToAllocate, credit: 0 },
+          { accountId: posting.appliedAccountId, debit: 0, credit: amountToAllocate },
+        ],
+      });
+      journalEntryId = journal.id;
+      await this.repo.setPolicyJournal(policy.id, journal.id);
     }
 
     await this.repo.setPoolStatus(pool.id, 'allocated');
 
     return {
-      policyId, policyName: policy.name, poolName: pool.name,
-      allocationBase: policy.allocationBase, totalPoolAmount: totalAmount.toFixed(4),
-      percentageApplied: percentage.toFixed(2), amountToAllocate: amountToAllocate.toFixed(4),
-      totalBaseQuantity: totalBase.toFixed(4), baseRate: rate.toFixed(6),
-      workOrdersAffected: results.length, results,
+      policyId,
+      policyName: policy.name,
+      poolName: pool.name,
+      allocationBase: policy.allocationBase,
+      totalPoolAmount: totalAmount.toFixed(4),
+      percentageApplied: percentage.toFixed(2),
+      amountToAllocate: amountToAllocate.toFixed(4),
+      totalBaseQuantity: totalBase.toFixed(4),
+      baseRate: rate.toFixed(6),
+      workOrdersAffected: results.length,
+      results,
+      journalEntryId,
     };
   }
 
@@ -194,54 +347,20 @@ export class CostService {
 
   private getBaseQuantities(base: AllocationBase, ps: string, pe: string) {
     switch (base) {
-      case 'units_produced':       return this.repo.getUnitsProduced(ps, pe);
-      case 'machine_hours':        return this.repo.getMachineHours(ps, pe);
-      case 'direct_labor_hours':   return this.repo.getLaborHours(ps, pe);
-      case 'direct_material_cost': return this.repo.getMaterialCosts(ps, pe);
-      case 'direct_labor_cost':    return this.repo.getLaborCosts(ps, pe);
-      case 'sales_revenue':        return this.repo.getSalesRevenue(ps, pe);
-      default: throw new CostValidationError(`Unknown allocation base: ${base}`);
+      case 'units_produced':
+        return this.repo.getUnitsProduced(ps, pe);
+      case 'machine_hours':
+        return this.repo.getMachineHours(ps, pe);
+      case 'direct_labor_hours':
+        return this.repo.getLaborHours(ps, pe);
+      case 'direct_material_cost':
+        return this.repo.getMaterialCosts(ps, pe);
+      case 'direct_labor_cost':
+        return this.repo.getLaborCosts(ps, pe);
+      case 'sales_revenue':
+        return this.repo.getSalesRevenue(ps, pe);
+      default:
+        throw new CostValidationError(`Unknown allocation base: ${base}`);
     }
-  }
-
-  // ═════════════════════════════════════════════
-  // ── دوال التحليلات الصناعية لشاشات الفرونت إند ──
-  // ═════════════════════════════════════════════
-
-  async getJobCostSheetAnalytics(workOrderId: string) {
-    return {
-      workOrderId,
-      targetUnits: 20,
-      totalDirectMaterials: 281030,
-      totalDirectLaborMachine: 19894.17,
-      totalDirectCost: 300924.17,
-      overheadRate: 25,
-      totalOverhead: 75231.04,
-      totalJobCost: 376155.21,
-      unitCost: 18807.76,
-      targetProfitMargin: 25,
-      unitSellingPriceWithVat: 26799.06,
-    };
-  }
-
-  async getStandardVsActualAnalytics(workOrderId: string) {
-    return {
-      workOrderId,
-      totalStandardCost: 311802.5,
-      totalActualCost: 326720,
-      netVariance: -14917.5,
-      isUnfavorable: true,
-    };
-  }
-
-  async get4LevelMaterialVarianceAnalytics(workOrderId: string) {
-    return {
-      workOrderId,
-      priceVarianceTotal: -3125,
-      usageVarianceTotal: -7115,
-      substitutionVarianceTotal: -1500,
-      scrapYieldVarianceTotal: -4782,
-      netTotalMaterialVariance: -16522,
-    };
   }
 }

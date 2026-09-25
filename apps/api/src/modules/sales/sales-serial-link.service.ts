@@ -10,10 +10,11 @@ import {
   ActivateWarrantyInstallationDto,
   QuerySalesSerialsDto,
 } from './sales-serial-link.dto';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 @Injectable()
 export class SalesSerialLinkService {
-  constructor(@Inject('DRIZZLE') private readonly db: any) {}
+  constructor(@Inject('DRIZZLE') private readonly db: NodePgDatabase) {}
 
   // ═════════════════════════════════════════════
   // 1. تخصيص السيريالات عند الفاتورة أو الشحن
@@ -64,12 +65,9 @@ export class SalesSerialLinkService {
         createdBy: userId,
       };
 
-      const [inserted] = await this.db
-        .insert(salesLineSerial)
-        .values(record)
-        .returning();
+      const [inserted] = await this.db.insert(salesLineSerial).values(record).returning();
 
-      results.push(inserted);
+      results.push(inserted!);
     }
 
     return results;
@@ -78,7 +76,10 @@ export class SalesSerialLinkService {
   // ═════════════════════════════════════════════
   // 2. إثبات التركيب في المستشفى وتفعيل الضمان آلياً
   // ═════════════════════════════════════════════
-  async activateWarranty(dto: ActivateWarrantyInstallationDto, userId: string): Promise<SalesLineSerial> {
+  async activateWarranty(
+    dto: ActivateWarrantyInstallationDto,
+    _userId: string,
+  ): Promise<SalesLineSerial> {
     const [serialRecord] = await this.db
       .select()
       .from(salesLineSerial)
@@ -110,7 +111,7 @@ export class SalesSerialLinkService {
       .where(eq(salesLineSerial.id, dto.serialLinkId))
       .returning();
 
-    return updated;
+    return updated!;
   }
 
   // ═════════════════════════════════════════════
@@ -119,10 +120,14 @@ export class SalesSerialLinkService {
   async querySerials(query: QuerySalesSerialsDto): Promise<SalesLineSerial[]> {
     const conditions = [];
     if (query.customerId) conditions.push(eq(salesLineSerial.customerId, query.customerId));
-    if (query.salesInvoiceId) conditions.push(eq(salesLineSerial.salesInvoiceId, query.salesInvoiceId));
+    if (query.salesInvoiceId)
+      conditions.push(eq(salesLineSerial.salesInvoiceId, query.salesInvoiceId));
     if (query.itemId) conditions.push(eq(salesLineSerial.itemId, query.itemId));
     if (query.serialNumber) conditions.push(eq(salesLineSerial.serialNumber, query.serialNumber));
-    if (query.status) conditions.push(eq(salesLineSerial.status, query.status as any));
+    if (query.status)
+      conditions.push(
+        eq(salesLineSerial.status, query.status as (typeof salesLineSerial.$inferSelect)['status']),
+      );
 
     return this.db
       .select()

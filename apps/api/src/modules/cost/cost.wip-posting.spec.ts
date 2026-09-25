@@ -4,7 +4,6 @@ import { AccountingRepository } from '../accounting/accounting.repository';
 import type {
   CompanyAccountingConfigRecord,
   AccountDeterminationRecord,
-  JournalEntryRecord,
 } from '../accounting/accounting.types';
 import type { StockMovementPostingPayload } from '../accounting/posting-engine.types';
 
@@ -24,6 +23,7 @@ describe('Manufacturing Costing — WIP Accounting & FG Receipt Posting', () => 
 
   beforeEach(() => {
     accountingRepo = {
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn().mockResolvedValue({
         orgNodeId: mockOrgNodeId,
         defaultGrniAccountId: mockGrniAccount,

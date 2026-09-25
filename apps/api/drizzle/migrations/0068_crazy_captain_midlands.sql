@@ -1,0 +1,2 @@
+ALTER TABLE "inventory"."stock_reservation" ADD COLUMN "reservation_type" text DEFAULT 'sales_order' NOT NULL;--> statement-breakpoint
+ALTER TABLE "inventory"."stock_reservation" ADD CONSTRAINT "stock_reservation_type_valid" CHECK ("inventory"."stock_reservation"."reservation_type" in ('sales_order', 'production', 'subcontract', 'production_plan', 'purchase_order', 'material_request', 'work_order'));

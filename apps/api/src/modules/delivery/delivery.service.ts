@@ -4,7 +4,18 @@ import { SalesService } from '../sales/sales.service';
 import type { JobOrderRecord } from '../sales/sales.types';
 import { DeliveryNotFoundError, DeliveryValidationError } from './delivery.errors';
 import { DeliveryRepository } from './delivery.repository';
-import type { CreateDeliveryOrderInput, CreateDeliveryReceiptInput, CreateInstallationInput, CreateInstallationReportInput, DeliveryOrderRecord, DeliveryReceiptRecord, InstallationRecord, InstallationReportRecord, UpdateDeliveryOrderInput, UpdateInstallationInput } from './delivery.types';
+import type {
+  CreateDeliveryOrderInput,
+  CreateDeliveryReceiptInput,
+  CreateInstallationInput,
+  CreateInstallationReportInput,
+  DeliveryOrderRecord,
+  DeliveryReceiptRecord,
+  InstallationRecord,
+  InstallationReportRecord,
+  UpdateDeliveryOrderInput,
+  UpdateInstallationInput,
+} from './delivery.types';
 
 @Injectable()
 export class DeliveryService {
@@ -27,8 +38,9 @@ export class DeliveryService {
     }
 
     const datePart = scheduledDate.toISOString().slice(0, 10).replace(/-/g, '');
-    const existingToday = (await this.repository.findDeliveryOrdersByJobOrder(input.jobOrderReference))
-      .filter(order => order.deliveryNumber.startsWith(`DO-${datePart}`));
+    const existingToday = (
+      await this.repository.findDeliveryOrdersByJobOrder(input.jobOrderReference)
+    ).filter((order) => order.deliveryNumber.startsWith(`DO-${datePart}`));
     const sequence = existingToday.length + 1;
     const deliveryNumber = `DO-${datePart}-${sequence.toString().padStart(4, '0')}`;
     const jobOrder = await this.getJobOrderOrThrow(input.jobOrderReference);
@@ -38,11 +50,14 @@ export class DeliveryService {
       deliveryNumber,
       orgNodeId: jobOrder.orgNodeId,
       ...input,
-      scheduledDate
+      scheduledDate,
     });
   }
 
-  async updateDeliveryOrder(id: string, input: UpdateDeliveryOrderInput): Promise<DeliveryOrderRecord> {
+  async updateDeliveryOrder(
+    id: string,
+    input: UpdateDeliveryOrderInput,
+  ): Promise<DeliveryOrderRecord> {
     const existing = await this.repository.findDeliveryOrderById(id);
     if (!existing) throw new DeliveryNotFoundError(`Delivery order ${id} not found`);
 
@@ -62,7 +77,8 @@ export class DeliveryService {
 
   async createInstallation(input: CreateInstallationInput): Promise<InstallationRecord> {
     const deliveryOrder = await this.repository.findDeliveryOrderById(input.deliveryOrderId);
-    if (!deliveryOrder) throw new DeliveryNotFoundError(`Delivery order ${input.deliveryOrderId} not found`);
+    if (!deliveryOrder)
+      throw new DeliveryNotFoundError(`Delivery order ${input.deliveryOrderId} not found`);
 
     const scheduledDate = new Date(input.scheduledDate);
     if (isNaN(scheduledDate.getTime())) {
@@ -72,11 +88,14 @@ export class DeliveryService {
     return this.repository.insertInstallation({
       id: randomUUID(),
       ...input,
-      scheduledDate
+      scheduledDate,
     });
   }
 
-  async updateInstallation(id: string, input: UpdateInstallationInput): Promise<InstallationRecord> {
+  async updateInstallation(
+    id: string,
+    input: UpdateInstallationInput,
+  ): Promise<InstallationRecord> {
     const existing = await this.repository.findInstallationById(id);
     if (!existing) throw new DeliveryNotFoundError(`Installation ${id} not found`);
 
@@ -99,14 +118,16 @@ export class DeliveryService {
 
   async getInstallationsByDeliveryOrder(deliveryOrderId: string): Promise<InstallationRecord[]> {
     const deliveryOrder = await this.repository.findDeliveryOrderById(deliveryOrderId);
-    if (!deliveryOrder) throw new DeliveryNotFoundError(`Delivery order ${deliveryOrderId} not found`);
+    if (!deliveryOrder)
+      throw new DeliveryNotFoundError(`Delivery order ${deliveryOrderId} not found`);
 
     return this.repository.findInstallationsByDeliveryOrder(deliveryOrderId);
   }
 
   async createDeliveryReceipt(input: CreateDeliveryReceiptInput): Promise<DeliveryReceiptRecord> {
     const deliveryOrder = await this.repository.findDeliveryOrderById(input.deliveryOrderId);
-    if (!deliveryOrder) throw new DeliveryNotFoundError(`Delivery order ${input.deliveryOrderId} not found`);
+    if (!deliveryOrder)
+      throw new DeliveryNotFoundError(`Delivery order ${input.deliveryOrderId} not found`);
 
     if (!input.signedBy?.trim()) {
       throw new DeliveryValidationError('Signed by is required');
@@ -119,13 +140,16 @@ export class DeliveryService {
     return this.repository.insertDeliveryReceipt({
       id: randomUUID(),
       receiptNumber,
-      ...input
+      ...input,
     });
   }
 
-  async createInstallationReport(input: CreateInstallationReportInput): Promise<InstallationReportRecord> {
+  async createInstallationReport(
+    input: CreateInstallationReportInput,
+  ): Promise<InstallationReportRecord> {
     const installation = await this.repository.findInstallationById(input.installationId);
-    if (!installation) throw new DeliveryNotFoundError(`Installation ${input.installationId} not found`);
+    if (!installation)
+      throw new DeliveryNotFoundError(`Installation ${input.installationId} not found`);
 
     if (!input.performedBy?.trim()) {
       throw new DeliveryValidationError('Performed by is required');
@@ -138,7 +162,7 @@ export class DeliveryService {
     return this.repository.insertInstallationReport({
       id: randomUUID(),
       reportNumber,
-      ...input
+      ...input,
     });
   }
   async getDeliveryReceipts(): Promise<DeliveryReceiptRecord[]> {

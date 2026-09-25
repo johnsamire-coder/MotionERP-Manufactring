@@ -2,13 +2,13 @@
 // Motion ERP — Accrual, Prepaid & Provision DTOs (Updated)
 // Step 77
 // ============================================================
-import { IsUUID, IsString, IsDateString, IsNumber, IsOptional, IsInt, Min, Max } from 'class-validator';
+import { IsUUID, IsString, IsDateString, IsNumber, IsOptional, Min, Max } from 'class-validator';
 
 // ── Accrued Expense DTOs ─────────────────────
 export class CreateAccrualDto {
-  @IsUUID()   orgNodeId!: string;
-  @IsUUID()   expenseAccountId!: string;
-  @IsUUID()   accruedLiabilityAccountId!: string;
+  @IsUUID() orgNodeId!: string;
+  @IsUUID() expenseAccountId!: string;
+  @IsUUID() accruedLiabilityAccountId!: string;
   @IsDateString() accrualDate!: string;
   @IsNumber() @Min(0.01) amount!: number;
   @IsString() description!: string;
@@ -26,9 +26,9 @@ export class ReverseAccrualDto {
 
 // ── Prepaid Expense DTOs ─────────────────────
 export class CreatePrepaidDto {
-  @IsUUID()   orgNodeId!: string;
-  @IsUUID()   prepaidAssetAccountId!: string;
-  @IsUUID()   expenseAccountId!: string;
+  @IsUUID() orgNodeId!: string;
+  @IsUUID() prepaidAssetAccountId!: string;
+  @IsUUID() expenseAccountId!: string;
   @IsDateString() paymentDate!: string;
   @IsDateString() coverageStartDate!: string;
   @IsDateString() coverageEndDate!: string;
@@ -45,9 +45,9 @@ export class AmortizePrepaidDto {
 
 // ── Warranty Provision DTOs ──────────────────
 export class CreateWarrantyProvisionDto {
-  @IsUUID()   orgNodeId!: string;
-  @IsUUID()   warrantyExpenseAccountId!: string;
-  @IsUUID()   provisionLiabilityAccountId!: string;
+  @IsUUID() orgNodeId!: string;
+  @IsUUID() warrantyExpenseAccountId!: string;
+  @IsUUID() provisionLiabilityAccountId!: string;
   @IsDateString() provisionDate!: string;
   @IsOptional() @IsUUID() salesInvoiceId?: string;
   @IsNumber() @Min(0.01) baseAmount!: number;
@@ -60,4 +60,6 @@ export class CreateWarrantyProvisionDto {
 export class UtilizeProvisionDto {
   @IsUUID() id!: string;
   @IsNumber() @Min(0.01) amount!: number;
+  /** Where the warranty cost came from (cash, bank or stock account). */
+  @IsUUID() creditAccountId!: string;
 }

@@ -1,0 +1,5 @@
+ALTER TABLE "accounting"."journal_entry" ADD COLUMN "reversal_of_entry_id" uuid;--> statement-breakpoint
+ALTER TABLE "accounting"."journal_entry" ADD COLUMN "reversal_reason" text;--> statement-breakpoint
+ALTER TABLE "accounting"."journal_entry" ADD CONSTRAINT "journal_entry_reversal_of_entry_id_journal_entry_id_fk" FOREIGN KEY ("reversal_of_entry_id") REFERENCES "accounting"."journal_entry"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "accounting"."journal_entry" ADD CONSTRAINT "journal_entry_reversal_of_unique" UNIQUE("reversal_of_entry_id");--> statement-breakpoint
+ALTER TABLE "accounting"."journal_entry" ADD CONSTRAINT "journal_entry_not_own_reversal" CHECK ("accounting"."journal_entry"."reversal_of_entry_id" is null or "accounting"."journal_entry"."reversal_of_entry_id" <> "accounting"."journal_entry"."id");

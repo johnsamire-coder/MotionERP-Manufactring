@@ -1,7 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { SalesNotFoundError, SalesValidationError } from './sales.errors';
 
-interface HttpResponse { status(code: number): HttpResponse; json(body: unknown): void; }
+interface HttpResponse {
+  status(code: number): HttpResponse;
+  json(body: unknown): void;
+}
 
 @Catch(SalesNotFoundError, SalesValidationError)
 export class SalesExceptionFilter implements ExceptionFilter {

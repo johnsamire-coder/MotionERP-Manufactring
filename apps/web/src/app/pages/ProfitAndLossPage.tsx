@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { accountingApi, ApiError } from '../api/client';
+import { accountingApi, ApiError, type ProfitAndLossReport } from '../api/client';
 
 export function ProfitAndLossPage(): JSX.Element {
-  const { t } = useTranslation();
-  const [report, setReport] = useState<any>(null);
+  const { t: _t } = useTranslation();
+  const [report, setReport] = useState<ProfitAndLossReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orgNodeId, setOrgNodeId] = useState('');
@@ -12,10 +12,17 @@ export function ProfitAndLossPage(): JSX.Element {
   const [endDate, setEndDate] = useState('');
 
   const loadReport = async () => {
-    if (!orgNodeId) { setError('يرجى إدخال كود الشركة'); return; }
+    if (!orgNodeId) {
+      setError('يرجى إدخال كود الشركة');
+      return;
+    }
     try {
       setLoading(true);
-      const data = await accountingApi.getProfitAndLoss(orgNodeId, startDate || undefined, endDate || undefined);
+      const data = await accountingApi.getProfitAndLoss(
+        orgNodeId,
+        startDate || undefined,
+        endDate || undefined,
+      );
       setReport(data);
       setError(null);
     } catch (e) {
@@ -36,13 +43,20 @@ export function ProfitAndLossPage(): JSX.Element {
       </div>
 
       <div className="filter-bar">
-        <label>كود الشركة
-          <input value={orgNodeId} onChange={(e) => setOrgNodeId(e.target.value)} placeholder="org-node-id" />
+        <label>
+          كود الشركة
+          <input
+            value={orgNodeId}
+            onChange={(e) => setOrgNodeId(e.target.value)}
+            placeholder="org-node-id"
+          />
         </label>
-        <label>من تاريخ
+        <label>
+          من تاريخ
           <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         </label>
-        <label>إلى تاريخ
+        <label>
+          إلى تاريخ
           <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </label>
         <button className="btn btn--primary" onClick={loadReport} disabled={loading}>
@@ -78,10 +92,18 @@ export function ProfitAndLossPage(): JSX.Element {
             <div className="report-section">
               <h4>تفاصيل الإيرادات</h4>
               <table className="data-table">
-                <thead><tr><th>الحساب</th><th>الرصيد</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>الحساب</th>
+                    <th>الرصيد</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {(report.revenueDetails ?? []).map((r: any, i: number) => (
-                    <tr key={i}><td>{r.accountName}</td><td>{Number(r.balance).toLocaleString('ar-EG')} ج.م</td></tr>
+                  {(report.revenueDetails ?? []).map((r, i) => (
+                    <tr key={i}>
+                      <td>{r.accountName}</td>
+                      <td>{Number(r.balance).toLocaleString('ar-EG')} ج.م</td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
@@ -89,10 +111,18 @@ export function ProfitAndLossPage(): JSX.Element {
             <div className="report-section">
               <h4>تفاصيل المصروفات</h4>
               <table className="data-table">
-                <thead><tr><th>الحساب</th><th>الرصيد</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>الحساب</th>
+                    <th>الرصيد</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {(report.expenseDetails ?? []).map((r: any, i: number) => (
-                    <tr key={i}><td>{r.accountName}</td><td>{Number(r.balance).toLocaleString('ar-EG')} ج.م</td></tr>
+                  {(report.expenseDetails ?? []).map((r, i) => (
+                    <tr key={i}>
+                      <td>{r.accountName}</td>
+                      <td>{Number(r.balance).toLocaleString('ar-EG')} ج.م</td>
+                    </tr>
                   ))}
                 </tbody>
               </table>

@@ -2,22 +2,38 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 
-interface ItemRecord { id: string; code: string; name: string; }
-interface WarehouseRecord { id: string; code: string; name: string; }
+interface ItemRecord {
+  id: string;
+  code: string;
+  name: string;
+}
+interface WarehouseRecord {
+  id: string;
+  code: string;
+  name: string;
+}
 interface StockMovementRecord {
-  id: string; itemId: string; warehouseId: string;
-  movementType: string; quantity: string; movementDate: string; note: string | null;
+  id: string;
+  itemId: string;
+  warehouseId: string;
+  movementType: string;
+  quantity: string;
+  movementDate: string;
+  note: string | null;
 }
 interface StockBalanceRecord {
-  itemId: string; warehouseId: string; onHand: string; reserved: string;
+  itemId: string;
+  warehouseId: string;
+  onHand: string;
+  reserved: string;
 }
 
 export function StockLedgerPage(): JSX.Element {
-  const { t, i18n } = useTranslation();
+  const { t: _t, i18n } = useTranslation();
   const [items, setItems] = useState<ItemRecord[]>([]);
   const [warehouses, setWarehouses] = useState<WarehouseRecord[]>([]);
   const [movements, setMovements] = useState<StockMovementRecord[]>([]);
-  const [balances, setBalances] = useState<StockBalanceRecord[]>([]);
+  const [_balances, setBalances] = useState<StockBalanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +50,9 @@ export function StockLedgerPage(): JSX.Element {
         api.get<{ items: ItemRecord[] }>(`/catalog/items?lang=${lang}`),
         api.get<{ warehouses: WarehouseRecord[] }>('/inventory/warehouses'),
         api.get<{ movements: StockMovementRecord[] }>('/inventory/movements'),
-        api.get<{ balances: StockBalanceRecord[] }>('/inventory/stock-balances').catch(() => ({ balances: [] })),
+        api
+          .get<{ balances: StockBalanceRecord[] }>('/inventory/stock-balances')
+          .catch(() => ({ balances: [] })),
       ]);
       setItems(itemsRes.items);
       setWarehouses(whRes.warehouses);
@@ -62,7 +80,12 @@ export function StockLedgerPage(): JSX.Element {
     return matchItem && matchWarehouse;
   });
 
-  const inputStyle = { padding: '6px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 };
+  const inputStyle = {
+    padding: '6px 10px',
+    borderRadius: 6,
+    border: '1px solid #cbd5e1',
+    fontSize: 13,
+  };
   const labelStyle = { fontSize: 12, color: '#64748b', fontWeight: 'bold' as const };
 
   if (loading) return <p style={{ padding: 40, textAlign: 'center' }}>Loading Stock Ledger...</p>;
@@ -73,45 +96,82 @@ export function StockLedgerPage(): JSX.Element {
         <div>
           <span className="eyebrow">Stock Reports & Analysis</span>
           <h1>Stock Ledger (دفتر أستاذ المخزون)</h1>
-          <p>Detailed historical log of all inventory ins, outs, and cumulative balances per item per warehouse.</p>
+          <p>
+            Detailed historical log of all inventory ins, outs, and cumulative balances per item per
+            warehouse.
+          </p>
         </div>
       </div>
 
       {error && <p style={{ color: '#b91c1c', padding: '8px 0' }}>{error}</p>}
 
       {/* Filters Toolbar - ERPNext Style */}
-      <article className="panel module-panel" style={{ background: '#fff', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 20 }}>
+      <article
+        className="panel module-panel"
+        style={{
+          background: '#fff',
+          padding: 16,
+          borderRadius: 8,
+          border: '1px solid #e2e8f0',
+          marginBottom: 20,
+        }}
+      >
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'end' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 220 }}>
             <label style={labelStyle}>Filter by Item (الصنف)</label>
-            <select value={filterItemId} onChange={(e) => setFilterItemId(e.target.value)} style={inputStyle}>
+            <select
+              value={filterItemId}
+              onChange={(e) => setFilterItemId(e.target.value)}
+              style={inputStyle}
+            >
               <option value="">— All Items (كل الأصناف) —</option>
               {items.map((it) => (
-                <option key={it.id} value={it.id}>{it.name} ({it.code})</option>
+                <option key={it.id} value={it.id}>
+                  {it.name} ({it.code})
+                </option>
               ))}
             </select>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 200 }}>
             <label style={labelStyle}>Filter by Warehouse (المستودع)</label>
-            <select value={filterWarehouseId} onChange={(e) => setFilterWId(e.target.value)} style={inputStyle}>
+            <select
+              value={filterWarehouseId}
+              onChange={(e) => setFilterWId(e.target.value)}
+              style={inputStyle}
+            >
               <option value="">— All Warehouses (كل المستودعات) —</option>
               {warehouses.map((wh) => (
-                <option key={wh.id} value={wh.id}>{wh.name}</option>
+                <option key={wh.id} value={wh.id}>
+                  {wh.name}
+                </option>
               ))}
             </select>
           </div>
 
-          <button className="filter-button" style={{ height: 34, padding: '0 16px' }} onClick={() => { setFilterItemId(''); setFilterWId(''); }}>
+          <button
+            className="filter-button"
+            style={{ height: 34, padding: '0 16px' }}
+            onClick={() => {
+              setFilterItemId('');
+              setFilterWId('');
+            }}
+          >
             Clear Filters
           </button>
         </div>
       </article>
 
       {/* Stock Ledger Ledger View */}
-      <article className="panel module-panel" style={{ background: '#fff', padding: 20, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+      <article
+        className="panel module-panel"
+        style={{ background: '#fff', padding: 20, borderRadius: 8, border: '1px solid #e2e8f0' }}
+      >
         <div className="placeholder-table">
-          <div className="placeholder-table__head" style={{ gridTemplateColumns: '1.2fr 2fr 1.5fr 1fr 1fr 2fr' }}>
+          <div
+            className="placeholder-table__head"
+            style={{ gridTemplateColumns: '1.2fr 2fr 1.5fr 1fr 1fr 2fr' }}
+          >
             <span>Posting Date</span>
             <span>Item (الصنف)</span>
             <span>Warehouse</span>
@@ -131,21 +191,31 @@ export function StockLedgerPage(): JSX.Element {
             const qtyChange = parseFloat(mov.quantity);
 
             return (
-              <div className="placeholder-table__row" key={mov.id} style={{ gridTemplateColumns: '1.2fr 2fr 1.5fr 1fr 1fr 2fr', alignItems: 'center' }}>
-                <span style={{ fontSize: 12, color: '#64748b' }}>{new Date(mov.movementDate).toLocaleString()}</span>
+              <div
+                className="placeholder-table__row"
+                key={mov.id}
+                style={{ gridTemplateColumns: '1.2fr 2fr 1.5fr 1fr 1fr 2fr', alignItems: 'center' }}
+              >
+                <span style={{ fontSize: 12, color: '#64748b' }}>
+                  {new Date(mov.movementDate).toLocaleString()}
+                </span>
                 <span>
                   <b>{itemLabel(mov.itemId)}</b>
                   <div style={{ fontSize: 11, color: '#94a3b8' }}>{itemCode(mov.itemId)}</div>
                 </span>
                 <span>{whLabel(mov.warehouseId)}</span>
                 <span>
-                  <span className={`status status--${isReceipt ? 'success' : 'neutral'}`} style={{ fontSize: 11, padding: '2px 6px' }}>
+                  <span
+                    className={`status status--${isReceipt ? 'success' : 'neutral'}`}
+                    style={{ fontSize: 11, padding: '2px 6px' }}
+                  >
                     {mov.movementType.toUpperCase()}
                   </span>
                 </span>
                 <span>
                   <b style={{ color: isReceipt ? '#166534' : '#b91c1c' }}>
-                    {isReceipt ? '+' : '-'}{qtyChange.toFixed(2)}
+                    {isReceipt ? '+' : '-'}
+                    {qtyChange.toFixed(2)}
                   </b>
                 </span>
                 <span style={{ fontSize: 12, color: '#475569' }}>{mov.note || '—'}</span>

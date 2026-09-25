@@ -1,8 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { AccountingValidationError } from './accounting.errors';
 import { AccountingRepository } from './accounting.repository';
 import { AccountingService } from './accounting.service';
 import type { JournalEntryRecord } from './accounting.types';
-import type { PostingMovementType, ResolvedAccounts, StockMovementPostingPayload } from './posting-engine.types';
+import type {
+  PostingMovementType,
+  ResolvedAccounts,
+  StockMovementPostingPayload,
+} from './posting-engine.types';
 
 @Injectable()
 export class PostingEngineService {
@@ -28,15 +33,22 @@ export class PostingEngineService {
 
     // 1. Resolve Inventory Asset Account
     const whDet = determinations.find(
-      (d) => d.determinationType === 'warehouse' && d.referenceId === warehouseId && d.accountPurpose === 'inventory',
+      (d) =>
+        d.determinationType === 'warehouse' &&
+        d.referenceId === warehouseId &&
+        d.accountPurpose === 'inventory',
     );
     const defaultInvDet = determinations.find(
       (d) => d.determinationType === 'default' && d.accountPurpose === 'inventory',
     );
-    const inventoryAccountId = whDet?.accountId ?? defaultInvDet?.accountId ?? null;
+    // Plan item 33: the company's default inventory account is the last fallback.
+    const inventoryAccountId =
+      whDet?.accountId ?? defaultInvDet?.accountId ?? config?.defaultInventoryAccountId ?? null;
 
     if (!inventoryAccountId) {
-      this.logger.warn(`No inventory asset account mapped for orgNodeId=${orgNodeId}, warehouseId=${warehouseId}`);
+      this.logger.warn(
+        `No inventory asset account mapped for orgNodeId=${orgNodeId}, warehouseId=${warehouseId}`,
+      );
       return null;
     }
 
@@ -50,7 +62,9 @@ export class PostingEngineService {
         contraAccountId = wipDet?.accountId ?? config?.defaultWipAccountId ?? null;
       } else {
         // Purchase receipt -> GRNI account
-        const grniDet = determinations.find((d) => d.accountPurpose === 'purchase' || d.accountPurpose === 'grni');
+        const grniDet = determinations.find(
+          (d) => d.accountPurpose === 'purchase' || d.accountPurpose === 'grni',
+        );
         contraAccountId = grniDet?.accountId ?? config?.defaultGrniAccountId ?? null;
       }
     } else if (movementType === 'issue' || movementType === 'transfer_out') {
@@ -73,7 +87,9 @@ export class PostingEngineService {
     }
 
     if (!contraAccountId) {
-      this.logger.warn(`No contra account mapped for movementType=${movementType}, sourceModule=${sourceModule}, orgNodeId=${orgNodeId}`);
+      this.logger.warn(
+        `No contra account mapped for movementType=${movementType}, sourceModule=${sourceModule}, orgNodeId=${orgNodeId}`,
+      );
       return null;
     }
 
@@ -81,10 +97,38 @@ export class PostingEngineService {
   }
 
   /**
+   * Plan item 33: when the company enforces its default accounts, a movement whose accounts
+   * cannot be resolved is refused BEFORE anything is saved (otherwise it would post nothing).
+   */
+  async assertCanPost(
+    orgNodeId: string,
+    warehouseId: string,
+    movementType: PostingMovementType,
+    sourceModule?: string | null,
+  ): Promise<void> {
+    orgNodeId = await this.repository.findAccountingOrgNode(orgNodeId);
+    const config = await this.repository.findCompanyConfig(orgNodeId);
+    if (!config?.enforceDefaultAccounts) return;
+    const accounts = await this.resolveStockMovementAccounts(
+      orgNodeId,
+      warehouseId,
+      movementType,
+      sourceModule,
+    );
+    if (!accounts) {
+      throw new AccountingValidationError(
+        `الشركة مفعّلة "الحسابات الافتراضية الإجبارية" والحركة دي (${movementType}${sourceModule ? ` / ${sourceModule}` : ''}) ملهاش حسابات — كمّل الحسابات من شاشة إعدادات الشركة (GET accounting/company-config/${orgNodeId}/readiness)`,
+      );
+    }
+  }
+
+  /**
    * Automatically generates and posts a balanced journal entry for a stock movement.
    * Guaranteed to be idempotent via unique idempotencyKey.
    */
-  async postStockMovement(payload: StockMovementPostingPayload): Promise<JournalEntryRecord | null> {
+  async postStockMovement(
+    payload: StockMovementPostingPayload,
+  ): Promise<JournalEntryRecord | null> {
     const valueNum = Number(payload.totalValue);
     if (!Number.isFinite(valueNum) || valueNum <= 0) {
       return null; // Zero-value movements do not generate financial postings
@@ -98,16 +142,20 @@ export class PostingEngineService {
       return existing;
     }
 
-    // 2. Resolve Accounts
+    // 2. Resolve Accounts — in the books of the warehouse's company (a branch without its own
+    // accounting config posts to the nearest ancestor that has one).
+    const booksOrgNodeId = await this.repository.findAccountingOrgNode(payload.orgNodeId);
     const accounts = await this.resolveStockMovementAccounts(
-      payload.orgNodeId,
+      booksOrgNodeId,
       payload.warehouseId,
       payload.movementType,
       payload.sourceModule,
     );
 
     if (!accounts) {
-      this.logger.log(`Skipping auto-posting for movement ${payload.movementId}: Accounts not mapped.`);
+      this.logger.log(
+        `Skipping auto-posting for movement ${payload.movementId}: Accounts not mapped.`,
+      );
       return null;
     }
 
@@ -146,7 +194,7 @@ export class PostingEngineService {
 
     // 3. Create Balanced Double-Entry Journal Entry
     const draftEntry = await this.accountingService.createEntry({
-      orgNodeId: payload.orgNodeId,
+      orgNodeId: booksOrgNodeId,
       description: desc,
       reference: payload.movementId,
       entryDate: payload.movementDate,

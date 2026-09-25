@@ -1,15 +1,23 @@
+import { CrmService } from '../crm/crm.service';
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { PlanningNotFoundError, PlanningValidationError } from './planning.errors';
 import { PlanningRepository } from './planning.repository';
 import { ProductionOpsService } from '../production_ops/production_ops.service';
 import { InventoryService } from '../inventory/inventory.service';
 import type {
-  CreateMaterialRequestInput, CreateProductionPlanInput, CreateSalesForecastInput,
-  MaterialRequestRecord, ProductionPlanRecord, SalesForecastRecord,
-  CreateItemLeadTimeInput, ItemLeadTimeRecord,
-  CreateMpsInput, MasterProductionScheduleRecord,
-  SalesForecastPeriodLineInput, SalesForecastPeriodLineRecord,
+  CreateMaterialRequestInput,
+  CreateProductionPlanInput,
+  CreateSalesForecastInput,
+  MaterialRequestRecord,
+  ProductionPlanRecord,
+  SalesForecastRecord,
+  CreateItemLeadTimeInput,
+  ItemLeadTimeRecord,
+  CreateMpsInput,
+  MasterProductionScheduleRecord,
+  SalesForecastPeriodLineInput,
+  SalesForecastPeriodLineRecord,
 } from './planning.types';
 
 @Injectable()
@@ -18,9 +26,12 @@ export class PlanningService {
     private readonly repository: PlanningRepository,
     private readonly productionOpsService: ProductionOpsService,
     private readonly inventoryService: InventoryService,
+    @Optional() private readonly crm?: CrmService,
   ) {}
 
-  async getSalesForecasts(): Promise<SalesForecastRecord[]> { return this.repository.listSalesForecasts(); }
+  async getSalesForecasts(): Promise<SalesForecastRecord[]> {
+    return this.repository.listSalesForecasts();
+  }
 
   async getSalesForecast(id: string): Promise<SalesForecastRecord> {
     const found = await this.repository.findSalesForecastById(id);
@@ -37,7 +48,8 @@ export class PlanningService {
     }
     for (const line of input.lines) {
       const qty = Number(line.forecastQuantity);
-      if (!Number.isFinite(qty) || qty <= 0) throw new PlanningValidationError('every forecast line quantity must be positive');
+      if (!Number.isFinite(qty) || qty <= 0)
+        throw new PlanningValidationError('every forecast line quantity must be positive');
     }
     const sequence = (await this.repository.countSalesForecasts()) + 1;
     const year = new Date().getFullYear();
@@ -48,11 +60,16 @@ export class PlanningService {
   async submitSalesForecast(id: string): Promise<SalesForecastRecord> {
     const found = await this.repository.findSalesForecastById(id);
     if (!found) throw new PlanningNotFoundError(`sales forecast ${id} does not exist`);
-    if (found.status !== 'draft') throw new PlanningValidationError(`sales forecast ${id} is "${found.status}" and cannot be submitted (must be "draft")`);
+    if (found.status !== 'draft')
+      throw new PlanningValidationError(
+        `sales forecast ${id} is "${found.status}" and cannot be submitted (must be "draft")`,
+      );
     return this.repository.setSalesForecastStatus(id, 'submitted');
   }
 
-  async getMaterialRequests(): Promise<MaterialRequestRecord[]> { return this.repository.listMaterialRequests(); }
+  async getMaterialRequests(): Promise<MaterialRequestRecord[]> {
+    return this.repository.listMaterialRequests();
+  }
 
   async getMaterialRequest(id: string): Promise<MaterialRequestRecord> {
     const found = await this.repository.findMaterialRequestById(id);
@@ -66,7 +83,24 @@ export class PlanningService {
     }
     for (const line of input.lines) {
       const qty = Number(line.quantity);
-      if (!Number.isFinite(qty) || qty <= 0) throw new PlanningValidationError('every material request line quantity must be positive');
+      if (!Number.isFinite(qty) || qty <= 0)
+        throw new PlanningValidationError('every material request line quantity must be positive');
+    }
+    // Plan item 24: customer-provided material names its customer; subcontracting may name the
+    // subcontractor. Both are CRM UUIDs checked through the CRM service (D2).
+    if (input.purpose === 'customer_provided' && !input.customerId)
+      throw new PlanningValidationError('a customer-provided material request needs customerId');
+    if (input.customerId && input.purpose !== 'customer_provided')
+      throw new PlanningValidationError('customerId is only for purpose "customer_provided"');
+    if (input.supplierId && input.purpose !== 'subcontracting')
+      throw new PlanningValidationError('supplierId is only for purpose "subcontracting"');
+    if (this.crm) {
+      try {
+        if (input.customerId) await this.crm.getCustomer(input.customerId);
+        if (input.supplierId) await this.crm.getSupplier(input.supplierId);
+      } catch (err) {
+        throw new PlanningNotFoundError((err as Error).message);
+      }
     }
     const sequence = (await this.repository.countMaterialRequests()) + 1;
     const year = new Date().getFullYear();
@@ -77,11 +111,16 @@ export class PlanningService {
   async submitMaterialRequest(id: string): Promise<MaterialRequestRecord> {
     const found = await this.repository.findMaterialRequestById(id);
     if (!found) throw new PlanningNotFoundError(`material request ${id} does not exist`);
-    if (found.status !== 'draft') throw new PlanningValidationError(`material request ${id} is "${found.status}" and cannot be submitted (must be "draft")`);
+    if (found.status !== 'draft')
+      throw new PlanningValidationError(
+        `material request ${id} is "${found.status}" and cannot be submitted (must be "draft")`,
+      );
     return this.repository.setMaterialRequestStatus(id, 'submitted');
   }
 
-  async getProductionPlans(): Promise<ProductionPlanRecord[]> { return this.repository.listProductionPlans(); }
+  async getProductionPlans(): Promise<ProductionPlanRecord[]> {
+    return this.repository.listProductionPlans();
+  }
 
   async getProductionPlan(id: string): Promise<ProductionPlanRecord> {
     const found = await this.repository.findProductionPlanById(id);
@@ -98,7 +137,8 @@ export class PlanningService {
     }
     for (const it of input.items) {
       const qty = Number(it.qtyToPlan);
-      if (!Number.isFinite(qty) || qty <= 0) throw new PlanningValidationError('every production plan item quantity must be positive');
+      if (!Number.isFinite(qty) || qty <= 0)
+        throw new PlanningValidationError('every production plan item quantity must be positive');
     }
     const sequence = (await this.repository.countProductionPlans()) + 1;
     const year = new Date().getFullYear();
@@ -109,20 +149,32 @@ export class PlanningService {
   async submitProductionPlan(id: string): Promise<ProductionPlanRecord> {
     const found = await this.repository.findProductionPlanById(id);
     if (!found) throw new PlanningNotFoundError(`production plan ${id} does not exist`);
-    if (found.status !== 'draft') throw new PlanningValidationError(`production plan ${id} is "${found.status}" and cannot be submitted (must be "draft")`);
+    if (found.status !== 'draft')
+      throw new PlanningValidationError(
+        `production plan ${id} is "${found.status}" and cannot be submitted (must be "draft")`,
+      );
     return this.repository.setProductionPlanStatus(id, 'submitted');
   }
 
   async createWorkOrdersFromPlan(id: string): Promise<ProductionPlanRecord> {
     const plan = await this.repository.findProductionPlanById(id);
     if (!plan) throw new PlanningNotFoundError(`production plan ${id} does not exist`);
-    if (plan.status !== 'submitted') throw new PlanningValidationError(`production plan ${id} is "${plan.status}" and cannot generate work orders (must be "submitted")`);
+    if (plan.status !== 'submitted')
+      throw new PlanningValidationError(
+        `production plan ${id} is "${plan.status}" and cannot generate work orders (must be "submitted")`,
+      );
     for (const it of plan.items) {
       if (it.workOrderId) continue;
-      if (!it.warehouseId) throw new PlanningValidationError(`item ${it.id} has no finished goods warehouse set; cannot create a work order for it`);
+      if (!it.warehouseId)
+        throw new PlanningValidationError(
+          `item ${it.id} has no finished goods warehouse set; cannot create a work order for it`,
+        );
       const wo = await this.productionOpsService.createWorkOrder({
-        productItemId: it.productItemId, bomId: it.bomId, orgNodeId: plan.orgNodeId,
-        qtyToManufacture: it.qtyToPlan, finishedGoodsWarehouseId: it.warehouseId,
+        productItemId: it.productItemId,
+        bomId: it.bomId,
+        orgNodeId: plan.orgNodeId,
+        qtyToManufacture: it.qtyToPlan,
+        finishedGoodsWarehouseId: it.warehouseId,
       });
       await this.repository.setPpItemWorkOrder(it.id, wo.id);
     }
@@ -132,7 +184,9 @@ export class PlanningService {
     return updated!;
   }
 
-  async getItemLeadTimes(): Promise<ItemLeadTimeRecord[]> { return this.repository.listItemLeadTimes(); }
+  async getItemLeadTimes(): Promise<ItemLeadTimeRecord[]> {
+    return this.repository.listItemLeadTimes();
+  }
 
   async getItemLeadTime(id: string): Promise<ItemLeadTimeRecord> {
     const found = await this.repository.findItemLeadTimeById(id);
@@ -142,10 +196,16 @@ export class PlanningService {
 
   async createItemLeadTime(input: CreateItemLeadTimeInput): Promise<ItemLeadTimeRecord> {
     const existing = await this.repository.findItemLeadTimeByItemId(input.itemId);
-    if (existing) throw new PlanningValidationError(`an item lead time record already exists for item ${input.itemId}`);
+    if (existing)
+      throw new PlanningValidationError(
+        `an item lead time record already exists for item ${input.itemId}`,
+      );
     for (const s of input.supplierLeadTimes ?? []) {
       const days = Number(s.leadTimeDays);
-      if (!Number.isFinite(days) || days <= 0) throw new PlanningValidationError('every supplier lead time must be a positive number of days');
+      if (!Number.isFinite(days) || days <= 0)
+        throw new PlanningValidationError(
+          'every supplier lead time must be a positive number of days',
+        );
     }
     return this.repository.insertItemLeadTime({ id: randomUUID(), ...input });
   }
@@ -154,7 +214,9 @@ export class PlanningService {
     return this.repository.replaceBomInProductionPlanItems(oldBomId, newBomId);
   }
 
-  async getMpsList(): Promise<MasterProductionScheduleRecord[]> { return this.repository.listMps(); }
+  async getMpsList(): Promise<MasterProductionScheduleRecord[]> {
+    return this.repository.listMps();
+  }
 
   async getMps(id: string): Promise<MasterProductionScheduleRecord> {
     const found = await this.repository.findMpsById(id);
@@ -164,14 +226,17 @@ export class PlanningService {
 
   async createMps(input: CreateMpsInput): Promise<MasterProductionScheduleRecord> {
     if (!input.scheduleLines || input.scheduleLines.length === 0) {
-      throw new PlanningValidationError('a master production schedule must have at least one schedule line');
+      throw new PlanningValidationError(
+        'a master production schedule must have at least one schedule line',
+      );
     }
     if (new Date(input.toDate) < new Date(input.fromDate)) {
       throw new PlanningValidationError('toDate cannot be before fromDate');
     }
     for (const line of input.scheduleLines) {
       const qty = Number(line.forecastQuantity);
-      if (!Number.isFinite(qty) || qty <= 0) throw new PlanningValidationError('every schedule line forecast quantity must be positive');
+      if (!Number.isFinite(qty) || qty <= 0)
+        throw new PlanningValidationError('every schedule line forecast quantity must be positive');
     }
     const sequence = (await this.repository.countMps()) + 1;
     const year = new Date().getFullYear();
@@ -182,16 +247,24 @@ export class PlanningService {
   async submitMps(id: string): Promise<MasterProductionScheduleRecord> {
     const found = await this.repository.findMpsById(id);
     if (!found) throw new PlanningNotFoundError(`master production schedule ${id} does not exist`);
-    if (found.status !== 'draft') throw new PlanningValidationError(`master production schedule ${id} is "${found.status}" and cannot be submitted (must be "draft")`);
+    if (found.status !== 'draft')
+      throw new PlanningValidationError(
+        `master production schedule ${id} is "${found.status}" and cannot be submitted (must be "draft")`,
+      );
     return this.repository.setMpsStatus(id, 'submitted');
   }
 
   async getProjectedQuantity(id: string): Promise<MasterProductionScheduleRecord> {
     const found = await this.repository.findMpsById(id);
     if (!found) throw new PlanningNotFoundError(`master production schedule ${id} does not exist`);
-    if (!found.warehouseId) throw new PlanningValidationError(`master production schedule ${id} has no warehouse set; cannot look up projected quantity`);
+    if (!found.warehouseId)
+      throw new PlanningValidationError(
+        `master production schedule ${id} has no warehouse set; cannot look up projected quantity`,
+      );
     const balances = await this.inventoryService.getBalances();
-    const match = balances.find((b) => b.itemId === found.itemId && b.warehouseId === found.warehouseId);
+    const match = balances.find(
+      (b) => b.itemId === found.itemId && b.warehouseId === found.warehouseId,
+    );
     return this.repository.setMpsProjectedQuantity(id, match ? match.available : '0');
   }
 
@@ -200,11 +273,15 @@ export class PlanningService {
     return this.repository.listPeriodLines(salesForecastId);
   }
 
-  async setPeriodLines(salesForecastId: string, lines: SalesForecastPeriodLineInput[]): Promise<SalesForecastPeriodLineRecord[]> {
+  async setPeriodLines(
+    salesForecastId: string,
+    lines: SalesForecastPeriodLineInput[],
+  ): Promise<SalesForecastPeriodLineRecord[]> {
     await this.getSalesForecast(salesForecastId);
     for (const line of lines) {
       const qty = Number(line.forecastQuantity);
-      if (!Number.isFinite(qty) || qty <= 0) throw new PlanningValidationError('every period line forecast quantity must be positive');
+      if (!Number.isFinite(qty) || qty <= 0)
+        throw new PlanningValidationError('every period line forecast quantity must be positive');
     }
     return this.repository.setPeriodLines(salesForecastId, lines);
   }

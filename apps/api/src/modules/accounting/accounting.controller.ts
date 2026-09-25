@@ -17,11 +17,9 @@ import {
   CreateAccountDeterminationDto,
   CreateCostCenterDto,
   CreateFiscalYearDto,
-  CreateFixedAssetDto,
   CreateJournalEntryDto,
   FinancialReportQueryDto,
   PartnerLedgerQueryDto,
-  PostDepreciationDto,
   PostVatSettlementDto,
   UpsertCompanyAccountingConfigDto,
 } from './accounting.dto';
@@ -34,10 +32,8 @@ import type {
   BalanceSheetReport,
   CostCenterRecord,
   FiscalYearRecord,
-  FixedAssetRecord,
   JournalEntryRecord,
   PartnerLedgerReport,
-  PostDepreciationResult,
   ProfitAndLossReport,
   TrialBalanceReport,
   VatReportSummary,
@@ -50,28 +46,50 @@ export class AccountingController {
   constructor(private readonly service: AccountingService) {}
 
   @Get('account-types')
-  async accountTypes(): Promise<{ accountTypes: AccountTypeRecord[] }> { return { accountTypes: await this.service.getAccountTypes() }; }
+  async accountTypes(): Promise<{ accountTypes: AccountTypeRecord[] }> {
+    return { accountTypes: await this.service.getAccountTypes() };
+  }
 
-  @Post('account-types') @HttpCode(201)
-  async createAccountType(@Body() dto: CreateAccountTypeDto): Promise<{ accountType: AccountTypeRecord }> {
+  @Post('account-types')
+  @HttpCode(201)
+  async createAccountType(
+    @Body() dto: CreateAccountTypeDto,
+  ): Promise<{ accountType: AccountTypeRecord }> {
     return { accountType: await this.service.createAccountType(dto) };
   }
 
   @Get('accounts')
-  async accounts(): Promise<{ accounts: ChartOfAccountsRecord[] }> { return { accounts: await this.service.getAccounts() }; }
+  async accounts(): Promise<{ accounts: ChartOfAccountsRecord[] }> {
+    return { accounts: await this.service.getAccounts() };
+  }
 
-  @Post('accounts') @HttpCode(201)
-  async createAccount(@Body() dto: CreateChartOfAccountsDto): Promise<{ account: ChartOfAccountsRecord }> {
-    return { account: await this.service.createAccount({ code: dto.code, name: dto.name, orgNodeId: dto.orgNodeId, accountTypeId: dto.accountTypeId, parentId: dto.parentId }) };
+  @Post('accounts')
+  @HttpCode(201)
+  async createAccount(
+    @Body() dto: CreateChartOfAccountsDto,
+  ): Promise<{ account: ChartOfAccountsRecord }> {
+    return {
+      account: await this.service.createAccount({
+        code: dto.code,
+        name: dto.name,
+        orgNodeId: dto.orgNodeId,
+        accountTypeId: dto.accountTypeId,
+        parentId: dto.parentId,
+      }),
+    };
   }
   @Get('fiscal-years')
-  async fiscalYears(@Query('orgNodeId') orgNodeId?: string): Promise<{ fiscalYears: FiscalYearRecord[] }> {
+  async fiscalYears(
+    @Query('orgNodeId') orgNodeId?: string,
+  ): Promise<{ fiscalYears: FiscalYearRecord[] }> {
     return { fiscalYears: await this.service.getFiscalYears(orgNodeId) };
   }
 
   @Post('fiscal-years')
   @HttpCode(201)
-  async createFiscalYear(@Body() dto: CreateFiscalYearDto): Promise<{ fiscalYear: FiscalYearRecord }> {
+  async createFiscalYear(
+    @Body() dto: CreateFiscalYearDto,
+  ): Promise<{ fiscalYear: FiscalYearRecord }> {
     const created = await this.service.createFiscalYear(dto);
     return { fiscalYear: created };
   }
@@ -84,7 +102,9 @@ export class AccountingController {
   }
 
   @Get('fiscal-years/:id/periods')
-  async periods(@Param('id', ParseUUIDPipe) id: string): Promise<{ periods: AccountingPeriodRecord[] }> {
+  async periods(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ periods: AccountingPeriodRecord[] }> {
     return { periods: await this.service.getPeriods(id) };
   }
 
@@ -98,13 +118,17 @@ export class AccountingController {
   }
 
   @Get('cost-centers')
-  async costCenters(@Query('orgNodeId') orgNodeId?: string): Promise<{ costCenters: CostCenterRecord[] }> {
+  async costCenters(
+    @Query('orgNodeId') orgNodeId?: string,
+  ): Promise<{ costCenters: CostCenterRecord[] }> {
     return { costCenters: await this.service.getCostCenters(orgNodeId) };
   }
 
   @Post('cost-centers')
   @HttpCode(201)
-  async createCostCenter(@Body() dto: CreateCostCenterDto): Promise<{ costCenter: CostCenterRecord }> {
+  async createCostCenter(
+    @Body() dto: CreateCostCenterDto,
+  ): Promise<{ costCenter: CostCenterRecord }> {
     const created = await this.service.createCostCenter(dto);
     return { costCenter: created };
   }
@@ -114,6 +138,11 @@ export class AccountingController {
     return { config: await this.service.getCompanyConfig(orgNodeId) };
   }
 
+  @Get('company-config/:orgNodeId/readiness')
+  async companyReadiness(@Param('orgNodeId', ParseUUIDPipe) orgNodeId: string) {
+    return this.service.defaultAccountsReadiness(orgNodeId);
+  }
+
   @Post('company-config')
   @HttpCode(200)
   async upsertCompanyConfig(@Body() dto: UpsertCompanyAccountingConfigDto) {
@@ -121,13 +150,17 @@ export class AccountingController {
   }
 
   @Get('account-determinations/:orgNodeId')
-  async accountDeterminations(@Param('orgNodeId', ParseUUIDPipe) orgNodeId: string): Promise<{ determinations: AccountDeterminationRecord[] }> {
+  async accountDeterminations(
+    @Param('orgNodeId', ParseUUIDPipe) orgNodeId: string,
+  ): Promise<{ determinations: AccountDeterminationRecord[] }> {
     return { determinations: await this.service.getAccountDeterminations(orgNodeId) };
   }
 
   @Post('account-determinations')
   @HttpCode(201)
-  async createAccountDetermination(@Body() dto: CreateAccountDeterminationDto): Promise<{ determination: AccountDeterminationRecord }> {
+  async createAccountDetermination(
+    @Body() dto: CreateAccountDeterminationDto,
+  ): Promise<{ determination: AccountDeterminationRecord }> {
     const created = await this.service.createAccountDetermination(dto);
     return { determination: created };
   }
@@ -138,59 +171,40 @@ export class AccountingController {
   }
 
   @Get('journal-entries/:id')
-  async journalEntry(@Param('id', ParseUUIDPipe) id: string): Promise<{ entry: JournalEntryRecord }> {
+  async journalEntry(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ entry: JournalEntryRecord }> {
     return { entry: await this.service.getEntry(id) };
   }
 
   @Post('journal-entries')
   @HttpCode(201)
-  async createJournalEntry(@Body() dto: CreateJournalEntryDto): Promise<{ entry: JournalEntryRecord }> {
+  async createJournalEntry(
+    @Body() dto: CreateJournalEntryDto,
+  ): Promise<{ entry: JournalEntryRecord }> {
     const created = await this.service.createEntry(dto);
     return { entry: created };
   }
 
   @Post('journal-entries/:id/post')
   @HttpCode(200)
-  async postJournalEntry(@Param('id', ParseUUIDPipe) id: string): Promise<{ entry: JournalEntryRecord }> {
+  async postJournalEntry(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ entry: JournalEntryRecord }> {
     return { entry: await this.service.postEntry(id) };
   }
 
   @Post('journal-entries/:id/cancel')
   @HttpCode(200)
-  async cancelJournalEntry(@Param('id', ParseUUIDPipe) id: string): Promise<{ entry: JournalEntryRecord }> {
+  async cancelJournalEntry(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<{ entry: JournalEntryRecord }> {
     return { entry: await this.service.cancelEntry(id) };
   }
 
   @Get('balances')
   async accountBalances(): Promise<{ balances: AccountBalance[] }> {
     return { balances: await this.service.getAccountBalances() };
-  }
-
-  // --- Fixed Assets Endpoints ---
-  @Get('fixed-assets')
-  async fixedAssets(@Query('orgNodeId') orgNodeId?: string): Promise<{ fixedAssets: FixedAssetRecord[] }> {
-    return { fixedAssets: await this.service.getFixedAssets(orgNodeId) };
-  }
-
-  @Get('fixed-assets/:id')
-  async fixedAsset(@Param('id', ParseUUIDPipe) id: string): Promise<{ fixedAsset: FixedAssetRecord }> {
-    return { fixedAsset: await this.service.getFixedAsset(id) };
-  }
-
-  @Post('fixed-assets')
-  @HttpCode(201)
-  async createFixedAsset(@Body() dto: CreateFixedAssetDto): Promise<{ fixedAsset: FixedAssetRecord }> {
-    const created = await this.service.createFixedAsset(dto);
-    return { fixedAsset: created };
-  }
-
-  @Post('fixed-assets/:id/depreciate')
-  @HttpCode(200)
-  async postDepreciation(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: PostDepreciationDto,
-  ): Promise<PostDepreciationResult> {
-    return this.service.postAssetDepreciation(id, dto.periodDate);
   }
 
   // --- Financial Reports Endpoints ---
@@ -212,7 +226,12 @@ export class AccountingController {
 
   @Get('reports/partner-ledger')
   async partnerLedger(@Query() query: PartnerLedgerQueryDto): Promise<PartnerLedgerReport> {
-    return this.service.getPartnerLedger(query.partyType, query.partyId, query.startDate, query.endDate);
+    return this.service.getPartnerLedger(
+      query.partyType,
+      query.partyId,
+      query.startDate,
+      query.endDate,
+    );
   }
 
   // --- VAT Return & Tax Settlement Endpoints ---

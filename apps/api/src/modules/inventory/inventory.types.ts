@@ -1,6 +1,47 @@
 export type WarehouseStatus = 'active' | 'inactive' | 'archived';
 export type MovementType = 'receipt' | 'issue' | 'transfer_in' | 'transfer_out' | 'adjustment';
+/**
+ * What a movement is for. Kept apart from MovementType, which drives the accounting direction:
+ * - material_transfer_for_manufacture: raw material moved to a production (WIP) warehouse (transfer_out / transfer_in)
+ * - manufacture_consumption: material actually consumed by production (issue)
+ */
+export type MovementPurpose =
+  'general' | 'material_transfer_for_manufacture' | 'manufacture_consumption';
 export type ReservationStatus = 'active' | 'released';
+/** Plan item 13: seven separate reservation / request types (see stock_reservation.reservation_type). */
+export type ReservationType =
+  | 'sales_order'
+  | 'production'
+  | 'subcontract'
+  | 'production_plan'
+  | 'purchase_order'
+  | 'material_request'
+  | 'work_order';
+/** Types that hold existing stock (reduce availability); the rest are expected incoming quantities. */
+export const RESERVING_TYPES: readonly ReservationType[] = [
+  'sales_order',
+  'production',
+  'subcontract',
+  'production_plan',
+];
+
+/** Per item/warehouse quantities, like ERPNext's Bin (plan item 13). */
+export interface StockBinRecord {
+  itemId: string;
+  warehouseId: string;
+  actualQty: string;
+  reservedQty: string;
+  reservedForProduction: string;
+  reservedForSubcontract: string;
+  reservedForProductionPlan: string;
+  orderedQty: string;
+  indentedQty: string;
+  plannedQty: string;
+  /** actual − all reserving quantities */
+  availableQty: string;
+  /** actual + ordered + indented + planned − all reserving quantities */
+  projectedQty: string;
+}
 export type ItemBatchStatus = 'active' | 'expired' | 'quarantined' | 'recalled';
 export type SerialNumberStatus = 'active' | 'delivered' | 'under_maintenance' | 'decommissioned';
 export type LandedCostStatus = 'draft' | 'posted' | 'cancelled';
@@ -12,6 +53,9 @@ export interface WarehouseRecord {
   name: string;
   orgNodeId: string;
   status: WarehouseStatus;
+  /** Plan item 23: parent in the warehouse tree, and whether this is a group (no stock of its own). */
+  parentWarehouseId?: string | null;
+  isGroup?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -41,6 +85,7 @@ export interface StockMovementRecord {
   itemId: string;
   warehouseId: string;
   movementType: MovementType;
+  purpose: MovementPurpose;
   quantity: string;
   movementDate: string;
   note: string | null;
@@ -49,6 +94,8 @@ export interface StockMovementRecord {
   totalValue: string | null;
   sourceModule: string | null;
   sourceId: string | null;
+  batchId?: string | null;
+  serialNos?: string[];
 }
 
 export interface CreateMovementInput {
@@ -61,6 +108,39 @@ export interface CreateMovementInput {
   unitCost?: string;
   sourceModule?: string;
   sourceId?: string;
+  /** Allow a movement dated before the latest movement of the same item/warehouse (requires backdateReason). */
+  allowBackdate?: boolean;
+  backdateReason?: string;
+  /** Required for batch-tracked items (catalog item.hasBatchNo). */
+  batchId?: string;
+  /** Required for serial-tracked items (catalog item.hasSerialNo): one serial per unit. */
+  serialNos?: string[];
+  /** Defaults to 'general'. */
+  purpose?: MovementPurpose;
+  /**
+   * Receipt against an approved supplier quotation (the purchase order, plan item 12): the
+   * cumulative received quantity may exceed the ordered one only within the over-receipt %.
+   */
+  purchaseOrderId?: string;
+}
+
+export interface TransferStockInput {
+  itemId: string;
+  fromWarehouseId: string;
+  toWarehouseId: string;
+  quantity: string;
+  purpose?: MovementPurpose;
+  batchId?: string;
+  serialNos?: string[];
+  movementDate?: string;
+  note?: string;
+  sourceModule?: string;
+  sourceId?: string;
+}
+
+export interface TransferStockResult {
+  transferOut: StockMovementRecord;
+  transferIn: StockMovementRecord;
 }
 
 export interface StockReservationRecord {
@@ -69,6 +149,7 @@ export interface StockReservationRecord {
   warehouseId: string;
   quantity: string;
   source: string;
+  reservationType: ReservationType;
   status: ReservationStatus;
   createdAt: string;
   releasedAt: string | null;
@@ -79,6 +160,8 @@ export interface CreateReservationInput {
   warehouseId: string;
   quantity: string;
   source: string;
+  /** Defaults to 'sales_order'. */
+  reservationType?: ReservationType;
 }
 
 // --- Stock Ledger Entry Types ---
@@ -87,6 +170,7 @@ export interface StockLedgerEntryRecord {
   itemId: string;
   warehouseId: string;
   movementId: string | null;
+  batchId?: string | null;
   quantityChange: string;
   balanceQtyAfter: string;
   incomingRate: string;
@@ -100,6 +184,7 @@ export interface CreateStockLedgerEntryInput {
   itemId: string;
   warehouseId: string;
   movementId?: string | null;
+  batchId?: string | null;
   quantityChange: string;
   balanceQtyAfter: string;
   incomingRate?: string;
@@ -129,6 +214,17 @@ export interface CreateItemBatchInput {
   manufacturingDate?: string;
   expiryDate?: string;
   notes?: string;
+}
+
+export interface BatchBalanceRecord {
+  id: string;
+  batchId: string;
+  itemId: string;
+  warehouseId: string;
+  quantity: string;
+  valuationRate: string;
+  totalValue: string;
+  updatedAt: string;
 }
 
 // --- Serial Number Tracking Types ---

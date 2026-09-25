@@ -2,9 +2,20 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 
-interface JobOrderRecord { id: string; jobOrderNumber: string; }
-interface ItemRecord { id: string; code: string; name: string; }
-interface WarehouseRecord { id: string; code: string; name: string; }
+interface JobOrderRecord {
+  id: string;
+  jobOrderNumber: string;
+}
+interface ItemRecord {
+  id: string;
+  code: string;
+  name: string;
+}
+interface WarehouseRecord {
+  id: string;
+  code: string;
+  name: string;
+}
 
 interface MaterialRequestRecord {
   id: string;
@@ -25,8 +36,8 @@ export function MaterialPage(): JSX.Element {
   const [items, setItems] = useState<ItemRecord[]>([]);
   const [warehouses, setWarehouses] = useState<WarehouseRecord[]>([]);
   const [requests, setRequests] = useState<MaterialRequestRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState<string | null>(null);
 
   const [selectedJO, setSelectedJO] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -61,7 +72,8 @@ export function MaterialPage(): JSX.Element {
       setRequests(reqRes.requests);
       if (!selectedJO && joRes.jobOrders[0]) setSelectedJO(joRes.jobOrders[0].jobOrderNumber);
       if (!selectedItemId && itemsRes.items[0]) setSelectedItemId(itemsRes.items[0].id);
-      if (!selectedWarehouseId && whRes.warehouses[0]) setSelectedWarehouseId(whRes.warehouses[0].id);
+      if (!selectedWarehouseId && whRes.warehouses[0])
+        setSelectedWarehouseId(whRes.warehouses[0].id);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to load material requests data');
     } finally {
@@ -69,11 +81,15 @@ export function MaterialPage(): JSX.Element {
     }
   }
 
-  useEffect(() => { void loadAll(); }, [i18n.language]);
+  useEffect(() => {
+    void loadAll();
+  }, [i18n.language]);
 
   async function handleCreateRequest(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
+    setFormError(null);
+    setFormSuccess(null);
+    setSubmitting(true);
     try {
       await api.post('/production/material-requests', {
         jobOrderReference: selectedJO,
@@ -85,11 +101,17 @@ export function MaterialPage(): JSX.Element {
       setShowForm(false);
       setFormSuccess(t('pages.material.form.success'));
       await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleApproveDeviation(requestId: string): Promise<void> {
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
+    setFormError(null);
+    setFormSuccess(null);
+    setSubmitting(true);
     try {
       await api.post(`/production/material-requests/${requestId}/approve-deviation`, {
         deviationReason: deviationReasonInput,
@@ -98,16 +120,26 @@ export function MaterialPage(): JSX.Element {
       setDeviationReasonInput('');
       setFormSuccess(t('pages.material.form.success'));
       await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleIssueStock(requestId: string): Promise<void> {
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
+    setFormError(null);
+    setFormSuccess(null);
+    setSubmitting(true);
     try {
       await api.post(`/production/material-requests/${requestId}/issue`, {});
       setFormSuccess(t('pages.material.form.success'));
       await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const itemLabel = (id: string): string => items.find((i) => i.id === id)?.name ?? id;
@@ -128,50 +160,130 @@ export function MaterialPage(): JSX.Element {
       {formSuccess && <p style={{ color: '#166534', padding: '8px 0' }}>{formSuccess}</p>}
 
       {/* JO Selector & Actions */}
-      <div style={{ background: '#fff', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div
+        style={{
+          background: '#fff',
+          padding: 16,
+          borderRadius: 8,
+          border: '1px solid #e2e8f0',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <label style={{ ...labelStyle, fontSize: 14, fontWeight: 'bold' }}>رقم أمر التشغيل (Job Order):</label>
-          <select value={selectedJO} onChange={(e) => setSelectedJO(e.target.value)} style={{ ...inputStyle, minWidth: 200, fontSize: 14, fontWeight: 'bold' }}>
-            {jobOrders.map((jo) => <option key={jo.id} value={jo.jobOrderNumber}>{jo.jobOrderNumber}</option>)}
+          <label style={{ ...labelStyle, fontSize: 14, fontWeight: 'bold' }}>
+            رقم أمر التشغيل (Job Order):
+          </label>
+          <select
+            value={selectedJO}
+            onChange={(e) => setSelectedJO(e.target.value)}
+            style={{ ...inputStyle, minWidth: 200, fontSize: 14, fontWeight: 'bold' }}
+          >
+            {jobOrders.map((jo) => (
+              <option key={jo.id} value={jo.jobOrderNumber}>
+                {jo.jobOrderNumber}
+              </option>
+            ))}
           </select>
         </div>
-        <button className="primary-button" onClick={() => setShowForm((v) => !v)}><b>+</b> {t('pages.material.form.newRequest')}</button>
+        <button className="primary-button" onClick={() => setShowForm((v) => !v)}>
+          <b>+</b> {t('pages.material.form.newRequest')}
+        </button>
       </div>
 
       {showForm && (
         <article className="panel module-panel" style={{ marginBottom: 20 }}>
-          <form onSubmit={(e) => { void handleCreateRequest(e); }} style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '0 0 10px' }}>
-            <h3>{t('pages.material.form.newRequest')} — {selectedJO}</h3>
+          <form
+            onSubmit={(e) => {
+              void handleCreateRequest(e);
+            }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '0 0 10px' }}
+          >
+            <h3>
+              {t('pages.material.form.newRequest')} — {selectedJO}
+            </h3>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.material.table.item')}</label>
-                <select value={selectedItemId} onChange={(e) => setSelectedItemId(e.target.value)} style={{ ...inputStyle, minWidth: 200 }}>
-                  {items.map((it) => <option key={it.id} value={it.id}>{it.name} ({it.code})</option>)}
+                <select
+                  value={selectedItemId}
+                  onChange={(e) => setSelectedItemId(e.target.value)}
+                  style={{ ...inputStyle, minWidth: 200 }}
+                >
+                  {items.map((it) => (
+                    <option key={it.id} value={it.id}>
+                      {it.name} ({it.code})
+                    </option>
+                  ))}
                 </select>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>المخزن</label>
-                <select value={selectedWarehouseId} onChange={(e) => setSelectedWarehouseId(e.target.value)} style={{ ...inputStyle, minWidth: 180 }}>
-                  {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                <select
+                  value={selectedWarehouseId}
+                  onChange={(e) => setSelectedWarehouseId(e.target.value)}
+                  style={{ ...inputStyle, minWidth: 180 }}
+                >
+                  {warehouses.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.material.form.qtyPlanned')}</label>
-                <input type="number" min="0.01" step="any" value={plannedQty} onChange={(e) => setPlannedQty(e.target.value)} required style={{ ...inputStyle, width: 110 }} />
+                <input
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  value={plannedQty}
+                  onChange={(e) => setPlannedQty(e.target.value)}
+                  required
+                  style={{ ...inputStyle, width: 110 }}
+                />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.material.form.qtyRequested')}</label>
-                <input type="number" min="0.01" step="any" value={requestedQty} onChange={(e) => setRequestedQty(e.target.value)} required style={{ ...inputStyle, width: 110 }} />
+                <input
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  value={requestedQty}
+                  onChange={(e) => setRequestedQty(e.target.value)}
+                  required
+                  style={{ ...inputStyle, width: 110 }}
+                />
               </div>
             </div>
 
             {Number(requestedQty) > Number(plannedQty) && (
-              <p style={{ fontSize: 13, color: '#b91c1c', background: '#fef2f2', padding: 10, borderRadius: 6, border: '1px solid #fca5a5' }}>
-                ⚠️ <b>تنبيه انحراف:</b> الكمية المطلوبة ({requestedQty}) أكبر من الكمية المخططة في الـ BOM ({plannedQty}). هذا الطلب سيتوقف ماليًا ولن يُصرف تلقائيًا إلا بعد مراجعة سبب الانحراف واعتماده صراحةً.
+              <p
+                style={{
+                  fontSize: 13,
+                  color: '#b91c1c',
+                  background: '#fef2f2',
+                  padding: 10,
+                  borderRadius: 6,
+                  border: '1px solid #fca5a5',
+                }}
+              >
+                ⚠️ <b>تنبيه انحراف:</b> الكمية المطلوبة ({requestedQty}) أكبر من الكمية المخططة في
+                الـ BOM ({plannedQty}). هذا الطلب سيتوقف ماليًا ولن يُصرف تلقائيًا إلا بعد مراجعة
+                سبب الانحراف واعتماده صراحةً.
               </p>
             )}
 
-            <button type="submit" disabled={submitting} className="primary-button" style={{ alignSelf: 'flex-start' }}>{t('pages.material.form.save')}</button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="primary-button"
+              style={{ alignSelf: 'flex-start' }}
+            >
+              {t('pages.material.form.save')}
+            </button>
           </form>
         </article>
       )}
@@ -196,42 +308,93 @@ export function MaterialPage(): JSX.Element {
           </div>
 
           {requests.filter((r) => r.jobOrderReference === selectedJO).length === 0 && (
-            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.material.form.empty')}</p>
+            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>
+              {t('pages.material.form.empty')}
+            </p>
           )}
 
-          {requests.filter((r) => r.jobOrderReference === selectedJO).map((req) => (
-            <div className="placeholder-table__row" key={req.id}>
-              <span><b>{itemLabel(req.itemId)}</b><small>{req.deviationReason ? `سبب الانحراف: ${req.deviationReason}` : ''}</small></span>
-              <span>{req.plannedQuantity}</span>
-              <span><b>{req.requestedQuantity}</b></span>
-              <span>{req.issuedQuantity ?? '0'}</span>
-              <span>
-                <span className={`status status--${req.status === 'issued' ? 'success' : req.status === 'pending_review' ? 'warning' : 'neutral'}`}>
-                  <i />{req.status}
+          {requests
+            .filter((r) => r.jobOrderReference === selectedJO)
+            .map((req) => (
+              <div className="placeholder-table__row" key={req.id}>
+                <span>
+                  <b>{itemLabel(req.itemId)}</b>
+                  <small>{req.deviationReason ? `سبب الانحراف: ${req.deviationReason}` : ''}</small>
                 </span>
-              </span>
-              <span>
-                {req.status === 'pending_review' && (
-                  <button className="filter-button" style={{ fontSize: 12, padding: '4px 8px', color: '#b91c1c', borderColor: '#fca5a5' }} onClick={() => setShowReviewModal(req.id)}>
-                    {t('pages.material.form.approveDeviation')}
-                  </button>
-                )}
-                {req.status === 'approved' && (
-                  <button className="primary-button" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { void handleIssueStock(req.id); }}>
-                    {t('pages.material.form.issueStock')}
-                  </button>
-                )}
-                {req.status === 'issued' && <span style={{ fontSize: 12, color: '#166534', fontWeight: 'bold' }}>تم الصرف من المخزن ✓</span>}
-              </span>
-            </div>
-          ))}
+                <span>{req.plannedQuantity}</span>
+                <span>
+                  <b>{req.requestedQuantity}</b>
+                </span>
+                <span>{req.issuedQuantity ?? '0'}</span>
+                <span>
+                  <span
+                    className={`status status--${req.status === 'issued' ? 'success' : req.status === 'pending_review' ? 'warning' : 'neutral'}`}
+                  >
+                    <i />
+                    {req.status}
+                  </span>
+                </span>
+                <span>
+                  {req.status === 'pending_review' && (
+                    <button
+                      className="filter-button"
+                      style={{
+                        fontSize: 12,
+                        padding: '4px 8px',
+                        color: '#b91c1c',
+                        borderColor: '#fca5a5',
+                      }}
+                      onClick={() => setShowReviewModal(req.id)}
+                    >
+                      {t('pages.material.form.approveDeviation')}
+                    </button>
+                  )}
+                  {req.status === 'approved' && (
+                    <button
+                      className="primary-button"
+                      style={{ fontSize: 12, padding: '4px 8px' }}
+                      onClick={() => {
+                        void handleIssueStock(req.id);
+                      }}
+                    >
+                      {t('pages.material.form.issueStock')}
+                    </button>
+                  )}
+                  {req.status === 'issued' && (
+                    <span style={{ fontSize: 12, color: '#166534', fontWeight: 'bold' }}>
+                      تم الصرف من المخزن ✓
+                    </span>
+                  )}
+                </span>
+              </div>
+            ))}
         </div>
       </article>
 
       {/* Modal for Approving Deviation */}
       {showReviewModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: '#fff', padding: 24, borderRadius: 8, width: 420, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+          }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              padding: 24,
+              borderRadius: 8,
+              width: 420,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
             <h3 style={{ color: '#b91c1c' }}>{t('pages.material.form.approveDeviation')}</h3>
             <label style={labelStyle}>{t('pages.material.form.reason')}</label>
             <textarea
@@ -243,8 +406,16 @@ export function MaterialPage(): JSX.Element {
               style={{ ...inputStyle, width: '100%', resize: 'none' }}
             />
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 10 }}>
-              <button className="filter-button" onClick={() => setShowReviewModal(null)}>{t('pages.material.form.cancel')}</button>
-              <button className="primary-button" disabled={submitting || !deviationReasonInput.trim()} onClick={() => { void handleApproveDeviation(showReviewModal); }}>
+              <button className="filter-button" onClick={() => setShowReviewModal(null)}>
+                {t('pages.material.form.cancel')}
+              </button>
+              <button
+                className="primary-button"
+                disabled={submitting || !deviationReasonInput.trim()}
+                onClick={() => {
+                  void handleApproveDeviation(showReviewModal);
+                }}
+              >
                 اعتماد وتجاوز
               </button>
             </div>

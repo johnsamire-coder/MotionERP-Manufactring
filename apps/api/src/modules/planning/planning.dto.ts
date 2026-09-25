@@ -1,5 +1,14 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsIn, IsNumberString, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 
 const PERIODICITIES = ['monthly', 'quarterly', 'half_yearly', 'yearly'] as const;
 
@@ -30,13 +39,22 @@ export class MaterialRequestLineDto {
   @IsOptional() @IsString() scheduleDate?: string;
 }
 
-const PURPOSES = ['purchase', 'material_transfer', 'material_issue', 'manufacture'] as const;
+const PURPOSES = [
+  'purchase',
+  'material_transfer',
+  'material_issue',
+  'manufacture',
+  'customer_provided',
+  'subcontracting',
+] as const;
 
 export class CreateMaterialRequestDto {
   @IsUUID() orgNodeId!: string;
   @IsOptional() @IsIn(PURPOSES) purpose?: (typeof PURPOSES)[number];
   @IsOptional() @IsString() requiredByDate?: string;
   @IsOptional() @IsString() jobOrderReference?: string;
+  @IsOptional() @IsUUID() customerId?: string;
+  @IsOptional() @IsUUID() supplierId?: string;
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MaterialRequestLineDto)

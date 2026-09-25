@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { PLATFORM_NAME } from '@motion-erp/shared';
+import { Public } from '../../modules/auth/decorators/public.decorator';
 import { AppConfigService } from '../config/app-config.service';
 import { DatabaseHealthIndicator, type DatabaseHealth } from '../database/database.health';
 
@@ -11,6 +12,7 @@ interface LivenessResponse {
   timestamp: string;
 }
 
+@Public()
 @Controller({ path: 'health', version: '1' })
 export class HealthController {
   constructor(

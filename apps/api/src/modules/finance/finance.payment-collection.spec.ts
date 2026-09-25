@@ -4,11 +4,7 @@ import { SalesService } from '../sales/sales.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { AccountingRepository } from '../accounting/accounting.repository';
 import { FinanceValidationError } from './finance.errors';
-import type {
-  PaymentRecord,
-  CreatePaymentInput,
-  CollectionRecord,
-} from './finance.types';
+import type { PaymentRecord, CreatePaymentInput, CollectionRecord } from './finance.types';
 import type {
   CompanyAccountingConfigRecord,
   AccountDeterminationRecord,
@@ -95,7 +91,9 @@ describe('FinanceService — Payments, Collections & Bank GL Posting', () => {
         mockCollections.set(input.id, record);
         return record;
       }),
-      listCollections: jest.fn().mockImplementation(async () => Array.from(mockCollections.values())),
+      listCollections: jest
+        .fn()
+        .mockImplementation(async () => Array.from(mockCollections.values())),
     } as unknown as FinanceRepository;
 
     salesService = {
@@ -110,6 +108,7 @@ describe('FinanceService — Payments, Collections & Bank GL Posting', () => {
     } as unknown as SalesService;
 
     accountingRepo = {
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn().mockResolvedValue({
         orgNodeId: mockOrgNodeId,
         defaultPayableAccountId: mockApAccountId,
@@ -299,13 +298,9 @@ describe('FinanceService — Payments, Collections & Bank GL Posting', () => {
     await financeService.postPayment(payment.id);
 
     // Try re-posting
-    await expect(financeService.postPayment(payment.id)).rejects.toThrow(
-      FinanceValidationError,
-    );
+    await expect(financeService.postPayment(payment.id)).rejects.toThrow(FinanceValidationError);
 
     // Try cancelling
-    await expect(financeService.cancelPayment(payment.id)).rejects.toThrow(
-      FinanceValidationError,
-    );
+    await expect(financeService.cancelPayment(payment.id)).rejects.toThrow(FinanceValidationError);
   });
 });

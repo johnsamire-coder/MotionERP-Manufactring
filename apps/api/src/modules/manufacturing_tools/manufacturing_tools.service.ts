@@ -26,13 +26,23 @@ export class ManufacturingToolsService {
     const currentBom = await this.technicalService.getBom(currentBomId);
     const newBom = await this.technicalService.getBom(newBomId);
     if (currentBom.productItemId !== newBom.productItemId) {
-      throw new ManufacturingToolsValidationError('currentBomId and newBomId must belong to the same product item');
+      throw new ManufacturingToolsValidationError(
+        'currentBomId and newBomId must belong to the same product item',
+      );
     }
     if (newBom.status !== 'approved') {
-      throw new ManufacturingToolsValidationError(`newBomId ${newBomId} is "${newBom.status}" and cannot replace another BOM (must be "approved")`);
+      throw new ManufacturingToolsValidationError(
+        `newBomId ${newBomId} is "${newBom.status}" and cannot replace another BOM (must be "approved")`,
+      );
     }
-    const workOrdersUpdated = await this.productionOpsService.replaceBomInWorkOrders(currentBomId, newBomId);
-    const productionPlanItemsUpdated = await this.planningService.replaceBomInProductionPlanItems(currentBomId, newBomId);
+    const workOrdersUpdated = await this.productionOpsService.replaceBomInWorkOrders(
+      currentBomId,
+      newBomId,
+    );
+    const productionPlanItemsUpdated = await this.planningService.replaceBomInProductionPlanItems(
+      currentBomId,
+      newBomId,
+    );
     return { currentBomId, newBomId, workOrdersUpdated, productionPlanItemsUpdated };
   }
 }

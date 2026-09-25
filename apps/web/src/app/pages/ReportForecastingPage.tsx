@@ -3,11 +3,28 @@ import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 import { ReportLayout } from '../components/ReportLayout';
 
-interface ItemRecord { id: string; code: string; name: string; }
-interface SfLineRecord { itemId: string; forecastQuantity: string; }
-interface SalesForecastRecord { id: string; lines: SfLineRecord[]; }
-interface OrgNodeTreeItem { id: string; nodeType: string; children: OrgNodeTreeItem[]; }
-interface CompanyProfileRecord { displayName: string | null; logoUrl: string | null; }
+interface ItemRecord {
+  id: string;
+  code: string;
+  name: string;
+}
+interface SfLineRecord {
+  itemId: string;
+  forecastQuantity: string;
+}
+interface SalesForecastRecord {
+  id: string;
+  lines: SfLineRecord[];
+}
+interface OrgNodeTreeItem {
+  id: string;
+  nodeType: string;
+  children: OrgNodeTreeItem[];
+}
+interface CompanyProfileRecord {
+  displayName: string | null;
+  logoUrl: string | null;
+}
 
 function findFirstLegalCompany(nodes: OrgNodeTreeItem[]): OrgNodeTreeItem | null {
   for (const node of nodes) {
@@ -52,10 +69,14 @@ export function ReportForecastingPage(): JSX.Element {
       const company = findFirstLegalCompany(orgRes.tree);
       if (company) {
         try {
-          const profileRes = await api.get<{ companyProfile: CompanyProfileRecord }>(`/settings/company-profile/${company.id}`);
+          const profileRes = await api.get<{ companyProfile: CompanyProfileRecord }>(
+            `/settings/company-profile/${company.id}`,
+          );
           setCompanyName(profileRes.companyProfile.displayName);
           setLogoUrl(profileRes.companyProfile.logoUrl);
-        } catch { setCompanyName(null); }
+        } catch {
+          setCompanyName(null);
+        }
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to load forecasting data');
@@ -64,7 +85,9 @@ export function ReportForecastingPage(): JSX.Element {
     }
   }
 
-  useEffect(() => { void loadAll(); }, [i18n.language]);
+  useEffect(() => {
+    void loadAll();
+  }, [i18n.language]);
 
   const itemLabel = (id: string): string => items.find((it) => it.id === id)?.name ?? id;
 
@@ -78,14 +101,19 @@ export function ReportForecastingPage(): JSX.Element {
     }
     const a = Math.min(1, Math.max(0, Number(alpha) || 0.3));
     return Array.from(seriesByItem.entries()).map(([itemId, series]) => ({
-      itemId, series, forecasted: exponentialSmoothing(series, a),
+      itemId,
+      series,
+      forecasted: exponentialSmoothing(series, a),
     }));
   }, [forecasts, alpha]);
 
   const inputStyle = { padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1' };
   const labelStyle = { fontSize: 12, color: '#64748b' };
 
-  if (loading) return <p style={{ padding: 40, textAlign: 'center' }}>{t('pages.production_ops.form.loading')}</p>;
+  if (loading)
+    return (
+      <p style={{ padding: 40, textAlign: 'center' }}>{t('pages.production_ops.form.loading')}</p>
+    );
 
   return (
     <section className="module-page">
@@ -97,20 +125,46 @@ export function ReportForecastingPage(): JSX.Element {
       </div>
 
       {error && <p style={{ color: '#b91c1c', padding: '8px 0' }}>{error}</p>}
-      <p style={{ fontSize: 12, color: '#b45309', background: '#fffbeb', padding: 10, borderRadius: 6 }}>{t('pages.reports.note2')}</p>
+      <p
+        style={{
+          fontSize: 12,
+          color: '#b45309',
+          background: '#fffbeb',
+          padding: 10,
+          borderRadius: 6,
+        }}
+      >
+        {t('pages.reports.note2')}
+      </p>
 
       <ReportLayout
         title={t('pages.reports.forecastingTitle')}
         companyName={companyName}
         logoUrl={logoUrl}
         filename="exponential-smoothing-forecasting"
-        exportHeaders={[t('pages.reports.item'), t('pages.reports.historicalQty'), t('pages.reports.forecastedQty')]}
-        exportRows={rows.map((r) => [itemLabel(r.itemId), r.series.join(', '), r.forecasted.toFixed(2)])}
+        exportHeaders={[
+          t('pages.reports.item'),
+          t('pages.reports.historicalQty'),
+          t('pages.reports.forecastedQty'),
+        ]}
+        exportRows={rows.map((r) => [
+          itemLabel(r.itemId),
+          r.series.join(', '),
+          r.forecasted.toFixed(2),
+        ])}
       >
         <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'end' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={labelStyle}>{t('pages.reports.smoothingConstant')}</label>
-            <input type="number" min="0" max="1" step="0.05" value={alpha} onChange={(e) => setAlpha(e.target.value)} style={{ ...inputStyle, width: 100 }} />
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.05"
+              value={alpha}
+              onChange={(e) => setAlpha(e.target.value)}
+              style={{ ...inputStyle, width: 100 }}
+            />
           </div>
         </div>
 
@@ -120,12 +174,20 @@ export function ReportForecastingPage(): JSX.Element {
             <span>{t('pages.reports.historicalQty')}</span>
             <span>{t('pages.reports.forecastedQty')}</span>
           </div>
-          {rows.length === 0 && <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.reports.noResults')}</p>}
+          {rows.length === 0 && (
+            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>
+              {t('pages.reports.noResults')}
+            </p>
+          )}
           {rows.map((r) => (
             <div className="placeholder-table__row" key={r.itemId}>
-              <span><b>{itemLabel(r.itemId)}</b></span>
+              <span>
+                <b>{itemLabel(r.itemId)}</b>
+              </span>
               <span>{r.series.join(', ')}</span>
-              <span style={{ fontWeight: 'bold', color: '#166534' }}>{r.forecasted.toFixed(2)}</span>
+              <span style={{ fontWeight: 'bold', color: '#166534' }}>
+                {r.forecasted.toFixed(2)}
+              </span>
             </div>
           ))}
         </div>

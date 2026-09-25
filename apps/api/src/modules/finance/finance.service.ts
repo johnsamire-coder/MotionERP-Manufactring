@@ -1,8 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, Optional } from '@nestjs/common';
+import { CrmService } from '../crm/crm.service';
+import { InventoryService } from '../inventory/inventory.service';
+import { PurchaseAllowanceService } from '../settings/purchase-allowance.service';
+import { AdvanceService } from './advance.service';
+import { PurchaseInvoiceHoldService } from './purchase-invoice-hold.service';
 import { SalesService } from '../sales/sales.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { AccountingRepository } from '../accounting/accounting.repository';
+import type { CreateJournalLineInput } from '../accounting/accounting.types';
 import type { JobOrderRecord } from '../sales/sales.types';
 import { FinanceNotFoundError, FinanceValidationError } from './finance.errors';
 import { FinanceRepository } from './finance.repository';
@@ -32,7 +38,76 @@ export class FinanceService {
     private readonly salesService: SalesService,
     @Optional() private readonly accountingService?: AccountingService,
     @Optional() private readonly accountingRepo?: AccountingRepository,
+    @Optional() private readonly crmService?: CrmService,
+    @Optional() private readonly inventoryService?: InventoryService,
+    @Optional() private readonly allowances?: PurchaseAllowanceService,
+    @Optional() private readonly invoiceHolds?: PurchaseInvoiceHoldService,
+    @Optional() private readonly advances?: AdvanceService,
   ) {}
+
+  /** Plan item 19: no payment against a purchase invoice that is individually on hold. */
+  private async assertInvoiceNotHeld(purchaseInvoiceId: string | null | undefined): Promise<void> {
+    if (!purchaseInvoiceId || !this.invoiceHolds) return;
+    const blocked = await this.invoiceHolds.blockReason(purchaseInvoiceId);
+    if (blocked) throw new FinanceValidationError(blocked);
+  }
+
+  /**
+   * Over-billing allowance (plan item 12): invoice lines that reference a receipt (stock
+   * movement) may bill, together with earlier non-cancelled invoices, at most the received
+   * value plus the configured %. Guard only — no posting logic changes.
+   */
+  private async assertBillingWithinReceipts(
+    orgNodeId: string,
+    lines: Array<{
+      itemId: string;
+      quantity: string;
+      unitCost: string;
+      purchaseReceiptId?: string;
+    }>,
+  ): Promise<void> {
+    const byReceipt = new Map<string, { itemId: string; amount: number }>();
+    for (const l of lines) {
+      if (!l.purchaseReceiptId) continue;
+      const prev = byReceipt.get(l.purchaseReceiptId);
+      if (prev && prev.itemId !== l.itemId)
+        throw new FinanceValidationError(
+          `receipt ${l.purchaseReceiptId} is referenced for two different items`,
+        );
+      byReceipt.set(l.purchaseReceiptId, {
+        itemId: l.itemId,
+        amount: (prev?.amount ?? 0) + Number(l.quantity) * Number(l.unitCost),
+      });
+    }
+    if (byReceipt.size === 0 || !this.inventoryService) return;
+    const pct = this.allowances ? (await this.allowances.resolve(orgNodeId)).overBillingPct : 0;
+    for (const [receiptId, line] of byReceipt) {
+      const receipt = await this.inventoryService.getMovement(receiptId).catch(() => null);
+      if (!receipt || receipt.movementType !== 'receipt')
+        throw new FinanceValidationError(`purchase receipt ${receiptId} does not exist`);
+      if (receipt.itemId !== line.itemId)
+        throw new FinanceValidationError(`purchase receipt ${receiptId} is for a different item`);
+      const received = Number(receipt.totalValue ?? 0);
+      const billed = await this.repository.sumBilledForReceipt(receiptId);
+      const max = PurchaseAllowanceService.limit(received, pct);
+      if (billed + line.amount > max + 1e-6) {
+        throw new FinanceValidationError(
+          `الفاتورة تتجاوز قيمة الاستلام: قيمة الاستلام ${received.toFixed(2)}، المفوتر سابقاً ${billed.toFixed(2)}، ` +
+            `الحالي ${line.amount.toFixed(2)}، والحد ${max.toFixed(2)} (نسبة السماح ${pct}%)`,
+        );
+      }
+    }
+  }
+
+  /** Supplier hold (plan item 8): stops invoices / payments for a held supplier. */
+  private async assertSupplierNotHeld(
+    supplierId: string | null | undefined,
+    action: 'invoice' | 'payment',
+  ): Promise<void> {
+    if (!supplierId || !this.crmService) return;
+    const blocked = await this.crmService.supplierBlockReason(supplierId, action);
+    if (blocked) throw new FinanceValidationError(blocked);
+  }
 
   private async getJobOrderOrThrow(jobOrderReference: string): Promise<JobOrderRecord> {
     const jobOrders = await this.salesService.getJobOrders();
@@ -48,7 +123,8 @@ export class FinanceService {
 
   async recordCollection(input: CreateCollectionInput): Promise<CollectionRecord> {
     const amount = Number(input.amount);
-    if (!Number.isFinite(amount) || amount <= 0) throw new FinanceValidationError('amount must be positive');
+    if (!Number.isFinite(amount) || amount <= 0)
+      throw new FinanceValidationError('amount must be positive');
 
     const jobOrder = await this.getJobOrderOrThrow(input.jobOrderReference);
     const sequence = (await this.repository.countCollections()) + 1;
@@ -62,14 +138,39 @@ export class FinanceService {
       ...input,
     });
 
-    if (this.accountingService && this.accountingRepo && input.receivedInAccountId && jobOrder.orgNodeId) {
+    if (
+      this.accountingService &&
+      this.accountingRepo &&
+      input.receivedInAccountId &&
+      jobOrder.orgNodeId
+    ) {
       const config = await this.accountingRepo.findCompanyConfig(jobOrder.orgNodeId);
-      const determinations = await this.accountingRepo.listAccountDeterminations(jobOrder.orgNodeId);
+      const determinations = await this.accountingRepo.listAccountDeterminations(
+        jobOrder.orgNodeId,
+      );
 
       const arDet = determinations.find((d) => d.accountPurpose === 'receivable');
       const arAccountId = arDet?.accountId ?? config?.defaultReceivableAccountId;
 
       if (arAccountId) {
+        // Plan item 38: with separate advance booking, what is collected beyond the posted invoices is an advance (liability).
+        const advAccounts = this.advances ? await this.advances.accounts(jobOrder.orgNodeId) : null;
+        const split =
+          advAccounts?.receivedAccountId && this.advances
+            ? await this.advances.splitCollection(input.jobOrderReference, amount)
+            : { settle: amount, advance: 0 };
+        const creditLines = [
+          {
+            accountId: arAccountId,
+            amount: split.settle,
+            description: `[Auto] AR Clearance for Collection ${collectionNumber}`,
+          },
+          {
+            accountId: advAccounts?.receivedAccountId ?? arAccountId,
+            amount: split.advance,
+            description: `[Auto] Customer advance for Collection ${collectionNumber}`,
+          },
+        ].filter((l) => l.amount > 0);
         const draftEntry = await this.accountingService.createEntry({
           orgNodeId: jobOrder.orgNodeId,
           description: `Customer Collection ${collectionNumber} for JO ${input.jobOrderReference}`,
@@ -85,16 +186,18 @@ export class FinanceService {
               creditAmount: '0',
               description: `[Auto] Deposit for Collection ${collectionNumber}`,
             },
-            {
-              accountId: arAccountId,
+            ...creditLines.map((l) => ({
+              accountId: l.accountId,
               debitAmount: '0',
-              creditAmount: Number(input.amount).toFixed(4),
-              description: `[Auto] AR Clearance for Collection ${collectionNumber}`,
-              partyType: 'customer',
+              creditAmount: l.amount.toFixed(4),
+              description: l.description,
+              partyType: 'customer' as const,
               partyId: jobOrder.customerId ?? undefined,
-            } as any,
+            })),
           ],
         });
+        if (split.advance > 0)
+          await this.advances!.setCollectionAdvance(collectionRecord.id, split.advance);
 
         await this.accountingService.postEntry(draftEntry.id);
       }
@@ -110,7 +213,8 @@ export class FinanceService {
 
   async createRetention(input: CreateRetentionInput): Promise<RetentionRecord> {
     const amount = Number(input.originalAmount);
-    if (!Number.isFinite(amount) || amount <= 0) throw new FinanceValidationError('originalAmount must be positive');
+    if (!Number.isFinite(amount) || amount <= 0)
+      throw new FinanceValidationError('originalAmount must be positive');
     if (!input.dueDate) throw new FinanceValidationError('dueDate is required');
 
     const jobOrder = await this.getJobOrderOrThrow(input.jobOrderReference);
@@ -118,31 +222,49 @@ export class FinanceService {
     const year = new Date().getFullYear();
     const retentionNumber = `RET-${year}-${String(sequence).padStart(6, '0')}`;
 
-    return this.repository.insertRetention({ id: randomUUID(), retentionNumber, orgNodeId: jobOrder.orgNodeId, ...input });
+    return this.repository.insertRetention({
+      id: randomUUID(),
+      retentionNumber,
+      orgNodeId: jobOrder.orgNodeId,
+      ...input,
+    });
   }
 
   async releaseRetention(id: string, amount: string): Promise<RetentionRecord> {
     const retentionRecord = await this.repository.findRetentionById(id);
     if (!retentionRecord) throw new FinanceNotFoundError(`retention ${id} does not exist`);
     if (retentionRecord.status !== 'active') {
-      throw new FinanceValidationError(`retention ${id} is "${retentionRecord.status}" and cannot be released (must be "active")`);
+      throw new FinanceValidationError(
+        `retention ${id} is "${retentionRecord.status}" and cannot be released (must be "active")`,
+      );
     }
 
     const releaseAmount = Number(amount);
-    if (!Number.isFinite(releaseAmount) || releaseAmount <= 0) throw new FinanceValidationError('release amount must be positive');
+    if (!Number.isFinite(releaseAmount) || releaseAmount <= 0)
+      throw new FinanceValidationError('release amount must be positive');
 
-    const remaining = Number(retentionRecord.originalAmount) - Number(retentionRecord.releasedAmount);
+    const remaining =
+      Number(retentionRecord.originalAmount) - Number(retentionRecord.releasedAmount);
     if (releaseAmount > remaining) {
-      throw new FinanceValidationError(`release amount ${releaseAmount} exceeds remaining retention ${remaining}`);
+      throw new FinanceValidationError(
+        `release amount ${releaseAmount} exceeds remaining retention ${remaining}`,
+      );
     }
 
     const newReleasedTotal = (Number(retentionRecord.releasedAmount) + releaseAmount).toFixed(4);
     const isFullyReleased = Number(newReleasedTotal) >= Number(retentionRecord.originalAmount);
-    return this.repository.releaseRetention(id, newReleasedTotal, isFullyReleased ? 'released' : 'active');
+    return this.repository.releaseRetention(
+      id,
+      newReleasedTotal,
+      isFullyReleased ? 'released' : 'active',
+    );
   }
 
   // --- Purchase Invoices & AP Accounting ---
-  async getPurchaseInvoices(orgNodeId?: string, supplierId?: string): Promise<PurchaseInvoiceRecord[]> {
+  async getPurchaseInvoices(
+    orgNodeId?: string,
+    supplierId?: string,
+  ): Promise<PurchaseInvoiceRecord[]> {
     return this.repository.listPurchaseInvoices(orgNodeId, supplierId);
   }
 
@@ -161,6 +283,8 @@ export class FinanceService {
     if (!input.lines || input.lines.length === 0) {
       throw new FinanceValidationError('purchase invoice must have at least one line');
     }
+    await this.assertSupplierNotHeld(input.supplierId, 'invoice');
+    await this.assertBillingWithinReceipts(input.orgNodeId, input.lines);
 
     let netTotal = 0;
     let taxTotal = 0;
@@ -170,8 +294,10 @@ export class FinanceService {
       const cost = Number(l.unitCost);
       const rate = Number(l.taxRate ?? '14.00');
 
-      if (!Number.isFinite(qty) || qty <= 0) throw new FinanceValidationError('line quantity must be positive');
-      if (!Number.isFinite(cost) || cost < 0) throw new FinanceValidationError('line unitCost must be non-negative');
+      if (!Number.isFinite(qty) || qty <= 0)
+        throw new FinanceValidationError('line quantity must be positive');
+      if (!Number.isFinite(cost) || cost < 0)
+        throw new FinanceValidationError('line unitCost must be non-negative');
 
       const lineNet = qty * cost;
       const lineTax = (lineNet * rate) / 100;
@@ -197,6 +323,19 @@ export class FinanceService {
     const year = new Date().getFullYear();
     const systemNumber = `PINV-${year}-${String(sequence).padStart(6, '0')}`;
 
+    // Plan item 18: the database already forbids a repeated supplier invoice number for the same
+    // supplier (for all years — stricter than per fiscal year); answer 400 with the details instead
+    // of letting the unique constraint surface as a 500.
+    const duplicate = await this.repository.findPurchaseInvoiceBySupplierNumber(
+      input.supplierId,
+      input.invoiceNumber,
+    );
+    if (duplicate) {
+      throw new FinanceValidationError(
+        `رقم فاتورة المورد "${input.invoiceNumber.trim()}" مسجّل بالفعل لنفس المورد في ${duplicate.systemNumber} ` +
+          `بتاريخ ${duplicate.invoiceDate.toISOString().slice(0, 10)} (${duplicate.status})`,
+      );
+    }
     return this.repository.insertPurchaseInvoice({
       ...input,
       id: randomUUID(),
@@ -211,14 +350,19 @@ export class FinanceService {
   async postPurchaseInvoice(id: string): Promise<PurchaseInvoiceRecord> {
     const invoice = await this.getPurchaseInvoice(id);
     if (invoice.status !== 'draft') {
-      throw new FinanceValidationError(`purchase invoice ${id} is "${invoice.status}" and cannot be posted (must be "draft")`);
+      throw new FinanceValidationError(
+        `purchase invoice ${id} is "${invoice.status}" and cannot be posted (must be "draft")`,
+      );
     }
+    await this.assertSupplierNotHeld(invoice.supplierId, 'invoice');
 
     if (this.accountingService && this.accountingRepo) {
       const config = await this.accountingRepo.findCompanyConfig(invoice.orgNodeId);
       const determinations = await this.accountingRepo.listAccountDeterminations(invoice.orgNodeId);
 
-      const grniDet = determinations.find((d) => d.accountPurpose === 'purchase' || d.accountPurpose === 'grni');
+      const grniDet = determinations.find(
+        (d) => d.accountPurpose === 'purchase' || d.accountPurpose === 'grni',
+      );
       const grniAccountId = grniDet?.accountId ?? config?.defaultGrniAccountId;
 
       const taxDet = determinations.find((d) => d.accountPurpose === 'input_tax');
@@ -228,7 +372,13 @@ export class FinanceService {
       const apAccountId = apDet?.accountId ?? config?.defaultPayableAccountId;
 
       if (grniAccountId && apAccountId) {
-        const lines = [
+        // A taxed invoice without an input-tax account would post an unbalanced entry (500) — say what is missing instead.
+        if (Number(invoice.taxAmount) > 0 && !taxAccountId) {
+          throw new FinanceValidationError(
+            `الفاتورة عليها ضريبة ${invoice.taxAmount} ومفيش حساب ضريبة مدخلات للشركة — حدده في إعدادات الشركة المحاسبية`,
+          );
+        }
+        const lines: CreateJournalLineInput[] = [
           {
             accountId: grniAccountId,
             debitAmount: invoice.netAmount,
@@ -251,9 +401,9 @@ export class FinanceService {
           debitAmount: '0',
           creditAmount: invoice.grandTotal,
           description: `[Auto] Payable to Supplier for PINV ${invoice.systemNumber}`,
-          partyType: 'supplier',
+          partyType: 'supplier' as const,
           partyId: invoice.supplierId,
-        } as any);
+        });
 
         const draftEntry = await this.accountingService.createEntry({
           orgNodeId: invoice.orgNodeId,
@@ -276,7 +426,9 @@ export class FinanceService {
   async cancelPurchaseInvoice(id: string): Promise<PurchaseInvoiceRecord> {
     const invoice = await this.getPurchaseInvoice(id);
     if (invoice.status === 'posted') {
-      throw new FinanceValidationError(`purchase invoice ${id} is already posted and cannot be cancelled`);
+      throw new FinanceValidationError(
+        `purchase invoice ${id} is already posted and cannot be cancelled`,
+      );
     }
     return this.repository.setPurchaseInvoiceStatus(id, 'cancelled');
   }
@@ -307,8 +459,10 @@ export class FinanceService {
       const price = Number(l.unitPrice);
       const rate = Number(l.taxRate ?? '14.00');
 
-      if (!Number.isFinite(qty) || qty <= 0) throw new FinanceValidationError('line quantity must be positive');
-      if (!Number.isFinite(price) || price < 0) throw new FinanceValidationError('line unitPrice must be non-negative');
+      if (!Number.isFinite(qty) || qty <= 0)
+        throw new FinanceValidationError('line quantity must be positive');
+      if (!Number.isFinite(price) || price < 0)
+        throw new FinanceValidationError('line unitPrice must be non-negative');
 
       const lineNet = qty * price;
       const lineTax = (lineNet * rate) / 100;
@@ -348,7 +502,9 @@ export class FinanceService {
   async postSalesInvoice(id: string): Promise<SalesInvoiceRecord> {
     const invoice = await this.getSalesInvoice(id);
     if (invoice.status !== 'draft') {
-      throw new FinanceValidationError(`sales invoice ${id} is "${invoice.status}" and cannot be posted (must be "draft")`);
+      throw new FinanceValidationError(
+        `sales invoice ${id} is "${invoice.status}" and cannot be posted (must be "draft")`,
+      );
     }
 
     if (this.accountingService && this.accountingRepo) {
@@ -365,15 +521,21 @@ export class FinanceService {
       const taxAccountId = taxDet?.accountId ?? config?.defaultOutputTaxAccountId;
 
       if (arAccountId && revAccountId) {
+        // A taxed invoice without an output-tax account would post an unbalanced entry (500) — say what is missing instead.
+        if (Number(invoice.taxAmount) > 0 && !taxAccountId) {
+          throw new FinanceValidationError(
+            `الفاتورة عليها ضريبة ${invoice.taxAmount} ومفيش حساب ضريبة مخرجات للشركة — حدده في إعدادات الشركة المحاسبية`,
+          );
+        }
         const lines = [
           {
             accountId: arAccountId,
             debitAmount: invoice.grandTotal,
             creditAmount: '0',
             description: `[Auto] Receivable for Sales Invoice ${invoice.invoiceNumber}`,
-            partyType: 'customer',
+            partyType: 'customer' as const,
             partyId: invoice.customerId,
-          } as any,
+          },
           {
             accountId: revAccountId,
             debitAmount: '0',
@@ -412,7 +574,9 @@ export class FinanceService {
   async cancelSalesInvoice(id: string): Promise<SalesInvoiceRecord> {
     const invoice = await this.getSalesInvoice(id);
     if (invoice.status === 'posted') {
-      throw new FinanceValidationError(`sales invoice ${id} is already posted and cannot be cancelled`);
+      throw new FinanceValidationError(
+        `sales invoice ${id} is already posted and cannot be cancelled`,
+      );
     }
     return this.repository.setSalesInvoiceStatus(id, 'cancelled');
   }
@@ -430,10 +594,14 @@ export class FinanceService {
 
   async createPayment(input: CreatePaymentInput): Promise<PaymentRecord> {
     if (!input.orgNodeId) throw new FinanceValidationError('orgNodeId is required');
-    if (!input.paidFromAccountId) throw new FinanceValidationError('paidFromAccountId (Bank/Cash account) is required');
+    if (!input.paidFromAccountId)
+      throw new FinanceValidationError('paidFromAccountId (Bank/Cash account) is required');
 
     const amount = Number(input.amount);
-    if (!Number.isFinite(amount) || amount <= 0) throw new FinanceValidationError('payment amount must be positive');
+    if (!Number.isFinite(amount) || amount <= 0)
+      throw new FinanceValidationError('payment amount must be positive');
+    await this.assertSupplierNotHeld(input.supplierId, 'payment');
+    await this.assertInvoiceNotHeld(input.purchaseInvoiceId);
 
     const sequence = (await this.repository.countPayments()) + 1;
     const year = new Date().getFullYear();
@@ -450,17 +618,28 @@ export class FinanceService {
   async postPayment(id: string): Promise<PaymentRecord> {
     const p = await this.getPayment(id);
     if (p.status !== 'draft') {
-      throw new FinanceValidationError(`payment ${id} is "${p.status}" and cannot be posted (must be "draft")`);
+      throw new FinanceValidationError(
+        `payment ${id} is "${p.status}" and cannot be posted (must be "draft")`,
+      );
     }
+    await this.assertSupplierNotHeld(p.supplierId, 'payment');
+    await this.assertInvoiceNotHeld(p.purchaseInvoiceId);
 
     if (this.accountingService && this.accountingRepo && p.paidFromAccountId) {
       const config = await this.accountingRepo.findCompanyConfig(p.orgNodeId);
       const determinations = await this.accountingRepo.listAccountDeterminations(p.orgNodeId);
 
       const apDet = determinations.find((d) => d.accountPurpose === 'payable');
-      const apAccountId = apDet?.accountId ?? config?.defaultPayableAccountId;
+      // Plan item 38: a payment with no invoice is a supplier advance (asset) when the company books advances separately.
+      const advAccounts =
+        !p.purchaseInvoiceId && this.advances ? await this.advances.accounts(p.orgNodeId) : null;
+      const isAdvance = Boolean(advAccounts?.paidAccountId);
+      const apAccountId = isAdvance
+        ? advAccounts!.paidAccountId!
+        : (apDet?.accountId ?? config?.defaultPayableAccountId);
 
       if (apAccountId) {
+        if (isAdvance) await this.advances!.setPaymentAdvance(p.id, Number(p.amount));
         const draftEntry = await this.accountingService.createEntry({
           orgNodeId: p.orgNodeId,
           description: `Supplier Payment ${p.paymentNumber}`,
@@ -475,9 +654,9 @@ export class FinanceService {
               debitAmount: p.amount,
               creditAmount: '0',
               description: `[Auto] AP Settlement via Payment ${p.paymentNumber}`,
-              partyType: 'supplier',
+              partyType: 'supplier' as const,
               partyId: p.supplierId ?? undefined,
-            } as any,
+            },
             {
               accountId: p.paidFromAccountId,
               debitAmount: '0',
@@ -503,7 +682,11 @@ export class FinanceService {
   }
 
   // --- Credit & Debit Notes ---
-  async getCreditDebitNotes(orgNodeId?: string, partyType?: 'customer' | 'supplier', partyId?: string): Promise<CreditDebitNoteRecord[]> {
+  async getCreditDebitNotes(
+    orgNodeId?: string,
+    partyType?: 'customer' | 'supplier',
+    partyId?: string,
+  ): Promise<CreditDebitNoteRecord[]> {
     return this.repository.listCreditDebitNotes(orgNodeId, partyType, partyId);
   }
 
@@ -528,8 +711,10 @@ export class FinanceService {
       const price = Number(l.unitPrice);
       const rate = Number(l.taxRate ?? '14.00');
 
-      if (!Number.isFinite(qty) || qty <= 0) throw new FinanceValidationError('Line quantity must be positive');
-      if (!Number.isFinite(price) || price < 0) throw new FinanceValidationError('Line unit price must be non-negative');
+      if (!Number.isFinite(qty) || qty <= 0)
+        throw new FinanceValidationError('Line quantity must be positive');
+      if (!Number.isFinite(price) || price < 0)
+        throw new FinanceValidationError('Line unit price must be non-negative');
 
       const lineNet = qty * price;
       const lineTax = (lineNet * rate) / 100;
@@ -587,7 +772,7 @@ export class FinanceService {
         const taxAccountId = taxDet?.accountId ?? config?.defaultOutputTaxAccountId;
 
         if (arAccountId && revAccountId) {
-          const lines = [
+          const lines: CreateJournalLineInput[] = [
             {
               accountId: revAccountId,
               debitAmount: note.netAmount,
@@ -610,9 +795,9 @@ export class FinanceService {
             debitAmount: '0',
             creditAmount: note.grandTotal,
             description: `[Auto] AR Reduction via Credit Note ${note.noteNumber}`,
-            partyType: 'customer',
+            partyType: 'customer' as const,
             partyId: note.partyId,
-          } as any);
+          });
 
           const draftJournal = await this.accountingService.createEntry({
             orgNodeId: note.orgNodeId,
@@ -644,9 +829,9 @@ export class FinanceService {
               debitAmount: note.grandTotal,
               creditAmount: '0',
               description: `[Auto] AP Reduction via Debit Note ${note.noteNumber}`,
-              partyType: 'supplier',
+              partyType: 'supplier' as const,
               partyId: note.partyId,
-            } as any,
+            },
             {
               accountId: invAccountId,
               debitAmount: '0',
@@ -731,7 +916,9 @@ export class FinanceService {
   async postBankTransfer(id: string): Promise<BankTransferRecord> {
     const transfer = await this.getBankTransfer(id);
     if (transfer.status !== 'draft') {
-      throw new FinanceValidationError(`Transfer ${id} is "${transfer.status}" and cannot be posted`);
+      throw new FinanceValidationError(
+        `Transfer ${id} is "${transfer.status}" and cannot be posted`,
+      );
     }
 
     // Automated Double-Entry GL Posting for Bank/Cash Transfer:
@@ -776,11 +963,16 @@ export class FinanceService {
   }
 
   // --- Bank Reconciliation Engine ---
-  async getBankReconciliations(orgNodeId?: string, bankAccountId?: string): Promise<BankReconciliationRecord[]> {
+  async getBankReconciliations(
+    orgNodeId?: string,
+    bankAccountId?: string,
+  ): Promise<BankReconciliationRecord[]> {
     return this.repository.listBankReconciliations(orgNodeId, bankAccountId);
   }
 
-  async createBankReconciliation(input: CreateBankReconciliationInput): Promise<BankReconciliationRecord> {
+  async createBankReconciliation(
+    input: CreateBankReconciliationInput,
+  ): Promise<BankReconciliationRecord> {
     if (!input.orgNodeId) throw new FinanceValidationError('orgNodeId is required');
     if (!input.bankAccountId) throw new FinanceValidationError('bankAccountId is required');
 

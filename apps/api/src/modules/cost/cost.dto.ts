@@ -1,4 +1,12 @@
-import { IsEnum, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
+import {
+  IsEnum,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateComponentTypeDto {
   @Matches(/^[a-z_][a-z0-9_]*$/) @MaxLength(50) @IsString() code!: string;
@@ -50,10 +58,19 @@ export class CreateAllocationPolicyDto {
   @Matches(/^[A-Z0-9_-]+$/) @MaxLength(50) @IsString() code!: string;
   @IsString() @MaxLength(200) name!: string;
   @IsUUID() poolId!: string;
-  @IsEnum(['units_produced', 'direct_labor_hours', 'direct_labor_cost', 'machine_hours', 'direct_material_cost', 'sales_revenue'])
+  @IsEnum([
+    'units_produced',
+    'direct_labor_hours',
+    'direct_labor_cost',
+    'machine_hours',
+    'direct_material_cost',
+    'sales_revenue',
+  ])
   allocationBase!: string;
   @IsOptional() @IsNumberString() percentage?: string;
   @IsUUID() orgNodeId!: string;
+  /** Applied-overhead account credited when the allocation is posted against WIP. */
+  @IsOptional() @IsUUID() appliedAccountId?: string;
 }
 
 export class ExecuteAllocationDto {

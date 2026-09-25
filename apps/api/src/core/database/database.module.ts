@@ -14,7 +14,11 @@ export const DRIZZLE = 'DRIZZLE';
   providers: [
     DatabaseService,
     DatabaseHealthIndicator,
-    { provide: DRIZZLE, useFactory: (database: DatabaseService) => database.db, inject: [DatabaseService] },
+    {
+      provide: DRIZZLE,
+      useFactory: (database: DatabaseService) => database.db,
+      inject: [DatabaseService],
+    },
   ],
   exports: [DatabaseService, DatabaseHealthIndicator, DRIZZLE],
 })

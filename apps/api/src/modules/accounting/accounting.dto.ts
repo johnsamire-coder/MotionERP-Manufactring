@@ -1,76 +1,142 @@
-import { IsDateString, IsIn, IsInt, IsNumberString, IsOptional, IsPositive, IsString, IsUUID, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import type { VoucherType } from './voucher-types';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsIn,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
 
 export class CreateAccountTypeDto {
-  code!: string;
-  name!: string;
-  normalBalance!: 'debit' | 'credit';
+  @IsString() @MaxLength(64) code!: string;
+  @IsString() @MaxLength(255) name!: string;
+  @IsIn(['debit', 'credit']) normalBalance!: 'debit' | 'credit';
 }
 
 export class CreateChartOfAccountsDto {
-  code!: string;
-  name!: string;
-  orgNodeId!: string;
-  accountTypeId!: string;
-  parentId?: string;
+  @IsString() @MaxLength(64) code!: string;
+  @IsString() @MaxLength(255) name!: string;
+  @IsUUID() orgNodeId!: string;
+  @IsUUID() accountTypeId!: string;
+  @IsOptional() @IsUUID() parentId?: string;
 }
 
 export class CreateFiscalYearDto {
-  orgNodeId!: string;
-  name!: string;
-  startDate!: string;
-  endDate!: string;
+  @IsUUID() orgNodeId!: string;
+  @IsString() @MaxLength(100) name!: string;
+  @IsDateString() startDate!: string;
+  @IsDateString() endDate!: string;
 }
 
 export class CreateCostCenterDto {
-  orgNodeId!: string;
-  code!: string;
-  name!: string;
-  parentId?: string;
-  isGroup?: boolean;
+  @IsUUID() orgNodeId!: string;
+  @IsString() @MaxLength(64) code!: string;
+  @IsString() @MaxLength(255) name!: string;
+  @IsOptional() @IsUUID() parentId?: string;
+  @IsOptional() @IsBoolean() isGroup?: boolean;
 }
 
 export class CreateAccountDeterminationDto {
-  orgNodeId!: string;
-  determinationType!: 'item_category' | 'warehouse' | 'default';
-  referenceId?: string;
-  accountPurpose!: string;
-  accountId!: string;
+  @IsUUID() orgNodeId!: string;
+  @IsIn(['item_category', 'warehouse', 'default']) determinationType!:
+    'item_category' | 'warehouse' | 'default';
+  @IsOptional() @IsUUID() referenceId?: string;
+  @IsString() accountPurpose!: string;
+  @IsUUID() accountId!: string;
+}
+
+export class LineDimensionDto {
+  @IsUUID() dimensionId!: string;
+  @IsUUID() valueId!: string;
 }
 
 export class CreateJournalLineDto {
-  accountId!: string;
-  debitAmount?: string;
-  creditAmount?: string;
-  description?: string;
-  partyType?: 'customer' | 'supplier';
-  partyId?: string;
-  costCenterId?: string;
-  jobOrderId?: string;
+  @IsUUID() accountId!: string;
+  @IsOptional() @IsNumberString() debitAmount?: string;
+  @IsOptional() @IsNumberString() creditAmount?: string;
+  @IsOptional() @IsString() @MaxLength(500) description?: string;
+  @IsOptional() @IsIn(['customer', 'supplier']) partyType?: 'customer' | 'supplier';
+  @IsOptional() @IsUUID() partyId?: string;
+  @IsOptional() @IsUUID() costCenterId?: string;
+  @IsOptional() @IsUUID() jobOrderId?: string;
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LineDimensionDto)
+  dimensions?: LineDimensionDto[];
 }
 
 export class CreateJournalEntryDto {
-  orgNodeId!: string;
-  description!: string;
-  reference?: string;
-  entryDate?: string;
+  @IsUUID() orgNodeId!: string;
+  @IsString() @MaxLength(500) description!: string;
+  @IsOptional() @IsString() @MaxLength(200) reference?: string;
+  @IsOptional() @IsDateString() entryDate?: string;
+  @IsOptional()
+  @IsIn([
+    'journal_entry',
+    'inter_company_journal_entry',
+    'bank_entry',
+    'cash_entry',
+    'credit_card_entry',
+    'debit_note',
+    'credit_note',
+    'contra_entry',
+    'excise_entry',
+    'write_off_entry',
+    'opening_entry',
+    'depreciation_entry',
+    'exchange_rate_revaluation',
+    'exchange_gain_or_loss',
+    'deferred_revenue',
+    'deferred_expense',
+    'reversal_of_itc',
+  ])
+  voucherType?: VoucherType;
+  @IsArray()
+  @ArrayMinSize(2)
+  @ValidateNested({ each: true })
+  @Type(() => CreateJournalLineDto)
   lines!: CreateJournalLineDto[];
 }
 
 export class UpsertCompanyAccountingConfigDto {
-  orgNodeId!: string;
-  baseCurrency?: string;
-  inventoryValuationMethod?: string;
-  defaultGrniAccountId?: string;
-  defaultWipAccountId?: string;
-  defaultCogsAccountId?: string;
-  defaultMfgVarianceAccountId?: string;
-  defaultPayableAccountId?: string;
-  defaultReceivableAccountId?: string;
-  defaultInputTaxAccountId?: string;
-  defaultOutputTaxAccountId?: string;
-  defaultScrapAccountId?: string;
-  defaultStockAdjustmentAccountId?: string;
-  defaultOhAppliedAccountId?: string;
+  @IsUUID() orgNodeId!: string;
+  @IsOptional() @IsString() @MaxLength(3) baseCurrency?: string;
+  @IsOptional() @IsIn(['weighted_average', 'fifo', 'standard']) inventoryValuationMethod?: string;
+  @IsOptional() @IsUUID() defaultGrniAccountId?: string;
+  @IsOptional() @IsUUID() defaultWipAccountId?: string;
+  @IsOptional() @IsUUID() defaultCogsAccountId?: string;
+  @IsOptional() @IsUUID() defaultMfgVarianceAccountId?: string;
+  @IsOptional() @IsUUID() defaultPayableAccountId?: string;
+  @IsOptional() @IsUUID() defaultReceivableAccountId?: string;
+  @IsOptional() @IsUUID() defaultInputTaxAccountId?: string;
+  @IsOptional() @IsUUID() defaultOutputTaxAccountId?: string;
+  @IsOptional() @IsUUID() defaultScrapAccountId?: string;
+  @IsOptional() @IsUUID() defaultStockAdjustmentAccountId?: string;
+  @IsOptional() @IsUUID() defaultOhAppliedAccountId?: string;
+  @IsOptional() @IsUUID() defaultBankAccountId?: string;
+  @IsOptional() @IsUUID() defaultCashAccountId?: string;
+  @IsOptional() @IsUUID() defaultIncomeAccountId?: string;
+  @IsOptional() @IsUUID() defaultInventoryAccountId?: string;
+  @IsOptional() @IsUUID() defaultRoundOffAccountId?: string;
+  @IsOptional() @IsUUID() defaultWriteOffAccountId?: string;
+  @IsOptional() @IsUUID() defaultExchangeGainLossAccountId?: string;
+  @IsOptional() @IsUUID() defaultDepreciationExpenseAccountId?: string;
+  @IsOptional() @IsBoolean() enforceDefaultAccounts?: boolean;
+  @IsOptional() @ValidateIf((_, v) => v !== null) @IsDateString() accountsFrozenUntil?:
+    string | null;
+  @IsOptional() @IsBoolean() bookAdvancesSeparately?: boolean;
+  @IsOptional() @IsUUID() defaultAdvanceReceivedAccountId?: string;
+  @IsOptional() @IsUUID() defaultAdvancePaidAccountId?: string;
+  @IsOptional() @IsUUID() defaultCostCenterId?: string;
 }
 
 export class FinancialReportQueryDto {
@@ -100,52 +166,6 @@ export class PartnerLedgerQueryDto {
   @IsOptional()
   @IsDateString()
   endDate?: string;
-}
-
-export class CreateFixedAssetDto {
-  @IsUUID()
-  orgNodeId!: string;
-
-  @IsString()
-  @MaxLength(64)
-  assetCode!: string;
-
-  @IsString()
-  @MaxLength(255)
-  assetName!: string;
-
-  @IsDateString()
-  purchaseDate!: string;
-
-  @IsNumberString()
-  purchaseCost!: string;
-
-  @IsInt()
-  @IsPositive()
-  usefulLifeMonths!: number;
-
-  @IsOptional()
-  @IsNumberString()
-  salvageValue?: string;
-
-  @IsUUID()
-  assetAccountId!: string;
-
-  @IsUUID()
-  accumulatedDepreciationAccountId!: string;
-
-  @IsUUID()
-  depreciationExpenseAccountId!: string;
-
-  @IsOptional()
-  @IsUUID()
-  costCenterId?: string;
-}
-
-export class PostDepreciationDto {
-  @IsOptional()
-  @IsDateString()
-  periodDate?: string;
 }
 
 export class PostVatSettlementDto {

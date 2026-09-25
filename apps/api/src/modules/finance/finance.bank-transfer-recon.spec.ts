@@ -226,9 +226,13 @@ describe('FinanceService — Bank Transfers & Bank Reconciliation Engine', () =>
     await financeService.postBankTransfer(transfer.id);
 
     // Try re-posting
-    await expect(financeService.postBankTransfer(transfer.id)).rejects.toThrow(FinanceValidationError);
+    await expect(financeService.postBankTransfer(transfer.id)).rejects.toThrow(
+      FinanceValidationError,
+    );
 
     // Try cancelling
-    await expect(financeService.cancelBankTransfer(transfer.id)).rejects.toThrow(FinanceValidationError);
+    await expect(financeService.cancelBankTransfer(transfer.id)).rejects.toThrow(
+      FinanceValidationError,
+    );
   });
 });

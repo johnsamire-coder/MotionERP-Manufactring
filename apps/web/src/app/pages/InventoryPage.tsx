@@ -4,11 +4,43 @@ import { api, ApiError } from '../api/client';
 
 type InventoryTab = 'items' | 'balances' | 'batches' | 'serials';
 
-interface ItemCategoryTreeNode { id: string; code: string; name: string; children: ItemCategoryTreeNode[]; }
-interface ItemRecord { id: string; code: string; name: string; itemType: string; categoryId: string; baseUnitId: string; status: string; }
-interface UomRecord { id: string; code: string; name: string; }
-interface WarehouseRecord { id: string; code: string; name: string; orgNodeId: string; status: string; }
-interface StockBalanceRecord { id: string; itemId: string; warehouseId: string; onHand: string; reserved: string; available: string; averageCost?: string; totalValue?: string; }
+interface ItemCategoryTreeNode {
+  id: string;
+  code: string;
+  name: string;
+  children: ItemCategoryTreeNode[];
+}
+interface ItemRecord {
+  id: string;
+  code: string;
+  name: string;
+  itemType: string;
+  categoryId: string;
+  baseUnitId: string;
+  status: string;
+}
+interface UomRecord {
+  id: string;
+  code: string;
+  name: string;
+}
+interface WarehouseRecord {
+  id: string;
+  code: string;
+  name: string;
+  orgNodeId: string;
+  status: string;
+}
+interface StockBalanceRecord {
+  id: string;
+  itemId: string;
+  warehouseId: string;
+  onHand: string;
+  reserved: string;
+  available: string;
+  averageCost?: string;
+  totalValue?: string;
+}
 
 interface ItemBatchRecord {
   id: string;
@@ -34,9 +66,19 @@ interface SerialNumberRecord {
   createdAt: string;
 }
 
-const ITEM_TYPES = ['raw_material', 'finished_product', 'semi_finished_product', 'consumable', 'spare_part', 'service'];
+const ITEM_TYPES = [
+  'raw_material',
+  'finished_product',
+  'semi_finished_product',
+  'consumable',
+  'spare_part',
+  'service',
+];
 
-function flattenCategories(nodes: ItemCategoryTreeNode[], depth = 0): Array<{ id: string; code: string; label: string }> {
+function flattenCategories(
+  nodes: ItemCategoryTreeNode[],
+  depth = 0,
+): Array<{ id: string; code: string; label: string }> {
   const out: Array<{ id: string; code: string; label: string }> = [];
   for (const node of nodes) {
     out.push({ id: node.id, code: node.code, label: `${'— '.repeat(depth)}${node.name}` });
@@ -51,34 +93,36 @@ function nextCode(prefix: string, existingCodes: string[]): string {
 }
 
 export function InventoryPage(): JSX.Element {
-  const { t, i18n } = useTranslation();
+  const { t: _t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<InventoryTab>('items');
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   // Core Data
   const [items, setItems] = useState<ItemRecord[]>([]);
-  const [categories, setCategories] = useState<Array<{ id: string; code: string; label: string }>>([]);
+  const [categories, setCategories] = useState<Array<{ id: string; code: string; label: string }>>(
+    [],
+  );
   const [uoms, setUoms] = useState<UomRecord[]>([]);
   const [warehouses, setWarehouses] = useState<WarehouseRecord[]>([]);
   const [balances, setBalances] = useState<StockBalanceRecord[]>([]);
   const [batches, setBatches] = useState<ItemBatchRecord[]>([]);
   const [serials, setSerials] = useState<SerialNumberRecord[]>([]);
-  const [orgNodeId, setOrgNodeId] = useState('00000000-0000-0000-0000-000000000001');
+  const [orgNodeId, _setOrgNodeId] = useState('00000000-0000-0000-0000-000000000001');
 
   // Item & Category Forms
   const [showItemForm, setShowItemForm] = useState(false);
-  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [_showCategoryForm, _setShowCategoryForm] = useState(false);
   const [itemCode, setItemCode] = useState('');
   const [itemNameAr, setItemNameAr] = useState('');
   const [itemNameEn, setItemNameEn] = useState('');
   const [itemType, setItemType] = useState('raw_material');
   const [itemCategoryId, setItemCategoryId] = useState('');
   const [itemUomId, setItemUomId] = useState('');
-  const [catCode, setCatCode] = useState('');
-  const [catNameAr, setCatNameAr] = useState('');
-  const [catNameEn, setCatNameEn] = useState('');
+  const [_catCode, _setCatCode] = useState('');
+  const [_catNameAr, _setCatNameAr] = useState('');
+  const [_catNameEn, _setCatNameEn] = useState('');
 
   // Warehouse & Movement Forms
   const [showWarehouseForm, setShowWarehouseForm] = useState(false);
@@ -105,15 +149,28 @@ export function InventoryPage(): JSX.Element {
     setError(null);
     try {
       const lang = i18n.language.startsWith('ar') ? 'ar' : 'en';
-      const [itemsRes, treeRes, uomsRes, warehousesRes, balancesRes, batchesRes, serialsRes] = await Promise.all([
-        api.get<{ items: ItemRecord[] }>(`/catalog/items?lang=${lang}`).catch(() => ({ items: [] })),
-        api.get<{ tree: ItemCategoryTreeNode[] }>(`/catalog/categories/tree?lang=${lang}`).catch(() => ({ tree: [] })),
-        api.get<{ uoms: UomRecord[] }>(`/catalog/uoms?lang=${lang}`).catch(() => ({ uoms: [] })),
-        api.get<{ warehouses: WarehouseRecord[] }>('/inventory/warehouses').catch(() => ({ warehouses: [] })),
-        api.get<{ balances: StockBalanceRecord[] }>('/inventory/balances').catch(() => ({ balances: [] })),
-        api.get<{ batches: ItemBatchRecord[] }>('/inventory/batches').catch(() => ({ batches: [] })),
-        api.get<{ serials: SerialNumberRecord[] }>('/inventory/serials').catch(() => ({ serials: [] })),
-      ]);
+      const [itemsRes, treeRes, uomsRes, warehousesRes, balancesRes, batchesRes, serialsRes] =
+        await Promise.all([
+          api
+            .get<{ items: ItemRecord[] }>(`/catalog/items?lang=${lang}`)
+            .catch(() => ({ items: [] })),
+          api
+            .get<{ tree: ItemCategoryTreeNode[] }>(`/catalog/categories/tree?lang=${lang}`)
+            .catch(() => ({ tree: [] })),
+          api.get<{ uoms: UomRecord[] }>(`/catalog/uoms?lang=${lang}`).catch(() => ({ uoms: [] })),
+          api
+            .get<{ warehouses: WarehouseRecord[] }>('/inventory/warehouses')
+            .catch(() => ({ warehouses: [] })),
+          api
+            .get<{ balances: StockBalanceRecord[] }>('/inventory/balances')
+            .catch(() => ({ balances: [] })),
+          api
+            .get<{ batches: ItemBatchRecord[] }>('/inventory/batches')
+            .catch(() => ({ batches: [] })),
+          api
+            .get<{ serials: SerialNumberRecord[] }>('/inventory/serials')
+            .catch(() => ({ serials: [] })),
+        ]);
 
       const itms = itemsRes.items ?? [];
       setItems(itms);
@@ -140,7 +197,9 @@ export function InventoryPage(): JSX.Element {
     }
   }
 
-  useEffect(() => { void loadAll(); }, [i18n.language]);
+  useEffect(() => {
+    void loadAll();
+  }, [i18n.language]);
 
   // Actions
   const handleCreateItem = async (e: React.FormEvent) => {
@@ -198,7 +257,9 @@ export function InventoryPage(): JSX.Element {
   const handleUpdateBatchStatus = async (id: string, status: string) => {
     try {
       await api.patch(`/inventory/batches/${id}/status`, { status });
-      setSuccess(`تم تحديث حالة اللوط بنجاح إلى: ${status === 'quarantined' ? 'حجر صحي ⚠️' : status === 'recalled' ? 'مستدعى طبياً ❌' : 'نشط ومتاح'}`);
+      setSuccess(
+        `تم تحديث حالة اللوط بنجاح إلى: ${status === 'quarantined' ? 'حجر صحي ⚠️' : status === 'recalled' ? 'مستدعى طبياً ❌' : 'نشط ومتاح'}`,
+      );
       void loadAll();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'فشل تحديث حالة اللوط');
@@ -239,25 +300,51 @@ export function InventoryPage(): JSX.Element {
         <div>
           <span className="eyebrow">إدارة المخازن والتتبع الطبي</span>
           <h1>المخازن، اللوطات الطبية، والأرقام التسلسلية</h1>
-          <p>إدارة الأصناف والمستودعات وتتبع أرقام التشغيلات (Batches) وتواريخ الصلاحية والسيريال نمبر للأجهزة</p>
+          <p>
+            إدارة الأصناف والمستودعات وتتبع أرقام التشغيلات (Batches) وتواريخ الصلاحية والسيريال
+            نمبر للأجهزة
+          </p>
         </div>
       </div>
 
-      {error && <div className="alert alert--error" style={{ marginBottom: 16 }}>{error}</div>}
-      {success && <div className="alert alert--success" style={{ marginBottom: 16 }}>{success}</div>}
+      {error && (
+        <div className="alert alert--error" style={{ marginBottom: 16 }}>
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="alert alert--success" style={{ marginBottom: 16 }}>
+          {success}
+        </div>
+      )}
 
       {/* Tabs */}
-      <div className="tab-nav" style={{ display: 'flex', gap: 8, borderBottom: '2px solid #e2e8f0', marginBottom: 20 }}>
-        <button className={`btn ${activeTab === 'items' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('items')}>
+      <div
+        className="tab-nav"
+        style={{ display: 'flex', gap: 8, borderBottom: '2px solid #e2e8f0', marginBottom: 20 }}
+      >
+        <button
+          className={`btn ${activeTab === 'items' ? 'btn--primary' : 'btn--secondary'}`}
+          onClick={() => setActiveTab('items')}
+        >
           📦 دليل الأصناف ({items.length})
         </button>
-        <button className={`btn ${activeTab === 'balances' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('balances')}>
+        <button
+          className={`btn ${activeTab === 'balances' ? 'btn--primary' : 'btn--secondary'}`}
+          onClick={() => setActiveTab('balances')}
+        >
           🏬 المخازن والأرصدة ({balances.length})
         </button>
-        <button className={`btn ${activeTab === 'batches' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('batches')}>
+        <button
+          className={`btn ${activeTab === 'batches' ? 'btn--primary' : 'btn--secondary'}`}
+          onClick={() => setActiveTab('batches')}
+        >
           🩺 التشغيلات واللوطات الطبية ({batches.length})
         </button>
-        <button className={`btn ${activeTab === 'serials' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('serials')}>
+        <button
+          className={`btn ${activeTab === 'serials' ? 'btn--primary' : 'btn--secondary'}`}
+          onClick={() => setActiveTab('serials')}
+        >
           🔢 السيريال نمبر للأجهزة ({serials.length})
         </button>
       </div>
@@ -270,7 +357,18 @@ export function InventoryPage(): JSX.Element {
               <span className="panel__eyebrow">كتالوج المنتجات والخامات</span>
               <h2>الأصناف والمستلزمات الطبية (Catalog Items)</h2>
             </div>
-            <button className="btn btn--primary" onClick={() => { setItemCode(nextCode('ITEM', items.map(i => i.code))); setShowItemForm(!showItemForm); }}>
+            <button
+              className="btn btn--primary"
+              onClick={() => {
+                setItemCode(
+                  nextCode(
+                    'ITEM',
+                    items.map((i) => i.code),
+                  ),
+                );
+                setShowItemForm(!showItemForm);
+              }}
+            >
               + إضافة صنف جديد
             </button>
           </div>
@@ -279,34 +377,68 @@ export function InventoryPage(): JSX.Element {
             <form className="form-card" onSubmit={handleCreateItem} style={{ marginBottom: 20 }}>
               <h3>إضافة صنف طبي / خام جديد</h3>
               <div className="form-grid">
-                <label>كود الصنف
+                <label>
+                  كود الصنف
                   <input value={itemCode} onChange={(e) => setItemCode(e.target.value)} required />
                 </label>
-                <label>الاسم بالعربي
-                  <input value={itemNameAr} onChange={(e) => setItemNameAr(e.target.value)} required placeholder="مثال: وحدة درج وضلفة 60" />
+                <label>
+                  الاسم بالعربي
+                  <input
+                    value={itemNameAr}
+                    onChange={(e) => setItemNameAr(e.target.value)}
+                    required
+                    placeholder="مثال: وحدة درج وضلفة 60"
+                  />
                 </label>
-                <label>الاسم بالإنجليزي
-                  <input value={itemNameEn} onChange={(e) => setItemNameEn(e.target.value)} placeholder="Cabinet Drawer Unit 60" />
+                <label>
+                  الاسم بالإنجليزي
+                  <input
+                    value={itemNameEn}
+                    onChange={(e) => setItemNameEn(e.target.value)}
+                    placeholder="Cabinet Drawer Unit 60"
+                  />
                 </label>
-                <label>نوع الصنف
+                <label>
+                  نوع الصنف
                   <select value={itemType} onChange={(e) => setItemType(e.target.value)}>
-                    {ITEM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                    {ITEM_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
                   </select>
                 </label>
-                <label>المجموعة التصنيفية
-                  <select value={itemCategoryId} onChange={(e) => setItemCategoryId(e.target.value)}>
-                    {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+                <label>
+                  المجموعة التصنيفية
+                  <select
+                    value={itemCategoryId}
+                    onChange={(e) => setItemCategoryId(e.target.value)}
+                  >
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.label}
+                      </option>
+                    ))}
                   </select>
                 </label>
-                <label>وحدة القياس الأساسية
+                <label>
+                  وحدة القياس الأساسية
                   <select value={itemUomId} onChange={(e) => setItemUomId(e.target.value)}>
-                    {uoms.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                    {uoms.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
                   </select>
                 </label>
               </div>
               <div className="form-actions">
-                <button type="submit" className="btn btn--primary">حفظ الصنف</button>
-                <button type="button" className="btn" onClick={() => setShowItemForm(false)}>إلغاء</button>
+                <button type="submit" className="btn btn--primary">
+                  حفظ الصنف
+                </button>
+                <button type="button" className="btn" onClick={() => setShowItemForm(false)}>
+                  إلغاء
+                </button>
               </div>
             </form>
           )}
@@ -323,14 +455,22 @@ export function InventoryPage(): JSX.Element {
               </thead>
               <tbody>
                 {items.length === 0 ? (
-                  <tr><td colSpan={4}>لا توجد أصناف مسجلة</td></tr>
+                  <tr>
+                    <td colSpan={4}>لا توجد أصناف مسجلة</td>
+                  </tr>
                 ) : (
                   items.map((it) => (
                     <tr key={it.id}>
-                      <td><b>{it.code}</b></td>
+                      <td>
+                        <b>{it.code}</b>
+                      </td>
                       <td>{it.name}</td>
-                      <td><code>{it.itemType}</code></td>
-                      <td><span className="status-badge status-badge--active">نشط</span></td>
+                      <td>
+                        <code>{it.itemType}</code>
+                      </td>
+                      <td>
+                        <span className="status-badge status-badge--active">نشط</span>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -348,25 +488,51 @@ export function InventoryPage(): JSX.Element {
               <span className="panel__eyebrow">أرصدة المستودعات</span>
               <h2>المخازن والأرصدة الفعلية والمتاحة (Stock Balances)</h2>
             </div>
-            <button className="btn btn--primary" onClick={() => { setWhCode(nextCode('WH', warehouses.map(w => w.code))); setShowWarehouseForm(!showWarehouseForm); }}>
+            <button
+              className="btn btn--primary"
+              onClick={() => {
+                setWhCode(
+                  nextCode(
+                    'WH',
+                    warehouses.map((w) => w.code),
+                  ),
+                );
+                setShowWarehouseForm(!showWarehouseForm);
+              }}
+            >
               + إضافة مخزن
             </button>
           </div>
 
           {showWarehouseForm && (
-            <form className="form-card" onSubmit={handleCreateWarehouse} style={{ marginBottom: 20 }}>
+            <form
+              className="form-card"
+              onSubmit={handleCreateWarehouse}
+              style={{ marginBottom: 20 }}
+            >
               <h3>إضافة مخزن جديد</h3>
               <div className="form-grid">
-                <label>كود المخزن
+                <label>
+                  كود المخزن
                   <input value={whCode} onChange={(e) => setWhCode(e.target.value)} required />
                 </label>
-                <label>اسم المخزن
-                  <input value={whName} onChange={(e) => setWhName(e.target.value)} placeholder="مثال: مخزن المواد الخام الرئيسي" required />
+                <label>
+                  اسم المخزن
+                  <input
+                    value={whName}
+                    onChange={(e) => setWhName(e.target.value)}
+                    placeholder="مثال: مخزن المواد الخام الرئيسي"
+                    required
+                  />
                 </label>
               </div>
               <div className="form-actions">
-                <button type="submit" className="btn btn--primary">حفظ المخزن</button>
-                <button type="button" className="btn" onClick={() => setShowWarehouseForm(false)}>إلغاء</button>
+                <button type="submit" className="btn btn--primary">
+                  حفظ المخزن
+                </button>
+                <button type="button" className="btn" onClick={() => setShowWarehouseForm(false)}>
+                  إلغاء
+                </button>
               </div>
             </form>
           )}
@@ -384,15 +550,25 @@ export function InventoryPage(): JSX.Element {
               </thead>
               <tbody>
                 {balances.length === 0 ? (
-                  <tr><td colSpan={5}>لا توجد أرصدة مسجلة في المخازن</td></tr>
+                  <tr>
+                    <td colSpan={5}>لا توجد أرصدة مسجلة في المخازن</td>
+                  </tr>
                 ) : (
                   balances.map((b) => (
                     <tr key={b.id}>
-                      <td><b>{itemName(b.itemId)}</b></td>
+                      <td>
+                        <b>{itemName(b.itemId)}</b>
+                      </td>
                       <td>{whNameLookup(b.warehouseId)}</td>
                       <td>{Number(b.onHand).toLocaleString('ar-EG')}</td>
-                      <td style={{ color: '#b45309' }}>{Number(b.reserved).toLocaleString('ar-EG')}</td>
-                      <td><b style={{ color: '#166534' }}>{Number(b.available).toLocaleString('ar-EG')}</b></td>
+                      <td style={{ color: '#b45309' }}>
+                        {Number(b.reserved).toLocaleString('ar-EG')}
+                      </td>
+                      <td>
+                        <b style={{ color: '#166534' }}>
+                          {Number(b.available).toLocaleString('ar-EG')}
+                        </b>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -419,27 +595,61 @@ export function InventoryPage(): JSX.Element {
             <form className="form-card" onSubmit={handleCreateBatch} style={{ marginBottom: 20 }}>
               <h3>تسجيل لوط / تشغيلة طبية جديدة</h3>
               <div className="form-grid">
-                <label>الصنف
-                  <select value={batchItemId} onChange={(e) => setBatchItemId(e.target.value)} required>
-                    {items.map((it) => <option key={it.id} value={it.id}>{it.name}</option>)}
+                <label>
+                  الصنف
+                  <select
+                    value={batchItemId}
+                    onChange={(e) => setBatchItemId(e.target.value)}
+                    required
+                  >
+                    {items.map((it) => (
+                      <option key={it.id} value={it.id}>
+                        {it.name}
+                      </option>
+                    ))}
                   </select>
                 </label>
-                <label>رقم التشغيلة / اللوط (Batch No)
-                  <input value={batchNo} onChange={(e) => setBatchNo(e.target.value)} placeholder="مثال: LOT-2026-STEEL-01" required />
+                <label>
+                  رقم التشغيلة / اللوط (Batch No)
+                  <input
+                    value={batchNo}
+                    onChange={(e) => setBatchNo(e.target.value)}
+                    placeholder="مثال: LOT-2026-STEEL-01"
+                    required
+                  />
                 </label>
-                <label>تاريخ الإنتاج
-                  <input type="date" value={batchMfgDate} onChange={(e) => setBatchMfgDate(e.target.value)} />
+                <label>
+                  تاريخ الإنتاج
+                  <input
+                    type="date"
+                    value={batchMfgDate}
+                    onChange={(e) => setBatchMfgDate(e.target.value)}
+                  />
                 </label>
-                <label>تاريخ انتهاء الصلاحية
-                  <input type="date" value={batchExpDate} onChange={(e) => setBatchExpDate(e.target.value)} />
+                <label>
+                  تاريخ انتهاء الصلاحية
+                  <input
+                    type="date"
+                    value={batchExpDate}
+                    onChange={(e) => setBatchExpDate(e.target.value)}
+                  />
                 </label>
-                <label>ملاحظات اللوط
-                  <input value={batchNotes} onChange={(e) => setBatchNotes(e.target.value)} placeholder="شهادة المطابقة المعقمة" />
+                <label>
+                  ملاحظات اللوط
+                  <input
+                    value={batchNotes}
+                    onChange={(e) => setBatchNotes(e.target.value)}
+                    placeholder="شهادة المطابقة المعقمة"
+                  />
                 </label>
               </div>
               <div className="form-actions">
-                <button type="submit" className="btn btn--primary">حفظ اللوط</button>
-                <button type="button" className="btn" onClick={() => setShowBatchForm(false)}>إلغاء</button>
+                <button type="submit" className="btn btn--primary">
+                  حفظ اللوط
+                </button>
+                <button type="button" className="btn" onClick={() => setShowBatchForm(false)}>
+                  إلغاء
+                </button>
               </div>
             </form>
           )}
@@ -458,33 +668,58 @@ export function InventoryPage(): JSX.Element {
               </thead>
               <tbody>
                 {batches.length === 0 ? (
-                  <tr><td colSpan={6}>لا توجد لوطات طبية مسجلة</td></tr>
+                  <tr>
+                    <td colSpan={6}>لا توجد لوطات طبية مسجلة</td>
+                  </tr>
                 ) : (
                   batches.map((b) => (
                     <tr key={b.id}>
-                      <td><b>{b.batchNumber}</b></td>
-                      <td>{itemName(b.itemId)}</td>
-                      <td>{b.manufacturingDate ? new Date(b.manufacturingDate).toLocaleDateString('ar-EG') : '—'}</td>
-                      <td>{b.expiryDate ? new Date(b.expiryDate).toLocaleDateString('ar-EG') : '—'}</td>
                       <td>
-                        <span className={`status-badge status-badge--${b.status === 'active' ? 'active' : b.status === 'quarantined' ? 'draft' : 'cancelled'}`}>
-                          {b.status === 'active' ? 'نشط ومتاح ✅' : b.status === 'quarantined' ? 'في الحجر الصحي ⚠️' : 'مستدعى طبياً ❌'}
+                        <b>{b.batchNumber}</b>
+                      </td>
+                      <td>{itemName(b.itemId)}</td>
+                      <td>
+                        {b.manufacturingDate
+                          ? new Date(b.manufacturingDate).toLocaleDateString('ar-EG')
+                          : '—'}
+                      </td>
+                      <td>
+                        {b.expiryDate ? new Date(b.expiryDate).toLocaleDateString('ar-EG') : '—'}
+                      </td>
+                      <td>
+                        <span
+                          className={`status-badge status-badge--${b.status === 'active' ? 'active' : b.status === 'quarantined' ? 'draft' : 'cancelled'}`}
+                        >
+                          {b.status === 'active'
+                            ? 'نشط ومتاح ✅'
+                            : b.status === 'quarantined'
+                              ? 'في الحجر الصحي ⚠️'
+                              : 'مستدعى طبياً ❌'}
                         </span>
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: 6 }}>
                           {b.status === 'active' && (
-                            <button className="btn btn--sm btn--warning" onClick={() => handleUpdateBatchStatus(b.id, 'quarantined')}>
+                            <button
+                              className="btn btn--sm btn--warning"
+                              onClick={() => handleUpdateBatchStatus(b.id, 'quarantined')}
+                            >
                               حجر صحي ⚠️
                             </button>
                           )}
                           {b.status === 'quarantined' && (
-                            <button className="btn btn--sm btn--success" onClick={() => handleUpdateBatchStatus(b.id, 'active')}>
+                            <button
+                              className="btn btn--sm btn--success"
+                              onClick={() => handleUpdateBatchStatus(b.id, 'active')}
+                            >
                               إفراج طبي ✅
                             </button>
                           )}
                           {b.status !== 'recalled' && (
-                            <button className="btn btn--sm btn--danger" onClick={() => handleUpdateBatchStatus(b.id, 'recalled')}>
+                            <button
+                              className="btn btn--sm btn--danger"
+                              onClick={() => handleUpdateBatchStatus(b.id, 'recalled')}
+                            >
                               استدعاء طبي ❌
                             </button>
                           )}
@@ -513,29 +748,76 @@ export function InventoryPage(): JSX.Element {
           </div>
 
           {showSerialModal && (
-            <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 100,
+              }}
+            >
               <div style={{ background: '#fff', padding: 24, borderRadius: 8, width: 450 }}>
                 <h3>توليد أرقام تسلسلية للأجهزة الطبية دفعة واحدة</h3>
-                <form onSubmit={handleGenerateBulkSerials} style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
-                  <label>الصنف
-                    <select value={serialItemId} onChange={(e) => setSerialItemId(e.target.value)} required>
-                      {items.map((it) => <option key={it.id} value={it.id}>{it.name}</option>)}
+                <form
+                  onSubmit={handleGenerateBulkSerials}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}
+                >
+                  <label>
+                    الصنف
+                    <select
+                      value={serialItemId}
+                      onChange={(e) => setSerialItemId(e.target.value)}
+                      required
+                    >
+                      {items.map((it) => (
+                        <option key={it.id} value={it.id}>
+                          {it.name}
+                        </option>
+                      ))}
                     </select>
                   </label>
-                  <label>بادئة السيريال (Serial Prefix)
-                    <input value={serialPrefix} onChange={(e) => setSerialPrefix(e.target.value)} required placeholder="مثال: SN-CAB" />
+                  <label>
+                    بادئة السيريال (Serial Prefix)
+                    <input
+                      value={serialPrefix}
+                      onChange={(e) => setSerialPrefix(e.target.value)}
+                      required
+                      placeholder="مثال: SN-CAB"
+                    />
                   </label>
-                  <label>عدد الأجهزة المصنعة
-                    <input type="number" min="1" max="100" value={serialCount} onChange={(e) => setSerialCount(e.target.value)} required />
+                  <label>
+                    عدد الأجهزة المصنعة
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={serialCount}
+                      onChange={(e) => setSerialCount(e.target.value)}
+                      required
+                    />
                   </label>
-                  <label>المخزن
+                  <label>
+                    المخزن
                     <select value={serialWhId} onChange={(e) => setSerialWhId(e.target.value)}>
-                      {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                      {warehouses.map((w) => (
+                        <option key={w.id} value={w.id}>
+                          {w.name}
+                        </option>
+                      ))}
                     </select>
                   </label>
-                  <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 10 }}>
-                    <button type="button" className="btn" onClick={() => setShowSerialModal(false)}>إلغاء</button>
-                    <button type="submit" className="btn btn--primary">توليد الأرقام الآن</button>
+                  <div
+                    style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 10 }}
+                  >
+                    <button type="button" className="btn" onClick={() => setShowSerialModal(false)}>
+                      إلغاء
+                    </button>
+                    <button type="submit" className="btn btn--primary">
+                      توليد الأرقام الآن
+                    </button>
                   </div>
                 </form>
               </div>
@@ -555,16 +837,30 @@ export function InventoryPage(): JSX.Element {
               </thead>
               <tbody>
                 {serials.length === 0 ? (
-                  <tr><td colSpan={5}>لا توجد أرقام تسلسلية مسجلة</td></tr>
+                  <tr>
+                    <td colSpan={5}>لا توجد أرقام تسلسلية مسجلة</td>
+                  </tr>
                 ) : (
                   serials.map((s) => (
                     <tr key={s.id}>
-                      <td><b><code>{s.serialNo}</code></b></td>
-                      <td>{itemName(s.itemId)}</td>
-                      <td>{s.warehouseId ? whNameLookup(s.warehouseId) : 'مُسلم لعميل / مستشفى'}</td>
                       <td>
-                        <span className={`status-badge status-badge--${s.status === 'active' ? 'active' : s.status === 'delivered' ? 'active' : 'draft'}`}>
-                          {s.status === 'active' ? 'بالمخزن (جاهز)' : s.status === 'delivered' ? 'مُسلَم للعميل' : s.status}
+                        <b>
+                          <code>{s.serialNo}</code>
+                        </b>
+                      </td>
+                      <td>{itemName(s.itemId)}</td>
+                      <td>
+                        {s.warehouseId ? whNameLookup(s.warehouseId) : 'مُسلم لعميل / مستشفى'}
+                      </td>
+                      <td>
+                        <span
+                          className={`status-badge status-badge--${s.status === 'active' ? 'active' : s.status === 'delivered' ? 'active' : 'draft'}`}
+                        >
+                          {s.status === 'active'
+                            ? 'بالمخزن (جاهز)'
+                            : s.status === 'delivered'
+                              ? 'مُسلَم للعميل'
+                              : s.status}
                         </span>
                       </td>
                       <td>{new Date(s.createdAt).toLocaleDateString('ar-EG')}</td>

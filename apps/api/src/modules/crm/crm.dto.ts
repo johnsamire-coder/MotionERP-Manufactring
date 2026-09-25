@@ -1,4 +1,14 @@
-import { IsEmail, IsIn, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
+import {
+  IsEmail,
+  IsIn,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
 
 const CUSTOMER_STATUSES = ['lead', 'active', 'inactive', 'archived'] as const;
 const INTERACTION_TYPES = ['visit', 'call', 'email', 'note'] as const;
@@ -18,6 +28,12 @@ export class CreateCustomerDto {
   @IsOptional() @IsEmail() contactEmail?: string;
   @IsUUID() orgNodeId!: string;
   @IsOptional() @IsIn(CUSTOMER_STATUSES) status?: (typeof CUSTOMER_STATUSES)[number];
+  @IsOptional() @IsNumberString() creditLimit?: string;
+}
+
+/** null clears the limit (= unlimited). */
+export class SetCreditLimitDto {
+  @ValidateIf((_o, v) => v !== null) @IsNumberString() creditLimit!: string | null;
 }
 
 export class CreateInteractionDto {
@@ -25,4 +41,12 @@ export class CreateInteractionDto {
   @IsIn(INTERACTION_TYPES) interactionType!: (typeof INTERACTION_TYPES)[number];
   @IsOptional() @IsString() interactionDate?: string;
   @IsOptional() @IsString() note?: string;
+}
+
+/** holdType null lifts the hold (plan item 8). */
+export class SetSupplierHoldDto {
+  @ValidateIf((_o, v) => v !== null) @IsIn(['all', 'invoices', 'payments']) holdType!:
+    'all' | 'invoices' | 'payments' | null;
+  @IsOptional() @IsString() @MaxLength(500) reason?: string;
+  @IsOptional() @IsString() releaseDate?: string;
 }

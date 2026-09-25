@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { financeApi, ApiError } from '../api/client';
+import { financeApi, ApiError, type PaymentRecord } from '../api/client';
 
 export function PaymentEntryPage(): JSX.Element {
-  const { t } = useTranslation();
-  const [payments, setPayments] = useState<any[]>([]);
+  const { t: _t } = useTranslation();
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -29,13 +29,20 @@ export function PaymentEntryPage(): JSX.Element {
     }
   };
 
-  useEffect(() => { void loadPayments(); }, []);
+  useEffect(() => {
+    void loadPayments();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await financeApi.createPayment({
-        orgNodeId, supplierId, amount, paymentMethod, paidFromAccountId, referenceNumber,
+        orgNodeId,
+        supplierId,
+        amount,
+        paymentMethod,
+        paidFromAccountId,
+        referenceNumber,
       });
       setShowForm(false);
       void loadPayments();
@@ -72,32 +79,52 @@ export function PaymentEntryPage(): JSX.Element {
         <form className="form-card" onSubmit={handleSubmit}>
           <h3>إنشاء سند صرف جديد</h3>
           <div className="form-grid">
-            <label>كود الشركة (orgNodeId)
+            <label>
+              كود الشركة (orgNodeId)
               <input value={orgNodeId} onChange={(e) => setOrgNodeId(e.target.value)} required />
             </label>
-            <label>كود المورد (supplierId)
+            <label>
+              كود المورد (supplierId)
               <input value={supplierId} onChange={(e) => setSupplierId(e.target.value)} />
             </label>
-            <label>المبلغ (ج.م)
-              <input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+            <label>
+              المبلغ (ج.م)
+              <input
+                type="number"
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+              />
             </label>
-            <label>طريقة الدفع
+            <label>
+              طريقة الدفع
               <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                 <option value="bank_transfer">تحويل بنكي</option>
                 <option value="cash">نقدي</option>
                 <option value="check">شيك</option>
               </select>
             </label>
-            <label>حساب البنك / الخزنة (accountId)
-              <input value={paidFromAccountId} onChange={(e) => setPaidFromAccountId(e.target.value)} required />
+            <label>
+              حساب البنك / الخزنة (accountId)
+              <input
+                value={paidFromAccountId}
+                onChange={(e) => setPaidFromAccountId(e.target.value)}
+                required
+              />
             </label>
-            <label>رقم المرجع / الشيك
+            <label>
+              رقم المرجع / الشيك
               <input value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} />
             </label>
           </div>
           <div className="form-actions">
-            <button type="submit" className="btn btn--primary">حفظ السند</button>
-            <button type="button" className="btn" onClick={() => setShowForm(false)}>إلغاء</button>
+            <button type="submit" className="btn btn--primary">
+              حفظ السند
+            </button>
+            <button type="button" className="btn" onClick={() => setShowForm(false)}>
+              إلغاء
+            </button>
           </div>
         </form>
       )}
@@ -116,16 +143,28 @@ export function PaymentEntryPage(): JSX.Element {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6}>جاري التحميل...</td></tr>
+              <tr>
+                <td colSpan={6}>جاري التحميل...</td>
+              </tr>
             ) : payments.length === 0 ? (
-              <tr><td colSpan={6}>لا توجد سندات صرف مسجلة</td></tr>
+              <tr>
+                <td colSpan={6}>لا توجد سندات صرف مسجلة</td>
+              </tr>
             ) : (
-              payments.map((p: any) => (
+              payments.map((p) => (
                 <tr key={p.id}>
-                  <td><b>{p.paymentNumber}</b></td>
+                  <td>
+                    <b>{p.paymentNumber}</b>
+                  </td>
                   <td>{new Date(p.paymentDate).toLocaleDateString('ar-EG')}</td>
                   <td>{Number(p.amount).toLocaleString('ar-EG')} ج.م</td>
-                  <td>{p.paymentMethod === 'bank_transfer' ? 'تحويل بنكي' : p.paymentMethod === 'cash' ? 'نقدي' : 'شيك'}</td>
+                  <td>
+                    {p.paymentMethod === 'bank_transfer'
+                      ? 'تحويل بنكي'
+                      : p.paymentMethod === 'cash'
+                        ? 'نقدي'
+                        : 'شيك'}
+                  </td>
                   <td>
                     <span className={`status-badge status-badge--${p.status}`}>
                       {p.status === 'draft' ? 'مسودة' : p.status === 'posted' ? 'مرحل' : 'ملغي'}

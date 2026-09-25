@@ -1,8 +1,14 @@
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { Pool } from 'pg';
 import type { AppConfigService } from '../../core/config/app-config.service';
 import { DatabaseService } from '../../core/database/database.service';
-import { getMigrationStatus, runMigrations } from '../../core/database/migrator';
+import {
+  defaultMigrationsFolder,
+  getMigrationStatus,
+  runMigrations,
+} from '../../core/database/migrator';
 import { OrganizationRepository } from './organization.repository';
 import { OrganizationService } from './organization.service';
 
@@ -37,8 +43,13 @@ describe('organizational core (integration, requires PostgreSQL)', () => {
   let repository: OrganizationRepository;
   let service: OrganizationService;
 
+  // Every schema the migrations create (not only "platform"), so a re-run starts from a clean test database.
   async function resetSchemas(): Promise<void> {
-    await pool.query('drop schema if exists "platform" cascade');
+    const { rows } = await pool.query<{ nspname: string }>(
+      `select nspname from pg_namespace
+       where nspname not like 'pg\\_%' and nspname not in ('information_schema', 'public')`,
+    );
+    for (const { nspname } of rows) await pool.query(`drop schema if exists "${nspname}" cascade`);
     await pool.query(`drop schema if exists "${BOOKKEEPING_SCHEMA}" cascade`);
   }
 
@@ -176,10 +187,16 @@ describe('organizational core (integration, requires PostgreSQL)', () => {
     const parent = await insertNode({ name: 'Parent' });
     await insertNode({ name: 'Child', parentId: parent });
 
-    // ON DELETE RESTRICT raises restrict_violation (23001), checked immediately.
-    await expect(
-      pool.query('delete from "platform"."org_node" where id = $1', [parent]),
-    ).rejects.toMatchObject({ code: '23001' });
+    // ON DELETE RESTRICT refuses the delete. PostgreSQL 16 reports it as foreign_key_violation (23503),
+    // older servers as restrict_violation (23001) — either way on the parent FK.
+    const refused = await pool
+      .query('delete from "platform"."org_node" where id = $1', [parent])
+      .then(
+        () => null,
+        (e: { code?: string; constraint?: string }) => e,
+      );
+    expect(['23001', '23503']).toContain(refused?.code);
+    expect(refused?.constraint).toBe('org_node_parent_id_fk');
   });
 
   it('defaults status to active and rejects an invalid status', async () => {
@@ -262,7 +279,11 @@ describe('organizational core (integration, requires PostgreSQL)', () => {
         databaseUrl: DATABASE_URL,
         migrationsSchema: BOOKKEEPING_SCHEMA,
       });
-      expect(before).toHaveLength(2);
+      // one row per migration in the journal, all applied
+      const journal = JSON.parse(
+        readFileSync(join(defaultMigrationsFolder(), 'meta', '_journal.json'), 'utf8'),
+      ) as { entries: unknown[] };
+      expect(before).toHaveLength(journal.entries.length);
       expect(before.every((m) => m.applied)).toBe(true);
 
       await runMigrations({ databaseUrl: DATABASE_URL, migrationsSchema: BOOKKEEPING_SCHEMA });

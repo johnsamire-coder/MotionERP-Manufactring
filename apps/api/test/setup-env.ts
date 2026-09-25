@@ -4,3 +4,5 @@
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL ??= 'postgresql://motion:motion@localhost:5432/motion_erp_test';
 process.env.API_CORS_ORIGINS ??= 'http://localhost:5173';
+// These suites predate login; auth.e2e-spec.ts turns enforcement on for itself.
+process.env.AUTH_ENFORCE ??= 'false';

@@ -2,12 +2,21 @@
 // Motion ERP — Sales Serial Link DTOs
 // Step 69
 // ============================================================
-import { IsUUID, IsString, IsDateString, IsNumber, IsOptional, IsEnum, Min, IsArray, ValidateNested, IsInt } from 'class-validator';
+import {
+  IsUUID,
+  IsString,
+  IsDateString,
+  IsOptional,
+  Min,
+  IsArray,
+  ValidateNested,
+  IsInt,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 // ── Serial Device Line DTO ───────────────────
 export class SerialDeviceLineDto {
-  @IsString()  serialNumber!: string;
+  @IsString() serialNumber!: string;
   @IsOptional() @IsString() batchNumber?: string;
   @IsOptional() @IsInt() @Min(1) warrantyMonths?: number;
   @IsOptional() @IsString() hospitalDepartment?: string;
@@ -15,19 +24,20 @@ export class SerialDeviceLineDto {
 
 // ── Allocate Serials to Sales Invoice ────────
 export class AllocateSalesSerialsDto {
-  @IsUUID()   salesInvoiceId!: string;
-  @IsUUID()   salesInvoiceLineId!: string;
+  @IsUUID() salesInvoiceId!: string;
+  @IsUUID() salesInvoiceLineId!: string;
   @IsOptional() @IsUUID() deliveryNoteId?: string;
-  @IsUUID()   customerId!: string;
-  @IsUUID()   itemId!: string;
-  @IsArray()  @ValidateNested({ each: true })
+  @IsUUID() customerId!: string;
+  @IsUUID() itemId!: string;
+  @IsArray()
+  @ValidateNested({ each: true })
   @Type(() => SerialDeviceLineDto)
   devices!: SerialDeviceLineDto[];
 }
 
 // ── Complete Installation & Activate Warranty
 export class ActivateWarrantyInstallationDto {
-  @IsUUID()   serialLinkId!: string;
+  @IsUUID() serialLinkId!: string;
   @IsDateString() installationDate!: string;
   @IsString() installedBy!: string;
   @IsOptional() @IsString() hospitalDepartment?: string;

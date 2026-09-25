@@ -4,10 +4,7 @@ import { SalesService } from '../sales/sales.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { AccountingRepository } from '../accounting/accounting.repository';
 import { FinanceValidationError } from './finance.errors';
-import type {
-  PurchaseInvoiceRecord,
-  CreatePurchaseInvoiceInput,
-} from './finance.types';
+import type { PurchaseInvoiceRecord, CreatePurchaseInvoiceInput } from './finance.types';
 import type {
   CompanyAccountingConfigRecord,
   AccountDeterminationRecord,
@@ -37,6 +34,7 @@ describe('FinanceService — Purchase Invoices & AP Accounting Posting', () => {
 
     financeRepo = {
       countPurchaseInvoices: jest.fn().mockImplementation(async () => mockInvoices.size),
+      findPurchaseInvoiceBySupplierNumber: jest.fn().mockResolvedValue(null),
       insertPurchaseInvoice: jest.fn().mockImplementation(async (input) => {
         const record: PurchaseInvoiceRecord = {
           id: input.id,
@@ -75,12 +73,15 @@ describe('FinanceService — Purchase Invoices & AP Accounting Posting', () => {
         }
         return inv;
       }),
-      listPurchaseInvoices: jest.fn().mockImplementation(async () => Array.from(mockInvoices.values())),
+      listPurchaseInvoices: jest
+        .fn()
+        .mockImplementation(async () => Array.from(mockInvoices.values())),
     } as unknown as FinanceRepository;
 
     salesService = {} as unknown as SalesService;
 
     accountingRepo = {
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn().mockResolvedValue({
         orgNodeId: mockOrgNodeId,
         defaultGrniAccountId: mockGrniAccountId,

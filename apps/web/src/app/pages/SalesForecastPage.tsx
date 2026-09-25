@@ -2,16 +2,50 @@
 import { useTranslation } from 'react-i18next';
 import { api, ApiError } from '../api/client';
 
-interface ItemRecord { id: string; code: string; name: string; }
-interface ItemCategoryRecord { id: string; code: string; name: string; }
-interface OrgNodeTreeItem { id: string; name: string; nodeType: string; children: OrgNodeTreeItem[]; }
-interface SfLineInput { itemId: string; forecastQuantity: string; }
-interface SfLineRecord { id: string; itemId: string; forecastQuantity: string; }
-interface PeriodLineInput { periodName: string; forecastQuantity: string; }
-interface PeriodLineRecord { id: string; periodName: string; forecastQuantity: string; }
+interface ItemRecord {
+  id: string;
+  code: string;
+  name: string;
+}
+interface ItemCategoryRecord {
+  id: string;
+  code: string;
+  name: string;
+}
+interface OrgNodeTreeItem {
+  id: string;
+  name: string;
+  nodeType: string;
+  children: OrgNodeTreeItem[];
+}
+interface SfLineInput {
+  itemId: string;
+  forecastQuantity: string;
+}
+interface SfLineRecord {
+  id: string;
+  itemId: string;
+  forecastQuantity: string;
+}
+interface PeriodLineInput {
+  periodName: string;
+  forecastQuantity: string;
+}
+interface PeriodLineRecord {
+  id: string;
+  periodName: string;
+  forecastQuantity: string;
+}
 interface SalesForecastRecord {
-  id: string; forecastNumber: string; orgNodeId: string; itemCategoryId: string;
-  fromDate: string; toDate: string; forecastPeriodicity: string; status: string; lines: SfLineRecord[];
+  id: string;
+  forecastNumber: string;
+  orgNodeId: string;
+  itemCategoryId: string;
+  fromDate: string;
+  toDate: string;
+  forecastPeriodicity: string;
+  status: string;
+  lines: SfLineRecord[];
 }
 
 function flattenOrgNodes(nodes: OrgNodeTreeItem[]): OrgNodeTreeItem[] {
@@ -55,7 +89,9 @@ export function SalesForecastPage(): JSX.Element {
       const lang = i18n.language.startsWith('ar') ? 'ar' : 'en';
       const [itemsRes, catRes, orgRes, sfRes] = await Promise.all([
         api.get<{ items: ItemRecord[] }>(`/catalog/items?lang=${lang}`),
-        api.get<{ tree: Array<{ id: string; code: string; name: string; children: unknown[] }> }>(`/catalog/categories/tree?lang=${lang}`),
+        api.get<{ tree: Array<{ id: string; code: string; name: string; children: unknown[] }> }>(
+          `/catalog/categories/tree?lang=${lang}`,
+        ),
         api.get<{ tree: OrgNodeTreeItem[] }>('/organization/tree'),
         api.get<{ salesForecasts: SalesForecastRecord[] }>('/planning/sales-forecasts'),
       ]);
@@ -77,7 +113,9 @@ export function SalesForecastPage(): JSX.Element {
     }
   }
 
-  useEffect(() => { void loadAll(); }, [i18n.language]);
+  useEffect(() => {
+    void loadAll();
+  }, [i18n.language]);
 
   function addLine(): void {
     const defaultItem = items[0]?.id ?? '';
@@ -95,43 +133,77 @@ export function SalesForecastPage(): JSX.Element {
 
   async function handleCreate(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
+    setFormError(null);
+    setFormSuccess(null);
+    setSubmitting(true);
     try {
       await api.post('/planning/sales-forecasts', {
-        orgNodeId, itemCategoryId, fromDate, toDate, forecastPeriodicity: periodicity,
+        orgNodeId,
+        itemCategoryId,
+        fromDate,
+        toDate,
+        forecastPeriodicity: periodicity,
         lines: lines.map((l) => ({ itemId: l.itemId, forecastQuantity: l.forecastQuantity })),
       });
       setShowForm(false);
       setFormSuccess(t('pages.sales_forecast.createForecast'));
       await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleSubmitForecast(id: string): Promise<void> {
-    setFormError(null); setFormSuccess(null); setSubmitting(true);
+    setFormError(null);
+    setFormSuccess(null);
+    setSubmitting(true);
     try {
       await api.post(`/planning/sales-forecasts/${id}/submit`, {});
       setFormSuccess(t('pages.sales_forecast.submit'));
       await loadAll();
-    } catch (err) { setFormError(err instanceof ApiError ? err.message : 'Failed'); } finally { setSubmitting(false); }
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function openPeriodModal(forecastId: string): Promise<void> {
     setPeriodModalFor(forecastId);
     setPeriodError(null);
     try {
-      const res = await api.get<{ periodLines: PeriodLineRecord[] }>(`/planning/sales-forecasts/${forecastId}/period-lines`);
-      setPeriodRows(res.periodLines.length > 0 ? res.periodLines.map((p) => ({ periodName: p.periodName, forecastQuantity: p.forecastQuantity })) : [{ periodName: '', forecastQuantity: '0' }]);
-    } catch { setPeriodRows([{ periodName: '', forecastQuantity: '0' }]); }
+      const res = await api.get<{ periodLines: PeriodLineRecord[] }>(
+        `/planning/sales-forecasts/${forecastId}/period-lines`,
+      );
+      setPeriodRows(
+        res.periodLines.length > 0
+          ? res.periodLines.map((p) => ({
+              periodName: p.periodName,
+              forecastQuantity: p.forecastQuantity,
+            }))
+          : [{ periodName: '', forecastQuantity: '0' }],
+      );
+    } catch {
+      setPeriodRows([{ periodName: '', forecastQuantity: '0' }]);
+    }
   }
 
-  function addPeriodRow(): void { setPeriodRows([...periodRows, { periodName: '', forecastQuantity: '0' }]); }
+  function addPeriodRow(): void {
+    setPeriodRows([...periodRows, { periodName: '', forecastQuantity: '0' }]);
+  }
   function updatePeriodRow(idx: number, field: keyof PeriodLineInput, value: string): void {
     const updated = [...periodRows];
     const current = updated[idx];
-    if (current) { updated[idx] = { ...current, [field]: value }; setPeriodRows(updated); }
+    if (current) {
+      updated[idx] = { ...current, [field]: value };
+      setPeriodRows(updated);
+    }
   }
-  function removePeriodRow(idx: number): void { setPeriodRows(periodRows.filter((_, i) => i !== idx)); }
+  function removePeriodRow(idx: number): void {
+    setPeriodRows(periodRows.filter((_, i) => i !== idx));
+  }
 
   function distributeEvenly(): void {
     const total = Number(distributeTotal) || 0;
@@ -142,23 +214,34 @@ export function SalesForecastPage(): JSX.Element {
 
   async function savePeriodLines(): Promise<void> {
     if (!periodModalFor) return;
-    setPeriodSubmitting(true); setPeriodError(null);
+    setPeriodSubmitting(true);
+    setPeriodError(null);
     try {
       await api.post(`/planning/sales-forecasts/${periodModalFor}/period-lines`, {
-        lines: periodRows.filter((r) => r.periodName).map((r) => ({ periodName: r.periodName, forecastQuantity: r.forecastQuantity })),
+        lines: periodRows
+          .filter((r) => r.periodName)
+          .map((r) => ({ periodName: r.periodName, forecastQuantity: r.forecastQuantity })),
       });
       setPeriodModalFor(null);
-    } catch (err) { setPeriodError(err instanceof ApiError ? err.message : 'Failed'); } finally { setPeriodSubmitting(false); }
+    } catch (err) {
+      setPeriodError(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setPeriodSubmitting(false);
+    }
   }
 
-  const itemLabel = (id: string): string => items.find((it) => it.id === id)?.name ?? id;
+  const _itemLabel = (id: string): string => items.find((it) => it.id === id)?.name ?? id;
   const catLabel = (id: string): string => categories.find((c) => c.id === id)?.name ?? id;
   const orgLabel = (id: string): string => orgNodes.find((o) => o.id === id)?.name ?? id;
-  const periodLabel = (p: string): string => t(`pages.sales_forecast.${p === 'half_yearly' ? 'halfYearly' : p}`);
+  const periodLabel = (p: string): string =>
+    t(`pages.sales_forecast.${p === 'half_yearly' ? 'halfYearly' : p}`);
   const inputStyle = { padding: '8px 10px', borderRadius: 6, border: '1px solid #cbd5e1' };
   const labelStyle = { fontSize: 12, color: '#64748b' };
 
-  if (loading) return <p style={{ padding: 40, textAlign: 'center' }}>{t('pages.production_ops.form.loading')}</p>;
+  if (loading)
+    return (
+      <p style={{ padding: 40, textAlign: 'center' }}>{t('pages.production_ops.form.loading')}</p>
+    );
 
   return (
     <section className="module-page">
@@ -180,35 +263,75 @@ export function SalesForecastPage(): JSX.Element {
             <span className="panel__eyebrow">Material Planning</span>
             <h2>{t('pages.sales_forecast.listTitle')}</h2>
           </div>
-          <button className="primary-button" onClick={() => setShowForm((v) => !v)}><b>+</b>{t('pages.sales_forecast.createForecast')}</button>
+          <button className="primary-button" onClick={() => setShowForm((v) => !v)}>
+            <b>+</b>
+            {t('pages.sales_forecast.createForecast')}
+          </button>
         </div>
 
         {showForm && (
-          <form onSubmit={(e) => { void handleCreate(e); }} style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '0 0 20px' }}>
+          <form
+            onSubmit={(e) => {
+              void handleCreate(e);
+            }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '0 0 20px' }}
+          >
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.sales_forecast.itemCategory')}</label>
-                <select value={itemCategoryId} onChange={(e) => setItemCategoryId(e.target.value)} style={{ ...inputStyle, minWidth: 180 }}>
-                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                <select
+                  value={itemCategoryId}
+                  onChange={(e) => setItemCategoryId(e.target.value)}
+                  style={{ ...inputStyle, minWidth: 180 }}
+                >
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.sales_forecast.activity')}</label>
-                <select value={orgNodeId} onChange={(e) => setOrgNodeId(e.target.value)} style={{ ...inputStyle, minWidth: 160 }}>
-                  {orgNodes.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                <select
+                  value={orgNodeId}
+                  onChange={(e) => setOrgNodeId(e.target.value)}
+                  style={{ ...inputStyle, minWidth: 160 }}
+                >
+                  {orgNodes.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.sales_forecast.fromDate')}</label>
-                <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} required style={inputStyle} />
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  required
+                  style={inputStyle}
+                />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.sales_forecast.toDate')}</label>
-                <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} required style={inputStyle} />
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  required
+                  style={inputStyle}
+                />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>{t('pages.sales_forecast.periodicity')}</label>
-                <select value={periodicity} onChange={(e) => setPeriodicity(e.target.value)} style={{ ...inputStyle, minWidth: 130 }}>
+                <select
+                  value={periodicity}
+                  onChange={(e) => setPeriodicity(e.target.value)}
+                  style={{ ...inputStyle, minWidth: 130 }}
+                >
                   <option value="monthly">{t('pages.sales_forecast.monthly')}</option>
                   <option value="quarterly">{t('pages.sales_forecast.quarterly')}</option>
                   <option value="half_yearly">{t('pages.sales_forecast.halfYearly')}</option>
@@ -217,24 +340,77 @@ export function SalesForecastPage(): JSX.Element {
               </div>
             </div>
 
-            <div style={{ background: '#f8fafc', padding: 16, borderRadius: 6, border: '1px solid #e2e8f0' }}>
-              <label style={{ ...labelStyle, fontWeight: 'bold', marginBottom: 10, display: 'block' }}>{t('pages.sales_forecast.addLine')}</label>
-              <div style={{ display: 'flex', gap: 12, marginBottom: 6, fontSize: 12, color: '#64748b', fontWeight: 'bold' }}>
+            <div
+              style={{
+                background: '#f8fafc',
+                padding: 16,
+                borderRadius: 6,
+                border: '1px solid #e2e8f0',
+              }}
+            >
+              <label
+                style={{ ...labelStyle, fontWeight: 'bold', marginBottom: 10, display: 'block' }}
+              >
+                {t('pages.sales_forecast.addLine')}
+              </label>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 12,
+                  marginBottom: 6,
+                  fontSize: 12,
+                  color: '#64748b',
+                  fontWeight: 'bold',
+                }}
+              >
                 <span style={{ flex: 2 }}>{t('pages.sales_forecast.item')}</span>
                 <span style={{ width: 140 }}>{t('pages.sales_forecast.forecastQty')}</span>
               </div>
               {lines.map((line, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: 12, marginTop: 8, alignItems: 'center' }}>
-                  <select value={line.itemId} onChange={(e) => updateLine(idx, 'itemId', e.target.value)} style={{ ...inputStyle, flex: 2, minWidth: 200 }}>
-                    {items.map((it) => <option key={it.id} value={it.id}>{it.name} ({it.code})</option>)}
+                <div
+                  key={idx}
+                  style={{ display: 'flex', gap: 12, marginTop: 8, alignItems: 'center' }}
+                >
+                  <select
+                    value={line.itemId}
+                    onChange={(e) => updateLine(idx, 'itemId', e.target.value)}
+                    style={{ ...inputStyle, flex: 2, minWidth: 200 }}
+                  >
+                    {items.map((it) => (
+                      <option key={it.id} value={it.id}>
+                        {it.name} ({it.code})
+                      </option>
+                    ))}
                   </select>
-                  <input type="number" min="0.01" step="any" value={line.forecastQuantity} onChange={(e) => updateLine(idx, 'forecastQuantity', e.target.value)} required style={{ ...inputStyle, width: 140 }} />
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="any"
+                    value={line.forecastQuantity}
+                    onChange={(e) => updateLine(idx, 'forecastQuantity', e.target.value)}
+                    required
+                    style={{ ...inputStyle, width: 140 }}
+                  />
                 </div>
               ))}
-              <button type="button" onClick={addLine} className="filter-button" style={{ marginTop: 12 }}>+ {t('pages.sales_forecast.addLine')}</button>
+              <button
+                type="button"
+                onClick={addLine}
+                className="filter-button"
+                style={{ marginTop: 12 }}
+              >
+                + {t('pages.sales_forecast.addLine')}
+              </button>
             </div>
 
-            <button type="submit" disabled={submitting} className="primary-button" style={{ alignSelf: 'flex-start' }}>{t('pages.technical.form.save')}</button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="primary-button"
+              style={{ alignSelf: 'flex-start' }}
+            >
+              {t('pages.technical.form.save')}
+            </button>
           </form>
         )}
 
@@ -247,21 +423,46 @@ export function SalesForecastPage(): JSX.Element {
             <span>{t('pages.sales_forecast.status')}</span>
             <span>{t('common.filter')}</span>
           </div>
-          {forecasts.length === 0 && <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>{t('pages.sales_forecast.noForecasts')}</p>}
+          {forecasts.length === 0 && (
+            <p style={{ padding: '20px 0', textAlign: 'center', color: '#94a3b8' }}>
+              {t('pages.sales_forecast.noForecasts')}
+            </p>
+          )}
           {forecasts.map((sf) => (
             <div className="placeholder-table__row" key={sf.id}>
-              <span><b>{sf.forecastNumber}</b></span>
+              <span>
+                <b>{sf.forecastNumber}</b>
+              </span>
               <span>{catLabel(sf.itemCategoryId)}</span>
               <span>{periodLabel(sf.forecastPeriodicity)}</span>
               <span>{orgLabel(sf.orgNodeId)}</span>
-              <span><span className={`status status--${sf.status === 'submitted' ? 'success' : 'neutral'}`}><i />{sf.status}</span></span>
+              <span>
+                <span
+                  className={`status status--${sf.status === 'submitted' ? 'success' : 'neutral'}`}
+                >
+                  <i />
+                  {sf.status}
+                </span>
+              </span>
               <span>
                 {sf.status === 'draft' && (
-                  <button className="primary-button" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => { void handleSubmitForecast(sf.id); }}>
+                  <button
+                    className="primary-button"
+                    style={{ fontSize: 12, padding: '4px 10px' }}
+                    onClick={() => {
+                      void handleSubmitForecast(sf.id);
+                    }}
+                  >
                     {t('pages.sales_forecast.submit')}
                   </button>
                 )}
-                <button className="filter-button" style={{ fontSize: 12, padding: '4px 10px', marginInlineStart: 6 }} onClick={() => { void openPeriodModal(sf.id); }}>
+                <button
+                  className="filter-button"
+                  style={{ fontSize: 12, padding: '4px 10px', marginInlineStart: 6 }}
+                  onClick={() => {
+                    void openPeriodModal(sf.id);
+                  }}
+                >
                   {t('pages.sales_forecast.manageDistribution')}
                 </button>
               </span>
@@ -271,30 +472,102 @@ export function SalesForecastPage(): JSX.Element {
       </article>
 
       {periodModalFor && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: '#fff', padding: 24, borderRadius: 8, width: 460, maxHeight: '80vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+          }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              padding: 24,
+              borderRadius: 8,
+              width: 460,
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3>{t('pages.sales_forecast.periodDistribution')}</h3>
-              <button className="filter-button" onClick={() => setPeriodModalFor(null)}>x</button>
+              <button className="filter-button" onClick={() => setPeriodModalFor(null)}>
+                x
+              </button>
             </div>
 
             {periodError && <p style={{ color: '#b91c1c', fontSize: 13 }}>{periodError}</p>}
 
             {periodRows.map((row, idx) => (
               <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input placeholder={t('pages.sales_forecast.periodName')} value={row.periodName} onChange={(e) => updatePeriodRow(idx, 'periodName', e.target.value)} style={{ ...inputStyle, flex: 2 }} />
-                <input type='number' min='0' step='any' value={row.forecastQuantity} onChange={(e) => updatePeriodRow(idx, 'forecastQuantity', e.target.value)} style={{ ...inputStyle, width: 100 }} />
-                <button type='button' className="filter-button" onClick={() => removePeriodRow(idx)}>x</button>
+                <input
+                  placeholder={t('pages.sales_forecast.periodName')}
+                  value={row.periodName}
+                  onChange={(e) => updatePeriodRow(idx, 'periodName', e.target.value)}
+                  style={{ ...inputStyle, flex: 2 }}
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={row.forecastQuantity}
+                  onChange={(e) => updatePeriodRow(idx, 'forecastQuantity', e.target.value)}
+                  style={{ ...inputStyle, width: 100 }}
+                />
+                <button
+                  type="button"
+                  className="filter-button"
+                  onClick={() => removePeriodRow(idx)}
+                >
+                  x
+                </button>
               </div>
             ))}
-            <button type='button' onClick={addPeriodRow} className="filter-button">+ {t('pages.sales_forecast.addPeriod')}</button>
+            <button type="button" onClick={addPeriodRow} className="filter-button">
+              + {t('pages.sales_forecast.addPeriod')}
+            </button>
 
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: '#f8fafc', padding: 10, borderRadius: 6 }}>
-              <input type='number' min='0' step='any' placeholder="Total" value={distributeTotal} onChange={(e) => setDistributeTotal(e.target.value)} style={{ ...inputStyle, width: 100 }} />
-              <button type='button' className="filter-button" onClick={distributeEvenly}>{t('pages.sales_forecast.distributeEvenly')}</button>
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                alignItems: 'center',
+                background: '#f8fafc',
+                padding: 10,
+                borderRadius: 6,
+              }}
+            >
+              <input
+                type="number"
+                min="0"
+                step="any"
+                placeholder="Total"
+                value={distributeTotal}
+                onChange={(e) => setDistributeTotal(e.target.value)}
+                style={{ ...inputStyle, width: 100 }}
+              />
+              <button type="button" className="filter-button" onClick={distributeEvenly}>
+                {t('pages.sales_forecast.distributeEvenly')}
+              </button>
             </div>
 
-            <button type='button' disabled={periodSubmitting} className="primary-button" onClick={() => { void savePeriodLines(); }}>{t('pages.sales_forecast.savePeriods')}</button>
+            <button
+              type="button"
+              disabled={periodSubmitting}
+              className="primary-button"
+              onClick={() => {
+                void savePeriodLines();
+              }}
+            >
+              {t('pages.sales_forecast.savePeriods')}
+            </button>
           </div>
         </div>
       )}

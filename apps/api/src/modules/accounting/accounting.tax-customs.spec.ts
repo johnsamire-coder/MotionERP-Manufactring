@@ -3,19 +3,67 @@
 // Step 79 | Aligned with accrual.schema.ts | 100% PASS ✅
 // ============================================================
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { TaxAndCustomsService } from './tax-customs.service';
 import { WhtDirection } from './tax-customs.dto';
 import { taxSettlement, withholdingTaxEntry, customsDeclaration } from './tax-customs.schema';
+import { ModuleRef } from '@nestjs/core';
+import { AccountingService } from './accounting.service';
+import { InventoryService } from '../inventory/inventory.service';
 
 describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
   let service: TaxAndCustomsService;
 
-  const mockCompanyId    = '11111111-1111-1111-1111-111111111111';
+  const mockCompanyId = '11111111-1111-1111-1111-111111111111';
   const mockFiscalYearId = '22222222-2222-2222-2222-222222222222';
-  const mockPeriodId     = '33333333-3333-3333-3333-333333333333';
-  const mockBankAccId    = '44444444-4444-4444-4444-444444444444';
-  const mockUserId       = '99999999-9999-9999-9999-999999999999';
+  const mockPeriodId = '33333333-3333-3333-3333-333333333333';
+  const mockBankAccId = '44444444-4444-4444-4444-444444444444';
+  const mockUserId = '99999999-9999-9999-9999-999999999999';
+  const outputVat = 'acc-output-vat';
+  const inputVat = 'acc-input-vat';
+  const taxAuthority = 'acc-tax-authority';
+  const customsClearing = 'acc-customs-clearing';
+
+  // Real posting path (AccountingService) stubbed: entries come back posted with their lines.
+  interface Draft {
+    id: string;
+    entryNumber: string;
+    status: string;
+    lines: unknown[];
+  }
+  const drafts = new Map<string, Draft>();
+  const accounting = {
+    getCompanyConfig: jest.fn(async () => ({
+      defaultInputTaxAccountId: inputVat,
+      defaultOutputTaxAccountId: outputVat,
+    })),
+    findEntryByIdempotencyKey: jest.fn(async () => null),
+    createEntry: jest.fn(async (input: { lines: unknown[] }): Promise<Draft> => {
+      const d = {
+        id: `je-${drafts.size + 1}`,
+        entryNumber: 'JE-1',
+        status: 'draft',
+        lines: input.lines,
+      };
+      drafts.set(d.id, d);
+      return d;
+    }),
+    postEntry: jest.fn(async (id: string): Promise<Draft> => ({
+      ...drafts.get(id)!,
+      status: 'posted',
+    })),
+  };
+  const inventory = {
+    getMovement: jest.fn(async (id: string) => ({
+      id,
+      itemId: 'item-ss-sheet',
+      warehouseId: 'warehouse-raw-ss-01',
+      movementType: 'receipt',
+      quantity: '100',
+      unitCost: '14550',
+    })),
+    createLandedCostVoucher: jest.fn(async () => ({ id: 'lcv-1' })),
+    postLandedCostVoucher: jest.fn(async () => ({ id: 'lcv-1', status: 'posted' })),
+  };
 
   // داتابيز حية في الذاكرة (In-Memory Database Emulation)
   let taxSettlementsDb: any[] = [];
@@ -28,7 +76,7 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
       return {
         from: jest.fn().mockImplementation((table) => {
           return {
-            where: jest.fn().mockImplementation((condition) => {
+            where: jest.fn().mockImplementation((_condition) => {
               // توجيه الاستعلام للجدول المناسب بالذاكرة
               if (table === taxSettlement) {
                 return taxSettlementsDb;
@@ -50,11 +98,11 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         values: jest.fn().mockImplementation((data) => {
           return {
             returning: jest.fn().mockImplementation(() => {
-              const record = { 
-                id: `id-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`, 
-                ...data 
+              const record = {
+                id: `id-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+                ...data,
               };
-              
+
               if (table === taxSettlement) {
                 taxSettlementsDb.push(record);
               } else if (table === withholdingTaxEntry) {
@@ -72,7 +120,7 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
       return {
         set: jest.fn().mockImplementation((updateData) => {
           return {
-            where: jest.fn().mockImplementation((condition) => {
+            where: jest.fn().mockImplementation((_condition) => {
               return {
                 returning: jest.fn().mockImplementation(() => {
                   // تحديث السجلات في الذاكرة
@@ -105,6 +153,11 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
       providers: [
         TaxAndCustomsService,
         { provide: 'DRIZZLE', useValue: mockDb },
+        { provide: AccountingService, useValue: accounting },
+        {
+          provide: ModuleRef,
+          useValue: { get: (token: unknown) => (token === InventoryService ? inventory : null) },
+        },
       ],
     }).compile();
 
@@ -122,20 +175,28 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         periodId: mockPeriodId,
         taxPeriod: '2026-08',
         totalSalesTaxable: 1850000,
-        outputVatAmount: 259000, 
+        outputVatAmount: 259000,
         totalPurchaseTaxable: 1120000,
-        inputVatAmount: 156800,  
+        inputVatAmount: 156800,
+        vatPayableAccountId: taxAuthority,
       },
       mockUserId,
     );
 
     expect(result).toBeDefined();
     expect(result.settlement.status).toBe('filed');
-    expect(parseFloat(result.settlement.netVatPayable)).toBe(102200); 
+    expect(parseFloat(result.settlement.netVatPayable)).toBe(102200);
 
     expect(result.journalEntry.lines).toHaveLength(3);
-    const outputVatLine = result.journalEntry.lines.find((l: any) => l.debit > 0);
-    expect(outputVatLine.debit).toBe(259000);
+    const byAccount = Object.fromEntries(
+      result.journalEntry.lines.map((l) => [l.accountId, [l.debitAmount, l.creditAmount]]),
+    );
+    expect(byAccount[outputVat]).toEqual(['259000.0000', '0.0000']);
+    expect(byAccount[inputVat]).toEqual(['0.0000', '156800.0000']);
+    expect(byAccount[taxAuthority]).toEqual(['0.0000', '102200.0000']);
+    expect(accounting.createEntry).toHaveBeenCalledWith(
+      expect.objectContaining({ orgNodeId: mockCompanyId, sourceEventType: 'vat_settlement' }),
+    );
   });
 
   // ────────────────────────────────────────────
@@ -150,9 +211,10 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         periodId: mockPeriodId,
         taxPeriod: '2026-08',
         totalSalesTaxable: 1850000,
-        outputVatAmount: 259000, 
+        outputVatAmount: 259000,
         totalPurchaseTaxable: 1120000,
-        inputVatAmount: 156800,  
+        inputVatAmount: 156800,
+        vatPayableAccountId: taxAuthority,
       },
       mockUserId,
     );
@@ -169,8 +231,12 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
     );
 
     expect(paymentResult.settlement.status).toBe('paid');
-    expect(paymentResult.paymentJournal.lines[0].debit).toBe(102200);
-    expect(paymentResult.paymentJournal.lines[1].credit).toBe(102200);
+    expect(paymentResult.paymentJournal.lines[0]).toEqual(
+      expect.objectContaining({ accountId: taxAuthority, debitAmount: '102200.0000' }),
+    );
+    expect(paymentResult.paymentJournal.lines[1]).toEqual(
+      expect.objectContaining({ accountId: mockBankAccId, creditAmount: '102200.0000' }),
+    );
   });
 
   // ────────────────────────────────────────────
@@ -190,7 +256,7 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         taxRegistrationNum: '100-245-891',
         invoiceNumber: 'PINV-001',
         baseAmount: 350000,
-        whtRate: 1, 
+        whtRate: 1,
       },
       mockUserId,
     );
@@ -208,7 +274,7 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         taxRegistrationNum: '200-345-999',
         invoiceNumber: 'PINV-002',
         baseAmount: 85000,
-        whtRate: 3, 
+        whtRate: 3,
       },
       mockUserId,
     );
@@ -240,18 +306,27 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         currency: 'USD',
         exchangeRate: 48.5,
         cifValueForeign: 30000,
-        customsDutyAmount: 72500, 
-        developmentFee: 43500,    
-        vatPaidAtCustoms: 219240, 
+        customsDutyAmount: 72500,
+        developmentFee: 43500,
+        vatPaidAtCustoms: 219240,
         clearanceExpenses: 15000,
+        customsClearingAccountId: customsClearing,
+        paidFromAccountId: mockBankAccId,
       },
       mockUserId,
     );
 
     expect(result.declaration.status).toBe('cleared');
-    expect(parseFloat(result.declaration.cifValueEgp)).toBe(1455000); 
-    expect(parseFloat(result.declaration.totalPaidAmount)).toBe(350240); 
+    expect(parseFloat(result.declaration.cifValueEgp)).toBe(1455000);
+    expect(parseFloat(result.declaration.totalPaidAmount)).toBe(350240);
     expect(result.journalEntry.lines).toHaveLength(3);
+    // duties 72,500 + 43,500 + 15,000 wait on the clearing account; VAT goes to input VAT
+    expect(result.journalEntry.lines[0]).toEqual(
+      expect.objectContaining({ accountId: customsClearing, debitAmount: '131000.0000' }),
+    );
+    expect(result.journalEntry.lines[2]).toEqual(
+      expect.objectContaining({ accountId: mockBankAccId, creditAmount: '350240.0000' }),
+    );
   });
 
   // ────────────────────────────────────────────
@@ -271,10 +346,12 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
         currency: 'USD',
         exchangeRate: 48.5,
         cifValueForeign: 30000,
-        customsDutyAmount: 72500, 
-        developmentFee: 43500,    
-        vatPaidAtCustoms: 219240, 
+        customsDutyAmount: 72500,
+        developmentFee: 43500,
+        vatPaidAtCustoms: 219240,
         clearanceExpenses: 15000,
+        customsClearingAccountId: customsClearing,
+        paidFromAccountId: mockBankAccId,
       },
       mockUserId,
     );
@@ -282,11 +359,21 @@ describe('Accounting: Egyptian Tax Authority & Customs Engine', () => {
     const capitalized = await service.capitalizeCustomsToInventory(
       {
         declarationId: prep.declaration.id,
-        targetWarehouseId: 'warehouse-raw-ss-01',
+        receiptMovementIds: ['mov-receipt-ss-1'],
       },
       mockUserId,
     );
 
     expect(capitalized.status).toBe('capitalized');
+    expect(capitalized.landedCostVoucherId).toBe('lcv-1');
+    expect(inventory.createLandedCostVoucher).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orgNodeId: mockCompanyId,
+        totalExpenseAmount: '131000.0000',
+        expenseAccountId: customsClearing,
+        items: [expect.objectContaining({ receiptMovementId: 'mov-receipt-ss-1' })],
+      }),
+    );
+    expect(inventory.postLandedCostVoucher).toHaveBeenCalledWith('lcv-1');
   });
 });

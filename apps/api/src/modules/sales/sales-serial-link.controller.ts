@@ -9,6 +9,7 @@ import {
   ActivateWarrantyInstallationDto,
   QuerySalesSerialsDto,
 } from './sales-serial-link.dto';
+import type { RequestWithUser } from '../auth/request-with-user';
 
 @Controller({ path: 'sales/serials', version: '1' })
 export class SalesSerialLinkController {
@@ -16,14 +17,17 @@ export class SalesSerialLinkController {
 
   // ── تخصيص أرقام السيريال للفاتورة ───────────
   @Post('allocate')
-  async allocateSerials(@Body() dto: AllocateSalesSerialsDto, @Req() req: any) {
+  async allocateSerials(@Body() dto: AllocateSalesSerialsDto, @Req() req: RequestWithUser) {
     const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
     return this.serialService.allocateSerials(dto, userId);
   }
 
   // ── إثبات التركيب وتفعيل الضمان ─────────────
   @Post('activate-warranty')
-  async activateWarranty(@Body() dto: ActivateWarrantyInstallationDto, @Req() req: any) {
+  async activateWarranty(
+    @Body() dto: ActivateWarrantyInstallationDto,
+    @Req() req: RequestWithUser,
+  ) {
     const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
     return this.serialService.activateWarranty(dto, userId);
   }

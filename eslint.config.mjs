@@ -20,6 +20,17 @@ export default tseslint.config(
     rules: {
       // Architecture Decisions D3: no untyped escape hatches without a documented reason.
       '@typescript-eslint/no-explicit-any': 'error',
+      // A leading underscore marks a binding that is intentionally unused
+      // (a positional parameter, a useState value only its setter needs, ...).
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+        },
+      ],
       '@typescript-eslint/explicit-function-return-type': [
         'warn',
         { allowExpressions: true, allowTypedFunctionExpressions: true },

@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api, ApiError } from '../api/client';
+import { api } from '../api/client';
 
-interface EmployeeRecord { id: string; code: string; name: string; }
+interface EmployeeRecord {
+  id: string;
+  code: string;
+  name: string;
+}
 interface LeaveRecord {
   id: string;
   employeeName: string;
@@ -14,7 +18,7 @@ interface LeaveRecord {
 }
 
 export function LeaveApplicationPage(): JSX.Element {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [leaves, setLeaves] = useState<LeaveRecord[]>([
     {
@@ -25,7 +29,7 @@ export function LeaveApplicationPage(): JSX.Element {
       toDate: '2026-10-05',
       reason: 'Family event',
       status: 'approved',
-    }
+    },
   ]);
   const [showForm, setShowForm] = useState(false);
   const [selectedEmpId, setSelectedEmpId] = useState('');
@@ -37,17 +41,23 @@ export function LeaveApplicationPage(): JSX.Element {
 
   async function loadEmployees(): Promise<void> {
     try {
-      const res = await api.get<{ employees: EmployeeRecord[] }>('/hr/employees').catch(() => ({ employees: [] }));
+      const res = await api
+        .get<{ employees: EmployeeRecord[] }>('/hr/employees')
+        .catch(() => ({ employees: [] }));
       setEmployees(res.employees || []);
       if (res.employees?.[0]) setSelectedEmpId(res.employees[0].id);
-    } catch {}
+    } catch {
+      // Best effort: the page still works with an empty employee list.
+    }
   }
 
-  useEffect(() => { void loadEmployees(); }, []);
+  useEffect(() => {
+    void loadEmployees();
+  }, []);
 
   function handleCreate(e: React.FormEvent): void {
     e.preventDefault();
-    const emp = employees.find(e => e.id === selectedEmpId);
+    const emp = employees.find((e) => e.id === selectedEmpId);
     const newLeave: LeaveRecord = {
       id: String(leaves.length + 1),
       employeeName: emp ? `${emp.name} (${emp.code})` : 'Employee',
@@ -74,7 +84,7 @@ export function LeaveApplicationPage(): JSX.Element {
           <h1>Leave Application (طلبات الإجازات)</h1>
           <p>Submit, approve, and track employee annual, sick, and casual leave requests.</p>
         </div>
-        <button className="primary-button" onClick={() => setShowForm(v => !v)}>
+        <button className="primary-button" onClick={() => setShowForm((v) => !v)}>
           {showForm ? 'Cancel' : '+ New Leave Application'}
         </button>
       </div>
@@ -82,20 +92,51 @@ export function LeaveApplicationPage(): JSX.Element {
       {success && <p style={{ color: '#166534', fontWeight: 'bold' }}>{success}</p>}
 
       {showForm && (
-        <article className="panel module-panel" style={{ background: '#fff', padding: 24, borderRadius: 8, border: '1px solid #e2e8f0', margin: '20px 0' }}>
+        <article
+          className="panel module-panel"
+          style={{
+            background: '#fff',
+            padding: 24,
+            borderRadius: 8,
+            border: '1px solid #e2e8f0',
+            margin: '20px 0',
+          }}
+        >
           <h2 style={{ fontSize: 18, margin: '0 0 16px' }}>Apply for Leave</h2>
-          <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
+          <form
+            onSubmit={handleCreate}
+            style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+          >
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: 16,
+              }}
+            >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>Employee</label>
-                <select value={selectedEmpId} onChange={e => setSelectedEmpId(e.target.value)} style={{ ...inputStyle, width: '100%' }} required>
-                  {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name} ({emp.code})</option>)}
+                <select
+                  value={selectedEmpId}
+                  onChange={(e) => setSelectedEmpId(e.target.value)}
+                  style={{ ...inputStyle, width: '100%' }}
+                  required
+                >
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.code})
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>Leave Type</label>
-                <select value={leaveType} onChange={e => setLeaveType(e.target.value)} style={{ ...inputStyle, width: '100%' }}>
+                <select
+                  value={leaveType}
+                  onChange={(e) => setLeaveType(e.target.value)}
+                  style={{ ...inputStyle, width: '100%' }}
+                >
                   <option value="Annual Leave (إجازة سنوية)">Annual Leave (إجازة سنوية)</option>
                   <option value="Sick Leave (إجازة مرضية)">Sick Leave (إجازة مرضية)</option>
                   <option value="Casual Leave (إجازة عارضة)">Casual Leave (إجازة عارضة)</option>
@@ -105,26 +146,57 @@ export function LeaveApplicationPage(): JSX.Element {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>From Date</label>
-                <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} style={{ ...inputStyle, width: '100%' }} required />
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  style={{ ...inputStyle, width: '100%' }}
+                  required
+                />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={labelStyle}>To Date</label>
-                <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} style={{ ...inputStyle, width: '100%' }} required />
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  style={{ ...inputStyle, width: '100%' }}
+                  required
+                />
               </div>
             </div>
 
-            <textarea value={reason} onChange={e => setReason(e.target.value)} placeholder="Reason for leave..." style={{ ...inputStyle, minHeight: 50 }} />
-            <button type="submit" className="primary-button" style={{ alignSelf: 'flex-start' }}>Approve & Record Leave</button>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Reason for leave..."
+              style={{ ...inputStyle, minHeight: 50 }}
+            />
+            <button type="submit" className="primary-button" style={{ alignSelf: 'flex-start' }}>
+              Approve & Record Leave
+            </button>
           </form>
         </article>
       )}
 
       {/* Leave Ledger */}
-      <article className="panel module-panel" style={{ background: '#fff', padding: 20, borderRadius: 8, border: '1px solid #e2e8f0', marginTop: 20 }}>
+      <article
+        className="panel module-panel"
+        style={{
+          background: '#fff',
+          padding: 20,
+          borderRadius: 8,
+          border: '1px solid #e2e8f0',
+          marginTop: 20,
+        }}
+      >
         <h2 style={{ fontSize: 16, margin: '0 0 16px' }}>Leave Applications Ledger</h2>
         <div className="placeholder-table">
-          <div className="placeholder-table__head" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 2fr 1fr' }}>
+          <div
+            className="placeholder-table__head"
+            style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 2fr 1fr' }}
+          >
             <span>Employee</span>
             <span>Type</span>
             <span>From</span>
@@ -133,14 +205,25 @@ export function LeaveApplicationPage(): JSX.Element {
             <span>Status</span>
           </div>
 
-          {leaves.map(l => (
-            <div className="placeholder-table__row" key={l.id} style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 2fr 1fr', alignItems: 'center' }}>
-              <span><b>{l.employeeName}</b></span>
+          {leaves.map((l) => (
+            <div
+              className="placeholder-table__row"
+              key={l.id}
+              style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 2fr 1fr', alignItems: 'center' }}
+            >
+              <span>
+                <b>{l.employeeName}</b>
+              </span>
               <span>{l.leaveType}</span>
               <span>{l.fromDate}</span>
               <span>{l.toDate}</span>
               <span>{l.reason}</span>
-              <span><span className="status status--success"><i />{l.status.toUpperCase()}</span></span>
+              <span>
+                <span className="status status--success">
+                  <i />
+                  {l.status.toUpperCase()}
+                </span>
+              </span>
             </div>
           ))}
         </div>

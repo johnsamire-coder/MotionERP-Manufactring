@@ -1,7 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { AccountingNotFoundError, AccountingValidationError } from './accounting.errors';
 
-interface HttpResponse { status(code: number): HttpResponse; json(body: unknown): void; }
+interface HttpResponse {
+  status(code: number): HttpResponse;
+  json(body: unknown): void;
+}
 
 @Catch(AccountingNotFoundError, AccountingValidationError)
 export class AccountingExceptionFilter implements ExceptionFilter {

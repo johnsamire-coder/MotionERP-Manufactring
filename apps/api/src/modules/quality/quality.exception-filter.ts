@@ -1,7 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { QualityNotFoundError, QualityValidationError } from './quality.errors';
 
-interface HttpResponse { status(code: number): HttpResponse; json(body: unknown): void; }
+interface HttpResponse {
+  status(code: number): HttpResponse;
+  json(body: unknown): void;
+}
 
 @Catch(QualityNotFoundError, QualityValidationError)
 export class QualityExceptionFilter implements ExceptionFilter {

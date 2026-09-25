@@ -1,7 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { CrmNotFoundError, CrmValidationError } from './crm.errors';
 
-interface HttpResponse { status(code: number): HttpResponse; json(body: unknown): void; }
+interface HttpResponse {
+  status(code: number): HttpResponse;
+  json(body: unknown): void;
+}
 
 @Catch(CrmNotFoundError, CrmValidationError)
 export class CrmExceptionFilter implements ExceptionFilter {

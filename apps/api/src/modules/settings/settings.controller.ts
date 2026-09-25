@@ -10,7 +10,9 @@ export class SettingsController {
   constructor(private readonly service: SettingsService) {}
 
   @Get('company-profile/:orgNodeId')
-  async companyProfile(@Param('orgNodeId', ParseUUIDPipe) orgNodeId: string): Promise<{ companyProfile: CompanyProfileRecord }> {
+  async companyProfile(
+    @Param('orgNodeId', ParseUUIDPipe) orgNodeId: string,
+  ): Promise<{ companyProfile: CompanyProfileRecord }> {
     return { companyProfile: await this.service.getCompanyProfile(orgNodeId) };
   }
 

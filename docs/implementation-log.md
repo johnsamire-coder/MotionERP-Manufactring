@@ -28,9 +28,9 @@
 ### تصحيحات موثقة على التوثيق النصي السابق
 
 - KPIs الصفحة الرئيسية الفعلية: `Total Work Order / Work Orders In Progress /
-  Ongoing Job Card / Total BOMs` (وليس القيم الشهرية المذكورة سابقًا).
+Ongoing Job Card / Total BOMs` (وليس القيم الشهرية المذكورة سابقًا).
 - قسم **Setup** لم يكن موثقًا: يحوي `Item / Warehouse / Operation / Workstation /
-  Workstation Type` — منها مستندان جديدان كليًا عندنا (Operation وWorkstation Type).
+Workstation Type` — منها مستندان جديدان كليًا عندنا (Operation وWorkstation Type).
 - تقارير Manufacturing الفعلية 10 (زادت: BOM Search وProduction Analytics
   وBOM Operations Time وWork Order Consumed Materials) وليست 5 كما ورد سابقًا.
 

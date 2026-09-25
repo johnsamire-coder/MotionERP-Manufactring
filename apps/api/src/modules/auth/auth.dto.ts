@@ -1,4 +1,13 @@
-import { IsIn, IsNumberString, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsIn,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 const ACTIONS = ['create', 'read', 'update', 'delete', 'approve'] as const;
 
@@ -33,4 +42,10 @@ export class CheckPermissionDto {
   @IsString() resource!: string;
   @IsOptional() @IsUUID() scopeOrgNodeId?: string;
   @IsOptional() @IsNumberString() value?: string;
+}
+
+export class CreateUserPermissionDto {
+  @IsUUID() userId!: string;
+  @IsIn(['org_node', 'warehouse']) allowType!: 'org_node' | 'warehouse';
+  @IsUUID() allowValue!: string;
 }

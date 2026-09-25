@@ -2,7 +2,13 @@
 // Motion ERP — Egyptian Tax Authority & Customs Service
 // Step 79 | Complete Service with Landed Cost Capitalization
 // ============================================================
-import { Injectable, BadRequestException, NotFoundException, Inject, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  Inject,
+  Optional,
+} from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
 import {
   taxSettlement,
@@ -22,57 +28,60 @@ import {
   QueryCustomsDto,
 } from './tax-customs.dto';
 import { Form41QuarterSummary } from './tax-customs.types';
-import { PostingEngineService } from './posting-engine.service';
+import { ModuleRef } from '@nestjs/core';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { InventoryService } from '../inventory/inventory.service';
+import { AccountingService } from './accounting.service';
+import type { JournalEntryRecord } from './accounting.types';
+import { postManualJournal } from './manual-journal';
 
 @Injectable()
 export class TaxAndCustomsService {
   constructor(
-    @Inject('DRIZZLE') private readonly db: any,
-    @Optional() @Inject(PostingEngineService) private readonly postingEngine?: PostingEngineService,
+    @Inject('DRIZZLE') private readonly db: NodePgDatabase,
+    private readonly accounting: AccountingService,
+    @Optional() private readonly moduleRef?: ModuleRef,
   ) {}
 
+  /** The company's input and output VAT accounts (company accounting config, plan item 33). */
+  private async vatAccounts(companyId: string): Promise<{ input: string; output: string }> {
+    const config = await this.accounting.getCompanyConfig(companyId);
+    if (!config?.defaultInputTaxAccountId || !config.defaultOutputTaxAccountId)
+      throw new BadRequestException(
+        'حدّد حساب ضريبة المدخلات وحساب ضريبة المخرجات في إعدادات الشركة المحاسبية الأول',
+      );
+    return { input: config.defaultInputTaxAccountId, output: config.defaultOutputTaxAccountId };
+  }
+
   // ── 1. VAT Return Settlements ──────────────
-  async createTaxSettlement(dto: CreateTaxSettlementDto, userId: string): Promise<{ settlement: TaxSettlement; journalEntry: any }> {
+  /**
+   * Files a VAT return and posts it: Dr output VAT / Cr input VAT, and the net to the tax authority
+   * account (credit when due, debit when it is a refund).
+   */
+  async createTaxSettlement(
+    dto: CreateTaxSettlementDto,
+    userId: string,
+  ): Promise<{ settlement: TaxSettlement; journalEntry: JournalEntryRecord }> {
     const netVat = dto.outputVatAmount - dto.inputVatAmount;
     const settlementNumber = `VAT-SETTLE-${dto.taxPeriod}-${Date.now().toString().slice(-4)}`;
-
-    const journalPayload = {
-      companyId: dto.companyId,
-      fiscalYearId: dto.fiscalYearId,
-      periodId: dto.periodId,
-      postingDate: new Date().toISOString().split('T')[0],
-      referenceType: 'vat_settlement',
-      referenceId: settlementNumber,
-      description: `Monthly VAT Settlement for period: ${dto.taxPeriod}`,
-      createdBy: userId,
+    const vat = await this.vatAccounts(dto.companyId);
+    const journal = await postManualJournal(this.accounting, {
+      orgNodeId: dto.companyId,
+      entryDate: new Date(dto.settlementDate ?? Date.now()).toISOString(),
+      description: `تسوية إقرار ضريبة القيمة المضافة ${dto.taxPeriod}`,
+      reference: settlementNumber,
+      sourceEventType: 'vat_settlement',
+      idempotencyKey: `vat-return-${settlementNumber}`,
       lines: [
+        { accountId: vat.output, debit: dto.outputVatAmount, credit: 0 },
+        { accountId: vat.input, debit: 0, credit: dto.inputVatAmount },
         {
-          accountId: '00000000-0000-0000-0000-000000002101',
-          debit: dto.outputVatAmount,
-          credit: 0,
-          description: `Close Output VAT for ${dto.taxPeriod}`,
-        },
-        {
-          accountId: '00000000-0000-0000-0000-000000001105',
-          debit: 0,
-          credit: dto.inputVatAmount,
-          description: `Close Input VAT for ${dto.taxPeriod}`,
-        },
-        {
-          accountId: '00000000-0000-0000-0000-000000002102',
-          debit: 0,
+          accountId: dto.vatPayableAccountId,
+          debit: netVat < 0 ? -netVat : 0,
           credit: netVat > 0 ? netVat : 0,
-          description: `Net VAT Payable to Egyptian Tax Authority`,
         },
       ],
-    };
-
-    let journalResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      journalResult = await (this.postingEngine as any).createManualJournalEntry(journalPayload);
-    } else {
-      journalResult = { id: `mock-vat-journal-${Date.now()}`, ...journalPayload };
-    }
+    });
 
     const [record] = await this.db
       .insert(taxSettlement)
@@ -88,15 +97,20 @@ export class TaxAndCustomsService {
         inputVatAmount: dto.inputVatAmount.toFixed(4),
         netVatPayable: netVat.toFixed(4),
         status: 'filed',
-        journalEntryId: journalResult.id,
+        journalEntryId: journal.id,
+        vatPayableAccountId: dto.vatPayableAccountId,
         createdBy: userId,
       })
       .returning();
 
-    return { settlement: record, journalEntry: journalResult };
+    return { settlement: record!, journalEntry: journal };
   }
 
-  async payTaxSettlement(dto: SettleAndPayVatDto, userId: string): Promise<{ settlement: TaxSettlement; paymentJournal: any }> {
+  /** Pays the net VAT due: Dr tax authority account / Cr the bank account. */
+  async payTaxSettlement(
+    dto: SettleAndPayVatDto,
+    _userId: string,
+  ): Promise<{ settlement: TaxSettlement; paymentJournal: JournalEntryRecord }> {
     const [settle] = await this.db
       .select()
       .from(taxSettlement)
@@ -104,41 +118,28 @@ export class TaxAndCustomsService {
 
     if (!settle) throw new NotFoundException(`VAT Settlement ${dto.settlementId} not found`);
     if (settle.status === 'paid') throw new BadRequestException('Settlement is already paid');
+    if (settle.status !== 'filed')
+      throw new BadRequestException(`Settlement is "${settle.status}" — file it before paying`);
+    if (!settle.vatPayableAccountId)
+      throw new BadRequestException(
+        'This settlement was filed before posting was enabled and has no tax authority account',
+      );
 
     const netAmount = parseFloat(settle.netVatPayable);
     if (netAmount <= 0) throw new BadRequestException('Net VAT payable is zero or negative');
 
-    const paymentJournalPayload = {
-      companyId: settle.companyId,
-      fiscalYearId: settle.fiscalYearId,
-      periodId: settle.periodId,
-      postingDate: dto.paymentDate,
-      referenceType: 'vat_payment',
-      referenceId: settle.settlementNumber,
-      description: `Payment of VAT for ${settle.taxPeriod}`,
-      createdBy: userId,
+    const journal = await postManualJournal(this.accounting, {
+      orgNodeId: settle.companyId,
+      entryDate: new Date(dto.paymentDate).toISOString(),
+      description: `سداد ضريبة القيمة المضافة ${settle.taxPeriod} (${dto.paymentReference})`,
+      reference: settle.settlementNumber,
+      sourceEventType: 'vat_payment',
+      idempotencyKey: `vat-payment-${settle.id}`,
       lines: [
-        {
-          accountId: '00000000-0000-0000-0000-000000002102',
-          debit: netAmount,
-          credit: 0,
-          description: `Settle VAT liability`,
-        },
-        {
-          accountId: dto.bankAccountId,
-          debit: 0,
-          credit: netAmount,
-          description: `Bank transfer payment`,
-        },
+        { accountId: settle.vatPayableAccountId, debit: netAmount, credit: 0 },
+        { accountId: dto.bankAccountId, debit: 0, credit: netAmount },
       ],
-    };
-
-    let paymentResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      paymentResult = await (this.postingEngine as any).createManualJournalEntry(paymentJournalPayload);
-    } else {
-      paymentResult = { id: `mock-vat-pay-${Date.now()}`, ...paymentJournalPayload };
-    }
+    });
 
     const [updated] = await this.db
       .update(taxSettlement)
@@ -146,19 +147,23 @@ export class TaxAndCustomsService {
         status: 'paid',
         paymentReference: dto.paymentReference,
         paymentDate: dto.paymentDate,
+        paymentJournalEntryId: journal.id,
         updatedAt: new Date(),
       })
       .where(eq(taxSettlement.id, dto.settlementId))
       .returning();
 
-    return { settlement: updated, paymentJournal: paymentResult };
+    return { settlement: updated!, paymentJournal: journal };
   }
 
   async listTaxSettlements(query: QueryTaxSettlementsDto): Promise<TaxSettlement[]> {
     const conditions = [];
     if (query.companyId) conditions.push(eq(taxSettlement.companyId, query.companyId));
     if (query.taxPeriod) conditions.push(eq(taxSettlement.taxPeriod, query.taxPeriod));
-    if (query.status) conditions.push(eq(taxSettlement.status, query.status as any));
+    if (query.status)
+      conditions.push(
+        eq(taxSettlement.status, query.status as (typeof taxSettlement.$inferSelect)['status']),
+      );
 
     return this.db
       .select()
@@ -193,10 +198,14 @@ export class TaxAndCustomsService {
       })
       .returning();
 
-    return result;
+    return result!;
   }
 
-  async getForm41QuarterSummary(companyId: string, year: string, quarter: number): Promise<Form41QuarterSummary> {
+  async getForm41QuarterSummary(
+    companyId: string,
+    year: string,
+    quarter: number,
+  ): Promise<Form41QuarterSummary> {
     const entries = await this.db
       .select()
       .from(withholdingTaxEntry)
@@ -228,7 +237,7 @@ export class TaxAndCustomsService {
       }
     }
 
-    const uniqueSuppliers = new Set(entries.map((e: any) => e.partnerId)).size;
+    const uniqueSuppliers = new Set(entries.map((e) => e.partnerId)).size;
 
     return {
       quarter,
@@ -245,8 +254,20 @@ export class TaxAndCustomsService {
     const conditions = [];
     if (query.companyId) conditions.push(eq(withholdingTaxEntry.companyId, query.companyId));
     if (query.quarter) conditions.push(eq(withholdingTaxEntry.quarter, query.quarter));
-    if (query.direction) conditions.push(eq(withholdingTaxEntry.direction, query.direction as any));
-    if (query.status) conditions.push(eq(withholdingTaxEntry.status, query.status as any));
+    if (query.direction)
+      conditions.push(
+        eq(
+          withholdingTaxEntry.direction,
+          query.direction as (typeof withholdingTaxEntry.$inferSelect)['direction'],
+        ),
+      );
+    if (query.status)
+      conditions.push(
+        eq(
+          withholdingTaxEntry.status,
+          query.status as (typeof withholdingTaxEntry.$inferSelect)['status'],
+        ),
+      );
 
     return this.db
       .select()
@@ -255,49 +276,33 @@ export class TaxAndCustomsService {
   }
 
   // ── 3. Customs Declarations (46 K.M) ────────
-  async createCustomsDeclaration(dto: CreateCustomsDeclarationDto, userId: string): Promise<{ declaration: CustomsDeclaration; journalEntry: any }> {
+  /**
+   * Records a customs clearance (form 46) and posts the payment: duties, fees and clearance to the
+   * customs clearing account (until capitalized), VAT paid at the port to input VAT, Cr the bank.
+   */
+  async createCustomsDeclaration(
+    dto: CreateCustomsDeclarationDto,
+    userId: string,
+  ): Promise<{ declaration: CustomsDeclaration; journalEntry: JournalEntryRecord }> {
     const cifEgp = dto.cifValueForeign * dto.exchangeRate;
     const devFee = dto.developmentFee || 0;
     const clearance = dto.clearanceExpenses || 0;
-    const totalPaid = dto.customsDutyAmount + devFee + dto.vatPaidAtCustoms + clearance;
-
-    const customsJournalPayload = {
-      companyId: dto.companyId,
-      fiscalYearId: dto.fiscalYearId,
-      periodId: dto.periodId,
-      postingDate: dto.declarationDate,
-      referenceType: 'customs_clearance',
-      referenceId: dto.declarationNumber,
-      description: `Customs clearance: ${dto.declarationNumber}`,
-      createdBy: userId,
+    const duties = dto.customsDutyAmount + devFee + clearance;
+    const totalPaid = duties + dto.vatPaidAtCustoms;
+    const vat = await this.vatAccounts(dto.companyId);
+    const journalResult = await postManualJournal(this.accounting, {
+      orgNodeId: dto.companyId,
+      entryDate: new Date(dto.declarationDate).toISOString(),
+      description: `إفراج جمركي ${dto.declarationNumber} — ${dto.portName}`,
+      reference: dto.declarationNumber,
+      sourceEventType: 'customs_clearance',
+      idempotencyKey: `customs-${dto.companyId}-${dto.declarationNumber}`,
       lines: [
-        {
-          accountId: '00000000-0000-0000-0000-000000005108',
-          debit: dto.customsDutyAmount + devFee + clearance,
-          credit: 0,
-          description: `Customs duties & expenses`,
-        },
-        {
-          accountId: '00000000-0000-0000-0000-000000001105',
-          debit: dto.vatPaidAtCustoms,
-          credit: 0,
-          description: `Input VAT paid at customs port`,
-        },
-        {
-          accountId: '00000000-0000-0000-0000-000000001002',
-          debit: 0,
-          credit: totalPaid,
-          description: `Customs payment via bank`,
-        },
+        { accountId: dto.customsClearingAccountId, debit: duties, credit: 0 },
+        { accountId: vat.input, debit: dto.vatPaidAtCustoms, credit: 0 },
+        { accountId: dto.paidFromAccountId, debit: 0, credit: totalPaid },
       ],
-    };
-
-    let journalResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      journalResult = await (this.postingEngine as any).createManualJournalEntry(customsJournalPayload);
-    } else {
-      journalResult = { id: `mock-cust-journal-${Date.now()}`, ...customsJournalPayload };
-    }
+    });
 
     const [record] = await this.db
       .insert(customsDeclaration)
@@ -321,72 +326,89 @@ export class TaxAndCustomsService {
         totalPaidAmount: totalPaid.toFixed(4),
         status: 'cleared',
         journalEntryId: journalResult.id,
+        clearingAccountId: dto.customsClearingAccountId,
         createdBy: userId,
       })
       .returning();
 
-    return { declaration: record, journalEntry: journalResult };
+    return { declaration: record!, journalEntry: journalResult };
   }
 
-  async capitalizeCustomsToInventory(dto: { declarationId: string; targetWarehouseId: string }, userId: string): Promise<CustomsDeclaration> {
+  /**
+   * Capitalizes the duties onto the imported goods through a real landed cost voucher: the voucher
+   * spreads them over the given stock receipts by value and posts Dr inventory / Cr the customs
+   * clearing account, so the stock valuation and the books move together.
+   */
+  async capitalizeCustomsToInventory(
+    dto: { declarationId: string; receiptMovementIds: string[] },
+    _userId: string,
+  ): Promise<CustomsDeclaration> {
     const [decl] = await this.db
       .select()
       .from(customsDeclaration)
       .where(eq(customsDeclaration.id, dto.declarationId));
 
     if (!decl) throw new NotFoundException(`Customs declaration ${dto.declarationId} not found`);
+    if (decl.status !== 'cleared')
+      throw new BadRequestException(`Declaration ${decl.declarationNumber} is "${decl.status}"`);
+    if (!decl.clearingAccountId)
+      throw new BadRequestException(
+        'This declaration was recorded before posting was enabled and has no clearing account',
+      );
+    const inventory = this.moduleRef?.get(InventoryService, { strict: false });
+    if (!inventory) throw new BadRequestException('inventory module is not available');
 
-    const capitalizableDuty = parseFloat(decl.customsDutyAmount) + parseFloat(decl.developmentFee) + parseFloat(decl.clearanceExpenses);
+    const capitalizableDuty =
+      parseFloat(decl.customsDutyAmount) +
+      parseFloat(decl.developmentFee) +
+      parseFloat(decl.clearanceExpenses);
+    if (!(capitalizableDuty > 0))
+      throw new BadRequestException('Nothing to capitalize on this declaration');
 
-    const capitalizationJournal = {
-      companyId: decl.companyId,
-      fiscalYearId: decl.fiscalYearId,
-      periodId: decl.periodId,
-      postingDate: new Date().toISOString().split('T')[0],
-      referenceType: 'landed_cost_capitalization',
-      referenceId: decl.declarationNumber,
-      description: `Capitalize Customs Duties: ${decl.declarationNumber}`,
-      createdBy: userId,
-      lines: [
-        {
-          accountId: '00000000-0000-0000-0000-000000001101',
-          debit: capitalizableDuty,
-          credit: 0,
-        },
-        {
-          accountId: '00000000-0000-0000-0000-000000005108',
-          debit: 0,
-          credit: capitalizableDuty,
-        },
-      ],
-    };
-
-    let journalResult: any = null;
-    if (this.postingEngine && typeof (this.postingEngine as any).createManualJournalEntry === 'function') {
-      journalResult = await (this.postingEngine as any).createManualJournalEntry(capitalizationJournal);
-    } else {
-      journalResult = { id: `mock-cap-journal-${Date.now()}`, ...capitalizationJournal };
+    const items = [];
+    for (const movementId of dto.receiptMovementIds) {
+      const m = await inventory.getMovement(movementId);
+      if (m.movementType !== 'receipt')
+        throw new BadRequestException(`movement ${movementId} is not a stock receipt`);
+      items.push({
+        receiptMovementId: m.id,
+        itemId: m.itemId,
+        warehouseId: m.warehouseId,
+        quantity: String(Math.abs(Number(m.quantity))),
+        originalRate: m.unitCost ?? '0',
+      });
     }
+    const voucher = await inventory.createLandedCostVoucher({
+      orgNodeId: decl.companyId,
+      totalExpenseAmount: capitalizableDuty.toFixed(4),
+      distributeMethod: 'by_amount',
+      expenseAccountId: decl.clearingAccountId,
+      notes: `رسملة جمارك الإفراج ${decl.declarationNumber}`,
+      items,
+    });
+    await inventory.postLandedCostVoucher(voucher.id);
 
     const [updated] = await this.db
       .update(customsDeclaration)
-      .set({
-        status: 'capitalized',
-        landedCostVoucherId: '00000000-0000-0000-0000-000000000001',
-        journalEntryId: journalResult.id,
-        updatedAt: new Date(),
-      })
+      .set({ status: 'capitalized', landedCostVoucherId: voucher.id, updatedAt: new Date() })
       .where(eq(customsDeclaration.id, dto.declarationId))
       .returning();
 
-    return updated;
+    return updated!;
   }
 
   async listCustomsDeclarations(query: QueryCustomsDto): Promise<CustomsDeclaration[]> {
     const conditions = [];
     if (query.companyId) conditions.push(eq(customsDeclaration.companyId, query.companyId));
-    if (query.declarationNumber) conditions.push(eq(customsDeclaration.declarationNumber, query.declarationNumber));
-    if (query.status) conditions.push(eq(customsDeclaration.status, query.status as any));
+    if (query.declarationNumber)
+      conditions.push(eq(customsDeclaration.declarationNumber, query.declarationNumber));
+    if (query.status)
+      conditions.push(
+        eq(
+          customsDeclaration.status,
+          query.status as (typeof customsDeclaration.$inferSelect)['status'],
+        ),
+      );
 
     return this.db
       .select()

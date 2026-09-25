@@ -1,6 +1,6 @@
 import { CatalogService } from './catalog.service';
 import { CatalogRepository } from './catalog.repository';
-import { CatalogValidationError, CatalogNotFoundError } from './catalog.errors';
+import { CatalogValidationError } from './catalog.errors';
 import type {
   UomRecord,
   ItemRecord,
@@ -33,6 +33,10 @@ describe('CatalogService — Multi-UOM Conversion Engine', () => {
       name: 'صاج مجلفن 1.2 مم',
       description: null,
       itemType: 'raw_material',
+      hasBatchNo: false,
+      hasSerialNo: false,
+      hasExpiryDate: false,
+      shelfLifeInDays: null,
       categoryId: 'cat-raw-1',
       baseUnitId: mockUomSqmId, // Base Unit is Square Meter (m2)
       status: 'active',
@@ -83,24 +87,28 @@ describe('CatalogService — Multi-UOM Conversion Engine', () => {
         const list = Array.from(mockConversions.values());
         return itemId ? list.filter((c) => c.itemId === itemId) : list;
       }),
-      findUomConversion: jest.fn().mockImplementation(async (itemId: string, fromId: string, toId: string) => {
-        const key = `${itemId}-${fromId}-${toId}`;
-        return mockConversions.get(key) ?? null;
-      }),
-      insertUomConversion: jest.fn().mockImplementation(async (input: CreateUomConversionInput & { id: string }) => {
-        const record: UomConversionRecord = {
-          id: input.id,
-          itemId: input.itemId,
-          fromUnitId: input.fromUnitId,
-          toUnitId: input.toUnitId,
-          conversionFactor: input.conversionFactor,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        const key = `${input.itemId}-${input.fromUnitId}-${input.toUnitId}`;
-        mockConversions.set(key, record);
-        return record;
-      }),
+      findUomConversion: jest
+        .fn()
+        .mockImplementation(async (itemId: string, fromId: string, toId: string) => {
+          const key = `${itemId}-${fromId}-${toId}`;
+          return mockConversions.get(key) ?? null;
+        }),
+      insertUomConversion: jest
+        .fn()
+        .mockImplementation(async (input: CreateUomConversionInput & { id: string }) => {
+          const record: UomConversionRecord = {
+            id: input.id,
+            itemId: input.itemId,
+            fromUnitId: input.fromUnitId,
+            toUnitId: input.toUnitId,
+            conversionFactor: input.conversionFactor,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          const key = `${input.itemId}-${input.fromUnitId}-${input.toUnitId}`;
+          mockConversions.set(key, record);
+          return record;
+        }),
     } as unknown as CatalogRepository;
 
     catalogService = new CatalogService(catalogRepo);
@@ -166,12 +174,7 @@ describe('CatalogService — Multi-UOM Conversion Engine', () => {
   });
 
   it('4. Identity Conversion: should return same quantity with factor 1 for identical UOMs', async () => {
-    const result = await catalogService.convertQuantity(
-      mockItemId,
-      mockUomKgId,
-      mockUomKgId,
-      50,
-    );
+    const result = await catalogService.convertQuantity(mockItemId, mockUomKgId, mockUomKgId, 50);
 
     expect(result.sourceQuantity).toBe(50);
     expect(result.convertedQuantity).toBe(50);

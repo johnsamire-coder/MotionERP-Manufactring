@@ -13,7 +13,15 @@ interface ReportLayoutProps {
   children: React.ReactNode;
 }
 
-export function ReportLayout({ title, companyName, logoUrl, filename, exportHeaders, exportRows, children }: ReportLayoutProps): JSX.Element {
+export function ReportLayout({
+  title,
+  companyName,
+  logoUrl,
+  filename,
+  exportHeaders,
+  exportRows,
+  children,
+}: ReportLayoutProps): JSX.Element {
   const [exporting, setExporting] = useState(false);
 
   function exportExcel(): void {
@@ -52,21 +60,50 @@ export function ReportLayout({ title, companyName, logoUrl, filename, exportHead
 
   return (
     <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #e2e8f0' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '20px 24px',
+          borderBottom: '1px solid #e2e8f0',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {logoUrl && <img src={logoUrl} alt="logo" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} style={{ height: 40, width: 40, objectFit: 'contain', borderRadius: 4 }} />}
+          {logoUrl && (
+            <img
+              src={logoUrl}
+              alt="logo"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+              style={{ height: 40, width: 40, objectFit: 'contain', borderRadius: 4 }}
+            />
+          )}
           <div>
             <div style={{ fontSize: 12, color: '#64748b' }}>{companyName ?? 'Motion ERP'}</div>
             <h2 style={{ margin: '2px 0 0', fontSize: 18 }}>{title}</h2>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="filter-button" disabled={exporting} onClick={exportExcel}>Excel</button>
-          <button className="filter-button" disabled={exporting} onClick={exportPdf}>PDF</button>
+          <button className="filter-button" disabled={exporting} onClick={exportExcel}>
+            Excel
+          </button>
+          <button className="filter-button" disabled={exporting} onClick={exportPdf}>
+            PDF
+          </button>
         </div>
       </div>
       <div style={{ padding: 20 }}>{children}</div>
-      <div style={{ padding: '10px 24px', borderTop: '1px solid #e2e8f0', fontSize: 11, color: '#94a3b8', textAlign: 'center' }}>
+      <div
+        style={{
+          padding: '10px 24px',
+          borderTop: '1px solid #e2e8f0',
+          fontSize: 11,
+          color: '#94a3b8',
+          textAlign: 'center',
+        }}
+      >
         Motion ERP
       </div>
     </div>

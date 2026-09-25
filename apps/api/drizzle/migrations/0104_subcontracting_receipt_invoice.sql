@@ -1,0 +1,4 @@
+ALTER TABLE "production_ops"."subcontracting_order" DROP CONSTRAINT "subcontracting_order_status_valid";--> statement-breakpoint
+ALTER TABLE "production_ops"."subcontracting_item" ADD COLUMN "received_qty" numeric(24, 6) DEFAULT '0' NOT NULL;--> statement-breakpoint
+ALTER TABLE "production_ops"."subcontracting_order" ADD COLUMN "purchase_invoice_id" uuid;--> statement-breakpoint
+ALTER TABLE "production_ops"."subcontracting_order" ADD CONSTRAINT "subcontracting_order_status_valid" CHECK ("production_ops"."subcontracting_order"."status" in ('draft', 'posted', 'partially_received', 'completed', 'cancelled'));

@@ -2,9 +2,12 @@ import './index.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { installAuthFetch } from './app/api/client';
 import { AppProviders } from './app/providers/AppProviders';
 import './styles/tokens.css';
 import './styles/app.css';
+
+installAuthFetch();
 
 const container = document.getElementById('root');
 if (!container) {

@@ -24,6 +24,7 @@ describe('AccountingService — VAT Return & Tax Settlement Engine', () => {
     journalCounter = 0;
 
     accountingRepo = {
+      findAccountingOrgNode: jest.fn(async (id: string) => id),
       findCompanyConfig: jest.fn().mockResolvedValue({
         orgNodeId: mockOrgNodeId,
         defaultInputTaxAccountId: mockInputTaxAccountId,
@@ -79,9 +80,15 @@ describe('AccountingService — VAT Return & Tax Settlement Engine', () => {
       ]),
 
       findFiscalYearByDate: jest.fn().mockResolvedValue(null),
-      findAccountById: jest.fn().mockResolvedValue({ id: 'acc-1', isLeaf: true, orgNodeId: mockOrgNodeId }),
+      findAccountById: jest
+        .fn()
+        .mockResolvedValue({ id: 'acc-1', isLeaf: true, orgNodeId: mockOrgNodeId }),
       countEntries: jest.fn().mockImplementation(async () => journalCounter),
-      findEntryById: jest.fn().mockImplementation(async (id: string) => mockPostedJournals.find((j) => j.id === id) ?? null),
+      findEntryById: jest
+        .fn()
+        .mockImplementation(
+          async (id: string) => mockPostedJournals.find((j) => j.id === id) ?? null,
+        ),
       insertEntry: jest.fn().mockImplementation(async (input) => {
         journalCounter++;
         const entry: JournalEntryRecord = {
