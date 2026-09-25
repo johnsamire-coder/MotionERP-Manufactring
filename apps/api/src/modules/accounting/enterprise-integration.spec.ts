@@ -18,7 +18,6 @@ import { accountingPeriod, fiscalYear } from './accounting.schema';
 
 describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
   let taxService: TaxAndCustomsService;
-  let costService: CostService;
   let batchService: PurchaseBatchLinkService;
   let serialService: SalesSerialLinkService;
 
@@ -133,7 +132,6 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
     }).compile();
 
     taxService = module.get<TaxAndCustomsService>(TaxAndCustomsService);
-    costService = module.get<CostService>(CostService);
     batchService = module.get<PurchaseBatchLinkService>(PurchaseBatchLinkService);
     serialService = module.get<SalesSerialLinkService>(SalesSerialLinkService);
   });
@@ -165,12 +163,6 @@ describe('Motion ERP — Complete Master Enterprise Lifecycle Pipeline', () => {
     const batchRecord = batches[0]!;
     expect(batchRecord.batchNumber).toBe('LOT-2026-MED-0941');
     expect(batchRecord.quarantineStatus).toBe('pending_inspection');
-
-    // ── المرحلة 2: تجميع أزمنة التشغيل وحساب كارت التكلفة الفعلي ──
-    const costSheet = await costService.getJobCostSheetAnalytics('WO-2026-08112');
-    expect(costSheet.targetUnits).toBe(20);
-    expect(costSheet.totalDirectMaterials).toBe(281030);
-    expect(costSheet.totalDirectCost).toBeCloseTo(300924.17, 2);
 
     // ── المرحلة 4: بيع الأجهزة الطبية وتخصيص السيريالات وتفعيل الضمان 24 شهر ──
     const allocatedSerials = await serialService.allocateSerials(

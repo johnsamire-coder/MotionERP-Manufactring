@@ -5,7 +5,12 @@ import { SalesService } from '../sales/sales.service';
 import { ProductionNotFoundError, ProductionValidationError } from './production.errors';
 import { ProductionRepository } from './production.repository';
 import type { JobOrderRecord } from '../sales/sales.types';
-import type { CreateMaterialRequestInput, MaterialRequestRecord } from './production.types';
+import type {
+  CreateMaterialRequestInput,
+  MaterialRequestRecord,
+  MaterialVarianceLine,
+  MaterialVarianceReport,
+} from './production.types';
 
 @Injectable()
 export class ProductionService {
@@ -90,14 +95,88 @@ export class ProductionService {
         `request ${id} is "${found.status}" and cannot be issued (must be "approved")`,
       );
     }
-    await this.inventoryService.createMovement({
+    // Issued to production: posts Dr WIP / Cr stock (not stock adjustment), and the movement is
+    // linked back to the request so its actual value feeds the planned-vs-actual variance.
+    const movement = await this.inventoryService.createMovement({
       itemId: found.itemId,
       warehouseId: found.warehouseId,
       movementType: 'issue',
+      purpose: 'manufacture_consumption',
       quantity: found.requestedQuantity,
+      sourceModule: 'production',
+      sourceId: id,
       note: `Material request ${id} (job order ${found.jobOrderReference})`,
     });
-    return this.repository.recordIssue(id, found.requestedQuantity);
+    return this.repository.recordIssue(id, found.requestedQuantity, {
+      movementId: movement.id,
+      value: movement.totalValue,
+    });
+  }
+
+  /**
+   * Planned vs actual materials of a job order, from its material requests. Every quantity is
+   * valued at the actual moving-average rate of its issue: usage variance = (used − planned) × rate,
+   * over-request = requested − planned, and "not returned" = issued − used (still in WIP).
+   */
+  async getMaterialVariance(jobOrderReference: string): Promise<MaterialVarianceReport> {
+    const requests = (await this.repository.listRequests(jobOrderReference)).filter(
+      (r) => r.status !== 'rejected',
+    );
+    const r4 = (n: number): string => n.toFixed(4);
+    let plannedValue = 0,
+      issuedValue = 0,
+      usedValue = 0,
+      usageVariance = 0,
+      notReturnedValue = 0;
+    const lines: MaterialVarianceLine[] = requests.map((r) => {
+      const planned = Number(r.plannedQuantity);
+      const requested = Number(r.requestedQuantity);
+      const issued = Number(r.issuedQuantity ?? 0);
+      const used = r.actualUsedQuantity == null ? null : Number(r.actualUsedQuantity);
+      const value = r.issuedValue == null ? null : Number(r.issuedValue);
+      const rate = value != null && issued > 0 ? value / issued : null;
+      const line: MaterialVarianceLine = {
+        requestId: r.id,
+        itemId: r.itemId,
+        warehouseId: r.warehouseId,
+        status: r.status,
+        deviationReason: r.deviationReason,
+        plannedQuantity: r.plannedQuantity,
+        requestedQuantity: r.requestedQuantity,
+        issuedQuantity: r.issuedQuantity,
+        actualUsedQuantity: r.actualUsedQuantity,
+        overRequestQuantity: r4(requested - planned),
+        usageVarianceQuantity: used == null ? null : r4(used - planned),
+        notReturnedQuantity: used == null ? null : r4(issued - used),
+        actualRate: rate == null ? null : r4(rate),
+        plannedValue: rate == null ? null : r4(planned * rate),
+        issuedValue: value == null ? null : r4(value),
+        usedValue: rate == null || used == null ? null : r4(used * rate),
+        usageVarianceValue: rate == null || used == null ? null : r4((used - planned) * rate),
+      };
+      if (rate != null) {
+        plannedValue += planned * rate;
+        issuedValue += value ?? 0;
+        if (used != null) {
+          usedValue += used * rate;
+          usageVariance += (used - planned) * rate;
+          notReturnedValue += (issued - used) * rate;
+        }
+      }
+      return line;
+    });
+    return {
+      jobOrderReference,
+      lines,
+      totals: {
+        plannedValue: r4(plannedValue),
+        issuedValue: r4(issuedValue),
+        usedValue: r4(usedValue),
+        usageVarianceValue: r4(usageVariance),
+        notReturnedValue: r4(notReturnedValue),
+      },
+      pendingLines: lines.filter((l) => l.issuedValue == null).length,
+    };
   }
 
   async closeRequest(id: string, actualUsedQuantity: string): Promise<MaterialRequestRecord> {

@@ -18,7 +18,6 @@ import {
   Factory,
   Cpu,
   ShieldCheck,
-  Calculator,
   Percent,
   TrendingUp,
   AlertOctagon,
@@ -61,10 +60,7 @@ import { StockEntryPage } from './app/pages/StockEntryPage';
 import { ProductionOpsPage } from './app/pages/ProductionOpsPage';
 import { BomCreatorPage } from './app/pages/BomCreatorPage';
 import { BatchTracePage } from './app/pages/BatchTracePage';
-import JobCostSheetPage from './pages/JobCostSheetPage';
-import StandardVsActualPage from './pages/StandardVsActualPage';
-import MaterialVariancePage from './pages/MaterialVariancePage';
-import OrderProfitabilityPage from './pages/OrderProfitabilityPage';
+import { PlannedVsActualPage } from './app/pages/PlannedVsActualPage';
 import TaxCustomsPage from './app/pages/TaxCustomsPage';
 import YearEndClosingPage from './app/pages/YearEndClosingPage';
 import AuditLogPage from './app/pages/AuditLogPage';
@@ -238,20 +234,7 @@ export const App: React.FC = () => {
       items: [
         { id: 'costing-general', label: 'تكلفة وربحية أوامر الشغل', icon: ClipboardList },
         { id: 'overhead-dashboard', label: 'مجمعات وتوزيع الأعباء', icon: Cpu },
-        { id: 'job-cost', label: 'كارت التكلفة الفعلي', icon: Calculator, badge: 'تجريبي' },
-        { id: 'std-vs-actual', label: 'المعياري vs الفعلي', icon: ArrowLeftRight, badge: 'تجريبي' },
-        {
-          id: 'material-variance',
-          label: 'انحرافات المواد 4-Level',
-          icon: Percent,
-          badge: 'تجريبي',
-        },
-        {
-          id: 'order-profitability',
-          label: 'ربحية أوامر الشغل',
-          icon: TrendingUp,
-          badge: 'تجريبي',
-        },
+        { id: 'std-vs-actual', label: 'المخطط مقابل الفعلي', icon: ArrowLeftRight },
       ],
     },
     {
@@ -478,10 +461,7 @@ export const App: React.FC = () => {
           {currentTab === 'report-forecasting' && <ReportForecastingPage />}
 
           {/* 5. التكاليف والربحية */}
-          {currentTab === 'job-cost' && <JobCostSheetPage />}
-          {currentTab === 'std-vs-actual' && <StandardVsActualPage />}
-          {currentTab === 'material-variance' && <MaterialVariancePage />}
-          {currentTab === 'order-profitability' && <OrderProfitabilityPage />}
+          {currentTab === 'std-vs-actual' && <PlannedVsActualPage />}
           {currentTab === 'overhead-dashboard' && <OverheadAllocationPage />}
           {currentTab === 'costing-general' && <CostingPage />}
 

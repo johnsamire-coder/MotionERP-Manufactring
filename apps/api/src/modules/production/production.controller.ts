@@ -17,7 +17,7 @@ import {
 } from './production.dto';
 import { ProductionExceptionFilter } from './production.exception-filter';
 import { ProductionService } from './production.service';
-import type { MaterialRequestRecord } from './production.types';
+import type { MaterialRequestRecord, MaterialVarianceReport } from './production.types';
 
 @Controller({ path: 'production', version: '1' })
 @UseFilters(ProductionExceptionFilter)
@@ -29,6 +29,11 @@ export class ProductionController {
     @Query('jobOrderReference') jobOrderReference?: string,
   ): Promise<{ requests: MaterialRequestRecord[] }> {
     return { requests: await this.service.getRequests(jobOrderReference) };
+  }
+
+  @Get('job-orders/:ref/material-variance')
+  async materialVariance(@Param('ref') ref: string): Promise<MaterialVarianceReport> {
+    return this.service.getMaterialVariance(ref);
   }
 
   @Get('material-requests/:id')

@@ -25,6 +25,10 @@ export const materialRequest = productionSchema.table(
     requestedQuantity: numeric('requested_quantity', { precision: 24, scale: 6 }).notNull(),
     issuedQuantity: numeric('issued_quantity', { precision: 24, scale: 6 }),
     actualUsedQuantity: numeric('actual_used_quantity', { precision: 24, scale: 6 }),
+    /** Stock movement that issued the material (inventory module, linked by UUID, no FK). */
+    issueMovementId: uuid('issue_movement_id'),
+    /** Actual value of the issue at the moving-average rate of the moment it was issued. */
+    issuedValue: numeric('issued_value', { precision: 24, scale: 4 }),
     status: text('status').notNull().default('pending_review'),
     deviationReason: text('deviation_reason'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

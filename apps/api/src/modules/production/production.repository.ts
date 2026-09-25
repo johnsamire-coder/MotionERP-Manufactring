@@ -18,6 +18,8 @@ const columns = {
   requestedQuantity: materialRequest.requestedQuantity,
   issuedQuantity: materialRequest.issuedQuantity,
   actualUsedQuantity: materialRequest.actualUsedQuantity,
+  issueMovementId: materialRequest.issueMovementId,
+  issuedValue: materialRequest.issuedValue,
   status: materialRequest.status,
   deviationReason: materialRequest.deviationReason,
   createdAt: materialRequest.createdAt,
@@ -34,6 +36,8 @@ interface Row {
   requestedQuantity: string;
   issuedQuantity: string | null;
   actualUsedQuantity: string | null;
+  issueMovementId: string | null;
+  issuedValue: string | null;
   status: string;
   deviationReason: string | null;
   createdAt: Date;
@@ -51,6 +55,8 @@ function toRecord(row: Row): MaterialRequestRecord {
     requestedQuantity: row.requestedQuantity,
     issuedQuantity: row.issuedQuantity,
     actualUsedQuantity: row.actualUsedQuantity,
+    issueMovementId: row.issueMovementId,
+    issuedValue: row.issuedValue,
     status: row.status as MaterialRequestStatus,
     deviationReason: row.deviationReason,
     createdAt: row.createdAt.toISOString(),
@@ -123,10 +129,19 @@ export class ProductionRepository {
     return toRecord(rows[0]!);
   }
 
-  async recordIssue(id: string, issuedQuantity: string): Promise<MaterialRequestRecord> {
+  async recordIssue(
+    id: string,
+    issuedQuantity: string,
+    issue?: { movementId: string; value: string | null },
+  ): Promise<MaterialRequestRecord> {
     const rows = await this.database.db
       .update(materialRequest)
-      .set({ issuedQuantity, status: 'issued' })
+      .set({
+        issuedQuantity,
+        status: 'issued',
+        issueMovementId: issue?.movementId ?? null,
+        issuedValue: issue?.value ?? null,
+      })
       .where(eq(materialRequest.id, id))
       .returning(columns);
     return toRecord(rows[0]!);
