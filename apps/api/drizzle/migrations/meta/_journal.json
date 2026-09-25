@@ -757,6 +757,13 @@
       "when": 1790293610828,
       "tag": "0107_material_request_issue_link",
       "breakpoints": true
+    },
+    {
+      "idx": 108,
+      "version": "7",
+      "when": 1790309076902,
+      "tag": "0108_material_issue_actual_cost",
+      "breakpoints": true
     }
   ]
 }

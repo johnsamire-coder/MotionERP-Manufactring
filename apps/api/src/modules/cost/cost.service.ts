@@ -82,6 +82,22 @@ export class CostService {
   }
 
   /**
+   * Records the actual material cost of a document (e.g. a material issue to production) on the job
+   * order's cost sheet, once: a repeat with the same source reference returns the existing entry.
+   */
+  async recordActualMaterialCost(
+    jobOrderReference: string,
+    amount: string,
+    sourceReference: string,
+    description?: string,
+  ): Promise<CostEntryRecord> {
+    const sheet = await this.getOrCreateCostSheet(jobOrderReference);
+    const existing = await this.repo.findEntryBySource(sheet.id, sourceReference);
+    if (existing) return existing;
+    return this.addMaterialCost(jobOrderReference, amount, description, sourceReference);
+  }
+
+  /**
    * Generates a complete cost sheet and profitability summary for a job order.
    * Compares Standard/Estimated costs with Actual costs and calculates variances.
    */

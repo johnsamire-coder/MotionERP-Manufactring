@@ -2,6 +2,7 @@ import { ProductionService } from './production.service';
 import type { ProductionRepository } from './production.repository';
 import type { InventoryService } from '../inventory/inventory.service';
 import type { SalesService } from '../sales/sales.service';
+import type { CostService } from '../cost/cost.service';
 import type { MaterialRequestRecord } from './production.types';
 
 function req(over: Partial<MaterialRequestRecord>): MaterialRequestRecord {
@@ -45,15 +46,37 @@ describe('ProductionService — material issue to WIP and planned-vs-actual vari
       },
     ),
   } as unknown as ProductionRepository;
+  const recordActualMaterialCost = jest.fn(async () => ({}));
   const service = new ProductionService(
     repository,
     { createMovement } as unknown as InventoryService,
     {} as SalesService,
+    { recordActualMaterialCost } as unknown as CostService,
   );
 
   beforeEach(() => {
     rows.clear();
     createMovement.mockClear();
+    recordActualMaterialCost.mockReset();
+    recordActualMaterialCost.mockImplementation(async () => ({}));
+  });
+
+  it('records the issue as actual material cost on the job order, keyed by the request', async () => {
+    rows.set('r1', req({ requestedQuantity: '12.000000' }));
+    await service.issueRequest('r1');
+    expect(recordActualMaterialCost).toHaveBeenCalledWith(
+      'JO-1',
+      '240.0000',
+      'material-request:r1',
+      expect.any(String),
+    );
+  });
+
+  it('keeps the issue when recording its cost fails (stock already moved and posted)', async () => {
+    rows.set('r1', req({}));
+    recordActualMaterialCost.mockRejectedValueOnce(new Error('no cost sheet'));
+    const issued = await service.issueRequest('r1');
+    expect(issued.status).toBe('issued');
   });
 
   it('issues to production (WIP) and records the movement and its actual value', async () => {

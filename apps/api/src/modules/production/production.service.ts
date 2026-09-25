@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { CostService } from '../cost/cost.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { SalesService } from '../sales/sales.service';
 import { ProductionNotFoundError, ProductionValidationError } from './production.errors';
@@ -18,7 +19,10 @@ export class ProductionService {
     private readonly repository: ProductionRepository,
     private readonly inventoryService: InventoryService,
     private readonly salesService: SalesService,
+    @Optional() private readonly costService?: CostService,
   ) {}
+
+  private readonly logger = new Logger(ProductionService.name);
 
   /**
    * Looks up the referenced job order through SalesService's public surface
@@ -107,10 +111,28 @@ export class ProductionService {
       sourceId: id,
       note: `Material request ${id} (job order ${found.jobOrderReference})`,
     });
-    return this.repository.recordIssue(id, found.requestedQuantity, {
+    const issued = await this.repository.recordIssue(id, found.requestedQuantity, {
       movementId: movement.id,
       value: movement.totalValue,
     });
+    // Owner decision: every issue is recorded as actual material cost on the job order's cost
+    // sheet. The stock has already moved and posted, so a failure here is logged, not thrown; the
+    // entry is keyed by the request so a later re-sync never records it twice.
+    if (this.costService && Number(movement.totalValue ?? 0) > 0) {
+      try {
+        await this.costService.recordActualMaterialCost(
+          found.jobOrderReference,
+          Number(movement.totalValue).toFixed(4),
+          `material-request:${id}`,
+          `صرف خامات — طلب ${id.slice(0, 8)}`,
+        );
+      } catch (err) {
+        this.logger.warn(
+          `material request ${id}: issued, but its actual cost was not recorded on job order ${found.jobOrderReference}: ${(err as Error).message}`,
+        );
+      }
+    }
+    return issued;
   }
 
   /**

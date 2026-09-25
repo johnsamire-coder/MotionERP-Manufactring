@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { DatabaseService } from '../../core/database/database.service';
 import {
   allocationPolicy,
@@ -221,6 +221,16 @@ export class CostRepository {
       .where(eq(jobCostSheet.jobOrderReference, ref))
       .limit(1);
     return rows[0] ? toSheet(rows[0]) : null;
+  }
+  async findEntryBySource(costSheetId: string, sourceReference: string) {
+    const rows = await this.db.db
+      .select(entryCols)
+      .from(costEntry)
+      .where(
+        and(eq(costEntry.costSheetId, costSheetId), eq(costEntry.sourceReference, sourceReference)),
+      )
+      .limit(1);
+    return rows[0] ? toEntry(rows[0]) : null;
   }
   async insertCostSheet(input: CreateJobCostSheetInput & { id: string; orgNodeId: string | null }) {
     const rows = await this.db.db
